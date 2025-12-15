@@ -7,12 +7,33 @@ import { z } from "zod";
 const router = Router();
 
 function isMissingRelationError(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
-  const anyErr = error as any;
-  // Postgres undefined_table
-  if (anyErr.code === "42P01") return true;
-  const msg = typeof anyErr.message === "string" ? anyErr.message : "";
-  return /relation .* does not exist/i.test(msg) || /undefined_table/i.test(msg);
+  // Drizzle/pg can wrap errors a few different ways. We handle:
+  // - Postgres error code "42P01" (undefined_table)
+  // - message containing "relation ... does not exist"
+  // - nested causes (error.cause / error.originalError / error.original)
+  const seen = new Set<any>();
+  const stack: any[] = [error as any];
+
+  while (stack.length) {
+    const e = stack.pop();
+    if (!e || typeof e !== "object") continue;
+    if (seen.has(e)) continue;
+    seen.add(e);
+
+    const code = (e as any).code ?? (e as any).sqlState ?? (e as any).sqlstate;
+    if (code === "42P01") return true;
+
+    const msg = typeof (e as any).message === "string" ? (e as any).message : "";
+    if (/relation .* does not exist/i.test(msg) || /undefined_table/i.test(msg)) return true;
+
+    // Common wrapper properties
+    if ((e as any).cause) stack.push((e as any).cause);
+    if ((e as any).originalError) stack.push((e as any).originalError);
+    if ((e as any).original) stack.push((e as any).original);
+    if ((e as any).error) stack.push((e as any).error);
+  }
+
+  return false;
 }
 
 // Get all feed items (community activities + user posts) with filter support
@@ -97,20 +118,21 @@ router.get("/", async (req: Request, res: Response) => {
     }
 
     // Check if user follows each post author
-    const allUserIds = [...activities.map(a => a.userId), ...posts.map(p => p.userId)].filter((id): id is number => id !== null);
+    const allUserIds = [...activities.map(a => a.userId), ...posts.map(p => p.userId)].filter(
+      (id): id is number => id !== null
+    );
     const uniqueUserIds = Array.from(new Set(allUserIds));
-    
-    const followingData = await db
-      .select({ followingId: follows.followingId })
-      .from(follows)
-      .where(
-        and(
-          eq(follows.followerId, userId),
-          inArray(follows.followingId, uniqueUserIds)
-        )
-      );
-    
-    const followingIds = new Set(followingData.map(f => f.followingId));
+
+    // Avoid generating invalid SQL with `IN ()` when the feed is empty.
+    let followingIds = new Set<number>();
+    if (uniqueUserIds.length > 0) {
+      const followingData = await db
+        .select({ followingId: follows.followingId })
+        .from(follows)
+        .where(and(eq(follows.followerId, userId), inArray(follows.followingId, uniqueUserIds)));
+
+      followingIds = new Set(followingData.map(f => f.followingId));
+    }
 
     // Combine and format feed items
     const feedItems = [

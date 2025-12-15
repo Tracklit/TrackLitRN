@@ -13,7 +13,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import theme from '@/utils/theme';
 
-type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Tools' | 'Profile';
+type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Marketplace' | 'Feed' | 'Tools' | 'Profile';
 
 interface NavItem {
   title: string;
@@ -41,6 +41,12 @@ const navItems: NavItem[] = [
     routeName: 'Programs',
     iconName: 'book',
     key: 'programs'
+  },
+  {
+    title: 'Marketplace',
+    routeName: 'Marketplace',
+    iconName: 'store',
+    key: 'marketplace'
   },
   {
     title: 'Feed',

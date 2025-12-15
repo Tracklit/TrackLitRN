@@ -2,6 +2,9 @@
   "name": "tracklit-api",
   "version": "1.0.0",
   "type": "module",
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.53.3"
+  },
   "dependencies": {
     "@azure/storage-blob": "^12.29.1",
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -92,6 +95,7 @@
   },
   "scripts": {
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:sql": "node server/scripts/run-sql-migrations.js",
     "start": "node --import tsx server/index.ts",
     "dev": "tsx watch server/index.ts",
     "build": "npm run build:client",

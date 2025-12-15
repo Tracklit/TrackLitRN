@@ -16,6 +16,7 @@ import { ProgramDetailScreen } from './src/screens/ProgramDetailScreen';
 import { ToolsScreen } from './src/screens/ToolsScreen';
 import { BottomNavigation } from './src/navigation/BottomNavigation';
 import { FeedScreen } from './src/screens/FeedScreen';
+import { MarketplaceScreen } from './src/screens/MarketplaceScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { FeedDetailScreen } from './src/screens/FeedDetailScreen';
 import { StopwatchScreen } from './src/screens/StopwatchScreen';
@@ -50,6 +51,7 @@ const MainTabs: React.FC = () => (
     <Tab.Screen name="Home" component={HomeTabScreen} />
     <Tab.Screen name="Practice" component={PracticeScreen} />
     <Tab.Screen name="Programs" component={ProgramsScreen} />
+    <Tab.Screen name="Marketplace" component={MarketplaceScreen} />
     <Tab.Screen name="Feed" component={FeedScreen} />
     <Tab.Screen name="Tools" component={ToolsScreen} />
     <Tab.Screen name="Profile" component={ProfileScreen} />

@@ -4,6 +4,7 @@ export type TabParamList = {
   Home: undefined;
   Practice: undefined;
   Programs: undefined;
+  Marketplace: undefined;
   Feed: undefined;
   Tools: undefined;
   Profile: undefined;

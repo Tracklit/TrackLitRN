@@ -6,16 +6,15 @@ echo "TrackLit Container Starting"
 echo "================================"
 echo "NODE_ENV: $NODE_ENV"
 echo "PORT: $PORT"
-echo "DATABASE_URL: ${DATABASE_URL:0:50}..." 
-echo "REDIS_URL: ${REDIS_URL:0:40}..."
+echo "DATABASE_URL is set: $(if [ -n \"$DATABASE_URL\" ]; then echo yes; else echo no; fi)"
+echo "REDIS_URL is set: $(if [ -n \"$REDIS_URL\" ]; then echo yes; else echo no; fi)"
 echo "================================"
 
-# Test database connectivity
-echo "Testing PostgreSQL connection..."
-if [ -n "$DATABASE_URL" ]; then
-    echo "DATABASE_URL is set"
-else
-    echo "WARNING: DATABASE_URL is not set!"
+# Optional: run SQL migrations in-container (disabled by default)
+# Set RUN_SQL_MIGRATIONS=1 to enable.
+if [ "$RUN_SQL_MIGRATIONS" = "1" ]; then
+  echo "Running SQL migrations..."
+  node server/scripts/run-sql-migrations.js
 fi
 
 # Start the application

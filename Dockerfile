@@ -71,6 +71,9 @@ COPY --from=builder /app/server ./server
 # Copy shared code
 COPY shared ./shared
 
+# Copy SQL migrations (for in-container DB migrations)
+COPY migrations ./migrations
+
 # Copy attached_assets if needed at runtime  
 
 # Copy startup script
@@ -84,7 +87,6 @@ ENV PORT=8080
 # Expose port
 EXPOSE 8080
 
-# Execute entrypoint directly
-# Use sh explicitly to avoid potential path issues
-CMD ["sh", "-c", "exec node dist/index.js"]
+# Start via entrypoint script (supports optional SQL migrations)
+CMD ["sh", "./docker-entrypoint.sh"]
 

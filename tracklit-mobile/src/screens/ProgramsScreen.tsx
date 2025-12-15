@@ -42,10 +42,36 @@ interface Program {
   isPurchased?: boolean;
 }
 
+interface PurchasedProgramItem {
+  id: number | string;
+  programId: number | string;
+  program: Program;
+  isAssigned?: boolean;
+  isCreated?: boolean;
+  assignerName?: string;
+  creatorName?: string;
+}
+
+interface WorkoutLibraryResponse {
+  workouts: Array<{
+    id: number | string;
+    title: string;
+    description?: string | null;
+    category?: string | null;
+    content?: any;
+    createdAt?: string;
+  }>;
+  isLimited?: boolean;
+  totalSaved?: number;
+  maxFreeAllowed?: number;
+}
+
 export const ProgramsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
-  const [activeTab, setActiveTab] = useState<'my-programs' | 'marketplace'>('my-programs');
+  const [activeTab, setActiveTab] = useState<'my-programs' | 'purchased' | 'workout-library'>(
+    'my-programs'
+  );
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id;
   const isGuest = userId === 'guest';
@@ -58,18 +84,27 @@ export const ProgramsScreen: React.FC = () => {
     enabled: isAuthenticated && !isGuest,
   });
 
-  // Fetch marketplace/public programs
-  const marketplaceQuery = useQuery({
-    queryKey: ['marketplace-programs'],
-    queryFn: () => apiRequest<Program[]>('/api/marketplace/programs/mine'),
+  // Fetch purchased/assigned programs (web parity: /api/purchased-programs)
+  const purchasedProgramsQuery = useQuery({
+    queryKey: ['purchased-programs'],
+    queryFn: () => apiRequest<PurchasedProgramItem[]>('/api/purchased-programs'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
+  // Fetch workout library (web parity: /api/workout-library)
+  const workoutLibraryQuery = useQuery({
+    queryKey: ['workout-library'],
+    queryFn: () => apiRequest<WorkoutLibraryResponse>('/api/workout-library'),
     enabled: isAuthenticated && !isGuest,
   });
 
   const handleRefresh = () => {
     if (activeTab === 'my-programs') {
       myProgramsQuery.refetch();
+    } else if (activeTab === 'purchased') {
+      purchasedProgramsQuery.refetch();
     } else {
-      marketplaceQuery.refetch();
+      workoutLibraryQuery.refetch();
     }
   };
 
@@ -95,7 +130,8 @@ export const ProgramsScreen: React.FC = () => {
     );
   };
 
-  const isRefreshing = myProgramsQuery.isFetching || marketplaceQuery.isFetching;
+  const isRefreshing =
+    myProgramsQuery.isFetching || purchasedProgramsQuery.isFetching || workoutLibraryQuery.isFetching;
 
   return (
     <LinearGradient
@@ -144,19 +180,36 @@ export const ProgramsScreen: React.FC = () => {
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'marketplace' && styles.activeTab]}
-            onPress={() => setActiveTab('marketplace')}
-            data-testid="tab-marketplace"
+            style={[styles.tab, activeTab === 'purchased' && styles.activeTab]}
+            onPress={() => setActiveTab('purchased')}
+            data-testid="tab-purchased-programs"
           >
             <Text 
               variant="body" 
               weight="medium"
               style={[
                 styles.tabText,
-                activeTab === 'marketplace' && styles.activeTabText
+                activeTab === 'purchased' && styles.activeTabText
               ]}
             >
-              Marketplace
+              Purchased
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'workout-library' && styles.activeTab]}
+            onPress={() => setActiveTab('workout-library')}
+            data-testid="tab-workout-library"
+          >
+            <Text
+              variant="body"
+              weight="medium"
+              style={[
+                styles.tabText,
+                activeTab === 'workout-library' && styles.activeTabText
+              ]}
+            >
+              Workout Library
             </Text>
           </TouchableOpacity>
         </View>
@@ -168,18 +221,24 @@ export const ProgramsScreen: React.FC = () => {
             isLoading={myProgramsQuery.isLoading}
             isError={myProgramsQuery.isError}
             isGuest={isGuest}
-            onBrowseMarketplace={() => setActiveTab('marketplace')}
+            onContinue={handleContinueProgram}
+            onViewDetails={handleViewDetails}
+          />
+        ) : activeTab === 'purchased' ? (
+          <PurchasedProgramsTab
+            purchases={purchasedProgramsQuery.data ?? []}
+            isLoading={purchasedProgramsQuery.isLoading}
+            isError={purchasedProgramsQuery.isError}
+            isGuest={isGuest}
             onContinue={handleContinueProgram}
             onViewDetails={handleViewDetails}
           />
         ) : (
-          <MarketplaceTab 
-            programs={marketplaceQuery.data ?? []}
-            isLoading={marketplaceQuery.isLoading}
-            isError={marketplaceQuery.isError}
+          <WorkoutLibraryTab
+            library={workoutLibraryQuery.data}
+            isLoading={workoutLibraryQuery.isLoading}
+            isError={workoutLibraryQuery.isError}
             isGuest={isGuest}
-            onPurchase={handlePurchase}
-            onViewDetails={handleViewDetails}
           />
         )}
       </ScrollView>
@@ -192,7 +251,6 @@ interface MyProgramsTabProps {
   isLoading: boolean;
   isError: boolean;
   isGuest: boolean;
-  onBrowseMarketplace?: () => void;
   onContinue: (program: Program) => void;
   onViewDetails: (program: Program) => void;
 }
@@ -202,7 +260,6 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   isLoading, 
   isError, 
   isGuest,
-  onBrowseMarketplace,
   onContinue,
   onViewDetails,
 }) => {
@@ -259,16 +316,8 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
           No Programs Yet
         </Text>
         <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Browse the marketplace to find training programs that match your goals.
+          You haven't created any training programs yet.
         </Text>
-        <Button
-          variant="outline"
-          style={styles.emptyButton}
-          onPress={onBrowseMarketplace}
-          data-testid="button-browse-marketplace"
-        >
-          Browse Marketplace
-        </Button>
       </View>
     );
   }
@@ -327,32 +376,23 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   );
 };
 
-interface MarketplaceTabProps {
-  programs: Program[];
+interface PurchasedProgramsTabProps {
+  purchases: PurchasedProgramItem[];
   isLoading: boolean;
   isError: boolean;
   isGuest: boolean;
-  onPurchase: (program: Program) => void;
+  onContinue: (program: Program) => void;
   onViewDetails: (program: Program) => void;
 }
 
-const MarketplaceTab: React.FC<MarketplaceTabProps> = ({ 
-  programs, 
+const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
+  purchases,
   isLoading, 
   isError,
   isGuest,
-  onPurchase,
+  onContinue,
   onViewDetails,
 }) => {
-  const getLevelColor = (level?: string) => {
-    switch (level) {
-      case 'Beginner': return 'success';
-      case 'Intermediate': return 'warning';
-      case 'Advanced': return 'destructive';
-      default: return 'default';
-    }
-  };
-
   if (isGuest) {
     return (
       <View style={styles.emptyState}>
@@ -361,7 +401,7 @@ const MarketplaceTab: React.FC<MarketplaceTabProps> = ({
           Sign In Required
         </Text>
         <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Sign in to browse and purchase training programs.
+          Sign in to view your purchased and assigned programs.
         </Text>
       </View>
     );
@@ -372,7 +412,7 @@ const MarketplaceTab: React.FC<MarketplaceTabProps> = ({
       <View style={styles.emptyState}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Loading marketplace...
+          Loading purchased programs...
         </Text>
       </View>
     );
@@ -383,21 +423,21 @@ const MarketplaceTab: React.FC<MarketplaceTabProps> = ({
       <View style={styles.emptyState}>
         <FontAwesome5 name="exclamation-circle" size={48} color={theme.colors.textMuted} solid />
         <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Unable to load marketplace. Pull to refresh.
+          Unable to load purchased programs. Pull to refresh.
         </Text>
       </View>
     );
   }
 
-  if (programs.length === 0) {
+  if (purchases.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="store" size={48} color={theme.colors.textMuted} solid />
+        <FontAwesome5 name="shopping-bag" size={48} color={theme.colors.textMuted} solid />
         <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
-          No Programs Available
+          No Purchased Programs
         </Text>
         <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Check back soon for new training programs!
+          Purchases and coach assignments will show up here.
         </Text>
       </View>
     );
@@ -405,36 +445,29 @@ const MarketplaceTab: React.FC<MarketplaceTabProps> = ({
 
   return (
     <View style={styles.programsContainer}>
-      {programs.map((program) => (
-        <Card key={program.id} style={styles.programCard}>
+      {purchases.map((purchase) => (
+        <Card key={purchase.id} style={styles.programCard}>
           <CardHeader style={styles.programHeader}>
             <View style={styles.programTitleRow}>
-              <CardTitle style={styles.programTitle}>{program.title}</CardTitle>
-              <Badge variant={getLevelColor(program.level || program.difficulty)} size="sm">
-                {program.level || program.difficulty || 'All Levels'}
-              </Badge>
+              <CardTitle style={styles.programTitle}>{purchase.program?.title}</CardTitle>
+              {purchase.isAssigned ? (
+                <Badge variant="secondary" size="sm">Assigned</Badge>
+              ) : purchase.isCreated ? (
+                <Badge variant="outline" size="sm">Created</Badge>
+              ) : (
+                <Badge variant="default" size="sm">Purchased</Badge>
+              )}
             </View>
             <Text variant="small" color="muted">
-              {program.coachName ? `by ${program.coachName}` : 'TrackLit Program'}
-              {program.durationWeeks ? ` • ${program.durationWeeks} weeks` : program.duration ? ` • ${program.duration}` : ''}
+              {purchase.isAssigned && purchase.assignerName ? `Coach: ${purchase.assignerName}` : 'TrackLit'}
             </Text>
           </CardHeader>
           
           <CardContent>
-            {program.events && program.events.length > 0 && (
-              <View style={styles.eventsContainer}>
-                {program.events.map((event, index) => (
-                  <Badge key={index} variant="outline" size="sm">
-                    {event}
-                  </Badge>
-                ))}
-              </View>
-            )}
-            
-            {program.price !== undefined && program.price > 0 && (
+            {purchase.program?.price !== undefined && (purchase.program?.price ?? 0) > 0 && (
               <View style={styles.priceRow}>
                 <Text variant="h3" weight="bold" color="primary">
-                  ${program.price}
+                  ${purchase.program?.price}
                 </Text>
                 <Text variant="small" color="muted">
                   one-time payment
@@ -447,20 +480,107 @@ const MarketplaceTab: React.FC<MarketplaceTabProps> = ({
                 variant="default" 
                 size="sm" 
                 style={styles.actionButton}
-                onPress={() => onPurchase(program)}
-                data-testid={`button-purchase-program-${program.id}`}
+                onPress={() => onContinue(purchase.program)}
+                data-testid={`button-continue-purchased-program-${purchase.programId}`}
               >
-                {program.price ? 'Purchase Program' : 'Enroll Free'}
+                Continue
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
-                onPress={() => onViewDetails(program)}
-                data-testid={`button-preview-program-${program.id}`}
+                onPress={() => onViewDetails(purchase.program)}
+                data-testid={`button-view-purchased-program-${purchase.programId}`}
               >
-                Preview
+                View Details
               </Button>
             </View>
+          </CardContent>
+        </Card>
+      ))}
+    </View>
+  );
+};
+
+interface WorkoutLibraryTabProps {
+  library?: WorkoutLibraryResponse;
+  isLoading: boolean;
+  isError: boolean;
+  isGuest: boolean;
+}
+
+const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoading, isError, isGuest }) => {
+  if (isGuest) {
+    return (
+      <View style={styles.emptyState}>
+        <FontAwesome5 name="user-lock" size={48} color={theme.colors.textMuted} solid />
+        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
+          Sign In Required
+        </Text>
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Sign in to view your workout library.
+        </Text>
+      </View>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <View style={styles.emptyState}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Loading workout library...
+        </Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.emptyState}>
+        <FontAwesome5 name="exclamation-circle" size={48} color={theme.colors.textMuted} solid />
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Unable to load workout library. Pull to refresh.
+        </Text>
+      </View>
+    );
+  }
+
+  const workouts = library?.workouts ?? [];
+  if (workouts.length === 0) {
+    return (
+      <View style={styles.emptyState}>
+        <FontAwesome5 name="dumbbell" size={48} color={theme.colors.textMuted} solid />
+        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
+          No workouts saved
+        </Text>
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Save workouts from Practice to see them here.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.programsContainer}>
+      {workouts.map((workout) => (
+        <Card key={workout.id} style={styles.programCard}>
+          <CardHeader style={styles.programHeader}>
+            <View style={styles.programTitleRow}>
+              <CardTitle style={styles.programTitle}>{workout.title}</CardTitle>
+              <Badge variant="outline" size="sm">
+                {workout.category || 'Workout'}
+              </Badge>
+            </View>
+            {!!workout.description && (
+              <Text variant="small" color="muted">
+                {workout.description}
+              </Text>
+            )}
+          </CardHeader>
+          <CardContent>
+            <Text variant="small" color="muted">
+              Saved workout (details coming next).
+            </Text>
           </CardContent>
         </Card>
       ))}
