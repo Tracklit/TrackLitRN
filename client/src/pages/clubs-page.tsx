@@ -38,7 +38,8 @@ export default function ClubsPage() {
   const [clubLoadError, setClubLoadError] = useState<string | null>(null);
   const [allClubsLoadError, setAllClubsLoadError] = useState<string | null>(null);
   const [clubAdmins, setClubAdmins] = useState<Record<number, string>>({});
-  
+  const [activeTab, setActiveTab] = useState("my-clubs");
+
   // Handle club creation
   const handleCreateClub = async () => {
     if (!clubName.trim()) {
@@ -320,7 +321,7 @@ export default function ClubsPage() {
         }
       />
 
-      <Tabs defaultValue="my-clubs" className="mt-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
         <TabsList className="mb-4">
           <TabsTrigger value="my-clubs">My Clubs</TabsTrigger>
           <TabsTrigger value="discover">Discover</TabsTrigger>
@@ -364,7 +365,7 @@ export default function ClubsPage() {
                   <p className="mt-2 text-muted-foreground">
                     Clubs connect you with other athletes and coaches for training and competitions.
                   </p>
-                  <Button className="mt-4" onClick={() => document.getElementById('discover-tab')?.click()}>
+                  <Button className="mt-4" onClick={() => setActiveTab('discover')}>
                     Discover Clubs
                   </Button>
                 </CardContent>
