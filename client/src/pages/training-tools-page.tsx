@@ -102,11 +102,6 @@ export default function WorkoutToolsPage() {
   
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 pb-10">
-      {/* Page Title */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-center">Training Tools</h1>
-      </div>
-      
       {/* Preload tool card images - temporarily commented out */}
       {/* <PreloadImages images={toolBackgrounds} quality={20} priority={true} /> */}
 
