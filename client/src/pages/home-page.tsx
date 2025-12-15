@@ -377,10 +377,10 @@ export default function HomePage() {
 
   return (
     <div 
-      className="min-h-screen text-foreground bg-background" 
+      className="min-h-screen text-foreground bg-background pt-16"
       style={{ 
-        marginTop: '15px',
-        position: 'relative'
+
+
       }}
     >
       {/* Preload critical images */}
