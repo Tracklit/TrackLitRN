@@ -1,0 +1,8 @@
+<step title="Incoming Request" date="2025-12-14T17:35:16.715" instance="bbfaab" url="/logstream" method="GET" type="request" pid="770,1,20" Host="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" User-Agent="AZURECLI/2.67.0 (MSI)" Accept-Encoding="identity" Authorization="Bea..." x-ms-client-request-id="399f7899-d913-11f0-a687-088e904feb3e" X-ARR-LOG-ID="399f7899-d913-11f0-a687-088e904feb3e" CLIENT-IP="190.113.103.183:30591" X-SITE-DEPLOYMENT-ID="app-tracklit-dev-kvnx2h" WAS-DEFAULT-HOSTNAME="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/logstream" X-Client-IP="190.113.103.183" X-Client-Port="30591" >
+  <step title="Cleanup Xml Logs" date="2025-12-14T17:35:16.725" >
+    <step title="Cleanup Infos" date="2025-12-14T17:35:16.754" totalFiles="279" totalCleanup="119" /><!-- duration: 20ms -->
+  </step><!-- duration: 58ms -->
+  <step title="LogStreamHandlerMiddleware.Invoke" date="2025-12-14T17:35:16.826" /><!-- duration: 3220ms -->
+  <step title="Error occurred" date="2025-12-14T17:36:20.046" type="error" text="LogStreamManager: ProcessRequest end" /><!-- duration: 3ms -->
+  <step title="Outgoing response" date="2025-12-14T17:36:20.056" type="response" statusCode="200" statusText="OK" /><!-- duration: 17ms -->
+</step><!-- duration: 63360ms -->

@@ -1,0 +1,9 @@
+<step title="Incoming Request" date="2025-12-14T04:41:58.452" instance="bbfaab" url="/api/deployments/latest" method="GET" type="request" pid="830,1,20" Accept="*/*" Host="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" User-Agent="AZURECLI/2.81.0 (HOMEBREW)" Accept-Encoding="gzip, deflate" Authorization="Bea..." x-ms-client-request-id="349ef722-d8a7-11f0-9b2a-baf561bef6c9" X-ARR-LOG-ID="349ef722-d8a7-11f0-9b2a-baf561bef6c9" CLIENT-IP="195.252.197.50:53815" X-SITE-DEPLOYMENT-ID="app-tracklit-dev-kvnx2h" WAS-DEFAULT-HOSTNAME="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest" X-Client-IP="195.252.197.50" X-Client-Port="53815" >
+  <step title="Cleanup Xml Logs" date="2025-12-14T04:41:58.466" /><!-- duration: 6ms -->
+  <step title="DeploymentService.GetResult" date="2025-12-14T04:41:58.476" >
+    <step title="DeploymentService.GetLatestDeployment" date="2025-12-14T04:41:58.485" >
+      <step title="DeploymentManager.GetResults" date="2025-12-14T04:41:58.487" /><!-- duration: 262ms -->
+    </step><!-- duration: 268ms -->
+  </step><!-- duration: 279ms -->
+  <step title="Outgoing response" date="2025-12-14T04:41:58.764" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 11ms -->
+</step><!-- duration: 325ms -->

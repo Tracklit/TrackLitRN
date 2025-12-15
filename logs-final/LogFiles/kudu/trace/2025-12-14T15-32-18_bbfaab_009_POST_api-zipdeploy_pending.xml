@@ -1,0 +1,23 @@
+<step title="Incoming Request" date="2025-12-14T15:32:18.972" instance="bbfaab" url="/api/zipdeploy?isAsync=true" method="POST" type="request" pid="768,1,5" Accept="*/*" Host="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" User-Agent="AZURECLI/2.81.0 (HOMEBREW)" Accept-Encoding="gzip, deflate" Authorization="Bea..." Cache-Control="no-cache" Content-Type="application/octet-stream" Content-Length="6443868" x-ms-client-request-id="10af6dc8-d902-11f0-8306-baf561bef6c9" x-ms-artifact-checksum="2ddd5288be372789e4abce34102ac229808c1cc114d8ed113935890a8e963717" X-ARR-LOG-ID="10af6dc8-d902-11f0-8306-baf561bef6c9" CLIENT-IP="195.252.197.50:61341" X-SITE-DEPLOYMENT-ID="app-tracklit-dev-kvnx2h" WAS-DEFAULT-HOSTNAME="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/zipdeploy?isAsync=true" X-Client-IP="195.252.197.50" X-Client-Port="61341" >
+  <step title="Cleanup Xml Logs" date="2025-12-14T15:32:19.003" >
+    <step title="Cleanup Infos" date="2025-12-14T15:32:19.043" totalFiles="244" totalCleanup="84" /><!-- duration: 38ms -->
+  </step><!-- duration: 99ms -->
+  <step title="ZipPushDeploy" date="2025-12-14T15:32:19.423" >
+    <step title="ZipDeploy. Extract zip. Remote build." date="2025-12-14T15:32:19.473" /><!-- duration: 13ms -->
+    <step title="None repository commit" date="2025-12-14T15:32:19.525" >
+      <step title="Commit id: b05b1418-e8cf-4efc-b1f6-06797b31ab9e" date="2025-12-14T15:32:19.535" Message="N/A" AuthorName="N/A" AuthorEmail="N/A" /><!-- duration: 11ms -->
+    </step><!-- duration: 30ms -->
+    <step title="Starting PushDeployAsync" date="2025-12-14T15:32:19.595" /><!-- duration: 9ms -->
+    <step title="Removing node_modules symlink" date="2025-12-14T15:32:19.786" >
+      <step title="Removing _del_node_modules symlink" date="2025-12-14T15:32:20.287" >
+        <step title="Writing artifact to /tmp/zipdeploy/125e5622-c940-4b81-9571-62212ef3cf9e.zip" date="2025-12-14T15:32:20.440" >
+          <step title="Writing multipart request body to /tmp/zipdeploy/125e5622-c940-4b81-9571-62212ef3cf9e.zip" date="2025-12-14T15:32:20.470" /><!-- duration: 21ms -->
+        </step><!-- duration: 1627ms -->
+        <step title="Removing previous build artifact&apos;s manifest file" date="2025-12-14T15:32:22.109" >
+          <step title="Start deployment in the background" date="2025-12-14T15:32:22.189" >
+            <step title="Acquiring Deployment Lock" date="2025-12-14T15:32:22.380" /><!-- duration: 58ms -->
+            <step title="Acquired Deployment Lock" date="2025-12-14T15:32:22.561" /><!-- duration: 9ms -->
+          </step><!-- duration: 674ms -->
+        </step><!-- duration: 813ms -->
+        <step title="Outgoing response" date="2025-12-14T15:32:23.032" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 58ms -->
+      </step><!-- duration: 2826ms -->

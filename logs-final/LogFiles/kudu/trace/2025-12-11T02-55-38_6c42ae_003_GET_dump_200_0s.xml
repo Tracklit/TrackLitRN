@@ -1,0 +1,4 @@
+<step title="Incoming Request" date="2025-12-11T02:55:38.427" instance="6c42ae" url="/dump" method="GET" type="request" pid="770,1,7" Host="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" User-Agent="AZURECLI/2.67.0 (MSI)" Accept-Encoding="identity" Authorization="Bea..." x-ms-client-request-id="dc2d82d6-d63c-11f0-b41b-088e904feb41" X-ARR-LOG-ID="dc2d82d6-d63c-11f0-b41b-088e904feb41" CLIENT-IP="190.113.103.183:30459" X-SITE-DEPLOYMENT-ID="app-tracklit-dev-kvnx2h" WAS-DEFAULT-HOSTNAME="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/dump" X-Client-IP="190.113.103.183" X-Client-Port="30459" >
+  <step title="Cleanup Xml Logs" date="2025-12-11T02:55:38.430" /><!-- duration: 7ms -->
+  <step title="Outgoing response" date="2025-12-11T02:55:38.882" type="response" statusCode="200" statusText="OK" /><!-- duration: 3ms -->
+</step><!-- duration: 459ms -->

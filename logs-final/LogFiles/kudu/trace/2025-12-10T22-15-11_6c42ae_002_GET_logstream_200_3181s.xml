@@ -1,0 +1,5 @@
+<step title="Incoming Request" date="2025-12-10T22:15:11.696" instance="6c42ae" url="/logstream" method="GET" type="request" pid="768,1,5" Host="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" User-Agent="AZURECLI/2.67.0 (MSI)" Accept-Encoding="identity" Authorization="Bea..." x-ms-client-request-id="956c1fbb-d615-11f0-9bf5-088e904feb41" X-ARR-LOG-ID="956c1fbb-d615-11f0-9bf5-088e904feb41" CLIENT-IP="190.113.103.183:30506" X-SITE-DEPLOYMENT-ID="app-tracklit-dev-kvnx2h" WAS-DEFAULT-HOSTNAME="app-tracklit-dev-kvnx2h.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/logstream" X-Client-IP="190.113.103.183" X-Client-Port="30506" >
+  <step title="LogStreamHandlerMiddleware.Invoke" date="2025-12-10T22:15:11.740" /><!-- duration: 267ms -->
+  <step title="Error occurred" date="2025-12-10T23:08:12.375" type="error" text="LogStreamManager: ProcessRequest end" /><!-- duration: 90ms -->
+  <step title="Outgoing response" date="2025-12-10T23:08:12.678" type="response" statusCode="200" statusText="OK" /><!-- duration: 3ms -->
+</step><!-- duration: 3181021ms -->

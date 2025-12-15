@@ -1,0 +1,5 @@
+<step title="Startup Request" date="2025-12-14T15:51:27.417" instance="bbfaab" url="/logstream" method="GET" type="request" pid="831,1,22" ScmType="None" SCM_DO_BUILD_DURING_DEPLOYMENT="true" >
+  <step title="Cleanup Xml Logs" date="2025-12-14T15:51:27.424" >
+    <step title="Cleanup Infos" date="2025-12-14T15:51:27.431" totalFiles="267" totalCleanup="107" /><!-- duration: 7ms -->
+  </step><!-- duration: 21ms -->
+</step><!-- duration: 30ms -->

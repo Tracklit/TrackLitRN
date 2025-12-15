@@ -1,0 +1,18 @@
+<step title="BackgroundTrace" date="2025-12-14T04:29:38.041" instance="bbfaab" url="/api/zipdeploy" method="POST" >
+  <step title="Creating temporary deployment - FetchDeploymentManager" date="2025-12-14T04:29:38.661" /><!-- duration: 2ms -->
+  <step title="Creating temporary deployment" date="2025-12-14T04:29:38.681" /><!-- duration: 100ms -->
+  <step title="Performing fetch based deployment" date="2025-12-14T04:29:38.942" >
+    <step title="Cleaning up temp folders from previous zip deployments and extracting pushed zip file /tmp/zipdeploy/842eb24f-e120-4e5b-a1bc-a87829b76e95.zip (6.14 MB) to /tmp/zipdeploy/extracted" date="2025-12-14T04:29:40.274" >
+      <step title="ChmodRecursive Process exited with total time taken in ms: 172" date="2025-12-14T04:29:41.729" /><!-- duration: 38ms -->
+    </step><!-- duration: 1514ms -->
+    <step title="Deployment timer started" date="2025-12-14T04:29:43.916" >
+      <step title="DeploymentManager.Deploy(id:5f30aef8-5b2b-471b-a458-7d3dc99c4e6d)" date="2025-12-14T04:29:43.945" >
+        <step title="Collecting changeset information" date="2025-12-14T04:29:43.996" /><!-- duration: 161ms -->
+        <step title="Updating submodules" date="2025-12-14T04:29:44.165" /><!-- duration: 1311ms -->
+        <step title="Determining deployment builder" date="2025-12-14T04:29:46.044" >
+          <step title="Builder is OryxBuilder" date="2025-12-14T04:29:46.058" /><!-- duration: 20ms -->
+        </step><!-- duration: 42ms -->
+        <step title="PreDeployment: context.CleanOutputPath False" date="2025-12-14T04:29:46.178" >
+          <step title="PreDeployment: context.OutputPath /home/site/wwwroot" date="2025-12-14T04:29:46.456" >
+            <step title="Building" date="2025-12-14T04:29:46.605" >
+              <step title="Executing external process" date="2025-12-14T04:29:46.885" type="process" path="bash" arguments="-c &quot;oryx build /tmp/zipdeploy/extracted -o /home/site/wwwroot --platform nodejs --platform-version 20 -p virtualenv_name= --log-file /tmp/build-debug.log  -i /tmp/8de3ac9693263bc -p compress_node_modules=tar-gz | tee /tmp/oryx-build.log ; exit $PIPESTATUS &quot;" 

@@ -1,0 +1,1 @@
+2025-12-14T17:10:30  Startup Request, url: /logstream, method: GET, type: request, pid: 770,1,7, ScmType: None, SCM_DO_BUILD_DURING_DEPLOYMENT: true

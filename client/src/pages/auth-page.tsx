@@ -20,7 +20,7 @@ import { Terminal, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/lib/countries';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-const authVideoUrl = '/assets/THE ULTIMATE TOOLKIT FOR TRACK & FIELD (1)_1761862317351.mp4';
+const authVideoUrl = '/assets/hero-video.mp4';
 
 // Extend the schemas with validation
 const loginFormSchema = z.object({
