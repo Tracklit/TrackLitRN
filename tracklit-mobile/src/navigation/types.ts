@@ -4,25 +4,48 @@ export type TabParamList = {
   Home: undefined;
   Practice: undefined;
   Programs: undefined;
-  Marketplace: undefined;
-  Feed: undefined;
   Tools: undefined;
   Profile: undefined;
-  Sprinthia: undefined;
 };
 
 export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<TabParamList>;
+  Sprinthia: undefined;
+  Feed: undefined;
+  Marketplace: undefined;
+  MarketplaceListingDetail: { id: number };
+  MarketplaceCart: undefined;
+  MarketplaceCreateListing: undefined;
+  Settings: undefined;
   FeedPost: { id?: number | string } | undefined;
   Stopwatch: undefined;
   StartGun: undefined;
   PhotoFinish: undefined;
   Journal: undefined;
   IntervalTimer: undefined;
+  VideoAnalysis: undefined;
+  ExerciseLibrary: undefined;
+  ExerciseLibraryAdd: undefined;
+  VelocityTracker: undefined;
   ProgramDetail: { id: number | string };
+  ProgramCreate: undefined;
   Meets: undefined;
+  CreateMeet: undefined;
+  Results: undefined;
+  Clubs: undefined;
+  ClubDetail: { id: number };
+  ClubManagement: { id: number };
+  CreateGroup: undefined;
   Chat: undefined;
   ChatConversation: { conversationId: number; type: 'direct' | 'group' };
+  Notifications: undefined;
+  Connections: undefined;
+  Coaches: undefined;
+  Athletes: undefined;
+  Rehab: undefined;
+  Spikes: undefined;
+  Subscriptions: undefined;
+  PhotoFinishAnalysis: undefined;
 };
 
 export type AuthStackParamList = {

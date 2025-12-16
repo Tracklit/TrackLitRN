@@ -22,6 +22,7 @@ import { Button } from '../components/ui/Button';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '../utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -47,7 +48,7 @@ export const MeetsScreen: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
   const [filter, setFilter] = useState<MeetFilter>('upcoming');
-  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
+  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
   // Fetch meets
   const meetsQuery = useQuery({
@@ -256,11 +257,41 @@ export const MeetsScreen: React.FC = () => {
                     )}
                   </View>
                 )}
+
+                <View style={styles.meetActions}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onPress={() => navigation.navigate('Results')}
+                    style={{ flex: 1 }}
+                  >
+                    Results
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onPress={() => navigation.navigate('CreateMeet')}
+                    style={{ flex: 1 }}
+                  >
+                    Add
+                  </Button>
+                </View>
               </CardContent>
             </Card>
           ))
         )}
       </ScrollView>
+
+      {!isGuest && (
+        <TouchableOpacity
+          style={[styles.fab, { bottom: theme.layout.bottomNavHeight + insets.bottom + theme.spacing.lg }]}
+          onPress={() => navigation.navigate('CreateMeet')}
+          accessibilityRole="button"
+          accessibilityLabel="Create meet"
+        >
+          <FontAwesome5 name="plus" size={18} color={theme.colors.primaryForeground} solid />
+        </TouchableOpacity>
+      )}
     </LinearGradient>
   );
 };
@@ -356,6 +387,22 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: theme.spacing.xs,
     marginTop: theme.spacing.md,
+  },
+  meetActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.md,
+  },
+  fab: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...theme.shadows.lg,
   },
 });
 

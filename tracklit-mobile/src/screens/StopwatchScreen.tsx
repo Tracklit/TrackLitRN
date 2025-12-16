@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +15,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import theme from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 
 export const StopwatchScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -78,7 +78,7 @@ export const StopwatchScreen: React.FC = () => {
       <View
         style={[
           styles.content,
-          { paddingBottom: theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl },
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true }) },
         ]}
       >
         {/* Header */}

@@ -7,6 +7,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -14,9 +15,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
 
 import { Text } from '../components/ui/Text';
-import { Card, CardContent } from '../components/ui/Card';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/queryClient';
@@ -58,6 +59,7 @@ const welcomeMessage: Message = {
 
 export const SprinthiaScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
   const scrollViewRef = useRef<ScrollView>(null);
@@ -66,6 +68,7 @@ export const SprinthiaScreen: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [viewMode, setViewMode] = useState<'chat' | 'history'>('chat');
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -165,6 +168,39 @@ export const SprinthiaScreen: React.FC = () => {
   const handleNewConversation = () => {
     setMessages([welcomeMessage]);
     setConversationId(null);
+    setViewMode('chat');
+  };
+
+  const loadConversationMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const items = await apiRequest<Array<{ id: number; role: string; content: string; createdAt: string }>>(
+        `/api/sprinthia/conversations/${id}/messages`,
+      );
+      return items;
+    },
+    onSuccess: (items) => {
+      const mapped: Message[] = items.map((m) => ({
+        id: String(m.id),
+        text: m.content,
+        isUser: m.role === 'user',
+        timestamp: new Date(m.createdAt),
+      }));
+      setMessages(mapped.length ? mapped : [welcomeMessage]);
+      setIsTyping(false);
+      setViewMode('chat');
+    },
+    onError: () => {
+      Alert.alert('Unable to load conversation', 'Please try again.');
+    },
+  });
+
+  const toggleViewMode = () => {
+    Keyboard.dismiss();
+    setViewMode((prev) => (prev === 'chat' ? 'history' : 'chat'));
+  };
+
+  const handleOpenDrawer = () => {
+    navigation.getParent?.()?.openDrawer?.();
   };
 
   return (
@@ -181,6 +217,14 @@ export const SprinthiaScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={handleOpenDrawer}
+              accessibilityRole="button"
+              accessibilityLabel="Open drawer"
+            >
+              <FontAwesome5 name="bars" size={18} color={theme.colors.primary} solid />
+            </TouchableOpacity>
             <View style={styles.aiAvatarContainer}>
               <LinearGradient
                 colors={[theme.colors.primary, theme.colors.deepGold]}
@@ -197,15 +241,22 @@ export const SprinthiaScreen: React.FC = () => {
                 ● Online
               </Text>
             </View>
-            {/* New Conversation Button */}
-            {messages.length > 1 && (
-              <TouchableOpacity 
-                style={styles.newChatButton}
-                onPress={handleNewConversation}
-              >
-                <FontAwesome5 name="plus" size={16} color={theme.colors.primary} solid />
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.headerIconButton} onPress={toggleViewMode}>
+                <FontAwesome5
+                  name={viewMode === 'chat' ? 'keyboard' : 'comments'}
+                  size={18}
+                  color={theme.colors.primary}
+                  solid
+                />
               </TouchableOpacity>
-            )}
+              {/* New Conversation Button */}
+              {messages.length > 1 && viewMode === 'chat' && (
+                <TouchableOpacity style={styles.headerIconButton} onPress={handleNewConversation}>
+                  <FontAwesome5 name="plus" size={18} color={theme.colors.primary} solid />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
 
@@ -217,38 +268,64 @@ export const SprinthiaScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
-          
-          {/* Typing Indicator */}
-          {isTyping && (
-            <View style={styles.aiMessageContainer}>
-              <View style={styles.aiAvatarSmall}>
-                <FontAwesome5 name="robot" size={16} color={theme.colors.primary} solid />
-              </View>
-              <View style={styles.typingBubble}>
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-                <Text variant="small" color="muted" style={styles.typingText}>
-                  Sprinthia is thinking...
-                </Text>
-              </View>
-            </View>
-          )}
-          
-          {/* Quick Prompts - show only on welcome screen */}
-          {messages.length === 1 && !isTyping && (
-            <View style={styles.quickPromptsContainer}>
-              <Text variant="small" color="muted" weight="medium" style={styles.quickPromptsTitle}>
-                Try asking about:
+          {viewMode === 'chat' ? (
+            <>
+              {messages.map((message) => (
+                <MessageBubble key={message.id} message={message} />
+              ))}
+              
+              {/* Typing Indicator */}
+              {isTyping && (
+                <View style={styles.aiMessageContainer}>
+                  <View style={styles.aiAvatarSmall}>
+                    <FontAwesome5 name="robot" size={16} color={theme.colors.primary} solid />
+                  </View>
+                  <View style={styles.typingBubble}>
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                    <Text variant="small" color="muted" style={styles.typingText}>
+                      Sprinthia is thinking...
+                    </Text>
+                  </View>
+                </View>
+              )}
+              
+              {/* Quick Prompts - show only on welcome screen */}
+              {messages.length === 1 && !isTyping && (
+                <View style={styles.quickPromptsContainer}>
+                  <Text variant="small" color="muted" weight="medium" style={styles.quickPromptsTitle}>
+                    Try asking about:
+                  </Text>
+                  <View style={styles.quickPrompts}>
+                    {quickPrompts.map((prompt, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.quickPrompt}
+                        onPress={() => handleQuickPrompt(prompt)}
+                        data-testid={`quick-prompt-${index}`}
+                      >
+                        <Text variant="small" color="primary" weight="medium">
+                          {prompt}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.historyContainer}>
+              <Text variant="h4" weight="semiBold" color="foreground">
+                Quick prompts
               </Text>
               <View style={styles.quickPrompts}>
                 {quickPrompts.map((prompt, index) => (
                   <TouchableOpacity
                     key={index}
                     style={styles.quickPrompt}
-                    onPress={() => handleQuickPrompt(prompt)}
-                    data-testid={`quick-prompt-${index}`}
+                    onPress={() => {
+                      setInputText(prompt);
+                      setViewMode('chat');
+                    }}
                   >
                     <Text variant="small" color="primary" weight="medium">
                       {prompt}
@@ -256,14 +333,66 @@ export const SprinthiaScreen: React.FC = () => {
                   </TouchableOpacity>
                 ))}
               </View>
+
+              <Text variant="h4" weight="semiBold" color="foreground" style={{ marginTop: theme.spacing.lg }}>
+                Conversations
+              </Text>
+              {!isAuthenticated || isGuest ? (
+                <Text variant="body" color="muted">
+                  Sign in to view conversation history.
+                </Text>
+              ) : conversationsQuery.isLoading ? (
+                <View style={styles.historyLoadingRow}>
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                  <Text variant="body" color="muted">
+                    Loading conversations...
+                  </Text>
+                </View>
+              ) : conversationsQuery.isError ? (
+                <Text variant="body" color="muted">
+                  Unable to load conversations.
+                </Text>
+              ) : (conversationsQuery.data?.length || 0) === 0 ? (
+                <Text variant="body" color="muted">
+                  No saved conversations yet.
+                </Text>
+              ) : (
+                <View style={styles.historyList}>
+                  {(conversationsQuery.data || []).map((c) => (
+                    <TouchableOpacity
+                      key={c.id}
+                      style={styles.historyItem}
+                      onPress={() => {
+                        if (loadConversationMutation.isPending) return;
+                        setConversationId(c.id);
+                        loadConversationMutation.mutate(c.id);
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
+                          {c.title || 'Conversation'}
+                        </Text>
+                        <Text variant="small" color="muted">
+                          {new Date(c.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                      {loadConversationMutation.isPending && conversationId === c.id ? (
+                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                      ) : (
+                        <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} solid />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           )}
         </ScrollView>
 
-        {/* Input Area */}
-        <View style={[styles.inputContainer, { paddingBottom: insets.bottom || theme.spacing.md }]}>
-          <Card style={styles.inputCard}>
-            <CardContent style={styles.inputContent}>
+        {/* Input Area (only in chat mode) */}
+        {viewMode === 'chat' && (
+          <View style={[styles.inputContainer, { paddingBottom: insets.bottom || theme.spacing.md }]}>
+            <View style={styles.inputBar}>
               <TextInput
                 style={styles.textInput}
                 value={inputText}
@@ -291,15 +420,15 @@ export const SprinthiaScreen: React.FC = () => {
                 ) : (
                   <FontAwesome5 
                     name="paper-plane" 
-                    size={16} 
+                    size={18} 
                     color={inputText.trim() ? 'white' : theme.colors.textMuted}
                     solid
                   />
                 )}
               </TouchableOpacity>
-            </CardContent>
-          </Card>
-        </View>
+            </View>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </LinearGradient>
   );
@@ -352,8 +481,10 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: theme.spacing.sm,
   },
   aiAvatarContainer: {
+    position: 'relative',
     marginRight: theme.spacing.md,
   },
   aiAvatar: {
@@ -366,6 +497,21 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  headerIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   newChatButton: {
     width: 36,
@@ -456,25 +602,55 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     ...theme.shadows.sm,
   },
+  historyContainer: {
+    gap: theme.spacing.md,
+  },
+  historyLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+  },
+  historyList: {
+    gap: theme.spacing.sm,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
   inputContainer: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
   },
-  inputCard: {
-    marginBottom: 0,
-  },
-  inputContent: {
+  inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     gap: theme.spacing.sm,
+    // Avoid iOS shadow perf warning on large dynamic views
+    ...theme.shadows.none,
   },
   textInput: {
     flex: 1,
     fontSize: theme.typography.sizes.base,
+    lineHeight: 20,
     color: theme.colors.foreground,
     maxHeight: 100,
-    paddingVertical: theme.spacing.sm,
+    minHeight: 44,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: 0,
+    textAlignVertical: 'top',
   },
   sendButton: {
     width: 40,

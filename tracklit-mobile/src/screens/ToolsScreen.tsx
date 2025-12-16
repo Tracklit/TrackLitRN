@@ -16,8 +16,20 @@ import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
 import theme from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 
-type ToolScreen = Extract<keyof RootStackParamList, 'Stopwatch' | 'StartGun' | 'PhotoFinish' | 'Journal' | 'IntervalTimer'>;
+type ToolScreen = Extract<
+  keyof RootStackParamList,
+  | 'Stopwatch'
+  | 'StartGun'
+  | 'PhotoFinish'
+  | 'Journal'
+  | 'IntervalTimer'
+  | 'VideoAnalysis'
+  | 'ExerciseLibrary'
+  | 'VelocityTracker'
+>;
 
 interface Tool {
   id: string;
@@ -32,7 +44,7 @@ interface Tool {
 export const ToolsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
+  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
   const tools: Tool[] = [
     {
@@ -97,7 +109,7 @@ export const ToolsScreen: React.FC = () => {
       description: 'AI-powered biomechanical analysis',
       icon: 'video',
       gradient: ['#3498DB', '#5DADE2'],
-      comingSoon: true,
+      screen: 'VideoAnalysis',
     },
     {
       id: '9',
@@ -106,6 +118,22 @@ export const ToolsScreen: React.FC = () => {
       icon: 'users',
       gradient: ['#F39C12', '#F7DC6F'],
       comingSoon: true,
+    },
+    {
+      id: '10',
+      title: 'Exercise Library',
+      description: 'Save and organize training videos and clips',
+      icon: 'book-open',
+      gradient: ['#2ECC71', '#58D68D'],
+      screen: 'ExerciseLibrary',
+    },
+    {
+      id: '11',
+      title: 'Velocity Tracker',
+      description: 'Track speed from time and distance',
+      icon: 'tachometer-alt',
+      gradient: ['#8E44AD', '#A569BD'],
+      screen: 'VelocityTracker',
     },
   ];
 
@@ -176,15 +204,11 @@ export const ToolsScreen: React.FC = () => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text variant="h2" weight="bold" color="foreground">
-            Training Tools
-          </Text>
-          <Text variant="body" color="muted">
-            Essential tools for athletes and coaches
-          </Text>
-        </View>
+        <ScreenHeader
+          title="Training Tools"
+          subtitle="Essential tools for athletes and coaches"
+          containerStyle={styles.header}
+        />
 
         {/* Tools Grid */}
         <View style={styles.toolsGrid}>
@@ -262,6 +286,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.xl * 2,
   },

@@ -18,10 +18,10 @@ import { formatDistanceToNow } from 'date-fns';
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
 import { Avatar } from '../components/ui/Avatar';
-import { Badge } from '../components/ui/Badge';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '../utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -53,7 +53,7 @@ export const ChatScreen: React.FC = () => {
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
-  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
+  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
   // Fetch chat groups
   const groupsQuery = useQuery({
@@ -279,6 +279,17 @@ export const ChatScreen: React.FC = () => {
           </>
         )}
       </ScrollView>
+
+      {!isGuest && (
+        <TouchableOpacity
+          style={[styles.fab, { bottom: theme.layout.bottomNavHeight + insets.bottom + theme.spacing.lg }]}
+          onPress={() => navigation.navigate('CreateGroup')}
+          accessibilityRole="button"
+          accessibilityLabel="Create group"
+        >
+          <FontAwesome5 name="plus" size={18} color={theme.colors.primaryForeground} solid />
+        </TouchableOpacity>
+      )}
     </LinearGradient>
   );
 };
@@ -362,6 +373,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     borderWidth: 2,
     borderColor: theme.colors.background,
+  },
+  fab: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...theme.shadows.lg,
   },
   chatInfo: {
     flex: 1,

@@ -9,14 +9,14 @@ import {
   Image,
   RefreshControl,
   ActivityIndicator,
-  Linking,
-  Modal,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useMutation } from '@tanstack/react-query';
 import { launchImageLibrary, Asset } from 'react-native-image-picker';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
@@ -25,13 +25,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useAuth } from '@/contexts/AuthContext';
 import { getToken } from '@/lib/tokenStorage';
 import { env } from '@/config/env';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
+import type { RootStackParamList } from '@/navigation/types';
 
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, logout, refreshUser } = useAuth();
   const isGuest = user?.id === 'guest';
-  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
+  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
@@ -39,49 +43,52 @@ export const ProfileScreen: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<Asset | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [activeSettingsTab, setActiveSettingsTab] = useState<'notifications' | 'privacy' | 'help' | 'about' | null>(null);
 
   // Update profile with image mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { name: string; bio?: string; imageAsset?: Asset }) => {
       const token = await getToken();
+      setIsUploadingImage(true);
       
-      // Use FormData for multipart upload
-      const formData = new FormData();
-      formData.append('name', data.name);
-      if (data.bio) {
-        formData.append('bio', data.bio);
-      }
-      
-      // Add image if selected
-      if (data.imageAsset?.uri) {
-        const imageUri = data.imageAsset.uri;
-        const fileName = data.imageAsset.fileName || 'profile.jpg';
-        const type = data.imageAsset.type || 'image/jpeg';
+      try {
+        // Use FormData for multipart upload
+        const formData = new FormData();
+        formData.append('name', data.name);
+        if (data.bio) {
+          formData.append('bio', data.bio);
+        }
         
-        formData.append('profileImage', {
-          uri: imageUri,
-          name: fileName,
-          type: type,
-        } as any);
+        // Add image if selected
+        if (data.imageAsset?.uri) {
+          const imageUri = data.imageAsset.uri;
+          const fileName = data.imageAsset.fileName || 'profile.jpg';
+          const type = data.imageAsset.type || 'image/jpeg';
+          
+          formData.append('profileImage', {
+            uri: imageUri,
+            name: fileName,
+            type: type,
+          } as any);
+        }
+        
+        const response = await fetch(`${env.API_BASE_URL}/api/user/public-profile`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // Don't set Content-Type for FormData - RN will set it with boundary
+          },
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error || 'Failed to update profile');
+        }
+        
+        return response.json();
+      } finally {
+        setIsUploadingImage(false);
       }
-      
-      const response = await fetch(`${env.API_BASE_URL}/api/user/public-profile`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          // Don't set Content-Type for FormData - browser/RN will set it with boundary
-        },
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Failed to update profile');
-      }
-      
-      return response.json();
     },
     onSuccess: () => {
       setIsEditing(false);
@@ -161,19 +168,6 @@ export const ProfileScreen: React.FC = () => {
     setIsEditing(true);
   }, [isGuest, user]);
 
-  const handleSettingsPress = (tab: 'notifications' | 'privacy' | 'help' | 'about') => {
-    setActiveSettingsTab(tab);
-    setShowSettingsModal(true);
-  };
-
-  const handleOpenWebsite = () => {
-    Linking.openURL('https://tracklitapp.com');
-  };
-
-  const handleContactSupport = () => {
-    Linking.openURL('mailto:support@tracklitapp.com');
-  };
-
   const getProfileImageUrl = () => {
     if (selectedImage?.uri) {
       return selectedImage.uri;
@@ -207,12 +201,7 @@ export const ProfileScreen: React.FC = () => {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text variant="h2" weight="bold" color="foreground">
-            Profile
-          </Text>
-        </View>
+        <ScreenHeader title="Profile" containerStyle={styles.header} />
 
         {/* Profile Card */}
         <Card style={styles.profileCard}>
@@ -334,7 +323,7 @@ export const ProfileScreen: React.FC = () => {
           <CardContent style={styles.settingsContent}>
             <TouchableOpacity 
               style={styles.settingRow}
-              onPress={() => handleSettingsPress('notifications')}
+              onPress={() => navigation.navigate('Settings')}
             >
               <FontAwesome5 name="bell" size={18} color={theme.colors.textMuted} solid />
               <Text variant="body" color="foreground" style={styles.settingText}>
@@ -345,7 +334,7 @@ export const ProfileScreen: React.FC = () => {
 
             <TouchableOpacity 
               style={styles.settingRow}
-              onPress={() => handleSettingsPress('privacy')}
+              onPress={() => navigation.navigate('Settings')}
             >
               <FontAwesome5 name="lock" size={18} color={theme.colors.textMuted} solid />
               <Text variant="body" color="foreground" style={styles.settingText}>
@@ -356,7 +345,7 @@ export const ProfileScreen: React.FC = () => {
 
             <TouchableOpacity 
               style={styles.settingRow}
-              onPress={() => handleSettingsPress('help')}
+              onPress={() => navigation.navigate('Settings')}
             >
               <FontAwesome5 name="question-circle" size={18} color={theme.colors.textMuted} solid />
               <Text variant="body" color="foreground" style={styles.settingText}>
@@ -367,7 +356,7 @@ export const ProfileScreen: React.FC = () => {
 
             <TouchableOpacity 
               style={styles.settingRow}
-              onPress={() => handleSettingsPress('about')}
+              onPress={() => navigation.navigate('Settings')}
             >
               <FontAwesome5 name="info-circle" size={18} color={theme.colors.textMuted} solid />
               <Text variant="body" color="foreground" style={styles.settingText}>
@@ -397,140 +386,6 @@ export const ProfileScreen: React.FC = () => {
         </Text>
       </ScrollView>
 
-      {/* Settings Modal */}
-      <Modal
-        visible={showSettingsModal}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowSettingsModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text variant="h3" weight="bold" color="foreground">
-                {activeSettingsTab === 'notifications' && 'Notifications'}
-                {activeSettingsTab === 'privacy' && 'Privacy'}
-                {activeSettingsTab === 'help' && 'Help & Support'}
-                {activeSettingsTab === 'about' && 'About TrackLit'}
-              </Text>
-              <TouchableOpacity onPress={() => setShowSettingsModal(false)}>
-                <FontAwesome5 name="times" size={20} color={theme.colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody}>
-              {activeSettingsTab === 'notifications' && (
-                <View style={styles.settingsSection}>
-                  <Text variant="body" color="muted" style={styles.settingsText}>
-                    Push notification settings will be available in a future update.
-                  </Text>
-                  <Text variant="body" color="muted" style={styles.settingsText}>
-                    For now, you can manage email notifications from the web app.
-                  </Text>
-                </View>
-              )}
-
-              {activeSettingsTab === 'privacy' && (
-                <View style={styles.settingsSection}>
-                  <Text variant="body" color="foreground" weight="semiBold" style={styles.settingsSectionTitle}>
-                    Profile Visibility
-                  </Text>
-                  <Text variant="body" color="muted" style={styles.settingsText}>
-                    Your profile is visible to other TrackLit users. You can manage detailed privacy settings from the web app.
-                  </Text>
-                  
-                  <Text variant="body" color="foreground" weight="semiBold" style={styles.settingsSectionTitle}>
-                    Data Usage
-                  </Text>
-                  <Text variant="body" color="muted" style={styles.settingsText}>
-                    We only collect data necessary to provide you with the TrackLit experience. Your workout data is private by default.
-                  </Text>
-                </View>
-              )}
-
-              {activeSettingsTab === 'help' && (
-                <View style={styles.settingsSection}>
-                  <Text variant="body" color="foreground" weight="semiBold" style={styles.settingsSectionTitle}>
-                    Contact Support
-                  </Text>
-                  <Text variant="body" color="muted" style={styles.settingsText}>
-                    Have a question or issue? We're here to help!
-                  </Text>
-                  <Button
-                    variant="outline"
-                    onPress={handleContactSupport}
-                    style={styles.settingsButton}
-                  >
-                    Email Support
-                  </Button>
-
-                  <Text variant="body" color="foreground" weight="semiBold" style={styles.settingsSectionTitle}>
-                    FAQs
-                  </Text>
-                  <Text variant="body" color="muted" style={styles.settingsText}>
-                    Visit our website for frequently asked questions and guides.
-                  </Text>
-                  <Button
-                    variant="outline"
-                    onPress={handleOpenWebsite}
-                    style={styles.settingsButton}
-                  >
-                    Visit Website
-                  </Button>
-                </View>
-              )}
-
-              {activeSettingsTab === 'about' && (
-                <View style={styles.settingsSection}>
-                  <Text variant="h4" color="primary" weight="bold" style={styles.aboutTitle}>
-                    TrackLit
-                  </Text>
-                  <Text variant="body" color="muted" style={styles.settingsText}>
-                    The ultimate training companion for track and field athletes.
-                  </Text>
-
-                  <Text variant="body" color="foreground" weight="semiBold" style={styles.settingsSectionTitle}>
-                    Version
-                  </Text>
-                  <Text variant="body" color="muted" style={styles.settingsText}>
-                    1.0.0 (Build 1)
-                  </Text>
-
-                  <Text variant="body" color="foreground" weight="semiBold" style={styles.settingsSectionTitle}>
-                    Features
-                  </Text>
-                  <Text variant="body" color="muted" style={styles.settingsText}>
-                    • AI-powered coaching with Sprinthia{'\n'}
-                    • Workout tracking & journaling{'\n'}
-                    • Training programs{'\n'}
-                    • Competition calendar{'\n'}
-                    • Community feed{'\n'}
-                    • Training tools
-                  </Text>
-
-                  <Button
-                    variant="outline"
-                    onPress={handleOpenWebsite}
-                    style={styles.settingsButton}
-                  >
-                    Visit tracklitapp.com
-                  </Button>
-                </View>
-              )}
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <Button
-                variant="default"
-                onPress={() => setShowSettingsModal(false)}
-                style={styles.modalCloseButton}
-              >
-                Close
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </LinearGradient>
   );
 };
@@ -540,6 +395,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    flexGrow: 1,
     paddingHorizontal: theme.spacing.lg,
   },
   header: {
@@ -658,52 +514,5 @@ const styles = StyleSheet.create({
   version: {
     textAlign: 'center',
     marginBottom: theme.spacing.xl,
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: theme.colors.background,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  modalBody: {
-    padding: theme.spacing.lg,
-  },
-  modalFooter: {
-    padding: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  modalCloseButton: {
-    width: '100%',
-  },
-  settingsSection: {
-    gap: theme.spacing.md,
-  },
-  settingsSectionTitle: {
-    marginTop: theme.spacing.lg,
-  },
-  settingsText: {
-    lineHeight: 22,
-  },
-  settingsButton: {
-    marginTop: theme.spacing.sm,
-  },
-  aboutTitle: {
-    textAlign: 'center',
-    marginBottom: theme.spacing.md,
   },
 });

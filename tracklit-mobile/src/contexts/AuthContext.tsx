@@ -6,6 +6,7 @@ import React, {
   useCallback,
   ReactNode,
 } from 'react';
+import { Linking } from 'react-native';
 
 import { apiRequest } from '@/lib/api';
 import { 
@@ -25,6 +26,13 @@ interface User {
   username?: string | null;
   email?: string | null;
   profileImageUrl?: string | null;
+  country?: string | null;
+  dateOfBirth?: string | null; // server returns ISO string
+  defaultClubId?: number | null;
+  isPrivate?: boolean | null;
+  spikes?: number | null;
+  isPremium?: boolean | null;
+  subscriptionTier?: string | null;
   token?: string; // Token may be included in response
 }
 
@@ -51,6 +59,7 @@ interface AuthContextType {
   isLoading: boolean;
   hasValidToken: boolean;
   login: (username: string, password: string) => Promise<boolean>;
+  loginWithToken: (token: string) => Promise<boolean>;
   register: (data: RegisterData) => Promise<boolean>;
   logout: () => Promise<void>;
   continueAsGuest: () => void;
@@ -146,6 +155,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchUser();
   }, [fetchUser]);
 
+  const loginWithToken = useCallback(async (token: string) => {
+    try {
+      if (!token) return false;
+      await setToken(token);
+      setHasValidToken(true);
+      // Validate token & populate user
+      await fetchUser();
+      return true;
+    } catch (error) {
+      console.error('[AUTH] loginWithToken failed:', error);
+      return false;
+    }
+  }, [fetchUser]);
+
+  // Deep link handler for mobile OAuth (e.g. tracklitmobile://auth?token=...)
+  useEffect(() => {
+    const handleUrl = async (url: string | null) => {
+      if (!url) return;
+      try {
+        const parsed = new URL(url);
+        const token = parsed.searchParams.get('token');
+        if (token) {
+          await loginWithToken(token);
+        }
+      } catch {
+        // ignore invalid URLs
+      }
+    };
+
+    Linking.getInitialURL().then(handleUrl);
+    const sub = Linking.addEventListener('url', (event) => handleUrl(event.url));
+    return () => sub.remove();
+  }, [loginWithToken]);
+
   const login = useCallback(async (username: string, password: string) => {
     if (DEBUG_AUTH) {
       console.log('[AUTH] Attempting login for:', username);
@@ -183,7 +226,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // Store user data (without token in user object)
-      const { token, ...userData } = response;
+      const userData = { ...response } as any;
+      delete userData.token;
       setUser(userData);
       await setStoredUser(userData);
       
@@ -223,7 +267,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // Store user data (without token in user object)
-      const { token, ...userData } = response.user;
+      const userData = { ...(response.user as any) };
+      delete userData.token;
       setUser(userData);
       await setStoredUser(userData);
       
@@ -281,6 +326,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isLoading,
         hasValidToken,
         login,
+        loginWithToken,
         register,
         logout,
         continueAsGuest,

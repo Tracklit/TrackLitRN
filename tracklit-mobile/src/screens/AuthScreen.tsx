@@ -6,15 +6,20 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Alert,
+  Linking,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '../components/ui/Text';
 import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 import theme from '../utils/theme';
 import { LoginForm } from './auth/LoginForm';
 import { RegisterForm } from './auth/RegisterForm';
+import { env } from '@/config/env';
 
 export const AuthScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -97,6 +102,32 @@ export const AuthScreen: React.FC = () => {
                 <RegisterForm onSwitchToLogin={() => setActiveTab('login')} />
               )}
             </View>
+
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text variant="small" color="muted" style={styles.dividerText}>
+                or
+              </Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <Button
+              variant="outline"
+              size="lg"
+              onPress={async () => {
+                try {
+                  await Linking.openURL(`${env.API_BASE_URL}/api/auth/google/mobile`);
+                } catch (e) {
+                  Alert.alert('Unable to open browser', 'Please try again.');
+                }
+              }}
+              style={styles.googleButton}
+            >
+              <FontAwesome5 name="google" size={16} color={theme.colors.primary} />
+              <Text variant="body" weight="semiBold" color="foreground" style={styles.googleButtonText}>
+                Continue with Google
+              </Text>
+            </Button>
           </Card>
 
           {/* Features Section */}
@@ -196,6 +227,27 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.border,
+  },
+  dividerText: {
+    textAlign: 'center',
+  },
+  googleButton: {
+    width: '100%',
+  },
+  googleButtonText: {
+    marginLeft: theme.spacing.sm,
   },
   featuresSection: {
     marginTop: theme.spacing.xl,

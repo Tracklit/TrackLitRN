@@ -185,6 +185,18 @@ export const PhotoFinishScreen: React.FC = () => {
           </Button>
         )}
 
+        <Button
+          variant="outline"
+          size="lg"
+          onPress={() => navigation.navigate('PhotoFinishAnalysis')}
+          style={styles.analyzeButtonAlt}
+        >
+          <FontAwesome5 name="sliders-h" size={18} color={theme.colors.foreground} solid />
+          <Text variant="body" weight="bold" color="foreground" style={styles.buttonText}>
+            Open analysis tools
+          </Text>
+        </Button>
+
         {/* Info Card */}
         <Card style={styles.infoCard}>
           <CardContent>
@@ -294,6 +306,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: theme.spacing.sm,
     backgroundColor: theme.colors.success,
+  },
+  analyzeButtonAlt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
   },
   infoCard: {
     marginTop: theme.spacing.md,

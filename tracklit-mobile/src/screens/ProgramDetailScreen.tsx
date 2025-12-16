@@ -15,12 +15,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { apiRequest } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '../utils/theme';
 
 type ProgramDetailRouteProp = RouteProp<RootStackParamList, 'ProgramDetail'>;
@@ -59,7 +59,6 @@ export const ProgramDetailScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const route = useRoute<ProgramDetailRouteProp>();
-  const { user } = useAuth();
   const programId = route.params?.id;
 
   // Fetch program details
@@ -325,7 +324,7 @@ export const ProgramDetailScreen: React.FC = () => {
         )}
 
         {/* Spacer for bottom nav */}
-        <View style={{ height: theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl }} />
+        <View style={{ height: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: 0 }) }} />
       </ScrollView>
     </LinearGradient>
   );

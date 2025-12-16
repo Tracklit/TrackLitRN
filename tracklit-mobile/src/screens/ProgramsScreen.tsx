@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
@@ -22,6 +21,8 @@ import { Badge } from '../components/ui/Badge';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '../utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -75,7 +76,7 @@ export const ProgramsScreen: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const userId = user?.id;
   const isGuest = userId === 'guest';
-  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
+  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
   // Fetch user's programs
   const myProgramsQuery = useQuery({
@@ -116,20 +117,6 @@ export const ProgramsScreen: React.FC = () => {
     navigation.navigate('ProgramDetail', { id: program.id });
   };
 
-  const handlePurchase = (program: Program) => {
-    Alert.alert(
-      'Purchase Program',
-      `Purchasing "${program.title}" for $${program.price || 0}. This feature will be available soon.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'View Details', 
-          onPress: () => navigation.navigate('ProgramDetail', { id: program.id })
-        }
-      ]
-    );
-  };
-
   const isRefreshing =
     myProgramsQuery.isFetching || purchasedProgramsQuery.isFetching || workoutLibraryQuery.isFetching;
 
@@ -150,15 +137,11 @@ export const ProgramsScreen: React.FC = () => {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text variant="h2" weight="bold" color="foreground">
-            Programs
-          </Text>
-          <Text variant="body" color="muted">
-            Training programs & marketplace
-          </Text>
-        </View>
+        <ScreenHeader
+          title="Programs"
+          subtitle="Training programs & marketplace"
+          containerStyle={styles.header}
+        />
 
         {/* Tabs */}
         <View style={styles.tabs}>
@@ -242,6 +225,17 @@ export const ProgramsScreen: React.FC = () => {
           />
         )}
       </ScrollView>
+
+      {isAuthenticated && !isGuest && activeTab === 'my-programs' && (
+        <TouchableOpacity
+          style={[styles.fab, { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg }]}
+          onPress={() => navigation.navigate('ProgramCreate')}
+          accessibilityRole="button"
+          accessibilityLabel="Create program"
+        >
+          <FontAwesome5 name="plus" size={18} color={theme.colors.primaryForeground} solid />
+        </TouchableOpacity>
+      )}
     </LinearGradient>
   );
 };
@@ -593,6 +587,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: theme.spacing.lg,
   },
   header: {
@@ -676,5 +671,16 @@ const styles = StyleSheet.create({
   },
   emptyButton: {
     paddingHorizontal: theme.spacing.xl,
+  },
+  fab: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...theme.shadows.lg,
   },
 });

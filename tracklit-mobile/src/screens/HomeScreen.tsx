@@ -15,6 +15,8 @@ import { Text } from '../components/ui/Text';
 import Icon from '@expo/vector-icons/FontAwesome5';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '../utils/theme';
 
 interface DashboardCard {
@@ -63,13 +65,6 @@ const dashboardCards: DashboardCard[] = [
     route: 'Tools',
     gradient: ['rgba(26, 26, 46, 0.8)', 'rgba(22, 33, 62, 0.6)'],
   },
-  {
-    title: 'Profile',
-    subtitle: 'Manage your TrackLit identity',
-    iconName: 'user',
-    route: 'Profile',
-    gradient: ['rgba(74, 20, 140, 0.8)', 'rgba(123, 31, 162, 0.6)'],
-  },
 ];
 
 interface DashboardCardProps {
@@ -95,8 +90,6 @@ const DashboardCardComponent: React.FC<DashboardCardProps> = ({ card, onPress })
   <Card
     style={styles.dashboardCard}
     onPress={onPress}
-    gradient={true}
-    opacity={0.85}
   >
     <LinearGradient
       colors={card.gradient}
@@ -202,33 +195,36 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         style={[styles.scrollView, { paddingTop: insets.top }]}
         contentContainerStyle={[
           styles.contentContainer,
-          { paddingBottom: theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl }
+          // Home has tall tiles; give it a bit more breathing room so the last tile is never clipped
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xxxxl }) }
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text variant="h2" weight="bold" color="primary">
-              {greeting}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
-            </Text>
-            <Text variant="body" color="secondary">
-              Ready to train today?
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.profileButton}
-            onPress={() => onNavigate?.('Profile')}
-            data-testid="button-profile"
-          >
-            <Icon
-              name="user-circle"
-              size={theme.iconSizes.xl}
-              color={theme.colors.primary}
-              solid
-            />
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader
+          title={`${greeting}${user?.name ? `, ${user.name.split(' ')[0]}` : ''}`}
+          subtitle="Ready to train today?"
+          right={
+            <>
+              <TouchableOpacity
+                style={styles.headerActionButton}
+                onPress={() => onNavigate?.('Notifications')}
+                accessibilityRole="button"
+                accessibilityLabel="Notifications"
+              >
+                <Icon name="bell" size={18} color={theme.colors.primary} solid />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerActionButton}
+                onPress={() => onNavigate?.('Chat')}
+                accessibilityRole="button"
+                accessibilityLabel="Messages"
+              >
+                <Icon name="comments" size={18} color={theme.colors.primary} solid />
+              </TouchableOpacity>
+            </>
+          }
+          containerStyle={styles.header}
+        />
 
         {/* Stats Cards Row */}
         <View style={styles.statsRow}>
@@ -305,13 +301,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.container,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingVertical: theme.spacing.xxl,
-  },
-  headerLeft: {
-    flex: 1,
   },
   profileButton: {
     padding: theme.spacing.sm,
@@ -332,13 +322,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardsContainer: {
-    flex: 1,
+    gap: theme.spacing.lg,
   },
   dashboardCard: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: 0,
     minHeight: 100,
     padding: 0,
     overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
   cardGradient: {
     flex: 1,
@@ -370,5 +361,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: theme.spacing.sm,
+  },
+  headerActionButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
 });

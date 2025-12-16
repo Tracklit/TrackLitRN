@@ -52,17 +52,20 @@ export const StartGunScreen: React.FC = () => {
   const bangRef = useRef<Sound | null>(null);
 
   useEffect(() => {
-    marksRef.current = new Sound(marksAudio, Sound.MAIN_BUNDLE, (error) => {
+    // For Metro `require()` assets, `react-native-sound` expects:
+    //   new Sound(require('...'), (error) => {...})
+    // Passing `Sound.MAIN_BUNDLE` here can be treated as the callback and crash on Hermes.
+    marksRef.current = new Sound(marksAudio, (error) => {
       if (error) {
         console.error('Failed to load on-your-marks audio', error);
       }
     });
-    setRef.current = new Sound(setAudio, Sound.MAIN_BUNDLE, (error) => {
+    setRef.current = new Sound(setAudio, (error) => {
       if (error) {
         console.error('Failed to load set audio', error);
       }
     });
-    bangRef.current = new Sound(bangAudio, Sound.MAIN_BUNDLE, (error) => {
+    bangRef.current = new Sound(bangAudio, (error) => {
       if (error) {
         console.error('Failed to load bang audio', error);
       }

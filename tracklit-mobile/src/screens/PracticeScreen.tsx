@@ -25,6 +25,8 @@ import { Badge } from '../components/ui/Badge';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/queryClient';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '../utils/theme';
 
 interface SavedWorkout {
@@ -82,7 +84,7 @@ export const PracticeScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'workouts' | 'journal'>('workouts');
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
-  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
+  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
   // Modal states
   const [showWorkoutModal, setShowWorkoutModal] = useState(false);
@@ -304,15 +306,11 @@ export const PracticeScreen: React.FC = () => {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text variant="h2" weight="bold" color="foreground">
-            Practice
-          </Text>
-          <Text variant="body" color="muted">
-            Track your training progress
-          </Text>
-        </View>
+        <ScreenHeader
+          title="Practice"
+          subtitle="Track your training progress"
+          containerStyle={styles.header}
+        />
 
         {/* Quick Stats */}
         <View style={styles.statsRow}>
@@ -825,6 +823,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: theme.spacing.lg,
   },
   header: {

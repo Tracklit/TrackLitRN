@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -23,6 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 
 type FeedFilter = 'all' | 'connections';
@@ -216,7 +217,11 @@ export const FeedScreen: React.FC = () => {
       <FlatList
         data={filteredItems}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          // Feed is a stack screen (no bottom tab bar), but still needs safe-area padding.
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl * 3 }) },
+        ]}
         renderItem={renderItem}
         refreshControl={
           <RefreshControl
@@ -252,7 +257,7 @@ export const FeedScreen: React.FC = () => {
 
       {canInteract && (
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, { bottom: insets.bottom + theme.spacing.xl }]}
           onPress={() => setIsComposerOpen(true)}
           data-testid="button-create-post"
         >

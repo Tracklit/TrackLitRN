@@ -11,13 +11,18 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { Text } from '@/components/ui/Text';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
+import type { RootStackParamList } from '@/navigation/types';
 
 type ListingType = 'program' | 'consulting';
 
@@ -61,9 +66,10 @@ const formatPrice = (priceCents: number, currency: string = 'USD') => {
 
 export const MarketplaceScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
-  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
+  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -105,14 +111,11 @@ export const MarketplaceScreen: React.FC = () => {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text variant="h2" weight="bold" color="foreground">
-            Marketplace
-          </Text>
-          <Text variant="body" color="muted">
-            Browse programs and services
-          </Text>
-        </View>
+        <ScreenHeader
+          title="Marketplace"
+          subtitle="Browse programs and services"
+          containerStyle={styles.header}
+        />
 
         {(!isAuthenticated || isGuest) && (
           <View style={styles.emptyState}>
@@ -127,6 +130,19 @@ export const MarketplaceScreen: React.FC = () => {
 
         {isAuthenticated && !isGuest && (
           <>
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.actionChip} onPress={() => navigation.navigate('MarketplaceCart')}>
+                <Text variant="small" weight="medium" color="foreground">
+                  Cart
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionChip} onPress={() => navigation.navigate('MarketplaceCreateListing')}>
+                <Text variant="small" weight="medium" color="foreground">
+                  Create listing
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -184,56 +200,58 @@ export const MarketplaceScreen: React.FC = () => {
             ) : (
               <View style={styles.listingsContainer}>
                 {items.map((listing) => (
-                  <Card key={listing.id} style={styles.listingCard}>
-                    <CardHeader style={styles.listingHeader}>
-                      <View style={styles.listingTitleRow}>
-                        <CardTitle style={styles.listingTitle}>{listing.title}</CardTitle>
-                        <Badge variant="outline" size="sm">
-                          {listing.type === 'consulting' ? 'Consulting' : 'Program'}
-                        </Badge>
-                      </View>
-                      {!!listing.subtitle && (
+                  <TouchableOpacity key={listing.id} activeOpacity={0.85} onPress={() => navigation.navigate('MarketplaceListingDetail', { id: listing.id })}>
+                    <Card style={styles.listingCard}>
+                      <CardHeader style={styles.listingHeader}>
+                        <View style={styles.listingTitleRow}>
+                          <CardTitle style={styles.listingTitle}>{listing.title}</CardTitle>
+                          <Badge variant="outline" size="sm">
+                            {listing.type === 'consulting' ? 'Consulting' : 'Program'}
+                          </Badge>
+                        </View>
+                        {!!listing.subtitle && (
+                          <Text variant="small" color="muted">
+                            {listing.subtitle}
+                          </Text>
+                        )}
                         <Text variant="small" color="muted">
-                          {listing.subtitle}
+                          By {listing.coach?.name ?? 'Coach'}
                         </Text>
-                      )}
-                      <Text variant="small" color="muted">
-                        By {listing.coach?.name ?? 'Coach'}
-                      </Text>
-                    </CardHeader>
+                      </CardHeader>
 
-                    <CardContent>
-                      <View style={styles.priceRow}>
-                        <Text variant="h3" weight="bold" color="primary">
-                          {formatPrice(listing.priceCents, listing.currency ?? 'USD')}
+                      <CardContent>
+                        <View style={styles.priceRow}>
+                          <Text variant="h3" weight="bold" color="primary">
+                            {formatPrice(listing.priceCents, listing.currency ?? 'USD')}
+                          </Text>
+                        </View>
+
+                        {!!listing.badges?.length && (
+                          <View style={styles.badgeRow}>
+                            {listing.badges.slice(0, 2).map((b) => (
+                              <Badge key={b} variant="secondary" size="sm">
+                                {b}
+                              </Badge>
+                            ))}
+                          </View>
+                        )}
+
+                        {!!listing.tags?.length && (
+                          <View style={styles.badgeRow}>
+                            {listing.tags.slice(0, 3).map((t) => (
+                              <Badge key={t} variant="outline" size="sm">
+                                {t}
+                              </Badge>
+                            ))}
+                          </View>
+                        )}
+
+                        <Text variant="small" color="muted">
+                          Tap to view details.
                         </Text>
-                      </View>
-
-                      {!!listing.badges?.length && (
-                        <View style={styles.badgeRow}>
-                          {listing.badges.slice(0, 2).map((b) => (
-                            <Badge key={b} variant="secondary" size="sm">
-                              {b}
-                            </Badge>
-                          ))}
-                        </View>
-                      )}
-
-                      {!!listing.tags?.length && (
-                        <View style={styles.badgeRow}>
-                          {listing.tags.slice(0, 3).map((t) => (
-                            <Badge key={t} variant="outline" size="sm">
-                              {t}
-                            </Badge>
-                          ))}
-                        </View>
-                      )}
-
-                      <Text variant="small" color="muted">
-                        Details coming next.
-                      </Text>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </TouchableOpacity>
                 ))}
               </View>
             )}
@@ -249,12 +267,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: theme.spacing.lg,
   },
   header: {
     alignItems: 'center',
     marginTop: theme.spacing.xl,
     marginBottom: theme.spacing.xl,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  actionChip: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
   },
   searchInput: {
     width: '100%',

@@ -1,5 +1,6 @@
 import express, { type Express, type Request, type Response } from "express";
 import passport from "passport";
+import jwt from "jsonwebtoken";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
@@ -430,6 +431,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     passport.authenticate('google', { scope: ['profile', 'email'] })
   );
 
+  // Mobile Google OAuth entrypoint (deep-link back into the app)
+  app.get('/api/auth/google/mobile',
+    passport.authenticate('google', { scope: ['profile', 'email'], state: 'tracklitmobile' })
+  );
+
   app.get('/api/auth/google/callback',
     passport.authenticate('google', { 
       failureRedirect: '/auth?error=google_auth_failed',
@@ -440,6 +446,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = req.user as User;
         if (!user) {
           return res.redirect('/auth?error=no_user');
+        }
+
+        // If this login started from mobile, return a JWT via deep link.
+        const state = typeof req.query.state === 'string' ? req.query.state : '';
+        if (state === 'tracklitmobile') {
+          const secret =
+            process.env.JWT_SECRET ||
+            process.env.SESSION_SECRET ||
+            'track-meet-jwt-secret-key';
+          const token = jwt.sign({ id: user.id }, secret, { expiresIn: '30d' });
+
+          // Send token back to the native app via Expo scheme.
+          const redirectUrl = `tracklitmobile://auth?token=${encodeURIComponent(token)}`;
+          return res.redirect(redirectUrl);
         }
 
         // Check if user needs onboarding
@@ -2223,7 +2243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       
       // Only allow specific fields to be updated
-      const allowedUpdates = ["name", "email", "country", "dateOfBirth", "defaultClubId"];
+      const allowedUpdates = ["name", "email", "country", "dateOfBirth", "defaultClubId", "isPrivate"];
       
       const updates: Record<string, any> = {};
       
@@ -2237,6 +2257,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert dateOfBirth string to Date object if present
       if (updates.dateOfBirth && typeof updates.dateOfBirth === 'string') {
         updates.dateOfBirth = new Date(updates.dateOfBirth);
+      }
+      // Normalize isPrivate if sent as string (common from form submissions)
+      if (updates.isPrivate !== undefined && typeof updates.isPrivate === 'string') {
+        updates.isPrivate = updates.isPrivate === 'true';
       }
       // If a default club ID is provided, verify the user is a member of that club
       if (updates.defaultClubId !== undefined) {

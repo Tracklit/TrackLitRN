@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -16,6 +17,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import { launchImageLibrary, type Asset } from 'react-native-image-picker';
 
 import { Text } from '../components/ui/Text';
 import { Avatar } from '../components/ui/Avatar';
@@ -23,6 +25,8 @@ import { Card, CardContent } from '../components/ui/Card';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/queryClient';
+import { getToken } from '@/lib/tokenStorage';
+import { env } from '@/config/env';
 import type { RootStackParamList } from '@/navigation/types';
 import theme from '../utils/theme';
 
@@ -48,13 +52,6 @@ interface GroupInfo {
   memberCount?: number;
 }
 
-interface ConversationInfo {
-  id: number;
-  otherUserId: number;
-  otherUserName?: string;
-  otherUserProfileImage?: string;
-}
-
 export const ChatConversationScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -64,6 +61,7 @@ export const ChatConversationScreen: React.FC = () => {
   
   const { conversationId, type } = route.params || { conversationId: 0, type: 'direct' as const };
   const [messageText, setMessageText] = useState('');
+  const [pendingMedia, setPendingMedia] = useState<Asset | null>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -71,6 +69,31 @@ export const ChatConversationScreen: React.FC = () => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
   }, []);
+
+  // Mark messages as read when opening a thread
+  useEffect(() => {
+    if (!conversationId) return;
+    const endpoint =
+      type === 'group'
+        ? `/api/chat/groups/${conversationId}/mark-read`
+        : `/api/chat/direct/${conversationId}/mark-read`;
+
+    // Mark-read is best-effort: some public groups may be viewable but not joinable.
+    apiRequest(endpoint, { method: 'POST', rawResponse: true })
+      .then((res: any) => {
+        // Silence 403s ("not a member") to avoid noisy logs.
+        if (res?.status && res.status === 403) return;
+      })
+      .catch(() => {
+        // Non-fatal
+      });
+  }, [conversationId, type]);
+
+  const safeFormatDistance = (value: unknown) => {
+    const d = value instanceof Date ? value : new Date(value as any);
+    if (!d || Number.isNaN(d.getTime())) return '';
+    return formatDistanceToNow(d, { addSuffix: true });
+  };
 
   // Fetch messages
   const messagesQuery = useQuery({
@@ -118,10 +141,94 @@ export const ChatConversationScreen: React.FC = () => {
     },
   });
 
+  const sendMediaMutation = useMutation({
+    mutationFn: async (payload: { asset: Asset; text?: string }) => {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Missing auth token');
+      }
+
+      if (!payload.asset.uri) {
+        throw new Error('Missing media uri');
+      }
+
+      const isGroup = type === 'group';
+      const uploadField = isGroup ? 'media' : 'image';
+      const endpoint = isGroup
+        ? `/api/chat/groups/${conversationId}/messages`
+        : `/api/chat/direct/${conversationId}/messages`;
+
+      const formData = new FormData();
+      if (payload.text?.trim()) {
+        formData.append('text', payload.text.trim());
+      }
+
+      const fileName = payload.asset.fileName || 'upload.jpg';
+      const fileType = payload.asset.type || 'image/jpeg';
+      formData.append(uploadField, {
+        uri: payload.asset.uri,
+        name: fileName,
+        type: fileType,
+      } as any);
+
+      const response = await fetch(`${env.API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to send media');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      setPendingMedia(null);
+      setMessageText('');
+      queryClient.invalidateQueries({ queryKey: ['chat-messages', type, conversationId] });
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+    },
+    onError: (error: Error) => {
+      Alert.alert('Unable to send media', error.message || 'Please try again.');
+    },
+  });
+
+  const handleAttach = async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      selectionLimit: 1,
+      quality: 0.8,
+    });
+
+    if (result.didCancel) return;
+    if (result.errorCode) {
+      Alert.alert('Unable to pick image', result.errorMessage || 'Please try again.');
+      return;
+    }
+
+    const asset = result.assets?.[0] ?? null;
+    if (!asset?.uri) {
+      Alert.alert('Unable to pick image', 'No image was selected.');
+      return;
+    }
+
+    setPendingMedia(asset);
+  };
+
   const messages = messagesQuery.data ?? [];
   const groupInfo = type === 'group' ? infoQuery.data : null;
 
   const handleSend = () => {
+    if (pendingMedia) {
+      if (sendMediaMutation.isPending) return;
+      sendMediaMutation.mutate({ asset: pendingMedia, text: messageText });
+      return;
+    }
+
     if (!messageText.trim() || sendMessageMutation.isPending) return;
     sendMessageMutation.mutate(messageText.trim());
   };
@@ -242,7 +349,7 @@ export const ChatConversationScreen: React.FC = () => {
                       color={isOwnMessage ? 'primary-foreground' : 'muted'} 
                       style={styles.messageTime}
                     >
-                      {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                      {safeFormatDistance(message.createdAt)}
                     </Text>
                   </View>
                 </View>
@@ -253,13 +360,30 @@ export const ChatConversationScreen: React.FC = () => {
 
         {/* Input Area */}
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom || theme.spacing.md }]}>
+          {pendingMedia && (
+            <View style={styles.attachmentRow}>
+              <Text variant="small" color="muted">
+                1 image attached
+              </Text>
+              <TouchableOpacity onPress={() => setPendingMedia(null)} style={styles.attachmentRemove}>
+                <FontAwesome5 name="times" size={14} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          )}
           <Card style={styles.inputCard}>
             <CardContent style={styles.inputContent}>
+              <TouchableOpacity
+                style={styles.attachButton}
+                onPress={handleAttach}
+                disabled={sendMediaMutation.isPending || sendMessageMutation.isPending}
+              >
+                <FontAwesome5 name="paperclip" size={16} color={theme.colors.textMuted} solid />
+              </TouchableOpacity>
               <TextInput
                 style={styles.textInput}
                 value={messageText}
                 onChangeText={setMessageText}
-                placeholder="Type a message..."
+                placeholder={pendingMedia ? 'Add a caption (optional)…' : 'Type a message...'}
                 placeholderTextColor={theme.colors.textMuted}
                 multiline
                 maxLength={1000}
@@ -267,20 +391,20 @@ export const ChatConversationScreen: React.FC = () => {
               <TouchableOpacity
                 style={[
                   styles.sendButton,
-                  messageText.trim() && !sendMessageMutation.isPending 
+                  (pendingMedia || messageText.trim()) && !sendMessageMutation.isPending && !sendMediaMutation.isPending
                     ? styles.sendButtonActive 
                     : styles.sendButtonInactive
                 ]}
                 onPress={handleSend}
-                disabled={!messageText.trim() || sendMessageMutation.isPending}
+                disabled={(!pendingMedia && !messageText.trim()) || sendMessageMutation.isPending || sendMediaMutation.isPending}
               >
-                {sendMessageMutation.isPending ? (
+                {sendMessageMutation.isPending || sendMediaMutation.isPending ? (
                   <ActivityIndicator size="small" color={theme.colors.textMuted} />
                 ) : (
                   <FontAwesome5 
                     name="paper-plane" 
                     size={16} 
-                    color={messageText.trim() ? 'white' : theme.colors.textMuted}
+                    color={pendingMedia || messageText.trim() ? 'white' : theme.colors.textMuted}
                     solid
                   />
                 )}
@@ -383,6 +507,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
   },
+  attachmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  attachmentRemove: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.muted,
+  },
   inputCard: {
     marginBottom: 0,
   },
@@ -391,6 +535,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingVertical: theme.spacing.sm,
     gap: theme.spacing.sm,
+  },
+  attachButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.muted,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   textInput: {
     flex: 1,
