@@ -5,7 +5,7 @@ import {
   faCalendarDays,
   faBook,
   faTrophy,
-  faImage,
+  faWrench,
   faStar,
   faShoppingCart,
   faNewspaper,
