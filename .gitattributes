@@ -1,0 +1,29 @@
+# Ensure consistent line endings across all platforms
+* text=auto
+
+# Force Unix (LF) line endings for shell scripts
+*.sh text eol=lf
+docker-entrypoint.sh text eol=lf
+
+# Force Windows (CRLF) line endings for batch files
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Force LF for common development files
+*.js text eol=lf
+*.ts text eol=lf
+*.jsx text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
