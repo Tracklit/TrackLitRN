@@ -68,9 +68,9 @@ export default function CoachesPage() {
                          coach.bio?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesSpecialty = selectedSpecialty === "all" || 
-                           coach.specialties?.includes(selectedSpecialty);
-    
-    return matchesSearch && matchesSpecialty;
+    const matchesSearch = (coach.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (coach.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (coach.bio || '').toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   // Get unique specialties for filter
