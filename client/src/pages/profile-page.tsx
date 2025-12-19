@@ -36,6 +36,7 @@ const profileFormSchema = z.object({
   dateOfBirth: z.string().optional(),
   defaultClubId: z.number().nullable().optional(),
   isPrivate: z.boolean().optional(),
+  specialties: z.array(z.string()).optional(),
 });
 
 // Public profile form schema
@@ -144,6 +145,7 @@ export default function ProfilePage() {
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
       defaultClubId: user?.defaultClubId || null,
       isPrivate: user?.isPrivate || false,
+      specialties: user?.specialties || [],
     },
   });
 
@@ -157,6 +159,33 @@ export default function ProfilePage() {
       specialties: user?.specialties || [],
     },
   });
+
+  // Reset public profile form when user data changes
+  useEffect(() => {
+    if (user) {
+      publicProfileForm.reset({
+        name: user.name || '',
+        bio: user.bio || '',
+        profileImageUrl: user.profileImageUrl || '',
+        specialties: user.specialties || [],
+      });
+    }
+  }, [user, publicProfileForm]);
+
+  // Reset profile settings form when user data changes
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        name: user.name || '',
+        email: user.email || '',
+        country: user.country || '',
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        defaultClubId: user.defaultClubId || null,
+        isPrivate: user.isPrivate || false,
+        specialties: user.specialties || [],
+      });
+    }
+  }, [user, form]);
 
   // Fetch user's clubs
   useEffect(() => {
@@ -520,6 +549,43 @@ export default function ProfilePage() {
                     </FormItem>
                   )}
                 />
+
+                {user?.isCoach && (
+                  <FormField
+                    control={form.control}
+                    name="specialties"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Coaching Specialties</FormLabel>
+                        <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto border border-gray-700 rounded-md p-3">
+                          {TRACK_FIELD_SPECIALTIES.map((specialty) => (
+                            <div key={specialty} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`profile-specialty-${specialty}`}
+                                checked={field.value?.includes(specialty)}
+                                onCheckedChange={(checked) => {
+                                  const current = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...current, specialty]);
+                                  } else {
+                                    field.onChange(current.filter((s: string) => s !== specialty));
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`profile-specialty-${specialty}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {specialty}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}

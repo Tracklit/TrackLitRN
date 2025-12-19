@@ -10,6 +10,14 @@ echo "DATABASE_URL is set: $(if [ -n \"$DATABASE_URL\" ]; then echo yes; else ec
 echo "REDIS_URL is set: $(if [ -n \"$REDIS_URL\" ]; then echo yes; else echo no; fi)"
 echo "================================"
 
+# Create uploads directories
+echo "Creating uploads directories..."
+mkdir -p uploads/profiles
+mkdir -p uploads/messages
+mkdir -p uploads/videos
+mkdir -p uploads/programs
+echo "Uploads directories created."
+
 # Optional: run SQL migrations in-container (disabled by default)
 # Set RUN_SQL_MIGRATIONS=1 to enable.
 if [ "$RUN_SQL_MIGRATIONS" = "1" ]; then
