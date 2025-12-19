@@ -63,14 +63,14 @@ export default function CoachesPage() {
 
   // Filter coaches based on search and specialty
   const filteredCoaches = coaches.filter(coach => {
-    const matchesSearch = coach.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         coach.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         coach.bio?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (coach.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (coach.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (coach.bio || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesSpecialty = selectedSpecialty === "all" || 
-    const matchesSearch = (coach.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (coach.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (coach.bio || '').toLowerCase().includes(searchTerm.toLowerCase());
+                           coach.specialties?.includes(selectedSpecialty);
+    
+    return matchesSearch && matchesSpecialty;
   });
 
   // Get unique specialties for filter
