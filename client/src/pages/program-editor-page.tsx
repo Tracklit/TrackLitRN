@@ -584,8 +584,24 @@ function ProgramEditorPage() {
         
         // Sort weeks by number
         weeksArray.sort((a, b) => a.weekNumber - b.weekNumber);
-        setWeeks(weeksArray);
-      } else {
+
+        // Merge with existing weeks to preserve manually added weeks without sessions
+        setWeeks(prevWeeks => {
+          // Create a map of existing week numbers
+          const existingWeekNumbers = new Set(prevWeeks.map(w => w.weekNumber));
+          const newWeekNumbers = new Set(weeksArray.map(w => w.weekNumber));
+          
+          // Keep all weeks that exist in prevWeeks but not in weeksArray (manually added empty weeks)
+          const preservedWeeks = prevWeeks.filter(w => !newWeekNumbers.has(w.weekNumber));
+          
+          // Combine preserved weeks with new weeks from sessions
+          const combinedWeeks = [...weeksArray, ...preservedWeeks];
+          
+          // Sort by week number
+          combinedWeeks.sort((a, b) => a.weekNumber - b.weekNumber);
+          
+          return combinedWeeks;
+        });
         // Create weeks based on program duration (convert days to weeks, minimum 1 week)
         const programWeeks = Math.max(1, Math.ceil((program.duration || 7) / 7));
         const newWeeks: WeekData[] = [];
@@ -596,7 +612,12 @@ function ProgramEditorPage() {
             days: [],
           });
         }
-        setWeeks(newWeeks);
+        setWeeks(prevWeeks => {
+          if (prevWeeks.length > 0) {
+            return prevWeeks; // Preserve manually added weeks
+          }
+          return newWeeks;
+        });
       }
     }
   }, [sessions, program]);
