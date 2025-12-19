@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, real, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, real, date, text as textArray } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -24,6 +24,7 @@ export const users = pgTable("users", {
   dateOfBirth: timestamp("date_of_birth"), // User's date of birth
   isBlocked: boolean("is_blocked").default(false), // For admin blocking
   isPrivate: boolean("is_private").default(false), // Privacy setting for profile visibility
+  specialties: text("specialties").array(), // Track and field specialties for coaches
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -685,6 +686,15 @@ export const workoutReactions = pgTable("workout_reactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Friendships table for managing friend connections
+export const friendships = pgTable("friendships", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  friendId: integer("friend_id").notNull().references(() => users.id),
+  status: text("status").notNull().default("pending"), // 'pending', 'accepted', 'rejected'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 // Notifications
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
@@ -732,6 +742,8 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
+export type Friendship = typeof friendships.$inferSelect;
+export type InsertFriendship = typeof friendships.$inferInsert;
 
 // Select types
 export type ClubMember = typeof clubMembers.$inferSelect;

@@ -989,7 +989,7 @@ function ProgramEditorPage() {
   // Special handling for text-based programs
   if (program.isTextBased) {
     return (
-      <div className="container max-w-4xl mx-auto p-4">
+      <div className="container max-w-4xl mx-auto p-4 pt-20">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <Button
@@ -1044,7 +1044,7 @@ function ProgramEditorPage() {
     const fileName = program.programFileUrl?.split('/').pop() || "Program Document";
     
     return (
-      <div className="container max-w-full p-4">
+      <div className="container max-w-full p-4 pt-20">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
             <Button
@@ -1425,7 +1425,7 @@ function ProgramEditorPage() {
 
   // Standard program with weekly schedule view
   return (
-    <div className="container max-w-full p-4">
+    <div className="container max-w-full p-4 pt-20">
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

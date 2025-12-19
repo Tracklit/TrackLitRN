@@ -2308,12 +2308,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user/public-profile", profileUpload.single('profileImage'), async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const { name, bio } = req.body;
-      let profileImageUrl = '';
 
-      // Handle profile image upload
+    try {
+      const { name, bio, specialties } = req.body;
+      let profileImageUrl = '';      // Handle profile image upload
       if (req.file) {
         const fileName = `profile-${req.user!.id}-${Date.now()}${path.extname(req.file.originalname)}`;
         const finalPath = path.join('uploads/profiles', fileName);
@@ -2346,6 +2344,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData: any = { name };
       if (bio !== undefined) updateData.bio = bio;
       if (profileImageUrl) updateData.profileImageUrl = profileImageUrl;
+      if (specialties !== undefined) {
+        // Parse specialties if it's a JSON string
+        updateData.specialties = typeof specialties === 'string' ? JSON.parse(specialties) : specialties;
+      }
 
       const updatedUser = await dbStorage.updateUser(req.user!.id, updateData);
       res.json(updatedUser);

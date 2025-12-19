@@ -25,6 +25,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter } from '@/components/ui/drawer';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TRACK_FIELD_SPECIALTIES } from '@shared/constants';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Profile form schema
 const profileFormSchema = z.object({
@@ -41,6 +43,7 @@ const publicProfileFormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   bio: z.string().max(500, { message: "Bio must be 500 characters or less" }).optional(),
   profileImageUrl: z.string().url().optional().or(z.literal('')),
+  specialties: z.array(z.string()).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -151,6 +154,7 @@ export default function ProfilePage() {
       name: user?.name || '',
       bio: user?.bio || '',
       profileImageUrl: user?.profileImageUrl || '',
+      specialties: user?.specialties || [],
     },
   });
 
@@ -240,6 +244,7 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append('name', data.name);
       formData.append('bio', data.bio || '');
+      formData.append('specialties', JSON.stringify(data.specialties || []));
       
       if (profileImageFile) {
         formData.append('profileImage', profileImageFile);
@@ -376,9 +381,9 @@ export default function ProfilePage() {
                               <FormItem>
                                 <FormLabel>Bio</FormLabel>
                                 <FormControl>
-                                  <Textarea 
-                                    {...field} 
-                                    placeholder="Tell others about yourself..." 
+                                  <Textarea
+                                    {...field}
+                                    placeholder="Tell others about yourself..."
                                     rows={3}
                                     maxLength={500}
                                   />
@@ -387,6 +392,43 @@ export default function ProfilePage() {
                               </FormItem>
                             )}
                           />
+
+                          {user?.isCoach && (
+                            <FormField
+                              control={publicProfileForm.control}
+                              name="specialties"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Coaching Specialties</FormLabel>
+                                  <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto border border-gray-700 rounded-md p-3">
+                                    {TRACK_FIELD_SPECIALTIES.map((specialty) => (
+                                      <div key={specialty} className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id={`specialty-${specialty}`}
+                                          checked={field.value?.includes(specialty)}
+                                          onCheckedChange={(checked) => {
+                                            const current = field.value || [];
+                                            if (checked) {
+                                              field.onChange([...current, specialty]);
+                                            } else {
+                                              field.onChange(current.filter((s: string) => s !== specialty));
+                                            }
+                                          }}
+                                        />
+                                        <label
+                                          htmlFor={`specialty-${specialty}`}
+                                          className="text-sm cursor-pointer"
+                                        >
+                                          {specialty}
+                                        </label>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
                         </form>
                       </Form>
                     </div>
