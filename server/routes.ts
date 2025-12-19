@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets, notifications, users, messageReactions, userSubscriptions, userSubscriptionPurchases, trainingPrograms, meetInvitations, passwordResetTokens, User } from "@shared/schema";
+import { meets, notifications, friendships, users, messageReactions, userSubscriptions, userSubscriptionPurchases, trainingPrograms, meetInvitations, passwordResetTokens, User } from "@shared/schema";
 import { and, eq, or, sql, isNotNull, desc, asc, inArray } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
@@ -601,41 +601,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
       res.status(500).json({ error: "Failed to fetch notifications" });
-    }
-  });
-
-  // Coach-athlete relationship API
-  app.get("/api/coach/athletes", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const userId = req.user!.id;
-      
-      // Check if user is a coach
-      const coach = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-      if (!coach[0]?.isCoach) {
-        return res.status(403).json({ error: "Only coaches can access athlete list" });
-      }
-
-      // Get athletes connected to this coach
-      const athletes = await db.execute(sql`
-        SELECT DISTINCT
-          u.id,
-          u.name,
-          u.username,
-          u.email,
-          u.profile_image_url,
-          u.created_at
-        FROM users u
-        INNER JOIN coach_athletes ca ON u.id = ca.athlete_id
-        WHERE ca.coach_id = ${userId}
-        ORDER BY u.name ASC
-      `);
-
-      res.json(athletes.rows);
-    } catch (error: any) {
-      console.error("Error fetching coach athletes:", error);
-      res.status(500).json({ error: "Failed to fetch athletes" });
     }
   });
 
@@ -7682,6 +7647,13 @@ Keep the response professional, evidence-based, and specific to track and field 
       await dbStorage.followUser(fromUserId, req.user.id);
       await dbStorage.followUser(req.user.id, fromUserId);
 
+
+      // Create friendship record (store once with smaller ID first to avoid duplicates)
+      await db.insert(friendships).values({
+        userId: Math.min(fromUserId, req.user.id),
+        friendId: Math.max(fromUserId, req.user.id),
+        status: 'accepted'
+      }).onConflictDoNothing();
       // Remove the friend request notification
       await dbStorage.markNotificationAsRead(req.user.id, "friend_request", fromUserId);
 
@@ -7976,6 +7948,14 @@ Keep the response professional, evidence-based, and specific to track and field 
 
     try {
       const athletes = await dbStorage.getCoachAthletes(req.user.id);
+      
+      // Prevent caching to ensure fresh data is always returned
+      res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       res.json(athletes);
     } catch (error: any) {
       console.error("Error getting coach athletes:", error);
