@@ -1676,16 +1676,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendStatus(204);
   });
 
-  // Coach routes
+  // Coach routes - Public directory of all coaches
   app.get("/api/coaches", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    const userId = req.user!.id;
-    const coaches = await dbStorage.getCoachesByUserId(userId);
-    res.json(coaches);
-  });
 
-  app.get("/api/athletes", async (req: Request, res: Response) => {
+    try {
+      // Get all users who are coaches
+      const coaches = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          profileImageUrl: users.profileImageUrl,
+          bio: users.bio,
+          specialties: users.specialties,
+          country: users.country,
+          isCoach: users.isCoach,
+        })
+        .from(users)
+        .where(eq(users.isCoach, true));
+
+      // Prevent caching to ensure fresh data
+      res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+
+      res.json(coaches);
+    } catch (error: any) {
+      console.error("Error fetching coaches:", error);
+      res.status(500).json({ error: "Failed to fetch coaches" });
+    }
+  });  app.get("/api/athletes", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
