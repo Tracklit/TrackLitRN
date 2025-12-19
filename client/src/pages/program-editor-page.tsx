@@ -602,6 +602,7 @@ function ProgramEditorPage() {
           
           return combinedWeeks;
         });
+      } else {
         // Create weeks based on program duration (convert days to weeks, minimum 1 week)
         const programWeeks = Math.max(1, Math.ceil((program.duration || 7) / 7));
         const newWeeks: WeekData[] = [];
@@ -1800,3 +1801,4 @@ function ProgramEditorPage() {
 export function Component() {
   return <ProgramEditorPage />;
 }
+
