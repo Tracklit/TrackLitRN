@@ -156,7 +156,7 @@ export default function CoachesPage() {
                   <Avatar className="h-16 w-16">
                     <AvatarImage src={coach.profileImageUrl} />
                     <AvatarFallback className="text-lg">
-                      {coach.name.split(' ').map(n => n[0]).join('')}
+                      {(coach.name || '?').split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
