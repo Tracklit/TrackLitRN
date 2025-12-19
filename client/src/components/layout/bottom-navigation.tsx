@@ -51,7 +51,7 @@ const getNavItems = (user: any) => [
   { 
     title: "Tools", 
     href: "/training-tools", 
-    icon: <FontAwesomeIcon icon={faImage} className="h-4 w-4" />,
+    icon: <FontAwesomeIcon icon={faWrench} className="h-4 w-4" />,
     key: "tools",
     disabled: false
   },
