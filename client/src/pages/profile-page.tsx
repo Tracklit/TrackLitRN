@@ -30,7 +30,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const profileFormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   email: z.string().email({ message: "Invalid email address" }),
+  country: z.string().optional(),
+  dateOfBirth: z.string().optional(),
   defaultClubId: z.number().nullable().optional(),
+  isPrivate: z.boolean().optional(),
 });
 
 // Public profile form schema
@@ -134,7 +137,10 @@ export default function ProfilePage() {
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
+      country: user?.country || '',
+      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
       defaultClubId: user?.defaultClubId || null,
+      isPrivate: user?.isPrivate || false,
     },
   });
 
@@ -181,6 +187,8 @@ export default function ProfilePage() {
 
   async function onSubmit(data: ProfileFormValues) {
     try {
+      console.log('Submitting profile data:', data);
+      
       const response = await fetch('/api/user', {
         method: 'PATCH',
         headers: {
@@ -189,16 +197,20 @@ export default function ProfilePage() {
         credentials: 'include',
         body: JSON.stringify(data),
       });
+
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
-        throw new Error('Failed to update profile');
+        const errorText = await response.text();
+        console.error('Server error:', errorText);
+        throw new Error(errorText || `Failed to update profile (${response.status})`);
       }
-      
+
       toast({
         title: "Profile updated",
         description: "Your changes have been saved",
       });
-      
+
       // Reload the page to reflect the changes
       window.location.reload();
     } catch (err: any) {
@@ -209,9 +221,7 @@ export default function ProfilePage() {
         variant: "destructive"
       });
     }
-  }
-
-  // Handle public profile image selection
+  }  // Handle public profile image selection
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -435,6 +445,34 @@ export default function ProfilePage() {
                       <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input {...field} type="email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country (Optional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter your country" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dateOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="date" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
