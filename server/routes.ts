@@ -4136,7 +4136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       if (!req.file) {
-        return res.status(400).send("No file uploaded");
+        return res.status(400).json({ error: "No file uploaded" });
       }
       
       const user = req.user!;
@@ -4241,7 +4241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Error cleaning up uploaded file:", cleanupError);
         }
       }
-      res.status(500).send("Error uploading exercise file");
+      res.status(500).json({ error: "Error uploading exercise file" });
     }
   });
 
