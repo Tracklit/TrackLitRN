@@ -25,6 +25,7 @@ import communityRoutes from "./routes/community";
 import chatRoutes from "./chat-routes-simple";
 import feedRoutes from "./routes/feed";
 import { getBaseUrl } from "./utils/url-helper";
+import { initializeBlobStorage, uploadToBlob, isBlobStorageAvailable } from "./azure-storage";
 
 // Coach-athlete relationship API functions will be moved inside registerRoutes
 
@@ -2313,31 +2314,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { name, bio, specialties } = req.body;
       let profileImageUrl = '';      // Handle profile image upload
       if (req.file) {
-        const fileName = `profile-${req.user!.id}-${Date.now()}${path.extname(req.file.originalname)}`;
-        const finalPath = path.join('uploads/profiles', fileName);
-        
-        // Move file to final location
-        fs.renameSync(req.file.path, finalPath);
-        
-        // Keep original format and only resize if too large, preserve aspect ratio
-        const compressedFileName = `compressed_${fileName}`;
-        const compressedPath = path.join('uploads/profiles', compressedFileName);
-        
-        try {
-          await sharp(finalPath)
-            .resize(800, 800, { 
-              fit: 'inside', 
-              withoutEnlargement: true 
-            })
-            .toFile(compressedPath);
-          
-          // Remove original file after processing
-          fs.unlinkSync(finalPath);
-          profileImageUrl = `/uploads/profiles/${compressedFileName}`;
-        } catch (processingError) {
-          console.error('Profile image processing failed, using original:', processingError);
+        // Process image with sharp first
+        const processedBuffer = await sharp(req.file.path)
+          .resize(800, 800, { 
+            fit: 'inside', 
+            withoutEnlargement: true 
+          })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+
+        // Upload to Azure Blob Storage if available, otherwise use local storage
+        if (isBlobStorageAvailable()) {
+          try {
+            const fileName = `profile-${req.user!.id}-${Date.now()}.jpg`;
+            profileImageUrl = await uploadToBlob(
+              processedBuffer,
+              fileName,
+              'image/jpeg'
+            );
+            console.log('✅ Profile image uploaded to Azure Blob Storage:', profileImageUrl);
+          } catch (blobError) {
+            console.error('❌ Failed to upload to blob storage, falling back to local:', blobError);
+            // Fallback to local storage
+            const fileName = `profile-${req.user!.id}-${Date.now()}.jpg`;
+            const finalPath = path.join('uploads/profiles', fileName);
+            fs.writeFileSync(finalPath, processedBuffer);
+            profileImageUrl = `/uploads/profiles/${fileName}`;
+          }
+        } else {
+          // Fallback to local storage (not persistent across container restarts)
+          console.warn('⚠️  Azure Blob Storage not available, using local storage (non-persistent)');
+          const fileName = `profile-${req.user!.id}-${Date.now()}.jpg`;
+          const finalPath = path.join('uploads/profiles', fileName);
+          fs.writeFileSync(finalPath, processedBuffer);
           profileImageUrl = `/uploads/profiles/${fileName}`;
         }
+
+        // Clean up the temporary multer file
+        fs.unlinkSync(req.file.path);
       }
 
       // Update user profile
