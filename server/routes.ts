@@ -25,7 +25,7 @@ import communityRoutes from "./routes/community";
 import chatRoutes from "./chat-routes-simple";
 import feedRoutes from "./routes/feed";
 import { getBaseUrl } from "./utils/url-helper";
-import { initializeBlobStorage, uploadToBlob, isBlobStorageAvailable } from "./azure-storage";
+import { initializeBlobStorage, uploadToBlob, isBlobStorageAvailable, BlobContainer } from "./azure-storage";
 
 // Coach-athlete relationship API functions will be moved inside registerRoutes
 
@@ -2329,6 +2329,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const fileName = `profile-${req.user!.id}-${Date.now()}.jpg`;
             profileImageUrl = await uploadToBlob(
               processedBuffer,
+              req.user!.id,
+              BlobContainer.PROFILE_IMAGES,
               fileName,
               'image/jpeg'
             );
@@ -4167,13 +4169,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Generate unique filename
-      const fileExtension = path.extname(req.file.originalname);
-      const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
-      const finalPath = path.join("uploads/exercises", uniqueFilename);
+      let fileUrl = '';
       
-      // Move file to final location
-      fs.renameSync(req.file.path, finalPath);
+      // Upload to Azure Blob Storage if available
+      if (isBlobStorageAvailable()) {
+        try {
+          const fileBuffer = fs.readFileSync(req.file.path);
+          const fileExtension = path.extname(req.file.originalname);
+          const fileName = `exercise-${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+          
+          fileUrl = await uploadToBlob(
+            fileBuffer,
+            user.id,
+            BlobContainer.EXERCISE_LIBRARY,
+            fileName,
+            req.file.mimetype
+          );
+          
+          console.log('✅ Exercise file uploaded to Azure Blob Storage:', fileUrl);
+          
+          // Clean up temp file
+          fs.unlinkSync(req.file.path);
+        } catch (blobError) {
+          console.error('❌ Failed to upload exercise file to blob storage, falling back to local:', blobError);
+          // Fallback to local storage
+          const fileExtension = path.extname(req.file.originalname);
+          const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+          const finalPath = path.join("uploads/exercises", uniqueFilename);
+          fs.renameSync(req.file.path, finalPath);
+          fileUrl = `/uploads/exercises/${uniqueFilename}`;
+        }
+      } else {
+        // Fallback to local storage
+        console.warn('⚠️  Azure Blob Storage not available, using local storage (non-persistent)');
+        const fileExtension = path.extname(req.file.originalname);
+        const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+        const finalPath = path.join("uploads/exercises", uniqueFilename);
+        fs.renameSync(req.file.path, finalPath);
+        fileUrl = `/uploads/exercises/${uniqueFilename}`;
+      }
       
       // Create exercise entry
       const exerciseData: InsertExerciseLibrary = {
@@ -4181,7 +4215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: name || req.file.originalname,
         description: description || null,
         type: 'upload',
-        fileUrl: `/uploads/exercises/${uniqueFilename}`,
+        fileUrl: fileUrl,
         youtubeUrl: null,
         youtubeVideoId: null,
         thumbnailUrl: null,
@@ -9035,60 +9069,105 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(400).json({ error: "Video name is required" });
       }
       
-      // Generate unique filename
-      const fileExtension = path.extname(req.file.originalname);
-      const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
-      const finalPath = path.join("uploads/video-analysis", uniqueFilename);
+      let fileUrl = '';
       
-      // Move file to final location
-      fs.renameSync(req.file.path, finalPath);
-      
-      // Extract biomechanical data automatically during upload
-      let biomechanicalData = null;
-      try {
-        console.log(`Starting MediaPipe pose analysis for: ${finalPath}`);
-        
-        const pythonResult = await new Promise<any>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error('MediaPipe processing timeout after 60 seconds'));
-          }, 60000);
+      // Upload to Azure Blob Storage if available
+      if (isBlobStorageAvailable()) {
+        try {
+          const fileBuffer = fs.readFileSync(req.file.path);
+          const fileExtension = path.extname(req.file.originalname);
+          const fileName = `video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
           
-          exec(`timeout 30s python3 server/video-analysis-simple.py "${finalPath}"`, {
-            maxBuffer: 10 * 1024 * 1024 // 10MB buffer
-          }, (error: any, stdout: string, stderr: string) => {
-            clearTimeout(timeout);
+          fileUrl = await uploadToBlob(
+            fileBuffer,
+            user.id,
+            BlobContainer.VIDEO_ANALYSIS,
+            fileName,
+            req.file.mimetype
+          );
+          
+          console.log('✅ Video uploaded to Azure Blob Storage:', fileUrl);
+          
+          // Clean up temp file
+          fs.unlinkSync(req.file.path);
+        } catch (blobError) {
+          console.error('❌ Failed to upload video to blob storage, falling back to local:', blobError);
+          // Fallback to local storage
+          const fileExtension = path.extname(req.file.originalname);
+          const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+          const finalPath = path.join("uploads/video-analysis", uniqueFilename);
+          fs.renameSync(req.file.path, finalPath);
+          fileUrl = `/uploads/video-analysis/${uniqueFilename}`;
+        }
+      } else {
+        // Fallback to local storage
+        console.warn('⚠️  Azure Blob Storage not available, using local storage (non-persistent)');
+        const fileExtension = path.extname(req.file.originalname);
+        const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+        const finalPath = path.join("uploads/video-analysis", uniqueFilename);
+        fs.renameSync(req.file.path, finalPath);
+        fileUrl = `/uploads/video-analysis/${uniqueFilename}`;
+      }
+      
+      // Extract biomechanical data automatically during upload (only if local file)
+      let biomechanicalData = null;
+      let localFilePath = '';
+      
+      // For MediaPipe analysis, we need a local file path
+      // If blob storage is used, we'll skip MediaPipe for now (can be enhanced later)
+      if (!isBlobStorageAvailable() || !fileUrl.includes('blob.core.windows.net')) {
+        // Local file - can run MediaPipe
+        localFilePath = fileUrl.startsWith('/') 
+          ? fileUrl.substring(1) // Remove leading slash for local path
+          : path.join("uploads/video-analysis", path.basename(fileUrl));
+          
+        try {
+          console.log(`Starting MediaPipe pose analysis for: ${localFilePath}`);
+          
+          const pythonResult = await new Promise<any>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('MediaPipe processing timeout after 60 seconds'));
+            }, 60000);
             
-            if (error) {
-              console.error('MediaPipe processing error:', error.message);
-              console.error('Stderr output:', stderr);
-              return reject(new Error(`MediaPipe failed: ${stderr || error.message}`));
-            }
-
-            if (!stdout || stdout.trim().length === 0) {
-              return reject(new Error('MediaPipe produced no output'));
-            }
-
-            try {
-              const parsed = JSON.parse(stdout.trim());
-              if (parsed.error) {
-                return reject(new Error(`MediaPipe error: ${parsed.error}`));
-              }
+            exec(`timeout 30s python3 server/video-analysis-simple.py "${localFilePath}"`, {
+              maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+            }, (error: any, stdout: string, stderr: string) => {
+              clearTimeout(timeout);
               
-              console.log(`MediaPipe analysis completed: ${parsed.total_frames} frames processed`);
-              resolve(parsed);
-            } catch (parseError) {
-              console.error('Failed to parse MediaPipe JSON output:', parseError);
-              console.error('Raw stdout (first 500 chars):', stdout.substring(0, 500));
-              reject(new Error('Invalid MediaPipe JSON response'));
-            }
-          });
-        });
+              if (error) {
+                console.error('MediaPipe processing error:', error.message);
+                console.error('Stderr output:', stderr);
+                return reject(new Error(`MediaPipe failed: ${stderr || error.message}`));
+              }
 
-        biomechanicalData = pythonResult;
-        
-      } catch (error: any) {
-        console.error(`MediaPipe biomechanical extraction failed: ${error.message}`);
-        biomechanicalData = null;
+              if (!stdout || stdout.trim().length === 0) {
+                return reject(new Error('MediaPipe produced no output'));
+              }
+
+              try {
+                const parsed = JSON.parse(stdout.trim());
+                if (parsed.error) {
+                  return reject(new Error(`MediaPipe error: ${parsed.error}`));
+                }
+                
+                console.log(`MediaPipe analysis completed: ${parsed.total_frames} frames processed`);
+                resolve(parsed);
+              } catch (parseError) {
+                console.error('Failed to parse MediaPipe JSON output:', parseError);
+                console.error('Raw stdout (first 500 chars):', stdout.substring(0, 500));
+                reject(new Error('Invalid MediaPipe JSON response'));
+              }
+            });
+          });
+
+          biomechanicalData = pythonResult;
+          
+        } catch (error: any) {
+          console.error(`MediaPipe biomechanical extraction failed: ${error.message}`);
+          biomechanicalData = null;
+        }
+      } else {
+        console.log('⚠️  Video stored in Azure Blob Storage - MediaPipe analysis will be done on-demand');
       }
 
       // Create video analysis entry with processing status
@@ -9096,7 +9175,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         userId: user.id,
         name: name.trim(),
         description: description?.trim() || null,
-        fileUrl: `/uploads/video-analysis/${uniqueFilename}`,
+        fileUrl: fileUrl,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
         status: 'processing' as const,
