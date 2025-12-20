@@ -118,7 +118,7 @@ export default function CoachesPage() {
               <select
                 value={selectedSpecialty}
                 onChange={(e) => setSelectedSpecialty(e.target.value)}
-                className="w-full p-2 border border-input bg-background rounded-md"
+                className="w-full p-2 border border-input bg-slate-900 text-white rounded-md"
               >
                 <option value="all">All Specialties</option>
                 {allSpecialties.map(specialty => (
