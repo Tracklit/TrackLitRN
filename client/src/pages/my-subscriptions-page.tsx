@@ -144,7 +144,7 @@ export default function MySubscriptionsPage() {
                     Subscribe to coaches to get personalized training and guidance
                   </p>
                   <Button asChild>
-                    <Link href="/explore">Find Coaches</Link>
+                    <Link href="/coaches">Find Coaches</Link>
                   </Button>
                 </CardContent>
               </Card>
