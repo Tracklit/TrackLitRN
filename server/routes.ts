@@ -4135,7 +4135,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
+      console.log('📤 Exercise library upload attempt:', {
+        hasFile: !!req.file,
+        bodyKeys: Object.keys(req.body),
+        contentType: req.headers['content-type']
+      });
+      
       if (!req.file) {
+        console.error('❌ No file received. Body:', req.body);
         return res.status(400).json({ error: "No file uploaded" });
       }
       
