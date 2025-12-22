@@ -310,7 +310,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#010a18] text-white">
+    <div className="min-h-screen bg-[#010a18] text-white pb-24">
       {/* Header */}
       <div className="pt-20 pb-6">
         <div className="max-w-4xl mx-auto px-4">
@@ -320,7 +320,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 pb-24 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 space-y-6">
         
         {/* Profile Header Card */}
         <Card className="bg-[#0a1529] border-blue-800/30">
