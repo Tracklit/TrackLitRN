@@ -13,16 +13,17 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   console.log(`Making ${method} request to ${url}`, data);
-  
+
   try {
+    // Check if data is FormData (for file uploads)
+    const isFormData = data instanceof FormData;
+    
     const res = await fetch(url, {
       method,
-      headers: data ? { "Content-Type": "application/json" } : {},
-      body: data ? JSON.stringify(data) : undefined,
+      headers: isFormData ? {} : (data ? { "Content-Type": "application/json" } : {}),
+      body: isFormData ? data as FormData : (data ? JSON.stringify(data) : undefined),
       credentials: "include",
-    });
-    
-    console.log(`Response status: ${res.status}`);
+    });    console.log(`Response status: ${res.status}`);
     
     if (res.status === 401 && url !== '/api/login') {
       console.error('Authentication error - user not authenticated');
