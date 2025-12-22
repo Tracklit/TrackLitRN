@@ -4047,6 +4047,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(exerciseLibrary)
         .where(whereCondition);
       
+      console.log('📚 Exercise library GET request:', {
+        userId: req.user!.id,
+        page,
+        typeFilter: type || 'none',
+        exercisesReturned: exercises.length,
+        totalCount: totalCount[0].count
+      });
+      
       res.json({
         exercises,
         totalCount: totalCount[0].count,
