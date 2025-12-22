@@ -1,6 +1,7 @@
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { v4 as uuidv4 } from 'uuid';
 
+const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING || '';
 const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME || 'stkvnx2h6p44qw4';
 const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY || '';
 
@@ -18,21 +19,33 @@ let blobServiceClient: BlobServiceClient | null = null;
 
 /**
  * Initialize Azure Blob Storage client
+ * Tries connection string first (works with shared key access disabled),
+ * falls back to shared key credential if connection string is not available
  */
 export function initializeBlobStorage() {
-  if (!accountName || !accountKey) {
+  try {
+    // Method 1: Try connection string first (recommended, works even if shared key access is disabled)
+    if (connectionString) {
+      console.log('Initializing Azure Blob Storage with connection string...');
+      blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+      console.log('✅ Azure Blob Storage initialized successfully with connection string');
+      return blobServiceClient;
+    }
+    
+    // Method 2: Fall back to shared key credential
+    if (accountName && accountKey) {
+      console.log('Initializing Azure Blob Storage with shared key credential...');
+      const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
+      blobServiceClient = new BlobServiceClient(
+        `https://${accountName}.blob.core.windows.net`,
+        sharedKeyCredential
+      );
+      console.log('✅ Azure Blob Storage initialized successfully with shared key');
+      return blobServiceClient;
+    }
+    
     console.warn('⚠️  Azure Storage credentials not configured. Files will be stored locally (not persistent across restarts).');
     return null;
-  }
-
-  try {
-    const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
-    blobServiceClient = new BlobServiceClient(
-      `https://${accountName}.blob.core.windows.net`,
-      sharedKeyCredential
-    );
-    console.log('✅ Azure Blob Storage initialized successfully');
-    return blobServiceClient;
   } catch (error) {
     console.error('❌ Failed to initialize Azure Blob Storage:', error);
     return null;
