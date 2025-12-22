@@ -320,7 +320,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 pb-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 pb-24 space-y-6">
         
         {/* Profile Header Card */}
         <Card className="bg-[#0a1529] border-blue-800/30">
