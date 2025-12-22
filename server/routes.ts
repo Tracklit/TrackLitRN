@@ -4237,13 +4237,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
         isPublic: isPublic === 'true',
-        tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : []
+        tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : [],
+        videoAnalysisId: null,
+        analysisData: null
       };
+      
+      console.log('💾 Inserting exercise into database:', {
+        userId: user.id,
+        name: exerciseData.name,
+        type: exerciseData.type,
+        fileUrl: exerciseData.fileUrl,
+        isPublic: exerciseData.isPublic
+      });
       
       const [newExercise] = await db
         .insert(exerciseLibrary)
         .values(exerciseData)
         .returning();
+      
+      console.log('✅ Exercise saved successfully:', {
+        id: newExercise.id,
+        userId: newExercise.userId,
+        name: newExercise.name,
+        createdAt: newExercise.createdAt
+      });
       
       res.status(201).json(newExercise);
     } catch (error: any) {
