@@ -525,6 +525,80 @@ export default function AuthPage() {
                   />
 
                   <FormField
+                    control={registerForm.control as any}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Age (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter your age"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={registerForm.control as any}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gender (Optional)</FormLabel>
+                        <Select
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select your gender" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="male">Male</SelectItem>
+                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                            <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={registerForm.control as any}
+                    name="trainingGoal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Training Goal (Optional)</FormLabel>
+                        <Select
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="What's your primary goal?" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="improve_speed">Improve Speed</SelectItem>
+                            <SelectItem value="build_endurance">Build Endurance</SelectItem>
+                            <SelectItem value="increase_strength">Increase Strength</SelectItem>
+                            <SelectItem value="injury_recovery">Injury Recovery</SelectItem>
+                            <SelectItem value="competition_prep">Competition Prep</SelectItem>
+                            <SelectItem value="general_fitness">General Fitness</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
                     control={registerForm.control as any}       
                     name="password"
                     render={({ field }) => (
