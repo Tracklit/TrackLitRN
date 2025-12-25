@@ -25,6 +25,17 @@ export const users = pgTable("users", {
   isBlocked: boolean("is_blocked").default(false), // For admin blocking
   isPrivate: boolean("is_private").default(false), // Privacy setting for profile visibility
   specialties: text("specialties").array(), // Track and field specialties for coaches
+  age: integer("age"), // User's age
+  gender: text("gender"), // User's gender (male, female, other, prefer_not_to_say)
+  trainingGoal: text("training_goal"), // User's training goal
+  injuryStatus: text("injury_status").default("none"), // Current injury status
+  sleepHours: real("sleep_hours").default(7.0), // Average hours of sleep per night
+  sleepQuality: text("sleep_quality").default("good"), // Sleep quality (poor, fair, good, excellent)
+  trainingDaysPerWeek: integer("training_days_per_week").default(3), // Training frequency
+  mood: text("mood").default("neutral"), // Current mood (poor, low, neutral, good, great)
+  streakCount: integer("streak_count").default(0), // Login/activity streak
+  badges: text("badges").array(), // Earned badges/achievements
+  coachMode: text("coach_mode").default("supportive"), // AI coach personality (supportive, motivational, analytical, tough_love)
   createdAt: timestamp("created_at").defaultNow(),
 });
 

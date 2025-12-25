@@ -37,6 +37,15 @@ const profileFormSchema = z.object({
   defaultClubId: z.number().nullable().optional(),
   isPrivate: z.boolean().optional(),
   specialties: z.array(z.string()).optional(),
+  age: z.number().optional(),
+  gender: z.string().optional(),
+  trainingGoal: z.string().optional(),
+  injuryStatus: z.string().optional(),
+  sleepHours: z.number().optional(),
+  sleepQuality: z.string().optional(),
+  trainingDaysPerWeek: z.number().optional(),
+  mood: z.string().optional(),
+  coachMode: z.string().optional(),
 });
 
 // Public profile form schema
@@ -146,6 +155,15 @@ export default function ProfilePage() {
       defaultClubId: user?.defaultClubId || null,
       isPrivate: user?.isPrivate || false,
       specialties: user?.specialties || [],
+      age: user?.age || undefined,
+      gender: user?.gender || '',
+      trainingGoal: user?.trainingGoal || '',
+      injuryStatus: user?.injuryStatus || 'none',
+      sleepHours: user?.sleepHours || 7.0,
+      sleepQuality: user?.sleepQuality || 'good',
+      trainingDaysPerWeek: user?.trainingDaysPerWeek || 3,
+      mood: user?.mood || 'neutral',
+      coachMode: user?.coachMode || 'supportive',
     },
   });
 
