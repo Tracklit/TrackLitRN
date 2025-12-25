@@ -28,6 +28,32 @@ import { getBaseUrl } from "./utils/url-helper";
 import { initializeBlobStorage, uploadToBlob, isBlobStorageAvailable, BlobContainer } from "./azure-storage";
 
 // Coach-athlete relationship API functions will be moved inside registerRoutes
+// Age calculation utility
+function calculateAge(dateOfBirth: string | Date | null | undefined): number | null {
+  if (!dateOfBirth) return null;
+  
+  try {
+    const birthDate = dateOfBirth instanceof Date ? dateOfBirth : new Date(dateOfBirth);
+    const today = new Date();
+    
+    // Validate date
+    if (isNaN(birthDate.getTime())) return null;
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    // Adjust if birthday hasn't occurred this year
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age >= 0 ? age : null;
+  } catch (error) {
+    console.error('Error calculating age:', error);
+    return null;
+  }
+}
+
 
 // Remove unused import
 

@@ -29,6 +29,29 @@ import { TRACK_FIELD_SPECIALTIES } from '@shared/constants';
 import { Checkbox } from '@/components/ui/checkbox';
 
 // Profile form schema
+// Helper function to calculate age from date of birth (client-side display only)
+function calculateAgeForDisplay(dateOfBirth: string | null | undefined): string {
+  if (!dateOfBirth) return 'Not set';
+  
+  try {
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    
+    if (isNaN(birthDate.getTime())) return 'Invalid date';
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age >= 0 ? age.toString() : 'Invalid';
+  } catch (error) {
+    return 'Invalid date';
+  }
+}
+
 const profileFormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   email: z.string().email({ message: "Invalid email address" }),
