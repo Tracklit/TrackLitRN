@@ -284,6 +284,17 @@ export default function ProfilePage() {
       country: user?.country || '',
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
       defaultClubId: user?.defaultClubId || null,
+      isPrivate: user?.isPrivate || false,
+      specialties: user?.specialties || [],
+      age: user?.age || undefined,
+      gender: user?.gender || '',
+      trainingGoal: user?.trainingGoal || '',
+      injuryStatus: user?.injuryStatus || '',
+      sleepHours: user?.sleepHours || undefined,
+      sleepQuality: user?.sleepQuality || '',
+      trainingDaysPerWeek: user?.trainingDaysPerWeek || undefined,
+      mood: user?.mood || '',
+      coachMode: user?.coachMode || '',
     },
   });
 
@@ -426,7 +437,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 pb-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 pb-24 space-y-6">
         
         {/* Profile Header Card */}
         <Card className="bg-[#0a1529] border-blue-800/30">
