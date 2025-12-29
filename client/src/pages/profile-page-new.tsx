@@ -40,7 +40,7 @@ const profileFormSchema = z.object({
   defaultClubId: z.number().nullable().optional(),
   isPrivate: z.boolean().optional(),
   specialties: z.array(z.string()).optional(),
-  age: z.number().optional(),
+  // age is auto-calculated from dateOfBirth, not editable
   gender: z.string().optional(),
   trainingGoal: z.string().optional(),
   injuryStatus: z.string().optional(),
@@ -286,7 +286,7 @@ export default function ProfilePage() {
       defaultClubId: user?.defaultClubId || null,
       isPrivate: user?.isPrivate || false,
       specialties: user?.specialties || [],
-      age: user?.age || undefined,
+      // age removed - it's auto-calculated
       gender: user?.gender || '',
       trainingGoal: user?.trainingGoal || '',
       injuryStatus: user?.injuryStatus || '',
@@ -825,24 +825,16 @@ export default function ProfilePage() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="age"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Age</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Your age"
-                          value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Age - Read-only, auto-calculated from date of birth */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none">Age</label>
+                  <div className="text-sm p-3 rounded-md border border-input bg-muted/50">
+                    {user?.age ? `${user.age} years old` : 'Set your date of birth to calculate age'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically calculated from your date of birth
+                  </p>
+                </div>
 
                 <FormField
                   control={form.control}

@@ -2258,26 +2258,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       
       // Only allow specific fields to be updated
-      const allowedUpdates = ["name", "email", "country", "dateOfBirth", "defaultClubId", "isPrivate"];
-      
+      const allowedUpdates = [
+        "name", "email", "country", "dateOfBirth", "defaultClubId", "isPrivate",
+        "gender", "trainingGoal", "injuryStatus", "sleepHours", "sleepQuality",
+        "trainingDaysPerWeek", "mood", "coachMode", "specialties"
+      ];
+
       const updates: Record<string, any> = {};
-      
+
       for (const field of allowedUpdates) {
         if (req.body[field] !== undefined) {
           updates[field] = req.body[field];
         }
       }
-      
-
       // Convert dateOfBirth string to Date object if present, handle empty strings
       if (updates.dateOfBirth !== undefined) {
         if (updates.dateOfBirth === '' || updates.dateOfBirth === null) {
           // Convert empty string or null to null for database
           updates.dateOfBirth = null;
+          updates.age = null;
         } else if (typeof updates.dateOfBirth === 'string') {
           const parsedDate = new Date(updates.dateOfBirth);
           // Only set if valid date, otherwise set to null
           updates.dateOfBirth = isNaN(parsedDate.getTime()) ? null : parsedDate;
+          // Auto-calculate age from dateOfBirth
+          updates.age = calculateAge(updates.dateOfBirth);
         }
       }
       // Normalize isPrivate if sent as string (common from form submissions)
