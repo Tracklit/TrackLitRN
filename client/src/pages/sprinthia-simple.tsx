@@ -165,9 +165,8 @@ export default function SprinthiaSimple() {
   };
 
   return (
-    <div className="min-h-screen bg-[#010a18] text-white pb-24" data-sprinthia-page>
-      <div className="flex flex-col h-full">
-        <div className="flex flex-1">
+    <div className="h-screen bg-[#010a18] text-white flex flex-col" data-sprinthia-page>
+      <div className="flex flex-1 overflow-hidden">
           {/* Conversation History Sidebar */}
           {showHistory && (
             <div className="w-80 border-r border-border bg-background/50 flex flex-col">
@@ -221,7 +220,7 @@ export default function SprinthiaSimple() {
           
           <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full">
             {/* Header */}
-          <div className="p-6 border-b border-white/20 bg-transparent">
+          <div className="p-6 pl-16 border-b border-white/20 bg-transparent">
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <h1 className="text-2xl font-bold text-white">
@@ -346,7 +345,7 @@ export default function SprinthiaSimple() {
           </div>
 
           {/* Input */}
-          <div className="p-6 pb-20 border-t border-white/20 bg-transparent">
+          <div className="p-6 pb-24 border-t border-white/20 bg-transparent">
             <div className="flex gap-3 max-w-4xl mx-auto">
               <div className="flex-1 relative">
                 <Input
@@ -372,7 +371,6 @@ export default function SprinthiaSimple() {
                 You've used all your prompts. Upgrade to Pro or Star to continue using Sprinthia.
               </p>
             )}
-          </div>
           </div>
         </div>
       </div>
