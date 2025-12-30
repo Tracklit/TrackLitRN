@@ -7051,28 +7051,69 @@ User message: ${content}`;
         console.error("Error fetching program context:", error);
       }
 
-      // Generate AI response using enhanced OpenAI integration
-      const { getChatCompletion } = await import("./openai");
+      // Call Aria API with full user profile context
+      const ariaApiUrl = process.env.ARIA_API_URL || 'https://aria-dev-api.azurewebsites.net';
       
-      const aiResponse = await getChatCompletion(message, programContext);
+      // Build comprehensive user context for Aria
+      const userContextForAria = `${message}${programContext ? '\n\n' + programContext : ''}`;
+      
+      try {
+        const ariaResponse = await fetch(`${ariaApiUrl}/ask`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: user.id.toString(),
+            user_input: userContextForAria
+          })
+        });
 
-      // Save AI response
-      await dbStorage.createSprinthiaMessage({
-        conversationId: currentConversationId,
-        role: "assistant",
-        content: aiResponse,
-        promptCost: 0
-      });
+        if (!ariaResponse.ok) {
+          const errorText = await ariaResponse.text();
+          console.error(`Aria API error (${ariaResponse.status}):`, errorText);
+          throw new Error(`Aria API returned ${ariaResponse.status}`);
+        }
 
-      // Deduct prompt from user (unless they're Star tier)
-      if (user.subscriptionTier !== 'star') {
-        await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts - 1);
+        const ariaData = await ariaResponse.json();
+        const aiResponse = ariaData.recommendation || ariaData.response || "I'm here to help with your training. Could you please rephrase your question?";
+
+        // Save AI response
+        await dbStorage.createSprinthiaMessage({
+          conversationId: currentConversationId,
+          role: "assistant",
+          content: aiResponse,
+          promptCost: 0
+        });
+
+        // Deduct prompt from user (unless they're Star tier)
+        if (user.subscriptionTier !== 'star') {
+          await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts - 1);
+        }
+
+        res.json({ 
+          conversationId: currentConversationId,
+          response: aiResponse 
+        });
+      } catch (ariaError: any) {
+        console.error("Aria API call failed:", ariaError);
+        
+        // Fallback: If Aria API fails, return a helpful error message
+        const fallbackMessage = "I'm having trouble connecting to my AI coach brain right now. Please try again in a moment!";
+        
+        // Save fallback message
+        await dbStorage.createSprinthiaMessage({
+          conversationId: currentConversationId,
+          role: "assistant",
+          content: fallbackMessage,
+          promptCost: 0
+        });
+
+        res.json({ 
+          conversationId: currentConversationId,
+          response: fallbackMessage 
+        });
       }
-
-      res.json({ 
-        conversationId: currentConversationId,
-        response: aiResponse 
-      });
     } catch (error: any) {
       console.error("Error in Sprinthia chat:", error);
       res.status(500).json({ error: "Failed to process chat message" });
