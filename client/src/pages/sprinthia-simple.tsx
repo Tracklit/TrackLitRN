@@ -165,11 +165,9 @@ export default function SprinthiaSimple() {
   };
 
   return (
-    <div className="flex h-screen" data-sprinthia-page style={{ 
-      background: 'linear-gradient(135deg, #8b5cf6 0%, #1e40af 100%)' 
-    }}>
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 flex">
+    <div className="min-h-screen bg-[#010a18] text-white pb-24" data-sprinthia-page>
+      <div className="flex flex-col h-full">
+        <div className="flex flex-1">
           {/* Conversation History Sidebar */}
           {showHistory && (
             <div className="w-80 border-r border-border bg-background/50 flex flex-col">
