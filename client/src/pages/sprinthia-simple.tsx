@@ -220,7 +220,7 @@ export default function SprinthiaSimple() {
           
           <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full">
             {/* Header */}
-          <div className="p-6 pl-16 border-b border-white/20 bg-transparent">
+          <div className="p-6 pl-20 pt-20 border-b border-white/20 bg-transparent">
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <h1 className="text-2xl font-bold text-white">
