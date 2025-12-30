@@ -7057,6 +7057,44 @@ User message: ${content}`;
       // Build comprehensive user context for Aria
       const userContextForAria = `${message}${programContext ? '\n\n' + programContext : ''}`;
       
+      // Helper function to clean AI response
+      const cleanAIResponse = (response: string, userMessage: string): string => {
+        if (!response) return response;
+        
+        let cleaned = response;
+        
+        // Remove JSON formatting artifacts
+        cleaned = cleaned.replace(/^```json\s*/i, '');
+        cleaned = cleaned.replace(/```\s*$/i, '');
+        cleaned = cleaned.replace(/^\{\s*"(?:analysis|recommendation|response)":\s*/i, '');
+        cleaned = cleaned.replace(/,?\s*"bibliography":\s*\[[\s\S]*?\]\s*\}\s*$/i, '');
+        cleaned = cleaned.replace(/^\[\s*/, '').replace(/\s*\]\s*$/, '');
+        cleaned = cleaned.trim();
+        
+        // Remove bibliography section unless user explicitly asks for sources/references/bibliography
+        const askingForSources = /\b(source|reference|bibliograph|citation|study|research|paper)\b/i.test(userMessage);
+        if (!askingForSources) {
+          // Remove bibliography heading and content
+          cleaned = cleaned.replace(/\*\*Bibliography:\*\*[\s\S]*?(?=\n\n|$)/gi, '');
+          cleaned = cleaned.replace(/\*\*References:\*\*[\s\S]*?(?=\n\n|$)/gi, '');
+          cleaned = cleaned.replace(/\*\*Sources:\*\*[\s\S]*?(?=\n\n|$)/gi, '');
+          // Clean up any trailing bibliography-like content
+          cleaned = cleaned.replace(/Check out\s+\\"[^"]*\\"[^"]*for insights into[\s\S]*$/i, '');
+          cleaned = cleaned.replace(/Additionally,?\s+the book\s+\\"[^"]*\\"[\s\S]*$/i, '');
+        }
+        
+        // Clean up extra whitespace
+        cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+        cleaned = cleaned.trim();
+        
+        // Remove leading/trailing quotes if present
+        if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+          cleaned = cleaned.slice(1, -1);
+        }
+        
+        return cleaned;
+      };
+      
       try {
         const ariaResponse = await fetch(`${ariaApiUrl}/ask`, {
           method: 'POST',
@@ -7076,7 +7114,10 @@ User message: ${content}`;
         }
 
         const ariaData = await ariaResponse.json();
-        const aiResponse = ariaData.recommendation || ariaData.response || "I'm here to help with your training. Could you please rephrase your question?";
+        let aiResponse = ariaData.recommendation || ariaData.response || "I'm here to help with your training. Could you please rephrase your question?";
+        
+        // Clean the response
+        aiResponse = cleanAIResponse(aiResponse, message);
 
         // Save AI response
         await dbStorage.createSprinthiaMessage({
