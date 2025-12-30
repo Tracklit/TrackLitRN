@@ -223,9 +223,16 @@ export default function SprinthiaSimple() {
           <div className="p-6 pl-20 pt-20 border-b border-white/20 bg-transparent">
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-white">
-                  Sprinthia AI Coach
-                </h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold text-white">
+                    Sprinthia AI Coach
+                  </h1>
+                  <img 
+                    src="/images/powered-by-aria.png" 
+                    alt="Powered by Aria" 
+                    className="h-8 w-auto object-contain"
+                  />
+                </div>
                 <p className="text-white/80 text-sm">Your AI track and field coach • Always available</p>
               </div>
               <div className="flex flex-col items-end gap-2">
