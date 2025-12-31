@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Send, User, Copy, Check, History, Plus } from 'lucide-react';
+import { Send, User, Copy, Check, History, Plus, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatMessage {
@@ -33,6 +33,7 @@ export default function SprinthiaSimple() {
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [savingMessageId, setSavingMessageId] = useState<string | null>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -164,8 +165,44 @@ export default function SprinthiaSimple() {
     }
   };
 
+  const handleSaveAsProgram = async (content: string, messageId: string) => {
+    try {
+      setSavingMessageId(messageId);
+      
+      // Create a program from the AI response
+      const response = await apiRequest('POST', '/api/programs', {
+        name: 'Training Plan from Sprinthia',
+        description: content.substring(0, 500) + (content.length > 500 ? '...' : ''),
+        content: content,
+        category: 'training',
+        level: 'intermediate',
+        duration: 'Custom',
+        workoutsPerWeek: 0
+      });
+
+      if (response.ok) {
+        const program = await response.json();
+        toast({
+          title: "Program saved!",
+          description: "Training plan saved to your programs",
+        });
+        setTimeout(() => setSavingMessageId(null), 2000);
+      } else {
+        throw new Error('Failed to save program');
+      }
+    } catch (err) {
+      console.error('Error saving program:', err);
+      toast({
+        title: "Failed to save",
+        description: "Could not save training plan as program",
+        variant: "destructive",
+      });
+      setSavingMessageId(null);
+    }
+  };
+
   return (
-    <div className="h-screen bg-[#010a18] text-white flex flex-col" data-sprinthia-page>
+    <div className="h-screen bg-background text-white flex flex-col" data-sprinthia-page>
       <div className="flex flex-1 overflow-hidden">
           {/* Conversation History Sidebar */}
           {showHistory && (
@@ -311,18 +348,34 @@ export default function SprinthiaSimple() {
                       })}
                     </span>
                     {message.role === 'assistant' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyMessage(message.content, message.id)}
-                        className="h-6 w-6 p-0 hover:bg-muted"
-                      >
-                        {copiedMessageId === message.id ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyMessage(message.content, message.id)}
+                          className="h-6 w-6 p-0 hover:bg-muted"
+                          title="Copy response"
+                        >
+                          {copiedMessageId === message.id ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSaveAsProgram(message.content, message.id)}
+                          className="h-6 w-6 p-0 hover:bg-muted"
+                          title="Save as program"
+                        >
+                          {savingMessageId === message.id ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <Save className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
