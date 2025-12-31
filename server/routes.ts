@@ -7105,17 +7105,21 @@ It supports multilingual interactions, replying in the same language as the athl
         // Remove bibliography section unless user explicitly asks for sources/references/bibliography
         const askingForSources = /\b(source|reference|bibliograph|citation|study|research|paper)\b/i.test(userMessage);
         if (!askingForSources) {
-          // Remove bibliography heading and all content after it
-          cleaned = cleaned.replace(/\*\*Bibliography:\*\*[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\*\*References:\*\*[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\*\*Sources:\*\*[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\n\nBibliography:[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\n\nReferences:[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\n\nSources:[\s\S]*$/gi, '');
-          // Clean up any trailing bibliography-like content
-          cleaned = cleaned.replace(/Check out\s+["""][^"""]*["""][^"""]*for insights into[\s\S]*$/i, '');
-          cleaned = cleaned.replace(/Additionally,?\s+the book\s+["""][^"""]*["""][\s\S]*$/i, '');
-          cleaned = cleaned.replace(/For more information,?\s+see[\s\S]*$/i, '');
+          // Remove bibliography with various formats (including quoted versions)
+          cleaned = cleaned.replace(/\*\*[""\u201c\u201d]?bibliography[""\u201c\u201d]?:\*\*[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\*\*[""\u201c\u201d]?references[""\u201c\u201d]?:\*\*[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\*\*[""\u201c\u201d]?sources[""\u201c\u201d]?:\*\*[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\n\n[""\u201c\u201d]?bibliography[""\u201c\u201d]?:[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\n\n[""\u201c\u201d]?references[""\u201c\u201d]?:[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\n\n[""\u201c\u201d]?sources[""\u201c\u201d]?:[\s\S]*$/gi, '');
+          // Remove numbered bibliography entries (1. Author, Title...)
+          cleaned = cleaned.replace(/\n\n[\d]+\.\s+[A-Z][\s\S]*$/i, '');
+          // Remove book/study references
+          cleaned = cleaned.replace(/Check out\s+[""\u201c\u201d'][^""\u201c\u201d']*[""\u201c\u201d'][\s\S]*$/i, '');
+          cleaned = cleaned.replace(/Additionally,?\s+(the book|studies|research)[\s\S]*$/i, '');
+          cleaned = cleaned.replace(/For (more information|further reading|insights),?\s+see[\s\S]*$/i, '');
+          // Remove academic citations in parentheses
+          cleaned = cleaned.replace(/\([A-Z][a-z]+,\s+[A-Z]\.[\s\S]*?\d{4}\)[\s\S]*$/i, '');
         }
         
         // Clean up extra whitespace
@@ -7134,17 +7138,32 @@ It supports multilingual interactions, replying in the same language as the athl
       };
       
       try {
+        const requestPayload = {
+          user_id: user.id.toString(),
+          user_input: userContextForAria,
+          system_prompt: sprintGPTPrompt,
+          conversation_history: conversationHistory
+        };
+        
+        console.log('📤 Sending to Aria API:', {
+          user_id: requestPayload.user_id,
+          user_input_length: requestPayload.user_input.length,
+          system_prompt_length: requestPayload.system_prompt.length,
+          conversation_history_count: requestPayload.conversation_history.length,
+          aria_url: ariaApiUrl
+        });
+        
+        // IMPORTANT: Aria API must accept and use these parameters:
+        // - system_prompt: Should be used as the system message to OpenAI
+        // - conversation_history: Should be included in the messages array
+        // If Aria API is not using these, responses will remain academic/formal
+        
         const ariaResponse = await fetch(`${ariaApiUrl}/ask`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            user_id: user.id.toString(),
-            user_input: userContextForAria,
-            system_prompt: sprintGPTPrompt,
-            conversation_history: conversationHistory
-          })
+          body: JSON.stringify(requestPayload)
         });
 
         if (!ariaResponse.ok) {
@@ -7156,8 +7175,12 @@ It supports multilingual interactions, replying in the same language as the athl
         const ariaData = await ariaResponse.json();
         let aiResponse = ariaData.recommendation || ariaData.response || "I'm here to help with your training. Could you please rephrase your question?";
         
+        console.log('📥 Received from Aria (before cleaning):', aiResponse.substring(0, 200) + '...');
+        
         // Clean the response
         aiResponse = cleanAIResponse(aiResponse, message);
+        
+        console.log('✨ After cleaning:', aiResponse.substring(0, 200) + '...');
 
         // Save AI response
         await dbStorage.createSprinthiaMessage({
