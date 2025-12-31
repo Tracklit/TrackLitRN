@@ -277,7 +277,7 @@ export default function SprinthiaSimple() {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowHistory(!showHistory)}
-                  className="flex items-center gap-1 border-white/25 text-white hover:text-white hover:bg-white/10"
+                  className="flex items-center gap-1 bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500 hover:text-black hover:border-yellow-500 font-semibold"
                 >
                   <History className="h-4 w-4" />
                   History
