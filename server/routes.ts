@@ -7063,24 +7063,40 @@ User message: ${content}`;
         
         let cleaned = response;
         
-        // Remove JSON formatting artifacts
-        cleaned = cleaned.replace(/^```json\s*/i, '');
+        // More aggressive JSON removal - handle various JSON wrapper formats
+        // Remove markdown code blocks
+        cleaned = cleaned.replace(/^```(?:json)?\s*/i, '');
         cleaned = cleaned.replace(/```\s*$/i, '');
-        cleaned = cleaned.replace(/^\{\s*"(?:analysis|recommendation|response)":\s*/i, '');
-        cleaned = cleaned.replace(/,?\s*"bibliography":\s*\[[\s\S]*?\]\s*\}\s*$/i, '');
+        
+        // Remove JSON object wrapper with any field name
+        cleaned = cleaned.replace(/^\{\s*"[^"]+"\s*:\s*"/i, '');
+        cleaned = cleaned.replace(/"\s*,?\s*"[^"]*"\s*:\s*\[[\s\S]*?\]\s*\}\s*$/i, '');
+        
+        // Remove array brackets
         cleaned = cleaned.replace(/^\[\s*/, '').replace(/\s*\]\s*$/, '');
+        
+        // Remove any remaining JSON structure at start/end
+        cleaned = cleaned.replace(/^\{\s*/i, '').replace(/\s*\}\s*$/i, '');
+        
+        // Remove escaped quotes
+        cleaned = cleaned.replace(/\\"/g, '"');
+        
         cleaned = cleaned.trim();
         
         // Remove bibliography section unless user explicitly asks for sources/references/bibliography
         const askingForSources = /\b(source|reference|bibliograph|citation|study|research|paper)\b/i.test(userMessage);
         if (!askingForSources) {
-          // Remove bibliography heading and content
-          cleaned = cleaned.replace(/\*\*Bibliography:\*\*[\s\S]*?(?=\n\n|$)/gi, '');
-          cleaned = cleaned.replace(/\*\*References:\*\*[\s\S]*?(?=\n\n|$)/gi, '');
-          cleaned = cleaned.replace(/\*\*Sources:\*\*[\s\S]*?(?=\n\n|$)/gi, '');
+          // Remove bibliography heading and all content after it
+          cleaned = cleaned.replace(/\*\*Bibliography:\*\*[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\*\*References:\*\*[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\*\*Sources:\*\*[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\n\nBibliography:[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\n\nReferences:[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\n\nSources:[\s\S]*$/gi, '');
           // Clean up any trailing bibliography-like content
-          cleaned = cleaned.replace(/Check out\s+\\"[^"]*\\"[^"]*for insights into[\s\S]*$/i, '');
-          cleaned = cleaned.replace(/Additionally,?\s+the book\s+\\"[^"]*\\"[\s\S]*$/i, '');
+          cleaned = cleaned.replace(/Check out\s+["""][^"""]*["""][^"""]*for insights into[\s\S]*$/i, '');
+          cleaned = cleaned.replace(/Additionally,?\s+the book\s+["""][^"""]*["""][\s\S]*$/i, '');
+          cleaned = cleaned.replace(/For more information,?\s+see[\s\S]*$/i, '');
         }
         
         // Clean up extra whitespace
@@ -7089,6 +7105,9 @@ User message: ${content}`;
         
         // Remove leading/trailing quotes if present
         if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+          cleaned = cleaned.slice(1, -1);
+        }
+        if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
           cleaned = cleaned.slice(1, -1);
         }
         
