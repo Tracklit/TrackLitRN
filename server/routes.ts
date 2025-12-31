@@ -6954,6 +6954,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         promptCost: 1
       });
 
+      // Fetch conversation history (excluding the message we just saved)
+      let conversationHistory = [];
+      try {
+        const allMessages = await dbStorage.getSprinthiaMessages(currentConversationId);
+        // Get last 10 messages (excluding the current one) for context
+        conversationHistory = allMessages.slice(-11, -1).map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+      } catch (error: any) {
+        console.error("Error fetching conversation history:", error);
+      }
+
       // Fetch user's program context for AI
       let programContext = "";
       try {
@@ -7129,7 +7142,8 @@ It supports multilingual interactions, replying in the same language as the athl
           body: JSON.stringify({
             user_id: user.id.toString(),
             user_input: userContextForAria,
-            system_prompt: sprintGPTPrompt
+            system_prompt: sprintGPTPrompt,
+            conversation_history: conversationHistory
           })
         });
 
