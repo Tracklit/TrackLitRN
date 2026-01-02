@@ -7777,14 +7777,20 @@ Keep the response professional, evidence-based, and specific to track and field 
       const { otherUserId } = req.body;
       const currentUserId = req.user.id;
 
-      if (!otherUserId || currentUserId === otherUserId) {
+      console.log('Create conversation request:', { otherUserId, currentUserId, otherUserIdType: typeof otherUserId });
+
+      if (!otherUserId || isNaN(Number(otherUserId)) || Number(otherUserId) === currentUserId) {
+        console.log('Invalid user ID validation failed:', { otherUserId, currentUserId });
         return res.status(400).json({ error: "Invalid user ID" });
       }
+
+      // Parse to number to ensure consistency
+      const parsedOtherUserId = Number(otherUserId);
 
       // Check if conversation already exists
       const existingConversations = await dbStorage.getUserConversations(currentUserId);
       const existingConversation = existingConversations.find(
-        (conv: any) => conv.otherUser.id === otherUserId
+        (conv: any) => conv.otherUser.id === parsedOtherUserId
       );
 
       if (existingConversation) {
@@ -7793,8 +7799,8 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       // Create new conversation
       const conversation = await dbStorage.createConversation({
-        user1Id: Math.min(currentUserId, otherUserId),
-        user2Id: Math.max(currentUserId, otherUserId),
+        user1Id: Math.min(currentUserId, parsedOtherUserId),
+        user2Id: Math.max(currentUserId, parsedOtherUserId),
         lastMessageAt: new Date()
       });
 
