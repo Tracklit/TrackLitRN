@@ -94,9 +94,42 @@ export default function MyAthletesPage() {
     removeAthleteMutation.mutate(athleteId);
   };
 
-  const handleMessageAthlete = (athleteId: number) => {
-    // Navigate to messages page with the athlete
-    toast({ title: 'Message feature coming soon!', description: 'Direct messaging will be available in the next update' }); // window.location.href = /chat;
+  const handleMessageAthlete = async (athleteId: number) => {
+    try {
+      // Create or get existing conversation with this athlete
+      const response = await apiRequest('POST', '/api/conversations/create', {
+        body: JSON.stringify({ otherUserId: athleteId })
+      });
+
+      if (response.ok) {
+        const conversation = await response.json();
+        
+        // Store conversation ID in sessionStorage for chat page to auto-select
+        sessionStorage.setItem('openConversationId', conversation.id.toString());
+        
+        toast({
+          title: "Opening chat...",
+          description: "Starting conversation with athlete"
+        });
+        
+        // Navigate to chat page
+        window.location.href = '/chat';
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Failed to start conversation",
+          description: errorData.error || "Please try again",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      console.error('Error starting conversation:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start conversation",
+        variant: "destructive"
+      });
+    }
   };
 
   // Show message if user is not a coach
