@@ -6858,9 +6858,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const { title } = req.body;
+      
+      // Prevent UUID-like strings from being used as titles
+      const isUuidLike = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(title || '');
+      const cleanTitle = (title && !isUuidLike && title.length > 0) ? title : "New Conversation";
+      
       const conversation = await dbStorage.createSprinthiaConversation({
         userId: req.user!.id,
-        title: title || "New Conversation"
+        title: cleanTitle
       });
       res.status(201).json(conversation);
     } catch (error: any) {
@@ -6879,6 +6884,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  // Fix conversation titles that are UUIDs - update them with first message
+  app.post("/api/sprinthia/fix-conversation-titles", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversations = await dbStorage.getSprinthiaConversations(req.user!.id);
+      let fixedCount = 0;
+      
+      for (const conversation of conversations) {
+        // Check if title looks like a UUID or generic title
+        const isUuidLike = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(conversation.title);
+        const needsUpdate = isUuidLike || conversation.title === "New Conversation";
+        
+        if (needsUpdate) {
+          // Get first user message from this conversation
+          const messages = await dbStorage.getSprinthiaMessages(conversation.id);
+          const firstUserMessage = messages.find(m => m.role === 'user');
+          
+          if (firstUserMessage && firstUserMessage.content) {
+            const newTitle = firstUserMessage.content.slice(0, 50) + 
+              (firstUserMessage.content.length > 50 ? "..." : "");
+            
+            // Update conversation title (you'll need to add this method to dbStorage)
+            await dbStorage.updateSprinthiaConversation(conversation.id, { title: newTitle });
+            fixedCount++;
+          }
+        }
+      }
+      
+      res.json({ message: `Fixed ${fixedCount} conversation titles`, fixedCount });
+    } catch (error: any) {
+      console.error("Error fixing conversation titles:", error);
+      res.status(500).json({ error: "Failed to fix conversation titles" });
     }
   });
 
@@ -6939,9 +6980,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create new conversation if none exists
       if (!currentConversationId) {
+        // Prevent UUID-like strings from being used as titles
+        const isUuidLike = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(message || '');
+        const conversationTitle = (message && !isUuidLike && message.trim().length > 0) 
+          ? message.slice(0, 50) + (message.length > 50 ? "..." : "")
+          : "New Conversation";
+        
         const conversation = await dbStorage.createSprinthiaConversation({
           userId: user.id,
-          title: message.slice(0, 50) + (message.length > 50 ? "..." : "")
+          title: conversationTitle
         });
         currentConversationId = conversation.id;
       }
