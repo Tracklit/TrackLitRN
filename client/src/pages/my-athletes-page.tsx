@@ -96,7 +96,7 @@ export default function MyAthletesPage() {
 
   const handleMessageAthlete = (athleteId: number) => {
     // Navigate to messages page with the athlete
-    window.location.href = `/messages/${athleteId}`;
+    toast({ title: 'Message feature coming soon!', description: 'Direct messaging will be available in the next update' }); // window.location.href = /chat;
   };
 
   // Show message if user is not a coach
