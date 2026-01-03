@@ -1,13 +1,12 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';
+import { StatusBar, View, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator, type BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
-  DrawerItem,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -76,7 +75,7 @@ const HomeTabScreen: React.FC<HomeTabProps> = ({ navigation }) => (
     onNavigate={(routeName) => {
       // Some destinations are now stack screens (not bottom tabs).
       if (routeName === 'Feed') {
-        (navigation.getParent() as any)?.navigate?.('Feed');
+        navigation.navigate('Feed');
         return;
       }
       if (routeName === 'Marketplace') {
@@ -110,6 +109,7 @@ const MainTabs: React.FC = () => {
         <Tab.Screen name="Home" component={HomeTabScreen} />
         <Tab.Screen name="Practice" component={PracticeScreen} />
         <Tab.Screen name="Programs" component={ProgramsScreen} />
+        <Tab.Screen name="Feed" component={FeedScreen} />
         <Tab.Screen name="Tools" component={ToolsScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
@@ -121,7 +121,6 @@ const RootNavigator: React.FC = () => (
   <RootStack.Navigator screenOptions={{ headerShown: false }}>
     <RootStack.Screen name="MainTabs" component={MainTabs} />
     <RootStack.Screen name="Sprinthia" component={SprinthiaScreen} />
-    <RootStack.Screen name="Feed" component={FeedScreen} />
     <RootStack.Screen name="Marketplace" component={MarketplaceScreen} />
     <RootStack.Screen name="MarketplaceListingDetail" component={MarketplaceListingDetailScreen} />
     <RootStack.Screen name="MarketplaceCart" component={MarketplaceCartScreen} />
@@ -163,25 +162,239 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   const isGuest = user?.id === 'guest';
+  const isCoach = (user as any)?.isCoach === true;
+  const isAdmin = (user as any)?.role === 'admin';
 
   const navigateIntoAppStack = (params: any) => {
     (props.navigation as any).navigate('AppStack', params);
     props.navigation.closeDrawer();
   };
 
-  const renderIcon = (name: React.ComponentProps<typeof FontAwesome5>['name']) =>
-    ({ color, size }: { color: string; size: number }) => (
-      <FontAwesome5 name={name} size={size} color={color} solid />
+  type MenuItem = {
+    label: string;
+    icon: React.ComponentProps<typeof FontAwesome5>['name'];
+    onPress?: () => void;
+    disabled?: boolean;
+    comingSoon?: boolean;
+    requiresCoach?: boolean;
+    requiresAdmin?: boolean;
+  };
+
+  const MenuRow: React.FC<MenuItem> = ({
+    label,
+    icon,
+    onPress,
+    disabled,
+    comingSoon,
+  }) => {
+    const content = (
+      <View
+        style={[
+          styles.menuRow,
+          disabled && styles.menuRowDisabled,
+        ]}
+      >
+        <View style={styles.menuRowLeft}>
+          <FontAwesome5
+            name={icon}
+            size={14}
+            color={disabled ? theme.colors.muted : theme.colors.sidebarForeground}
+            solid
+            style={styles.menuRowIcon}
+          />
+          <Text
+            variant="small"
+            weight="medium"
+            color={disabled ? 'muted' : 'foreground'}
+          >
+            {label}
+          </Text>
+        </View>
+        {comingSoon && (
+          <View style={styles.comingSoonPill}>
+            <Text variant="caption" color="muted">
+              Coming Soon
+            </Text>
+          </View>
+        )}
+      </View>
     );
 
-  const drawerItemCommon = {
-    labelStyle: styles.drawerItemLabel,
-    style: styles.drawerItem,
-    activeTintColor: theme.colors.sidebarAccent,
-    inactiveTintColor: theme.colors.sidebarForeground,
-    activeBackgroundColor: theme.colors.primary + '22',
-    inactiveBackgroundColor: 'transparent',
-  } as const;
+    if (disabled || !onPress) {
+      return content;
+    }
+
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        style={styles.menuRowTouchable}
+      >
+        {content}
+      </TouchableOpacity>
+    );
+  };
+
+  const sections: { title: string; items: MenuItem[] }[] = [
+    {
+      title: 'Dashboard',
+      items: [
+        {
+          label: 'Dashboard',
+          icon: 'home',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Home' } }),
+        },
+      ],
+    },
+    {
+      title: 'TRAINING',
+      items: [
+        {
+          label: 'Practice',
+          icon: 'dumbbell',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Practice' } }),
+        },
+        {
+          label: 'Programs',
+          icon: 'book',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Programs' } }),
+        },
+        {
+          label: 'Training Tools',
+          icon: 'clock',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Tools' } }),
+        },
+        {
+          label: 'Rehabilitation',
+          icon: 'heart',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Rehab' } }),
+        },
+      ],
+    },
+    {
+      title: 'COMPETITION',
+      items: [
+        {
+          label: 'Meets',
+          icon: 'trophy',
+          disabled: true,
+          comingSoon: true,
+        },
+        {
+          label: 'Results',
+          icon: 'chart-line',
+          disabled: true,
+          comingSoon: true,
+        },
+      ],
+    },
+    {
+      title: 'MARKETPLACE',
+      items: [
+        {
+          label: 'Marketplace',
+          icon: 'shopping-cart',
+          disabled: true,
+          comingSoon: true,
+        },
+      ],
+    },
+    {
+      title: 'SOCIAL',
+      items: [
+        {
+          label: 'Connections',
+          icon: 'user-check',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Connections' } }),
+        },
+        {
+          label: 'Feed',
+          icon: 'newspaper',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Feed' } }),
+        },
+        {
+          label: 'Group Chat',
+          icon: 'comments',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Chat' } }),
+        },
+        {
+          label: 'My Athletes',
+          icon: 'bullseye',
+          requiresCoach: true,
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Athletes' } }),
+        },
+        {
+          label: 'Roster Stats',
+          icon: 'chart-line',
+          requiresCoach: true,
+          disabled: true,
+          comingSoon: true,
+        },
+        {
+          label: 'Athletes',
+          icon: 'users',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Athletes' } }),
+        },
+        {
+          label: 'Coaches',
+          icon: 'award',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Coaches' } }),
+        },
+        {
+          label: 'Groups',
+          icon: 'users',
+          disabled: true,
+          comingSoon: true,
+        },
+      ],
+    },
+    {
+      title: 'ADMIN',
+      items: [
+        {
+          label: 'Admin Panel',
+          icon: 'shield-alt',
+          requiresAdmin: true,
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Settings' } }),
+        },
+      ],
+    },
+    {
+      title: 'ACCOUNT',
+      items: [
+        {
+          label: 'Spikes',
+          icon: 'coins',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Spikes' } }),
+        },
+        {
+          label: 'Profile Settings',
+          icon: 'cog',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Profile' } }),
+        },
+        {
+          label: 'My Subscriptions',
+          icon: 'heart',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Subscriptions' } }),
+        },
+      ],
+    },
+  ];
 
   return (
     <DrawerContentScrollView
@@ -223,164 +436,51 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         </View>
       </View>
 
-      <View style={styles.drawerSection}>
-        <Text variant="small" color="muted" style={styles.drawerSectionLabel}>
-          Main
-        </Text>
-        <DrawerItem
-          label="Home"
-          {...drawerItemCommon}
-          icon={renderIcon('home')}
-          onPress={() => navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Home' } })}
-        />
-        <DrawerItem
-          label="Practice"
-          {...drawerItemCommon}
-          icon={renderIcon('calendar-alt')}
-          onPress={() => navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Practice' } })}
-        />
-        <DrawerItem
-          label="Programs"
-          {...drawerItemCommon}
-          icon={renderIcon('book')}
-          onPress={() => navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Programs' } })}
-        />
-        <DrawerItem
-          label="Tools"
-          {...drawerItemCommon}
-          icon={renderIcon('tools')}
-          onPress={() => navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Tools' } })}
-        />
-        <DrawerItem
-          label="Profile"
-          {...drawerItemCommon}
-          icon={renderIcon('user')}
-          onPress={() => navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Profile' } })}
-        />
-        <DrawerItem
-          label="Sprinthia"
-          {...drawerItemCommon}
-          icon={renderIcon('robot')}
-          onPress={() => navigateIntoAppStack({ screen: 'Sprinthia' })}
-        />
-        <DrawerItem
-          label="Competitions"
-          {...drawerItemCommon}
-          icon={renderIcon('trophy')}
-          onPress={() => navigateIntoAppStack({ screen: 'Meets' })}
-        />
-        <DrawerItem
-          label="Results"
-          {...drawerItemCommon}
-          icon={renderIcon('medal')}
-          onPress={() => navigateIntoAppStack({ screen: 'Results' })}
-        />
-      </View>
+      {sections.map((section) => {
+        const filteredItems = section.items.filter((item) => {
+          if (item.requiresCoach && !isCoach) return false;
+          if (item.requiresAdmin && !isAdmin) return false;
+          return true;
+        });
 
-      <View style={styles.drawerSection}>
-        <Text variant="small" color="muted" style={styles.drawerSectionLabel}>
-          Community
-        </Text>
-        <DrawerItem
-          label="Feed"
-          {...drawerItemCommon}
-          icon={renderIcon('newspaper')}
-          onPress={() => navigateIntoAppStack({ screen: 'Feed' })}
-        />
-        <DrawerItem
-          label="Messages"
-          {...drawerItemCommon}
-          icon={renderIcon('comments')}
-          onPress={() => navigateIntoAppStack({ screen: 'Chat' })}
-        />
-        <DrawerItem
-          label="Notifications"
-          {...drawerItemCommon}
-          icon={renderIcon('bell')}
-          onPress={() => navigateIntoAppStack({ screen: 'Notifications' })}
-        />
-        <DrawerItem
-          label="Connections"
-          {...drawerItemCommon}
-          icon={renderIcon('user-friends')}
-          onPress={() => navigateIntoAppStack({ screen: 'Connections' })}
-        />
-        <DrawerItem
-          label="Clubs"
-          {...drawerItemCommon}
-          icon={renderIcon('users')}
-          onPress={() => navigateIntoAppStack({ screen: 'Clubs' })}
-        />
-        <DrawerItem
-          label="Create Group"
-          {...drawerItemCommon}
-          icon={renderIcon('plus-circle')}
-          onPress={() => navigateIntoAppStack({ screen: 'CreateGroup' })}
-        />
-      </View>
+        if (!filteredItems.length) return null;
 
-      <View style={styles.drawerSection}>
+        return (
+          <View style={styles.drawerSection} key={section.title}>
         <Text variant="small" color="muted" style={styles.drawerSectionLabel}>
-          Coaching
+              {section.title}
         </Text>
-        <DrawerItem
-          label="Athletes"
-          {...drawerItemCommon}
-          icon={renderIcon('running')}
-          onPress={() => navigateIntoAppStack({ screen: 'Athletes' })}
-        />
-        <DrawerItem
-          label="Coaches"
-          {...drawerItemCommon}
-          icon={renderIcon('chalkboard-teacher')}
-          onPress={() => navigateIntoAppStack({ screen: 'Coaches' })}
-        />
+            {filteredItems.map((item) => (
+              <MenuRow key={item.label} {...item} />
+            ))}
       </View>
-
-      <View style={styles.drawerSection}>
-        <Text variant="small" color="muted" style={styles.drawerSectionLabel}>
-          More
-        </Text>
-        <DrawerItem
-          label="Settings"
-          {...drawerItemCommon}
-          icon={renderIcon('cog')}
-          onPress={() => navigateIntoAppStack({ screen: 'Settings' })}
-        />
-        <DrawerItem
-          label="Rehabilitation"
-          {...drawerItemCommon}
-          icon={renderIcon('heartbeat')}
-          onPress={() => navigateIntoAppStack({ screen: 'Rehab' })}
-        />
-        <DrawerItem
-          label="Spikes"
-          {...drawerItemCommon}
-          icon={renderIcon('bolt')}
-          onPress={() => navigateIntoAppStack({ screen: 'Spikes' })}
-        />
-        <DrawerItem
-          label="Subscriptions"
-          {...drawerItemCommon}
-          icon={renderIcon('crown')}
-          onPress={() => navigateIntoAppStack({ screen: 'Subscriptions' })}
-        />
-        <DrawerItem
-          label="Marketplace"
-          {...drawerItemCommon}
-          icon={renderIcon('store')}
-          onPress={() => navigateIntoAppStack({ screen: 'Marketplace' })}
-        />
-      </View>
+        );
+      })}
 
       <View style={styles.drawerFooter}>
-        <DrawerItem
-          label={isGuest ? 'Exit Guest' : 'Sign Out'}
-          {...drawerItemCommon}
-          icon={renderIcon('sign-out-alt')}
-          labelStyle={[styles.drawerItemLabel, { color: theme.colors.destructive }]}
+        <TouchableOpacity
           onPress={() => logout()}
-        />
+          activeOpacity={0.7}
+        >
+          <View style={styles.menuRow}>
+            <View style={styles.menuRowLeft}>
+              <FontAwesome5
+                name="sign-out-alt"
+                size={14}
+                color={theme.colors.destructive}
+                solid
+                style={styles.menuRowIcon}
+              />
+              <Text
+                variant="small"
+                weight="medium"
+                style={{ color: theme.colors.destructive }}
+              >
+                {isGuest ? 'Exit Guest' : 'Sign Out'}
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
         {isGuest && (
           <Text variant="small" color="muted" style={styles.drawerGuestNote}>
             Guest mode limits community, chat, and posting features.
@@ -555,5 +655,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,
     lineHeight: 18,
+  },
+  menuRowTouchable: {
+    marginHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    marginHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: 'transparent',
+  },
+  menuRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  menuRowIcon: {
+    width: 18,
+  },
+  menuRowDisabled: {
+    opacity: 0.4,
+  },
+  comingSoonPill: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    backgroundColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
   },
 });

@@ -7,7 +7,7 @@ import {
   TouchableOpacityProps,
   TextStyle,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from '@/components/LinearGradient';
 import theme from '@/utils/theme';
 import { Text } from './Text';
 

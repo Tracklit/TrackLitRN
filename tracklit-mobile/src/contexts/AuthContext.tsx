@@ -34,6 +34,8 @@ interface User {
   isPremium?: boolean | null;
   subscriptionTier?: string | null;
   token?: string; // Token may be included in response
+  role?: string | null;
+  isCoach?: boolean | null;
 }
 
 interface RegisterData {

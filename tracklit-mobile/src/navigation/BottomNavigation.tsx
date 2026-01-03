@@ -13,7 +13,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import theme from '@/utils/theme';
 
-type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Tools' | 'Profile';
+type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Tools' | 'Profile';
 
 interface NavItem {
   title: string;
@@ -41,6 +41,12 @@ const navItems: NavItem[] = [
     routeName: 'Programs',
     iconName: 'book',
     key: 'programs'
+  },
+  {
+    title: 'Feed',
+    routeName: 'Feed',
+    iconName: 'newspaper',
+    key: 'feed'
   },
   {
     title: 'Tools',
@@ -170,13 +176,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(15, 20, 25, 0.95)',
+    backgroundColor: '#0f172a',
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
   },
   navBar: {
     flexDirection: 'row',
-    height: theme.layout.bottomNavHeight,
+    height: 64,
     paddingHorizontal: theme.spacing.sm,
     alignItems: 'center',
   },

@@ -5,158 +5,66 @@ import {
   StyleSheet,
   StatusBar,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import Icon from '@expo/vector-icons/FontAwesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+
+import { LinearGradient } from '@/components/LinearGradient';
 import { Card } from '../components/ui/Card';
 import { Text } from '../components/ui/Text';
-import Icon from '@expo/vector-icons/FontAwesome5';
-import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
+import { apiRequest } from '@/lib/api';
 import theme from '../utils/theme';
-
-interface DashboardCard {
-  title: string;
-  subtitle: string;
-  iconName: string;
-  backgroundImage?: any;
-  route: string;
-  gradient: string[];
-}
-
-// Dashboard cards - exact replica from web app
-const dashboardCards: DashboardCard[] = [
-  {
-    title: 'Practice',
-    subtitle: 'Log your daily workouts',
-    iconName: 'calendar-alt',
-    route: 'Practice',
-    gradient: ['rgba(74, 20, 140, 0.8)', 'rgba(123, 31, 162, 0.6)'],
-  },
-  {
-    title: 'Programs',
-    subtitle: 'Training programs & schedules',
-    iconName: 'book',
-    route: 'Programs', 
-    gradient: ['rgba(26, 26, 46, 0.8)', 'rgba(22, 33, 62, 0.6)'],
-  },
-  {
-    title: 'Sprinthia AI',
-    subtitle: 'Your AI athletics coach',
-    iconName: 'robot',
-    route: 'Sprinthia',
-    gradient: ['rgba(245, 196, 66, 0.8)', 'rgba(204, 153, 51, 0.6)'],
-  },
-  {
-    title: 'Feed',
-    subtitle: 'See what your community is doing',
-    iconName: 'newspaper',
-    route: 'Feed',
-    gradient: ['rgba(74, 20, 140, 0.8)', 'rgba(123, 31, 162, 0.6)'],
-  },
-  {
-    title: 'Tools',
-    subtitle: 'Training utilities & calculators',
-    iconName: 'tools',
-    route: 'Tools',
-    gradient: ['rgba(26, 26, 46, 0.8)', 'rgba(22, 33, 62, 0.6)'],
-  },
-];
-
-interface DashboardCardProps {
-  card: DashboardCard;
-  onPress: () => void;
-}
 
 interface HomeScreenProps {
   onNavigate?: (route: string) => void;
 }
-
-interface UserProgram {
-  id: number;
+interface CategoryCard {
   title: string;
+  description: string;
+  iconName: string;
+  route: string;
+  disabled?: boolean;
+  isSpecial?: boolean;
+  showStar?: boolean;
 }
 
-interface Meet {
+type ActivityType =
+  | 'workout'
+  | 'journal_entry'
+  | 'user_joined'
+  | 'meet_created'
+  | 'meet_results'
+  | 'coach_status'
+  | 'program_assigned'
+  | 'group_joined'
+  | string;
+
+interface CommunityActivity {
   id: number;
-  name: string;
+  userId: number;
+  activityType: ActivityType;
+  title: string;
+  description?: string;
+  createdAt: string;
+  user?: {
+    id: number;
+    username: string;
+    name: string;
+    profileImageUrl?: string;
+  };
 }
-
-const DashboardCardComponent: React.FC<DashboardCardProps> = ({ card, onPress }) => (
-  <Card
-    style={styles.dashboardCard}
-    onPress={onPress}
-  >
-    <LinearGradient
-      colors={card.gradient}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 1}}
-      style={styles.cardGradient}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.iconCircle}>
-          <Icon
-            name={card.iconName}
-            size={theme.iconSizes.lg}
-            color={theme.colors.primary}
-            solid
-          />
-        </View>
-        <View style={styles.cardTextContainer}>
-          <Text variant="h4" weight="bold" color="primary">
-            {card.title}
-          </Text>
-          <Text variant="caption" color="secondary" style={styles.cardSubtitle}>
-            {card.subtitle}
-          </Text>
-        </View>
-      </View>
-      <View style={styles.cardFooter}>
-        <Icon
-          name="chevron-right"
-          size={theme.iconSizes.sm}
-          color={theme.colors.primary}
-          solid
-        />
-      </View>
-    </LinearGradient>
-  </Card>
-);
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const insets = useSafeAreaInsets();
   const [greeting, setGreeting] = useState('');
-  const { user, isAuthenticated } = useAuth();
-  const userId = user?.id;
-  const isGuest = userId === 'guest';
-
-  // Fetch user programs count
-  const programsQuery = useQuery({
-    queryKey: ['user-programs'],
-    queryFn: () => apiRequest<UserProgram[]>('/api/programs'),
-    enabled: isAuthenticated && !isGuest,
-  });
-
-  // Fetch meets count
-  const meetsQuery = useQuery({
-    queryKey: ['meets'],
-    queryFn: () => apiRequest<Meet[]>('/api/meets'),
-    enabled: isAuthenticated && !isGuest,
-  });
-
-  // Fetch saved workouts count
-  const practiceQuery = useQuery({
-    queryKey: ['workout-library'],
-    queryFn: async () => {
-      const response = await apiRequest<{ workouts: any[]; totalSaved: number }>('/api/workout-library');
-      return response.workouts ?? [];
-    },
-    enabled: isAuthenticated && !isGuest,
-  });
+  const { user } = useAuth();
+  const [tickerCollapsed, setTickerCollapsed] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -165,17 +73,127 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     else setGreeting('Good evening');
   }, []);
 
+  const activitiesQuery = useQuery<CommunityActivity[]>({
+    queryKey: ['community-activities'],
+    queryFn: () => apiRequest<CommunityActivity[]>('/api/community/activities'),
+    refetchInterval: 30000,
+    retry: false,
+    staleTime: 60000,
+    initialData: [
+      {
+        id: 1,
+        userId: 1,
+        activityType: 'workout',
+        title: 'Sprint Training Complete',
+        description: 'Finished 6x100m sprint session with excellent form',
+        createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        user: { id: 1, username: 'speedster_pro', name: 'Alex R.' },
+      },
+      {
+        id: 2,
+        userId: 2,
+        activityType: 'user_joined',
+        title: 'New Athlete Joined',
+        description: 'Welcome Sarah M. to the TrackLit community!',
+        createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.' },
+      },
+      {
+        id: 3,
+        userId: 3,
+        activityType: 'meet_created',
+        title: 'Spring Championship Meet',
+        description: 'New meet scheduled for April 15th at Metro Stadium',
+        createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        user: { id: 3, username: 'coach_jones', name: 'Coach Jones' },
+      },
+    ],
+  });
+
+  const activities = activitiesQuery.data ?? [];
+  const currentActivity =
+    activities.length > 0 ? activities[currentActivityIndex % activities.length] : undefined;
+
+  useEffect(() => {
+    if (!activities.length || isPaused || tickerCollapsed) return;
+    const id = setInterval(() => {
+      setCurrentActivityIndex((prev) => (prev + 1) % activities.length);
+    }, 7000);
+    return () => clearInterval(id);
+  }, [activities.length, isPaused, tickerCollapsed]);
+
+  const formatTimeAgo = (dateString: string) => {
+    const now = Date.now();
+    const diff = Math.floor((now - new Date(dateString).getTime()) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  const getActivityIconName = (activityType: ActivityType) => {
+    switch (activityType) {
+      case 'workout':
+      case 'journal_entry':
+        return 'book';
+      case 'user_joined':
+      case 'group_joined':
+        return 'users';
+      case 'meet_created':
+        return 'calendar';
+      case 'meet_results':
+        return 'medal';
+      case 'coach_status':
+        return 'trophy';
+      case 'program_assigned':
+        return 'book-open';
+      default:
+        return 'user';
+    }
+  };
+
+  const categoryCards: CategoryCard[] = [
+    {
+      title: 'Practice',
+      description: 'Your daily workout',
+      iconName: 'calendar-alt',
+      route: 'Practice',
+      isSpecial: true,
+    },
+    {
+      title: 'Programs',
+      description: 'Training plans and schedules',
+      iconName: 'book',
+      route: 'Programs',
+    },
+    {
+      title: 'Tools',
+      description: 'Training and performance tools',
+      iconName: 'clock',
+      route: 'Tools',
+    },
+    {
+      title: 'Race',
+      description: 'Coming Soon',
+      iconName: 'trophy',
+      route: 'Meets',
+      disabled: true,
+    },
+    {
+      title: 'Sprinthia',
+      description: 'Coming Soon',
+      iconName: 'comments',
+      route: 'Sprinthia',
+      disabled: true,
+      showStar: true,
+    },
+  ];
+
   const handleCardPress = (route: string) => {
     if (onNavigate) {
       onNavigate(route);
     }
   };
-
-  // Calculate stats
-  const workoutsCount = practiceQuery.data?.length ?? 0;
-  const programsCount = programsQuery.data?.length ?? 0;
-  const meetsCount = meetsQuery.data?.length ?? 0;
-  const isLoadingStats = programsQuery.isLoading || meetsQuery.isLoading || practiceQuery.isLoading;
 
   return (
     <LinearGradient
@@ -195,7 +213,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         style={[styles.scrollView, { paddingTop: insets.top }]}
         contentContainerStyle={[
           styles.contentContainer,
-          // Home has tall tiles; give it a bit more breathing room so the last tile is never clipped
           { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xxxxl }) }
         ]}
         showsVerticalScrollIndicator={false}
@@ -226,63 +243,129 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           containerStyle={styles.header}
         />
 
-        {/* Stats Cards Row */}
-        <View style={styles.statsRow}>
-          <Card style={styles.statCard} gradient={true}>
-            <View style={styles.statContent}>
-              {isLoadingStats ? (
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-              ) : (
-                <Text variant="h3" weight="bold" color="accent">
-                  {workoutsCount}
-                </Text>
-              )}
-              <Text variant="caption" color="secondary">
-                Workouts
+        {/* Feed ticker */}
+        <View style={styles.tickerContainer}>
+          {tickerCollapsed ? (
+            <TouchableOpacity
+              style={styles.tickerCollapsed}
+              activeOpacity={0.8}
+              onPress={() => setTickerCollapsed(false)}
+            >
+              <Text variant="body" weight="medium" color="foreground">
+                Feed
               </Text>
-            </View>
-          </Card>
-          
-          <Card style={styles.statCard} gradient={true}>
-            <View style={styles.statContent}>
-              {isLoadingStats ? (
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-              ) : (
-                <Text variant="h3" weight="bold" color="accent">
-                  {programsCount}
+              <Icon name="chevron-down" size={12} color="#cbd5e1" solid />
+            </TouchableOpacity>
+          ) : (
+            <LinearGradient
+              colors={['#5b21b6', '#7c3aed']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.tickerCard}
+            >
+              <View style={styles.tickerControls}>
+                <TouchableOpacity
+                  style={styles.tickerIconButton}
+                  onPress={() => setIsPaused((prev) => !prev)}
+                >
+                  <Icon name={isPaused ? 'play' : 'pause'} size={10} color="#ffffff" solid />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.tickerIconButton}
+                  onPress={() => setTickerCollapsed(true)}
+                >
+                  <Icon name="times" size={10} color="#ffffff" solid />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.tickerContent}>
+                <View style={styles.tickerHeaderRow}>
+                  <View style={styles.tickerAvatar}>
+                    <Icon
+                      name={getActivityIconName(currentActivity?.activityType ?? 'user')}
+                      size={12}
+                      color="#e2e8f0"
+                      solid
+                    />
+                  </View>
+                  <View style={styles.tickerTitleBlock}>
+                    <Text variant="caption" color="accent" numberOfLines={1}>
+                      {currentActivity?.title ?? 'Community updates'}
+                    </Text>
+                    {!!currentActivity?.user?.username && (
+                      <Text variant="caption" color="secondary" numberOfLines={1}>
+                        {currentActivity.user.username} · {formatTimeAgo(currentActivity.createdAt)}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                <Text variant="body" weight="medium" color="foreground" numberOfLines={2}>
+                  {currentActivity?.description ??
+                    'Athletes are crushing their sessions today. Tap Feed to see more.'}
                 </Text>
-              )}
-              <Text variant="caption" color="secondary">
-                Programs
-              </Text>
-            </View>
-          </Card>
-          
-          <Card style={styles.statCard} gradient={true}>
-            <View style={styles.statContent}>
-              {isLoadingStats ? (
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-              ) : (
-                <Text variant="h3" weight="bold" color="accent">
-                  {meetsCount}
-                </Text>
-              )}
-              <Text variant="caption" color="secondary">
-                Meets
-              </Text>
-            </View>
-          </Card>
+              </View>
+            </LinearGradient>
+          )}
         </View>
 
-        {/* Dashboard Cards */}
+        {/* Category Cards */}
         <View style={styles.cardsContainer}>
-          {dashboardCards.map((card) => (
-            <DashboardCardComponent
-              key={card.route}
-              card={card}
-              onPress={() => handleCardPress(card.route)}
-            />
-          ))}
+          {categoryCards.map((card, idx) => {
+            const disabled = card.disabled;
+            const CardContent = (
+              <Card
+                key={card.title}
+                style={[styles.categoryCard, idx > 0 && styles.categoryCardSpacer, disabled && styles.cardDisabled]}
+                gradient={false}
+              >
+                <View style={styles.categoryInner}>
+                  <View style={styles.categoryText}>
+                    <Text variant="h4" weight="bold" color={disabled ? 'muted' : 'foreground'}>
+                      {card.title}{' '}
+                      {card.showStar ? (
+                        <Icon name="star" size={12} color="#facc15" solid />
+                      ) : null}
+                    </Text>
+                    <View style={styles.categorySubRow}>
+                      <View style={styles.categoryDot} />
+                      <Text variant="caption" color={disabled ? 'muted' : 'secondary'}>
+                        {card.description}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.categoryIcons}>
+                    {card.isSpecial && (
+                      <TouchableOpacity
+                        style={styles.previewButton}
+                        activeOpacity={0.7}
+                        onPress={() => !disabled && handleCardPress(card.route)}
+                      >
+                        <Icon name="eye" size={14} color="#60a5fa" solid />
+                      </TouchableOpacity>
+                    )}
+                    <Icon name="chevron-right" size={12} color={disabled ? '#94a3b8' : '#cbd5e1'} solid />
+                  </View>
+                </View>
+              </Card>
+            );
+
+            if (disabled) {
+              return (
+                <View key={card.title} style={{ width: '100%' }} pointerEvents="none">
+                  {CardContent}
+                </View>
+              );
+            }
+
+            return (
+              <TouchableOpacity
+                key={card.title}
+                activeOpacity={0.85}
+                onPress={() => handleCardPress(card.route)}
+              >
+                {CardContent}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
     </LinearGradient>
@@ -324,44 +407,6 @@ const styles = StyleSheet.create({
   cardsContainer: {
     gap: theme.spacing.lg,
   },
-  dashboardCard: {
-    marginBottom: 0,
-    minHeight: 100,
-    padding: 0,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-  },
-  cardGradient: {
-    flex: 1,
-    padding: theme.spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardHeader: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(245, 196, 66, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.lg,
-  },
-  cardTextContainer: {
-    flex: 1,
-  },
-  cardSubtitle: {
-    marginTop: theme.spacing.xs,
-  },
-  cardFooter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: theme.spacing.sm,
-  },
   headerActionButton: {
     width: 44,
     height: 44,
@@ -371,5 +416,116 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
+  },
+  tickerContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  tickerCollapsed: {
+    height: 40,
+    borderRadius: 12,
+    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.3)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tickerCard: {
+    borderRadius: 12,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    minHeight: 90,
+    borderWidth: 0.5,
+    borderColor: 'rgba(148, 163, 184, 0.25)',
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  tickerControls: {
+    position: 'absolute',
+    right: theme.spacing.sm,
+    top: theme.spacing.sm,
+    flexDirection: 'row',
+    gap: theme.spacing.xs,
+  },
+  tickerIconButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tickerContent: {
+    paddingRight: 48,
+    gap: theme.spacing.xs,
+  },
+  tickerHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+  },
+  tickerAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(15,23,42,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.35)',
+  },
+  tickerTitleBlock: {
+    flex: 1,
+  },
+  categoryCard: {
+    height: 90,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(147, 51, 234, 0.08)',
+    borderColor: 'rgba(100, 116, 139, 0.25)',
+    borderWidth: 0.5,
+    borderRadius: 6,
+  },
+  categoryCardSpacer: {
+    marginTop: theme.spacing.lg,
+  },
+  categoryInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing.lg,
+  },
+  categoryText: {
+    flex: 1,
+  },
+  categorySubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
+  },
+  categoryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#60a5fa',
+  },
+  categoryIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginLeft: theme.spacing.md,
+  },
+  previewButton: {
+    padding: theme.spacing.xs,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+  },
+  cardDisabled: {
+    opacity: 0.5,
   },
 });
