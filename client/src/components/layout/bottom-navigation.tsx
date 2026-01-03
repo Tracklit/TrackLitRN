@@ -1,17 +1,16 @@
 import { Link, useLocation } from "wouter";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
+import {
   faHome,
   faCalendarDays,
   faBook,
   faTrophy,
-  faImage,
+  faWrench,
   faStar,
   faShoppingCart,
   faNewspaper,
-} from '@fortawesome/free-solid-svg-icons';
-
-import { cn } from "@/lib/utils";
+  faComments,
+} from '@fortawesome/free-solid-svg-icons';import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useKeyboard } from "@/contexts/keyboard-context";
 import { Badge } from "@/components/ui/badge";
@@ -48,16 +47,23 @@ const getNavItems = (user: any) => [
     key: "feed",
     disabled: false
   },
-  { 
-    title: "Tools", 
-    href: "/training-tools", 
-    icon: <FontAwesomeIcon icon={faImage} className="h-4 w-4" />,
+  {
+    title: "Tools",
+    href: "/training-tools",
+    icon: <FontAwesomeIcon icon={faWrench} className="h-4 w-4" />,
     key: "tools",
     disabled: false
   },
-  { 
-    title: "Profile", 
-    href: "/profile", 
+  {
+    title: "Sprinthia",
+    href: "/sprinthia",
+    icon: <FontAwesomeIcon icon={faComments} className="h-4 w-4" />,
+    key: "sprinthia",
+    disabled: false
+  },
+  {
+    title: "Profile",
+    href: "/profile",
     icon: (
       <Avatar className="h-6 w-6">
         <AvatarImage src="/default-avatar.png" />
@@ -195,7 +201,7 @@ export function BottomNavigation() {
       style={{ bottom: '-5px' }}
     >
       <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-16 pb-[5px]">
-        <div className="grid grid-cols-6 h-full">
+        <div className="grid grid-cols-7 h-full">
           {navItems.map((item, index) => (
             <NavItem
               key={item.key}
@@ -213,3 +219,4 @@ export function BottomNavigation() {
     </div>
   );
 }
+

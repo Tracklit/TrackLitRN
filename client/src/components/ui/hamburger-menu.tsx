@@ -168,9 +168,20 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               >
                 <FontAwesomeIcon icon={faHeart} className="h-4 w-4 mr-3" />
                 Rehabilitation
+              </div>            </Link>
+            <Link href="/sprinthia">
+              <div
+                className={cn(
+                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
+                  location.startsWith("/sprinthia") ? "bg-primary text-primary-foreground" : "text-gray-300"
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                <FontAwesomeIcon icon={faComments} className="h-4 w-4 mr-3" />
+                Sprinthia
               </div>
             </Link>
-            
+
             {/* Competition Section */}
             <div className="pt-4 pb-2">
               <p className="text-xs text-gray-400 px-4 font-medium">COMPETITION</p>

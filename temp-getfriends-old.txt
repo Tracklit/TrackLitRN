@@ -1,0 +1,50 @@
+  }
+
+  // Friend management methods
+  async getFriends(userId: number): Promise<any[]> {
+    // Get friend notifications that were accepted (converted to friendships)
+    const friendNotifications = await db
+      .select({
+        id: notifications.id,
+        userId: notifications.userId,
+        type: notifications.type,
+        title: notifications.title,
+        message: notifications.message,
+        relatedId: notifications.relatedId,
+        isRead: notifications.isRead,
+        createdAt: notifications.createdAt
+      })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.type, 'friend_accepted'),
+          or(
+            eq(notifications.userId, userId),
+            eq(notifications.relatedId, userId)
+          )
+        )
+      );
+
+    // Get user details for each friend
+    const friends = [];
+    for (const notification of friendNotifications) {
+      const friendId = notification.userId === userId ? notification.relatedId : notification.userId;
+      if (friendId) {
+        const [friend] = await db.select().from(users).where(eq(users.id, friendId));
+        if (friend) {
+          friends.push({
+            id: friend.id,
+            username: friend.username,
+            name: friend.name,
+            email: friend.email,
+            bio: friend.bio,
+            isPremium: friend.isPremium,
+            createdAt: friend.createdAt
+          });
+        }
+      }
+    }
+
+    return friends;
+  }
+

@@ -584,7 +584,24 @@ function ProgramEditorPage() {
         
         // Sort weeks by number
         weeksArray.sort((a, b) => a.weekNumber - b.weekNumber);
-        setWeeks(weeksArray);
+
+        // Merge with existing weeks to preserve manually added weeks without sessions
+        setWeeks(prevWeeks => {
+          // Create a map of existing week numbers
+          const existingWeekNumbers = new Set(prevWeeks.map(w => w.weekNumber));
+          const newWeekNumbers = new Set(weeksArray.map(w => w.weekNumber));
+          
+          // Keep all weeks that exist in prevWeeks but not in weeksArray (manually added empty weeks)
+          const preservedWeeks = prevWeeks.filter(w => !newWeekNumbers.has(w.weekNumber));
+          
+          // Combine preserved weeks with new weeks from sessions
+          const combinedWeeks = [...weeksArray, ...preservedWeeks];
+          
+          // Sort by week number
+          combinedWeeks.sort((a, b) => a.weekNumber - b.weekNumber);
+          
+          return combinedWeeks;
+        });
       } else {
         // Create weeks based on program duration (convert days to weeks, minimum 1 week)
         const programWeeks = Math.max(1, Math.ceil((program.duration || 7) / 7));
@@ -596,7 +613,12 @@ function ProgramEditorPage() {
             days: [],
           });
         }
-        setWeeks(newWeeks);
+        setWeeks(prevWeeks => {
+          if (prevWeeks.length > 0) {
+            return prevWeeks; // Preserve manually added weeks
+          }
+          return newWeeks;
+        });
       }
     }
   }, [sessions, program]);
@@ -967,7 +989,7 @@ function ProgramEditorPage() {
   // Special handling for text-based programs
   if (program.isTextBased) {
     return (
-      <div className="container max-w-4xl mx-auto p-4">
+      <div className="container max-w-4xl mx-auto p-4 pt-20">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <Button
@@ -1022,7 +1044,7 @@ function ProgramEditorPage() {
     const fileName = program.programFileUrl?.split('/').pop() || "Program Document";
     
     return (
-      <div className="container max-w-full p-4">
+      <div className="container max-w-full p-4 pt-20">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
             <Button
@@ -1403,7 +1425,7 @@ function ProgramEditorPage() {
 
   // Standard program with weekly schedule view
   return (
-    <div className="container max-w-full p-4">
+    <div className="container max-w-full p-4 pt-20">
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -1779,3 +1801,4 @@ function ProgramEditorPage() {
 export function Component() {
   return <ProgramEditorPage />;
 }
+

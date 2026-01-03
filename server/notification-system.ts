@@ -27,7 +27,7 @@ export class NotificationAutomationSystem {
       category: 'athlete_wellness',
       title: '💤 Recovery Check-In',
       message: 'How are you feeling today? Getting proper rest is crucial for performance. Consider logging your sleep quality in your journal.',
-      actionUrl: '/journal',
+      actionUrl: '/tools/journal',
       frequency: 'weekly',
       conditions: { timeOfDay: 'morning' }
     },
@@ -53,7 +53,7 @@ export class NotificationAutomationSystem {
       category: 'athlete_wellness',
       title: '🥗 Fuel Your Performance',
       message: 'Are you eating enough protein and carbs for recovery? Consider tracking your nutrition in your training journal.',
-      actionUrl: '/journal',
+      actionUrl: '/tools/journal',
       frequency: 'bi_weekly',
       conditions: { timeOfDay: 'morning' }
     },
@@ -89,7 +89,7 @@ export class NotificationAutomationSystem {
       category: 'feature_discovery',
       title: '📝 Discover: Training Journal',
       message: 'Track your workouts, thoughts, and progress with voice notes! Your journal helps identify patterns and improvements.',
-      actionUrl: '/journal',
+      actionUrl: '/tools/journal',
       frequency: 'one_time',
       conditions: { minDaysSinceRegistration: 3 }
     },

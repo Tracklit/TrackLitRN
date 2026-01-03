@@ -107,8 +107,11 @@ import {
   programAssignments,
   workoutReactions,
   notifications,
+  friendships,
   Notification,
   InsertNotification,
+  Friendship,
+  InsertFriendship,
   follows,
   Follow,
   InsertFollow,
@@ -2860,6 +2863,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFollowStatus(userId: number, targetUserId: number): Promise<any> {
+    // Check if they are friends (in the friendships table)
+    const friendship = await db
+      .select()
+      .from(friendships)
+      .where(
+        and(
+          eq(friendships.status, 'accepted'),
+          or(
+            and(
+              eq(friendships.userId, Math.min(userId, targetUserId)),
+              eq(friendships.friendId, Math.max(userId, targetUserId))
+            )
+          )
+        )
+      );
+
+    const areFriends = friendship.length > 0;
+
+    // Also check old follow system for backwards compatibility
     const isFollowing = await db
       .select()
       .from(follows)
@@ -2882,7 +2904,7 @@ export class DatabaseStorage implements IStorage {
     return {
       isFollowing: following,
       isFollower: follower,
-      areFriends: following && follower // Bidirectional connection = friends
+      areFriends: areFriends || (following && follower) // Check new friendships table OR old mutual follows
     };
   }
 
@@ -2953,50 +2975,42 @@ export class DatabaseStorage implements IStorage {
 
   // Friend management methods
   async getFriends(userId: number): Promise<any[]> {
-    // Get friend notifications that were accepted (converted to friendships)
-    const friendNotifications = await db
+    // Get accepted friendships where the user is either user or friend
+    const friendshipsAsUser = await db
       .select({
-        id: notifications.id,
-        userId: notifications.userId,
-        type: notifications.type,
-        title: notifications.title,
-        message: notifications.message,
-        relatedId: notifications.relatedId,
-        isRead: notifications.isRead,
-        createdAt: notifications.createdAt
+        friend: users
       })
-      .from(notifications)
-      .where(
-        and(
-          eq(notifications.type, 'friend_accepted'),
-          or(
-            eq(notifications.userId, userId),
-            eq(notifications.relatedId, userId)
-          )
-        )
-      );
+      .from(friendships)
+      .innerJoin(users, eq(friendships.friendId, users.id))
+      .where(and(
+        eq(friendships.userId, userId),
+        eq(friendships.status, 'accepted')
+      ));
 
-    // Get user details for each friend
-    const friends = [];
-    for (const notification of friendNotifications) {
-      const friendId = notification.userId === userId ? notification.relatedId : notification.userId;
-      if (friendId) {
-        const [friend] = await db.select().from(users).where(eq(users.id, friendId));
-        if (friend) {
-          friends.push({
-            id: friend.id,
-            username: friend.username,
-            name: friend.name,
-            email: friend.email,
-            bio: friend.bio,
-            isPremium: friend.isPremium,
-            createdAt: friend.createdAt
-          });
-        }
-      }
-    }
+    const friendshipsAsFriend = await db
+      .select({
+        friend: users
+      })
+      .from(friendships)
+      .innerJoin(users, eq(friendships.userId, users.id))
+      .where(and(
+        eq(friendships.friendId, userId),
+        eq(friendships.status, 'accepted')
+      ));
 
-    return friends;
+    // Combine and format results
+    const allFriends = [...friendshipsAsUser, ...friendshipsAsFriend].map(f => ({
+      id: f.friend.id,
+      username: f.friend.username,
+      name: f.friend.name,
+      email: f.friend.email,
+      bio: f.friend.bio,
+      profileImageUrl: f.friend.profileImageUrl,
+      isPremium: f.friend.isPremium,
+      createdAt: f.friend.createdAt
+    }));
+
+    return allFriends;
   }
 
   async getFollowing(userId: number): Promise<any[]> {

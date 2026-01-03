@@ -4,6 +4,7 @@ import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./utils";
 import { VideoCleanupService } from "./video-cleanup";
+import { initializeBlobStorage } from "./azure-storage";
 import path from "path";
 import fs from "fs";
 
@@ -95,6 +96,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize Azure Blob Storage for persistent profile pictures
+  console.log('Initializing Azure Blob Storage...');
+  initializeBlobStorage();
+
   // Import scheduler utilities
   const { refreshAllGoogleSheetPrograms } = await import('./utils/scheduler');
   

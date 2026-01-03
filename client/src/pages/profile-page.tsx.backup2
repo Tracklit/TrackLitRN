@@ -29,29 +29,6 @@ import { TRACK_FIELD_SPECIALTIES } from '@shared/constants';
 import { Checkbox } from '@/components/ui/checkbox';
 
 // Profile form schema
-// Helper function to calculate age from date of birth (client-side display only)
-function calculateAgeForDisplay(dateOfBirth: string | null | undefined): string {
-  if (!dateOfBirth) return 'Not set';
-  
-  try {
-    const birthDate = new Date(dateOfBirth);
-    const today = new Date();
-    
-    if (isNaN(birthDate.getTime())) return 'Invalid date';
-    
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    return age >= 0 ? age.toString() : 'Invalid';
-  } catch (error) {
-    return 'Invalid date';
-  }
-}
-
 const profileFormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   email: z.string().email({ message: "Invalid email address" }),
@@ -60,15 +37,6 @@ const profileFormSchema = z.object({
   defaultClubId: z.number().nullable().optional(),
   isPrivate: z.boolean().optional(),
   specialties: z.array(z.string()).optional(),
-  age: z.number().optional(),
-  gender: z.string().optional(),
-  trainingGoal: z.string().optional(),
-  injuryStatus: z.string().optional(),
-  sleepHours: z.number().optional(),
-  sleepQuality: z.string().optional(),
-  trainingDaysPerWeek: z.number().optional(),
-  mood: z.string().optional(),
-  coachMode: z.string().optional(),
 });
 
 // Public profile form schema
@@ -178,15 +146,6 @@ export default function ProfilePage() {
       defaultClubId: user?.defaultClubId || null,
       isPrivate: user?.isPrivate || false,
       specialties: user?.specialties || [],
-      age: user?.age || undefined,
-      gender: user?.gender || '',
-      trainingGoal: user?.trainingGoal || '',
-      injuryStatus: user?.injuryStatus || 'none',
-      sleepHours: user?.sleepHours || 7.0,
-      sleepQuality: user?.sleepQuality || 'good',
-      trainingDaysPerWeek: user?.trainingDaysPerWeek || 3,
-      mood: user?.mood || 'neutral',
-      coachMode: user?.coachMode || 'supportive',
     },
   });
 
@@ -591,216 +550,6 @@ export default function ProfilePage() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="age"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Age</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Your age"
-                          value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gender</FormLabel>
-                      <Select value={field.value || ""} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your gender" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                          <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="trainingGoal"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Training Goal</FormLabel>
-                      <Select value={field.value || ""} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="What's your primary goal?" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="improve_speed">Improve Speed</SelectItem>
-                          <SelectItem value="build_endurance">Build Endurance</SelectItem>
-                          <SelectItem value="increase_strength">Increase Strength</SelectItem>
-                          <SelectItem value="injury_recovery">Injury Recovery</SelectItem>
-                          <SelectItem value="competition_prep">Competition Prep</SelectItem>
-                          <SelectItem value="general_fitness">General Fitness</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="injuryStatus"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Injury Status</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., None, Hamstring, Recovering from ankle sprain"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="trainingDaysPerWeek"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Training Days Per Week</FormLabel>
-                      <Select
-                        value={field.value?.toString() || "3"}
-                        onValueChange={(val) => field.onChange(parseInt(val))}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1">1 day</SelectItem>
-                          <SelectItem value="2">2 days</SelectItem>
-                          <SelectItem value="3">3 days</SelectItem>
-                          <SelectItem value="4">4 days</SelectItem>
-                          <SelectItem value="5">5 days</SelectItem>
-                          <SelectItem value="6">6 days</SelectItem>
-                          <SelectItem value="7">7 days</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="sleepHours"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Average Sleep Hours</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.5"
-                          min="0"
-                          max="24"
-                          placeholder="7.0"
-                          value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="sleepQuality"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sleep Quality</FormLabel>
-                      <Select value={field.value || "good"} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="poor">Poor</SelectItem>
-                          <SelectItem value="fair">Fair</SelectItem>
-                          <SelectItem value="good">Good</SelectItem>
-                          <SelectItem value="excellent">Excellent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="mood"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Mood</FormLabel>
-                      <Select value={field.value || "neutral"} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="poor">Poor</SelectItem>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="neutral">Neutral</SelectItem>
-                          <SelectItem value="good">Good</SelectItem>
-                          <SelectItem value="great">Great</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="coachMode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>AI Coach Personality</FormLabel>
-                      <Select value={field.value || "supportive"} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="supportive">Supportive</SelectItem>
-                          <SelectItem value="motivational">Motivational</SelectItem>
-                          <SelectItem value="analytical">Analytical</SelectItem>
-                          <SelectItem value="tough_love">Tough Love</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 {user?.isCoach && (
                   <FormField
                     control={form.control}

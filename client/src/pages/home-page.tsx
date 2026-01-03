@@ -363,10 +363,10 @@ export default function HomePage() {
     },
     {
       title: "Sprinthia",
-      description: "Coming Soon",
+      description: "Your AI Coach",
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
-      disabled: true,
+      disabled: false,
       showStar: true
     }
   ];
@@ -879,4 +879,5 @@ export default function HomePage() {
     </div>
   );
 }
+
 

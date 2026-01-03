@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { TRACK_FIELD_SPECIALTIES } from "@shared/constants";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -63,9 +64,9 @@ export default function CoachesPage() {
 
   // Filter coaches based on search and specialty
   const filteredCoaches = coaches.filter(coach => {
-    const matchesSearch = coach.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         coach.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         coach.bio?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (coach.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (coach.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (coach.bio || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesSpecialty = selectedSpecialty === "all" || 
                            coach.specialties?.includes(selectedSpecialty);
@@ -73,8 +74,8 @@ export default function CoachesPage() {
     return matchesSearch && matchesSpecialty;
   });
 
-  // Get unique specialties for filter
-  const allSpecialties = [...new Set(coaches.flatMap(coach => coach.specialties || []))];
+  // Use standard track & field specialties for filter
+  const allSpecialties = TRACK_FIELD_SPECIALTIES;
 
   if (isLoading) {
     return (
@@ -117,7 +118,7 @@ export default function CoachesPage() {
               <select
                 value={selectedSpecialty}
                 onChange={(e) => setSelectedSpecialty(e.target.value)}
-                className="w-full p-2 border border-input bg-background rounded-md"
+                className="w-full p-2 border border-input bg-slate-900 text-white rounded-md"
               >
                 <option value="all">All Specialties</option>
                 {allSpecialties.map(specialty => (
@@ -156,7 +157,7 @@ export default function CoachesPage() {
                   <Avatar className="h-16 w-16">
                     <AvatarImage src={coach.profileImageUrl} />
                     <AvatarFallback className="text-lg">
-                      {coach.name.split(' ').map(n => n[0]).join('')}
+                      {(coach.name || '?').split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">

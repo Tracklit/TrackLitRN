@@ -38,17 +38,6 @@ const profileFormSchema = z.object({
   country: z.string().optional(),
   dateOfBirth: z.string().optional(),
   defaultClubId: z.number().nullable().optional(),
-  isPrivate: z.boolean().optional(),
-  specialties: z.array(z.string()).optional(),
-  // age is auto-calculated from dateOfBirth, not editable
-  gender: z.string().optional(),
-  trainingGoal: z.string().optional(),
-  injuryStatus: z.string().optional(),
-  sleepHours: z.number().optional(),
-  sleepQuality: z.string().optional(),
-  trainingDaysPerWeek: z.number().optional(),
-  mood: z.string().optional(),
-  coachMode: z.string().optional(),
 });
 
 // Public profile form schema
@@ -284,17 +273,6 @@ export default function ProfilePage() {
       country: user?.country || '',
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
       defaultClubId: user?.defaultClubId || null,
-      isPrivate: user?.isPrivate || false,
-      specialties: user?.specialties || [],
-      // age removed - it's auto-calculated
-      gender: user?.gender || '',
-      trainingGoal: user?.trainingGoal || '',
-      injuryStatus: user?.injuryStatus || '',
-      sleepHours: user?.sleepHours || undefined,
-      sleepQuality: user?.sleepQuality || '',
-      trainingDaysPerWeek: user?.trainingDaysPerWeek || undefined,
-      mood: user?.mood || '',
-      coachMode: user?.coachMode || '',
     },
   });
 
@@ -437,7 +415,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 pb-24 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 pb-8 space-y-6">
         
         {/* Profile Header Card */}
         <Card className="bg-[#0a1529] border-blue-800/30">
@@ -820,225 +798,6 @@ export default function ProfilePage() {
                       <FormControl>
                         <Input {...field} type="date" />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Age - Read-only, auto-calculated from date of birth */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none">Age</label>
-                  <div className="text-sm p-3 rounded-md border border-input bg-muted/50">
-                    {user?.age ? `${user.age} years old` : 'Set your date of birth to calculate age'}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Automatically calculated from your date of birth
-                  </p>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gender</FormLabel>
-                      <Select
-                        value={field.value || ""}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your gender" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                          <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="trainingGoal"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Training Goal</FormLabel>
-                      <Select
-                        value={field.value || ""}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your training goal" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="improve_speed">Improve Speed</SelectItem>
-                          <SelectItem value="build_endurance">Build Endurance</SelectItem>
-                          <SelectItem value="increase_strength">Increase Strength</SelectItem>
-                          <SelectItem value="lose_weight">Lose Weight</SelectItem>
-                          <SelectItem value="maintain_fitness">Maintain Fitness</SelectItem>
-                          <SelectItem value="competition_prep">Competition Preparation</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="injuryStatus"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Injury Status (Optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Describe any current injuries or concerns"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="trainingDaysPerWeek"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Training Days Per Week</FormLabel>
-                      <Select
-                        value={field.value?.toString() || ""}
-                        onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select training days" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1">1 day</SelectItem>
-                          <SelectItem value="2">2 days</SelectItem>
-                          <SelectItem value="3">3 days</SelectItem>
-                          <SelectItem value="4">4 days</SelectItem>
-                          <SelectItem value="5">5 days</SelectItem>
-                          <SelectItem value="6">6 days</SelectItem>
-                          <SelectItem value="7">7 days</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="sleepHours"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Average Sleep Hours Per Night</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g., 7"
-                          min="0"
-                          max="24"
-                          step="0.5"
-                          value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="sleepQuality"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sleep Quality</FormLabel>
-                      <Select
-                        value={field.value || ""}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Rate your sleep quality" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="poor">Poor</SelectItem>
-                          <SelectItem value="fair">Fair</SelectItem>
-                          <SelectItem value="good">Good</SelectItem>
-                          <SelectItem value="very_good">Very Good</SelectItem>
-                          <SelectItem value="excellent">Excellent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="mood"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Mood</FormLabel>
-                      <Select
-                        value={field.value || ""}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="How are you feeling?" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="poor">Poor</SelectItem>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="neutral">Neutral</SelectItem>
-                          <SelectItem value="good">Good</SelectItem>
-                          <SelectItem value="great">Great</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="coachMode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>AI Coach Personality</FormLabel>
-                      <Select
-                        value={field.value || ""}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select coaching style" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="supportive">Supportive & Encouraging</SelectItem>
-                          <SelectItem value="analytical">Analytical & Data-Driven</SelectItem>
-                          <SelectItem value="motivational">Motivational & Energetic</SelectItem>
-                          <SelectItem value="balanced">Balanced & Practical</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

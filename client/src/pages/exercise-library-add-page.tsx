@@ -89,8 +89,29 @@ export default function ExerciseLibraryAddPage() {
 
   const handleUpload = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData();
+    
+    // Get file input
+    const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      formData.append('file', fileInput.files[0]);
+      console.log('📁 File attached:', fileInput.files[0].name, 'Size:', fileInput.files[0].size);
+    } else {
+      console.error('❌ No file selected');
+    }
+    
+    // Add other fields
+    const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement;
+    const descriptionInput = form.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
+    const tagsInput = form.querySelector('input[name="tags"]') as HTMLInputElement;
+    
+    if (nameInput) formData.append('name', nameInput.value);
+    if (descriptionInput) formData.append('description', descriptionInput.value);
+    if (tagsInput) formData.append('tags', tagsInput.value);
     formData.append('isPublic', isPublic.toString());
+    
+    console.log('📤 Submitting FormData');
     uploadMutation.mutate(formData);
   };
 

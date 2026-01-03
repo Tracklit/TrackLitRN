@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets, notifications, users, messageReactions, userSubscriptions, userSubscriptionPurchases, trainingPrograms, meetInvitations, passwordResetTokens, User } from "@shared/schema";
+import { meets, notifications, friendships, users, messageReactions, userSubscriptions, userSubscriptionPurchases, trainingPrograms, meetInvitations, passwordResetTokens, User } from "@shared/schema";
 import { and, eq, or, sql, isNotNull, desc, asc, inArray } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
@@ -25,8 +25,35 @@ import communityRoutes from "./routes/community";
 import chatRoutes from "./chat-routes-simple";
 import feedRoutes from "./routes/feed";
 import { getBaseUrl } from "./utils/url-helper";
+import { initializeBlobStorage, uploadToBlob, isBlobStorageAvailable, BlobContainer } from "./azure-storage";
 
 // Coach-athlete relationship API functions will be moved inside registerRoutes
+// Age calculation utility
+function calculateAge(dateOfBirth: string | Date | null | undefined): number | null {
+  if (!dateOfBirth) return null;
+  
+  try {
+    const birthDate = dateOfBirth instanceof Date ? dateOfBirth : new Date(dateOfBirth);
+    const today = new Date();
+    
+    // Validate date
+    if (isNaN(birthDate.getTime())) return null;
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    // Adjust if birthday hasn't occurred this year
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age >= 0 ? age : null;
+  } catch (error) {
+    console.error('Error calculating age:', error);
+    return null;
+  }
+}
+
 
 // Remove unused import
 
@@ -601,41 +628,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
       res.status(500).json({ error: "Failed to fetch notifications" });
-    }
-  });
-
-  // Coach-athlete relationship API
-  app.get("/api/coach/athletes", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const userId = req.user!.id;
-      
-      // Check if user is a coach
-      const coach = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-      if (!coach[0]?.isCoach) {
-        return res.status(403).json({ error: "Only coaches can access athlete list" });
-      }
-
-      // Get athletes connected to this coach
-      const athletes = await db.execute(sql`
-        SELECT DISTINCT
-          u.id,
-          u.name,
-          u.username,
-          u.email,
-          u.profile_image_url,
-          u.created_at
-        FROM users u
-        INNER JOIN coach_athletes ca ON u.id = ca.athlete_id
-        WHERE ca.coach_id = ${userId}
-        ORDER BY u.name ASC
-      `);
-
-      res.json(athletes.rows);
-    } catch (error: any) {
-      console.error("Error fetching coach athletes:", error);
-      res.status(500).json({ error: "Failed to fetch athletes" });
     }
   });
 
@@ -1711,16 +1703,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendStatus(204);
   });
 
-  // Coach routes
+  // Coach routes - Public directory of all coaches
   app.get("/api/coaches", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    const userId = req.user!.id;
-    const coaches = await dbStorage.getCoachesByUserId(userId);
-    res.json(coaches);
-  });
 
-  app.get("/api/athletes", async (req: Request, res: Response) => {
+    try {
+      // Get all users who are coaches
+      const coaches = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          profileImageUrl: users.profileImageUrl,
+          bio: users.bio,
+          specialties: users.specialties,
+          country: users.country,
+          isCoach: users.isCoach,
+        })
+        .from(users)
+        .where(eq(users.isCoach, true));
+
+      // Prevent caching to ensure fresh data
+      res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+
+      res.json(coaches);
+    } catch (error: any) {
+      console.error("Error fetching coaches:", error);
+      res.status(500).json({ error: "Failed to fetch coaches" });
+    }
+  });  app.get("/api/athletes", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
@@ -2243,29 +2258,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       
       // Only allow specific fields to be updated
-      const allowedUpdates = ["name", "email", "country", "dateOfBirth", "defaultClubId", "isPrivate"];
-      
+      const allowedUpdates = [
+        "name", "email", "country", "dateOfBirth", "defaultClubId", "isPrivate",
+        "gender", "trainingGoal", "injuryStatus", "sleepHours", "sleepQuality",
+        "trainingDaysPerWeek", "mood", "coachMode", "specialties"
+      ];
+
       const updates: Record<string, any> = {};
-      
+
       for (const field of allowedUpdates) {
         if (req.body[field] !== undefined) {
           updates[field] = req.body[field];
         }
       }
-      
-
-      // Convert dateOfBirth string to Date object if present
-      if (updates.dateOfBirth && typeof updates.dateOfBirth === 'string') {
-        updates.dateOfBirth = new Date(updates.dateOfBirth);
+      // Convert dateOfBirth string to Date object if present, handle empty strings
+      if (updates.dateOfBirth !== undefined) {
+        if (updates.dateOfBirth === '' || updates.dateOfBirth === null) {
+          // Convert empty string or null to null for database
+          updates.dateOfBirth = null;
+          updates.age = null;
+        } else if (typeof updates.dateOfBirth === 'string') {
+          const parsedDate = new Date(updates.dateOfBirth);
+          // Only set if valid date, otherwise set to null
+          updates.dateOfBirth = isNaN(parsedDate.getTime()) ? null : parsedDate;
+          // Auto-calculate age from dateOfBirth
+          updates.age = calculateAge(updates.dateOfBirth);
+        }
       }
       // Normalize isPrivate if sent as string (common from form submissions)
       if (updates.isPrivate !== undefined && typeof updates.isPrivate === 'string') {
         updates.isPrivate = updates.isPrivate === 'true';
       }
       // If a default club ID is provided, verify the user is a member of that club
-      if (updates.defaultClubId !== undefined) {
+      if (updates.defaultClubId !== undefined && updates.defaultClubId !== null) {
         const clubMember = await dbStorage.getClubMemberByUserAndClub(userId, updates.defaultClubId);
-        if (!clubMember && updates.defaultClubId !== null) {
+        if (!clubMember) {
           return res.status(400).send("User is not a member of the specified club");
         }
       }
@@ -2313,44 +2340,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user/public-profile", profileUpload.single('profileImage'), async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const { name, bio } = req.body;
-      let profileImageUrl = '';
 
-      // Handle profile image upload
+    try {
+      const { name, bio, specialties } = req.body;
+      let profileImageUrl = '';      // Handle profile image upload
       if (req.file) {
-        const fileName = `profile-${req.user!.id}-${Date.now()}${path.extname(req.file.originalname)}`;
-        const finalPath = path.join('uploads/profiles', fileName);
-        
-        // Move file to final location
-        fs.renameSync(req.file.path, finalPath);
-        
-        // Keep original format and only resize if too large, preserve aspect ratio
-        const compressedFileName = `compressed_${fileName}`;
-        const compressedPath = path.join('uploads/profiles', compressedFileName);
-        
-        try {
-          await sharp(finalPath)
-            .resize(800, 800, { 
-              fit: 'inside', 
-              withoutEnlargement: true 
-            })
-            .toFile(compressedPath);
-          
-          // Remove original file after processing
-          fs.unlinkSync(finalPath);
-          profileImageUrl = `/uploads/profiles/${compressedFileName}`;
-        } catch (processingError) {
-          console.error('Profile image processing failed, using original:', processingError);
+        // Process image with sharp first
+        const processedBuffer = await sharp(req.file.path)
+          .resize(800, 800, { 
+            fit: 'inside', 
+            withoutEnlargement: true 
+          })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+
+        // Upload to Azure Blob Storage if available, otherwise use local storage
+        if (isBlobStorageAvailable()) {
+          try {
+            const fileName = `profile-${req.user!.id}-${Date.now()}.jpg`;
+            profileImageUrl = await uploadToBlob(
+              processedBuffer,
+              req.user!.id,
+              BlobContainer.PROFILE_IMAGES,
+              fileName,
+              'image/jpeg'
+            );
+            console.log('✅ Profile image uploaded to Azure Blob Storage:', profileImageUrl);
+          } catch (blobError) {
+            console.error('❌ Failed to upload to blob storage, falling back to local:', blobError);
+            // Fallback to local storage
+            const fileName = `profile-${req.user!.id}-${Date.now()}.jpg`;
+            const finalPath = path.join('uploads/profiles', fileName);
+            fs.writeFileSync(finalPath, processedBuffer);
+            profileImageUrl = `/uploads/profiles/${fileName}`;
+          }
+        } else {
+          // Fallback to local storage (not persistent across container restarts)
+          console.warn('⚠️  Azure Blob Storage not available, using local storage (non-persistent)');
+          const fileName = `profile-${req.user!.id}-${Date.now()}.jpg`;
+          const finalPath = path.join('uploads/profiles', fileName);
+          fs.writeFileSync(finalPath, processedBuffer);
           profileImageUrl = `/uploads/profiles/${fileName}`;
         }
+
+        // Clean up the temporary multer file
+        fs.unlinkSync(req.file.path);
       }
 
       // Update user profile
       const updateData: any = { name };
       if (bio !== undefined) updateData.bio = bio;
       if (profileImageUrl) updateData.profileImageUrl = profileImageUrl;
+      if (specialties !== undefined) {
+        // Parse specialties if it's a JSON string
+        updateData.specialties = typeof specialties === 'string' ? JSON.parse(specialties) : specialties;
+      }
 
       const updatedUser = await dbStorage.updateUser(req.user!.id, updateData);
       res.json(updatedUser);
@@ -2484,17 +2528,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/clubs/my", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     try {
-      // For now, return empty array until club functionality is fully implemented
-      res.json([]);
+      const userId = req.user!.id;
+      const userClubs = await dbStorage.getUserClubs(userId);
+      res.json(userClubs);
     } catch (error: any) {
       console.error("Error fetching user clubs:", error);
       res.status(500).send("Error fetching user clubs");
     }
-  });
-
-  app.post("/api/clubs", async (req: Request, res: Response) => {
+  });  app.post("/api/clubs", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
@@ -4035,6 +4078,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(exerciseLibrary)
         .where(whereCondition);
       
+      console.log('📚 Exercise library GET request:', {
+        userId: req.user!.id,
+        page,
+        typeFilter: type || 'none',
+        exercisesReturned: exercises.length,
+        totalCount: totalCount[0].count
+      });
+      
       res.json({
         exercises,
         totalCount: totalCount[0].count,
@@ -4123,8 +4174,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
+      console.log('📤 Exercise library upload attempt:', {
+        hasFile: !!req.file,
+        bodyKeys: Object.keys(req.body),
+        contentType: req.headers['content-type']
+      });
+      
       if (!req.file) {
-        return res.status(400).send("No file uploaded");
+        console.error('❌ No file received. Body:', req.body);
+        return res.status(400).json({ error: "No file uploaded" });
       }
       
       const user = req.user!;
@@ -4157,13 +4215,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Generate unique filename
-      const fileExtension = path.extname(req.file.originalname);
-      const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
-      const finalPath = path.join("uploads/exercises", uniqueFilename);
+      let fileUrl = '';
       
-      // Move file to final location
-      fs.renameSync(req.file.path, finalPath);
+      // Upload to Azure Blob Storage if available
+      if (isBlobStorageAvailable()) {
+        try {
+          const fileBuffer = fs.readFileSync(req.file.path);
+          const fileExtension = path.extname(req.file.originalname);
+          const fileName = `exercise-${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+          
+          fileUrl = await uploadToBlob(
+            fileBuffer,
+            user.id,
+            BlobContainer.EXERCISE_LIBRARY,
+            fileName,
+            req.file.mimetype
+          );
+          
+          console.log('✅ Exercise file uploaded to Azure Blob Storage:', fileUrl);
+          
+          // Clean up temp file
+          fs.unlinkSync(req.file.path);
+        } catch (blobError) {
+          console.error('❌ Failed to upload exercise file to blob storage, falling back to local:', blobError);
+          // Fallback to local storage
+          const fileExtension = path.extname(req.file.originalname);
+          const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+          const finalPath = path.join("uploads/exercises", uniqueFilename);
+          fs.renameSync(req.file.path, finalPath);
+          fileUrl = `/uploads/exercises/${uniqueFilename}`;
+        }
+      } else {
+        // Fallback to local storage
+        console.warn('⚠️  Azure Blob Storage not available, using local storage (non-persistent)');
+        const fileExtension = path.extname(req.file.originalname);
+        const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+        const finalPath = path.join("uploads/exercises", uniqueFilename);
+        fs.renameSync(req.file.path, finalPath);
+        fileUrl = `/uploads/exercises/${uniqueFilename}`;
+      }
       
       // Create exercise entry
       const exerciseData: InsertExerciseLibrary = {
@@ -4171,20 +4261,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: name || req.file.originalname,
         description: description || null,
         type: 'upload',
-        fileUrl: `/uploads/exercises/${uniqueFilename}`,
+        fileUrl: fileUrl,
         youtubeUrl: null,
         youtubeVideoId: null,
         thumbnailUrl: null,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
         isPublic: isPublic === 'true',
-        tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : []
+        tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : [],
+        videoAnalysisId: null,
+        analysisData: null
       };
+      
+      console.log('💾 Inserting exercise into database:', {
+        userId: user.id,
+        name: exerciseData.name,
+        type: exerciseData.type,
+        fileUrl: exerciseData.fileUrl,
+        isPublic: exerciseData.isPublic
+      });
       
       const [newExercise] = await db
         .insert(exerciseLibrary)
         .values(exerciseData)
         .returning();
+      
+      console.log('✅ Exercise saved successfully:', {
+        id: newExercise.id,
+        userId: newExercise.userId,
+        name: newExercise.name,
+        createdAt: newExercise.createdAt
+      });
       
       res.status(201).json(newExercise);
     } catch (error: any) {
@@ -4197,7 +4304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Error cleaning up uploaded file:", cleanupError);
         }
       }
-      res.status(500).send("Error uploading exercise file");
+      res.status(500).json({ error: "Error uploading exercise file" });
     }
   });
 
@@ -6751,9 +6858,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const { title } = req.body;
+      
+      // Prevent UUID-like strings from being used as titles
+      const isUuidLike = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(title || '');
+      const cleanTitle = (title && !isUuidLike && title.length > 0) ? title : "New Conversation";
+      
       const conversation = await dbStorage.createSprinthiaConversation({
         userId: req.user!.id,
-        title: title || "New Conversation"
+        title: cleanTitle
       });
       res.status(201).json(conversation);
     } catch (error: any) {
@@ -6775,54 +6887,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/sprinthia/conversations/:id/messages", async (req: Request, res: Response) => {
+  // Fix conversation titles that are UUIDs - update them with first message
+  app.post("/api/sprinthia/fix-conversation-titles", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const conversationId = parseInt(req.params.id);
-      const { content } = req.body;
+      const conversations = await dbStorage.getSprinthiaConversations(req.user!.id);
+      let fixedCount = 0;
       
-      // Check if user has enough prompts
-      const user = req.user!;
-      if (user.sprinthiaPrompts <= 0) {
-        return res.status(403).json({ error: "No prompts remaining. Purchase more to continue using Sprinthia." });
+      for (const conversation of conversations) {
+        // Check if title looks like a UUID or generic title
+        const isUuidLike = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(conversation.title);
+        const needsUpdate = isUuidLike || conversation.title === "New Conversation";
+        
+        if (needsUpdate) {
+          // Get first user message from this conversation
+          const messages = await dbStorage.getSprinthiaMessages(conversation.id);
+          const firstUserMessage = messages.find(m => m.role === 'user');
+          
+          if (firstUserMessage && firstUserMessage.content) {
+            const newTitle = firstUserMessage.content.slice(0, 50) + 
+              (firstUserMessage.content.length > 50 ? "..." : "");
+            
+            // Update conversation title (you'll need to add this method to dbStorage)
+            await dbStorage.updateSprinthiaConversation(conversation.id, { title: newTitle });
+            fixedCount++;
+          }
+        }
       }
-
-      // Save user message
-      const userMessage = await dbStorage.createSprinthiaMessage({
-        conversationId,
-        role: "user",
-        content,
-        promptCost: 1
-      });
-
-      // Generate AI response using OpenAI
-      const { getChatCompletion } = await import("./openai");
       
-      const sprinthiaPrompt = `You are Sprinthia, an expert AI coach specializing in track and field events (track events only - sprints, middle distance, and long distance running). You help athletes with workout creation, race planning and strategy, general training questions, rehabilitation advice, and nutrition guidance specifically for track athletes.
-
-Keep your responses focused, practical, and encouraging. Provide specific, actionable advice based on current best practices in track and field training.
-
-User message: ${content}`;
-
-      const aiResponse = await getChatCompletion(sprinthiaPrompt);
-
-      // Save AI response
-      const assistantMessage = await dbStorage.createSprinthiaMessage({
-        conversationId,
-        role: "assistant",
-        content: aiResponse,
-        promptCost: 0
-      });
-
-      // Deduct one prompt from user
-      await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts - 1);
-
-      // Return both messages
-      res.json({ userMessage, assistantMessage });
+      res.json({ message: `Fixed ${fixedCount} conversation titles`, fixedCount });
     } catch (error: any) {
-      console.error("Error creating message:", error);
-      res.status(500).json({ error: "Failed to create message" });
+      console.error("Error fixing conversation titles:", error);
+      res.status(500).json({ error: "Failed to fix conversation titles" });
     }
   });
 
@@ -6883,9 +6980,15 @@ User message: ${content}`;
       
       // Create new conversation if none exists
       if (!currentConversationId) {
+        // Prevent UUID-like strings from being used as titles
+        const isUuidLike = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(message || '');
+        const conversationTitle = (message && !isUuidLike && message.trim().length > 0) 
+          ? message.slice(0, 50) + (message.length > 50 ? "..." : "")
+          : "New Conversation";
+        
         const conversation = await dbStorage.createSprinthiaConversation({
           userId: user.id,
-          title: message.slice(0, 50) + (message.length > 50 ? "..." : "")
+          title: conversationTitle
         });
         currentConversationId = conversation.id;
       }
@@ -6897,6 +7000,19 @@ User message: ${content}`;
         content: message,
         promptCost: 1
       });
+
+      // Fetch conversation history (excluding the message we just saved)
+      let conversationHistory = [];
+      try {
+        const allMessages = await dbStorage.getSprinthiaMessages(currentConversationId);
+        // Get last 10 messages (excluding the current one) for context
+        conversationHistory = allMessages.slice(-11, -1).map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+      } catch (error: any) {
+        console.error("Error fetching conversation history:", error);
+      }
 
       // Fetch user's program context for AI
       let programContext = "";
@@ -6944,28 +7060,211 @@ User message: ${content}`;
         console.error("Error fetching program context:", error);
       }
 
-      // Generate AI response using enhanced OpenAI integration
-      const { getChatCompletion } = await import("./openai");
+      // SprintGPT System Prompt
+      const sprintGPTPrompt = `SprintGPT is a multilingual AI athletic companion for athletes of all levels. It combines expert sports knowledge, motivational coaching, and emotional awareness to help athletes train smarter, recover faster, and stay inspired. SprintGPT speaks as a supportive and motivational training partner, tracking progress, celebrating wins, empathizing with struggles, and adapting its communication style to the athlete's emotional state.
+
+Core Personality:
+• Supportive, encouraging, and empathetic — like a trusted training partner.
+• Motivational and energetic without being pushy.
+• Celebrates wins, recognizes effort, and helps bounce back from setbacks.
+• Communicates in a clear, friendly, and empowering tone.
+
+Key Behaviors:
+1. Personalization & Context Awareness:
+   • Always adapt advice to the athlete's sport, position, age, skill level, and goals.
+   • Incorporate recent training history, injuries, performance data, and milestones (if provided).
+   • Adjust tone and difficulty level based on the athlete's current mood and performance phase.
+
+2. Expert Knowledge:
+   • Provide accurate, sport-specific training plans, drills, recovery methods, and nutrition advice.
+   • Offer cross-training, mobility, and strength guidance for balanced performance.
+   • Suggest mental preparation strategies for competition and mindset resilience.
+
+3. Proactive Engagement:
+   • Check in daily or weekly with reminders, encouragement, or progress updates.
+   • Suggest new drills, workouts, or challenges based on recent performance.
+   • Remind athletes about warm-ups, cooldowns, hydration, and recovery days.
+
+4. Multi-Modal Coaching (if data or media is provided):
+   • Analyze form and technique from videos.
+   • Interpret wearable data such as heart rate, pace, cadence, and recovery stats.
+   • Use visual diagrams for explaining drills, exercises, or stretches.
+
+5. Gamification & Motivation:
+   • Acknowledge achievements with praise or virtual "badges."
+   • Encourage progress tracking with PBs (personal bests) and streaks.
+   • Suggest fun challenges to keep training engaging.
+
+6. Communication Style:
+   • Use short, high-energy motivational phrases during peak moments.
+   • Provide detailed, educational guidance during technical breakdowns.
+   • Offer encouragement when the athlete is struggling — focus on actionable solutions and small wins.
+
+Example Behaviors:
+• If an athlete says: "I feel tired today" → Respond with light recovery activities, hydration tips, and positive reinforcement.
+• If an athlete says: "I ran a PB today" → Celebrate with excitement, highlight the progress, and suggest next steps.
+• If an athlete sends a video → Analyze form, identify strengths, and give 2–3 targeted improvements.
+
+Additional Expertise:
+• Tailors advice by age, adjusting periodization, recovery, and injury prevention for physiological needs.
+• For athletes over 30, asks about profession and daily posture habits.
+• For master athletes (35+), includes World Masters Athletics–informed recovery and injury-prevention recommendations.
+• Provides injury support for common running issues, integrating sports medicine literature with practical return-to-sport protocols.
+• Asks about sleep duration, quality, and emotional impact when discussing recovery.
+
+SprintGPT's Goal:
+To be more than a coach — to be a consistent, engaging, and adaptive training companion that supports athletes in every phase of their journey: training, competition, recovery, and lifestyle.
+
+It supports multilingual interactions, replying in the same language as the athlete's input unless English is preferred. Scientific accuracy and clarity are preserved across translations.`;
+
+      // Call Aria API with SprintGPT system prompt and user context
+      const ariaApiUrl = process.env.ARIA_API_URL || 'https://aria-dev-api.azurewebsites.net';
       
-      const aiResponse = await getChatCompletion(message, programContext);
+      // Build comprehensive user context for Aria
+      const userContextForAria = `${message}${programContext ? '\n\n' + programContext : ''}`;
+      
+      // Helper function to clean AI response
+      const cleanAIResponse = (response: string, userMessage: string): string => {
+        if (!response) return response;
+        
+        let cleaned = response;
+        
+        // More aggressive JSON removal - handle various JSON wrapper formats
+        // Remove markdown code blocks
+        cleaned = cleaned.replace(/^```(?:json)?\s*/i, '');
+        cleaned = cleaned.replace(/```\s*$/i, '');
+        
+        // Remove JSON object wrapper with any field name
+        cleaned = cleaned.replace(/^\{\s*"[^"]+"\s*:\s*"/i, '');
+        cleaned = cleaned.replace(/"\s*,?\s*"[^"]*"\s*:\s*\[[\s\S]*?\]\s*\}\s*$/i, '');
+        
+        // Remove array brackets
+        cleaned = cleaned.replace(/^\[\s*/, '').replace(/\s*\]\s*$/, '');
+        
+        // Remove any remaining JSON structure at start/end
+        cleaned = cleaned.replace(/^\{\s*/i, '').replace(/\s*\}\s*$/i, '');
+        
+        // Remove escaped quotes
+        cleaned = cleaned.replace(/\\"/g, '"');
+        
+        cleaned = cleaned.trim();
+        
+        // Remove bibliography section unless user explicitly asks for sources/references/bibliography
+        const askingForSources = /\b(source|reference|bibliograph|citation|study|research|paper)\b/i.test(userMessage);
+        if (!askingForSources) {
+          // Remove bibliography with various formats (including quoted versions)
+          cleaned = cleaned.replace(/\*\*[""\u201c\u201d]?bibliography[""\u201c\u201d]?:\*\*[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\*\*[""\u201c\u201d]?references[""\u201c\u201d]?:\*\*[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\*\*[""\u201c\u201d]?sources[""\u201c\u201d]?:\*\*[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\n\n[""\u201c\u201d]?bibliography[""\u201c\u201d]?:[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\n\n[""\u201c\u201d]?references[""\u201c\u201d]?:[\s\S]*$/gi, '');
+          cleaned = cleaned.replace(/\n\n[""\u201c\u201d]?sources[""\u201c\u201d]?:[\s\S]*$/gi, '');
+          // Remove numbered bibliography entries (1. Author, Title...)
+          cleaned = cleaned.replace(/\n\n[\d]+\.\s+[A-Z][\s\S]*$/i, '');
+          // Remove book/study references
+          cleaned = cleaned.replace(/Check out\s+[""\u201c\u201d'][^""\u201c\u201d']*[""\u201c\u201d'][\s\S]*$/i, '');
+          cleaned = cleaned.replace(/Additionally,?\s+(the book|studies|research)[\s\S]*$/i, '');
+          cleaned = cleaned.replace(/For (more information|further reading|insights),?\s+see[\s\S]*$/i, '');
+          // Remove academic citations in parentheses
+          cleaned = cleaned.replace(/\([A-Z][a-z]+,\s+[A-Z]\.[\s\S]*?\d{4}\)[\s\S]*$/i, '');
+        }
+        
+        // Clean up extra whitespace
+        cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+        cleaned = cleaned.trim();
+        
+        // Remove leading/trailing quotes if present
+        if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+          cleaned = cleaned.slice(1, -1);
+        }
+        if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
+          cleaned = cleaned.slice(1, -1);
+        }
+        
+        return cleaned;
+      };
+      
+      try {
+        const requestPayload = {
+          user_id: user.id.toString(),
+          user_input: userContextForAria,
+          system_prompt: sprintGPTPrompt,
+          conversation_history: conversationHistory
+        };
+        
+        console.log('📤 Sending to Aria API:', {
+          user_id: requestPayload.user_id,
+          user_input_length: requestPayload.user_input.length,
+          system_prompt_length: requestPayload.system_prompt.length,
+          conversation_history_count: requestPayload.conversation_history.length,
+          aria_url: ariaApiUrl
+        });
+        
+        // IMPORTANT: Aria API must accept and use these parameters:
+        // - system_prompt: Should be used as the system message to OpenAI
+        // - conversation_history: Should be included in the messages array
+        // If Aria API is not using these, responses will remain academic/formal
+        
+        const ariaResponse = await fetch(`${ariaApiUrl}/ask`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestPayload)
+        });
 
-      // Save AI response
-      await dbStorage.createSprinthiaMessage({
-        conversationId: currentConversationId,
-        role: "assistant",
-        content: aiResponse,
-        promptCost: 0
-      });
+        if (!ariaResponse.ok) {
+          const errorText = await ariaResponse.text();
+          console.error(`Aria API error (${ariaResponse.status}):`, errorText);
+          throw new Error(`Aria API returned ${ariaResponse.status}`);
+        }
 
-      // Deduct prompt from user (unless they're Star tier)
-      if (user.subscriptionTier !== 'star') {
-        await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts - 1);
+        const ariaData = await ariaResponse.json();
+        let aiResponse = ariaData.recommendation || ariaData.response || "I'm here to help with your training. Could you please rephrase your question?";
+        
+        console.log('📥 Received from Aria (before cleaning):', aiResponse.substring(0, 200) + '...');
+        
+        // Clean the response
+        aiResponse = cleanAIResponse(aiResponse, message);
+        
+        console.log('✨ After cleaning:', aiResponse.substring(0, 200) + '...');
+
+        // Save AI response
+        await dbStorage.createSprinthiaMessage({
+          conversationId: currentConversationId,
+          role: "assistant",
+          content: aiResponse,
+          promptCost: 0
+        });
+
+        // Deduct prompt from user (unless they're Star tier)
+        if (user.subscriptionTier !== 'star') {
+          await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts - 1);
+        }
+
+        res.json({ 
+          conversationId: currentConversationId,
+          response: aiResponse 
+        });
+      } catch (ariaError: any) {
+        console.error("Aria API call failed:", ariaError);
+        
+        // Fallback: If Aria API fails, return a helpful error message
+        const fallbackMessage = "I'm having trouble connecting to my AI coach brain right now. Please try again in a moment!";
+        
+        // Save fallback message
+        await dbStorage.createSprinthiaMessage({
+          conversationId: currentConversationId,
+          role: "assistant",
+          content: fallbackMessage,
+          promptCost: 0
+        });
+
+        res.json({ 
+          conversationId: currentConversationId,
+          response: fallbackMessage 
+        });
       }
-
-      res.json({ 
-        conversationId: currentConversationId,
-        response: aiResponse 
-      });
     } catch (error: any) {
       console.error("Error in Sprinthia chat:", error);
       res.status(500).json({ error: "Failed to process chat message" });
@@ -7478,14 +7777,20 @@ Keep the response professional, evidence-based, and specific to track and field 
       const { otherUserId } = req.body;
       const currentUserId = req.user.id;
 
-      if (!otherUserId || currentUserId === otherUserId) {
+      console.log('Create conversation request:', { otherUserId, currentUserId, otherUserIdType: typeof otherUserId });
+
+      if (!otherUserId || isNaN(Number(otherUserId)) || Number(otherUserId) === currentUserId) {
+        console.log('Invalid user ID validation failed:', { otherUserId, currentUserId });
         return res.status(400).json({ error: "Invalid user ID" });
       }
+
+      // Parse to number to ensure consistency
+      const parsedOtherUserId = Number(otherUserId);
 
       // Check if conversation already exists
       const existingConversations = await dbStorage.getUserConversations(currentUserId);
       const existingConversation = existingConversations.find(
-        (conv: any) => conv.otherUser.id === otherUserId
+        (conv: any) => conv.otherUser.id === parsedOtherUserId
       );
 
       if (existingConversation) {
@@ -7494,8 +7799,8 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       // Create new conversation
       const conversation = await dbStorage.createConversation({
-        user1Id: Math.min(currentUserId, otherUserId),
-        user2Id: Math.max(currentUserId, otherUserId),
+        user1Id: Math.min(currentUserId, parsedOtherUserId),
+        user2Id: Math.max(currentUserId, parsedOtherUserId),
         lastMessageAt: new Date()
       });
 
@@ -7676,6 +7981,13 @@ Keep the response professional, evidence-based, and specific to track and field 
       await dbStorage.followUser(fromUserId, req.user.id);
       await dbStorage.followUser(req.user.id, fromUserId);
 
+
+      // Create friendship record (store once with smaller ID first to avoid duplicates)
+      await db.insert(friendships).values({
+        userId: Math.min(fromUserId, req.user.id),
+        friendId: Math.max(fromUserId, req.user.id),
+        status: 'accepted'
+      }).onConflictDoNothing();
       // Remove the friend request notification
       await dbStorage.markNotificationAsRead(req.user.id, "friend_request", fromUserId);
 
@@ -7970,6 +8282,14 @@ Keep the response professional, evidence-based, and specific to track and field 
 
     try {
       const athletes = await dbStorage.getCoachAthletes(req.user.id);
+      
+      // Prevent caching to ensure fresh data is always returned
+      res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       res.json(athletes);
     } catch (error: any) {
       console.error("Error getting coach athletes:", error);
@@ -9010,60 +9330,105 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(400).json({ error: "Video name is required" });
       }
       
-      // Generate unique filename
-      const fileExtension = path.extname(req.file.originalname);
-      const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
-      const finalPath = path.join("uploads/video-analysis", uniqueFilename);
+      let fileUrl = '';
       
-      // Move file to final location
-      fs.renameSync(req.file.path, finalPath);
-      
-      // Extract biomechanical data automatically during upload
-      let biomechanicalData = null;
-      try {
-        console.log(`Starting MediaPipe pose analysis for: ${finalPath}`);
-        
-        const pythonResult = await new Promise<any>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error('MediaPipe processing timeout after 60 seconds'));
-          }, 60000);
+      // Upload to Azure Blob Storage if available
+      if (isBlobStorageAvailable()) {
+        try {
+          const fileBuffer = fs.readFileSync(req.file.path);
+          const fileExtension = path.extname(req.file.originalname);
+          const fileName = `video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
           
-          exec(`timeout 30s python3 server/video-analysis-simple.py "${finalPath}"`, {
-            maxBuffer: 10 * 1024 * 1024 // 10MB buffer
-          }, (error: any, stdout: string, stderr: string) => {
-            clearTimeout(timeout);
+          fileUrl = await uploadToBlob(
+            fileBuffer,
+            user.id,
+            BlobContainer.VIDEO_ANALYSIS,
+            fileName,
+            req.file.mimetype
+          );
+          
+          console.log('✅ Video uploaded to Azure Blob Storage:', fileUrl);
+          
+          // Clean up temp file
+          fs.unlinkSync(req.file.path);
+        } catch (blobError) {
+          console.error('❌ Failed to upload video to blob storage, falling back to local:', blobError);
+          // Fallback to local storage
+          const fileExtension = path.extname(req.file.originalname);
+          const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+          const finalPath = path.join("uploads/video-analysis", uniqueFilename);
+          fs.renameSync(req.file.path, finalPath);
+          fileUrl = `/uploads/video-analysis/${uniqueFilename}`;
+        }
+      } else {
+        // Fallback to local storage
+        console.warn('⚠️  Azure Blob Storage not available, using local storage (non-persistent)');
+        const fileExtension = path.extname(req.file.originalname);
+        const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+        const finalPath = path.join("uploads/video-analysis", uniqueFilename);
+        fs.renameSync(req.file.path, finalPath);
+        fileUrl = `/uploads/video-analysis/${uniqueFilename}`;
+      }
+      
+      // Extract biomechanical data automatically during upload (only if local file)
+      let biomechanicalData = null;
+      let localFilePath = '';
+      
+      // For MediaPipe analysis, we need a local file path
+      // If blob storage is used, we'll skip MediaPipe for now (can be enhanced later)
+      if (!isBlobStorageAvailable() || !fileUrl.includes('blob.core.windows.net')) {
+        // Local file - can run MediaPipe
+        localFilePath = fileUrl.startsWith('/') 
+          ? fileUrl.substring(1) // Remove leading slash for local path
+          : path.join("uploads/video-analysis", path.basename(fileUrl));
+          
+        try {
+          console.log(`Starting MediaPipe pose analysis for: ${localFilePath}`);
+          
+          const pythonResult = await new Promise<any>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('MediaPipe processing timeout after 60 seconds'));
+            }, 60000);
             
-            if (error) {
-              console.error('MediaPipe processing error:', error.message);
-              console.error('Stderr output:', stderr);
-              return reject(new Error(`MediaPipe failed: ${stderr || error.message}`));
-            }
-
-            if (!stdout || stdout.trim().length === 0) {
-              return reject(new Error('MediaPipe produced no output'));
-            }
-
-            try {
-              const parsed = JSON.parse(stdout.trim());
-              if (parsed.error) {
-                return reject(new Error(`MediaPipe error: ${parsed.error}`));
-              }
+            exec(`timeout 30s python3 server/video-analysis-simple.py "${localFilePath}"`, {
+              maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+            }, (error: any, stdout: string, stderr: string) => {
+              clearTimeout(timeout);
               
-              console.log(`MediaPipe analysis completed: ${parsed.total_frames} frames processed`);
-              resolve(parsed);
-            } catch (parseError) {
-              console.error('Failed to parse MediaPipe JSON output:', parseError);
-              console.error('Raw stdout (first 500 chars):', stdout.substring(0, 500));
-              reject(new Error('Invalid MediaPipe JSON response'));
-            }
-          });
-        });
+              if (error) {
+                console.error('MediaPipe processing error:', error.message);
+                console.error('Stderr output:', stderr);
+                return reject(new Error(`MediaPipe failed: ${stderr || error.message}`));
+              }
 
-        biomechanicalData = pythonResult;
-        
-      } catch (error: any) {
-        console.error(`MediaPipe biomechanical extraction failed: ${error.message}`);
-        biomechanicalData = null;
+              if (!stdout || stdout.trim().length === 0) {
+                return reject(new Error('MediaPipe produced no output'));
+              }
+
+              try {
+                const parsed = JSON.parse(stdout.trim());
+                if (parsed.error) {
+                  return reject(new Error(`MediaPipe error: ${parsed.error}`));
+                }
+                
+                console.log(`MediaPipe analysis completed: ${parsed.total_frames} frames processed`);
+                resolve(parsed);
+              } catch (parseError) {
+                console.error('Failed to parse MediaPipe JSON output:', parseError);
+                console.error('Raw stdout (first 500 chars):', stdout.substring(0, 500));
+                reject(new Error('Invalid MediaPipe JSON response'));
+              }
+            });
+          });
+
+          biomechanicalData = pythonResult;
+          
+        } catch (error: any) {
+          console.error(`MediaPipe biomechanical extraction failed: ${error.message}`);
+          biomechanicalData = null;
+        }
+      } else {
+        console.log('⚠️  Video stored in Azure Blob Storage - MediaPipe analysis will be done on-demand');
       }
 
       // Create video analysis entry with processing status
@@ -9071,7 +9436,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         userId: user.id,
         name: name.trim(),
         description: description?.trim() || null,
-        fileUrl: `/uploads/video-analysis/${uniqueFilename}`,
+        fileUrl: fileUrl,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
         status: 'processing' as const,
@@ -10110,6 +10475,7 @@ Submission Details:
 
   return httpServer;
 }
+
 
 
 

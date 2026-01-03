@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Send, User, Copy, Check, History, Plus } from 'lucide-react';
+import { Send, User, Copy, Check, History, Plus, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatMessage {
@@ -33,6 +33,7 @@ export default function SprinthiaSimple() {
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [savingMessageId, setSavingMessageId] = useState<string | null>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -164,12 +165,45 @@ export default function SprinthiaSimple() {
     }
   };
 
+  const handleSaveAsProgram = async (content: string, messageId: string) => {
+    try {
+      setSavingMessageId(messageId);
+      
+      // Create a program from the AI response
+      const response = await apiRequest('POST', '/api/programs', {
+        name: 'Training Plan from Sprinthia',
+        description: content.substring(0, 500) + (content.length > 500 ? '...' : ''),
+        content: content,
+        category: 'training',
+        level: 'intermediate',
+        duration: 'Custom',
+        workoutsPerWeek: 0
+      });
+
+      if (response.ok) {
+        const program = await response.json();
+        toast({
+          title: "Program saved!",
+          description: "Training plan saved to your programs",
+        });
+        setTimeout(() => setSavingMessageId(null), 2000);
+      } else {
+        throw new Error('Failed to save program');
+      }
+    } catch (err) {
+      console.error('Error saving program:', err);
+      toast({
+        title: "Failed to save",
+        description: "Could not save training plan as program",
+        variant: "destructive",
+      });
+      setSavingMessageId(null);
+    }
+  };
+
   return (
-    <div className="flex h-screen" data-sprinthia-page style={{ 
-      background: 'linear-gradient(135deg, #8b5cf6 0%, #1e40af 100%)' 
-    }}>
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 flex">
+    <div className="h-screen bg-background text-white flex flex-col" data-sprinthia-page>
+      <div className="flex flex-1 overflow-hidden">
           {/* Conversation History Sidebar */}
           {showHistory && (
             <div className="w-80 border-r border-border bg-background/50 flex flex-col">
@@ -223,12 +257,19 @@ export default function SprinthiaSimple() {
           
           <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full">
             {/* Header */}
-          <div className="p-6 border-b border-white/20 bg-transparent">
+          <div className="p-6 pl-20 pt-20 border-b border-white/20 bg-transparent">
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-white">
-                  Sprinthia AI Coach
-                </h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold text-white">
+                    Sprinthia AI Coach
+                  </h1>
+                  <img 
+                    src="/images/powered-by-aria.png" 
+                    alt="Powered by Aria" 
+                    className="h-8 w-auto object-contain"
+                  />
+                </div>
                 <p className="text-white/80 text-sm">Your AI track and field coach • Always available</p>
               </div>
               <div className="flex flex-col items-end gap-2">
@@ -236,7 +277,7 @@ export default function SprinthiaSimple() {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowHistory(!showHistory)}
-                  className="flex items-center gap-1 border-white/25 text-white hover:text-white hover:bg-white/10"
+                  className="flex items-center gap-1 bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500 hover:text-black hover:border-yellow-500 font-semibold"
                 >
                   <History className="h-4 w-4" />
                   History
@@ -307,18 +348,34 @@ export default function SprinthiaSimple() {
                       })}
                     </span>
                     {message.role === 'assistant' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopyMessage(message.content, message.id)}
-                        className="h-6 w-6 p-0 hover:bg-muted"
-                      >
-                        {copiedMessageId === message.id ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyMessage(message.content, message.id)}
+                          className="h-6 w-6 p-0 hover:bg-muted"
+                          title="Copy response"
+                        >
+                          {copiedMessageId === message.id ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSaveAsProgram(message.content, message.id)}
+                          className="h-6 w-6 p-0 hover:bg-muted"
+                          title="Save as program"
+                        >
+                          {savingMessageId === message.id ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <Save className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -348,7 +405,7 @@ export default function SprinthiaSimple() {
           </div>
 
           {/* Input */}
-          <div className="p-6 pb-20 border-t border-white/20 bg-transparent">
+          <div className="p-6 pb-24 border-t border-white/20 bg-transparent">
             <div className="flex gap-3 max-w-4xl mx-auto">
               <div className="flex-1 relative">
                 <Input
@@ -374,7 +431,6 @@ export default function SprinthiaSimple() {
                 You've used all your prompts. Upgrade to Pro or Star to continue using Sprinthia.
               </p>
             )}
-          </div>
           </div>
         </div>
       </div>

@@ -542,6 +542,17 @@ const ChatPage = () => {
     };
   }, [refetchChannels]);
 
+  // Auto-select conversation from My Athletes page
+  useEffect(() => {
+    const conversationId = sessionStorage.getItem('openConversationId');
+    if (conversationId) {
+      console.log('Auto-selecting conversation:', conversationId);
+      setSelectedChat({ type: 'direct', id: parseInt(conversationId) });
+      setViewState('chat');
+      sessionStorage.removeItem('openConversationId');
+    }
+  }, []);
+
   // Fetch conversations
   const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
     queryKey: ['/api/conversations'],

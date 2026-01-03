@@ -450,17 +450,9 @@ article::-webkit-scrollbar,
     background: transparent !important;
   }
 
-  /* Sprinthia page gets solid background */
-  body:has([data-sprinthia-page]) {
-    background: #010a18 !important;
-    animation: none !important;
-  }
+  
 
-  body:has([data-sprinthia-page]) #root,
-  body:has([data-sprinthia-page]) .flex.h-screen,
-  body:has([data-sprinthia-page]) [class*="bg-background"] {
-    background: #010a18 !important;
-  }
+  
 }
 
 @keyframes gradientShift {
