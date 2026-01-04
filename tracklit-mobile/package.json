@@ -26,6 +26,7 @@
     "expo": "~51",
     "expo-dev-client": "4.0.21",
     "expo-dev-menu": "5.0.17",
+    "expo-clipboard": "^6.0.0",
     "expo-linear-gradient": "~13.0.2",
     "react": "^18.2.0",
     "react-hook-form": "^7.55.0",

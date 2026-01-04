@@ -5,6 +5,7 @@ export type TabParamList = {
   Practice: undefined;
   Programs: undefined;
   Feed: undefined;
+  Sprinthia: undefined;
   Tools: undefined;
   Profile: undefined;
 };

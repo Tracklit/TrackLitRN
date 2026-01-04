@@ -61,7 +61,9 @@ export async function setupVite(app: Express, server: Server) {
     return cachedTemplate;
   };
 
-  app.use("*", async (req, res, next) => {
+  // Express v5 (path-to-regexp v6) is strict about wildcard patterns like "*" or "/*".
+  // Use a RegExp catch-all instead.
+  app.use(/.*/, async (req, res, next) => {
     const url = req.originalUrl;
 
     // Skip serving HTML for source files, API routes, and assets
@@ -116,7 +118,8 @@ export function serveStatic(app: Express) {
   console.log(`Setting up static file serving from: ${distPath}`);
 
   // Direct asset serving - bypass express.static
-  app.get('/assets/*', (req, res) => {
+  // Express v5 does not accept '/assets/*' style patterns; use RegExp instead.
+  app.get(/^\/assets\/.*$/, (req, res) => {
     const assetPath = req.path.substring('/assets/'.length);
     const fullPath = path.join(distPath, 'assets', assetPath);
     
@@ -165,7 +168,8 @@ export function serveStatic(app: Express) {
   }));
 
   // fall through to index.html if the file doesn't exist (but skip /assets/ requests)
-  app.use("*", (req, res, next) => {
+  // Express v5 (path-to-regexp v6) is strict about wildcard patterns like "*" or "/*".
+  app.use(/.*/, (req, res, next) => {
     // Don't serve index.html for asset requests - let them 404 instead
     if (req.originalUrl.startsWith('/assets/')) {
       console.log(`Skipping index.html fallback for asset request: ${req.originalUrl}`);

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -6,27 +6,42 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  ActivityIndicator,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  Modal,
+  Keyboard,
+  Animated,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
+// Clipboard is optional: if native module isn't available yet, we degrade gracefully.
+let Clipboard: typeof import('expo-clipboard') | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  Clipboard = require('expo-clipboard');
+} catch (err) {
+  console.warn('expo-clipboard not available; copy actions will be disabled until native modules are rebuilt.', err);
+}
 
 import { Text } from '../components/ui/Text';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/queryClient';
 import theme from '../utils/theme';
+import { FormattedSprinthiaText } from '../utils/sprinthiaFormat';
+import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '../utils/layoutPadding';
+
+type Role = 'user' | 'assistant';
 
 interface Message {
   id: string;
   text: string;
-  isUser: boolean;
+  role: Role;
   timestamp: Date;
 }
 
@@ -34,6 +49,7 @@ interface SprinthiaConversation {
   id: number;
   title: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 interface ChatResponse {
@@ -41,167 +57,270 @@ interface ChatResponse {
   conversationId: number;
 }
 
-const quickPrompts = [
-  "Create a 400m workout plan",
-  "Analyze my sprint technique", 
-  "Plan my competition schedule",
-  "Recovery tips after hard training",
-  "Nutrition advice for sprinters",
-  "Mental preparation strategies"
+const suggestions = [
+  'Create a sprint workout',
+  'Race strategy for 400m',
+  'Hamstring injury recovery',
+  'Pre-race nutrition',
 ];
 
-const welcomeMessage: Message = {
-  id: 'welcome',
-  text: "Hi! I'm Sprinthia, your AI athletics coach. I'm here to help you train smarter, compete better, and reach your full potential. What can I help you with today?",
-  isUser: false,
-  timestamp: new Date(),
+const poweredByAria = require('../assets/powered-by-aria.png');
+const WHITE = '#ffffff';
+
+const TypingDots: React.FC = () => {
+  const dots = [
+    useRef(new Animated.Value(0.3)).current,
+    useRef(new Animated.Value(0.3)).current,
+    useRef(new Animated.Value(0.3)).current,
+  ];
+
+  useEffect(() => {
+    const animations = dots.map((dot, index) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(dot, {
+            toValue: 1,
+            duration: 400,
+            delay: index * 120,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot, {
+            toValue: 0.3,
+            duration: 400,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      )
+    );
+
+    animations.forEach((anim) => anim.start());
+    return () => animations.forEach((anim) => anim.stop());
+  }, [dots]);
+
+  return (
+    <View style={styles.typingDots}>
+      {dots.map((dot, idx) => (
+        <Animated.View
+          key={`dot-${idx}`}
+          style={[
+            styles.typingDot,
+            {
+              opacity: dot,
+              transform: [
+                {
+                  translateY: dot.interpolate({
+                    inputRange: [0.3, 1],
+                    outputRange: [0, -2],
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
 };
 
 export const SprinthiaScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, refreshUser } = useAuth();
   const isGuest = user?.id === 'guest';
+  const isStar = user?.subscriptionTier === 'star';
+
   const scrollViewRef = useRef<ScrollView>(null);
-  
-  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [conversationId, setConversationId] = useState<number | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
-  const [viewMode, setViewMode] = useState<'chat' | 'history'>('chat');
+  const [isThinking, setIsThinking] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [savingMessageId, setSavingMessageId] = useState<string | null>(null);
+  const [inlineWarning, setInlineWarning] = useState<string | null>(null);
 
-  // Auto-scroll to bottom when messages change
+  const remainingPrompts = isStar ? 'Unlimited' : user?.sprinthiaPrompts ?? 0;
+  const isOutOfPrompts = !isStar && ((user?.sprinthiaPrompts ?? 0) <= 0);
+
   useEffect(() => {
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, [messages, isTyping]);
+    }, 50);
+  }, [messages, isThinking]);
 
-  // Fetch conversation history (optional - for future conversation list feature)
   const conversationsQuery = useQuery({
     queryKey: ['sprinthia-conversations'],
     queryFn: () => apiRequest<SprinthiaConversation[]>('/api/sprinthia/conversations'),
     enabled: isAuthenticated && !isGuest,
   });
 
-  // Send message mutation - connects to real backend
-  const sendMessageMutation = useMutation({
-    mutationFn: async (message: string) => {
-      const payload: { message: string; conversationId?: number } = { message };
-      if (conversationId) {
-        payload.conversationId = conversationId;
-      }
-      
-      return apiRequest<ChatResponse>('/api/sprinthia/chat', {
-        method: 'POST',
-        data: payload,
-      });
-    },
-    onSuccess: (data) => {
-      // Add AI response to messages
-      const aiMessage: Message = {
-        id: Date.now().toString() + '_ai',
-        text: data.response,
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, aiMessage]);
-      setConversationId(data.conversationId);
-      setIsTyping(false);
-      
-      // Invalidate conversations cache to update history
-      queryClient.invalidateQueries({ queryKey: ['sprinthia-conversations'] });
-    },
-    onError: (error: Error) => {
-      console.error('Sprinthia API error:', error);
-      setIsTyping(false);
-      
-      // Add error message
-      const errorMessage: Message = {
-        id: Date.now().toString() + '_error',
-        text: "I'm sorry, I couldn't process your request right now. Please check your connection and try again.",
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      
-      Alert.alert(
-        'Connection Error',
-        error.message || 'Failed to send message to Sprinthia. Please try again.',
-        [{ text: 'OK' }]
-      );
-    },
-  });
-
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
-    
-    // Check if user is authenticated
-    if (!isAuthenticated || isGuest) {
-      Alert.alert(
-        'Sign In Required',
-        'Please sign in to chat with Sprinthia AI.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    const userMessage: Message = {
-      id: Date.now().toString() + '_user',
-      text: inputText.trim(),
-      isUser: true,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setIsTyping(true);
-    
-    // Send to real backend API
-    sendMessageMutation.mutate(inputText.trim());
-    setInputText('');
-  };
-
-  const handleQuickPrompt = (prompt: string) => {
-    setInputText(prompt);
-  };
-
-  const handleNewConversation = () => {
-    setMessages([welcomeMessage]);
-    setConversationId(null);
-    setViewMode('chat');
-  };
-
   const loadConversationMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const items = await apiRequest<Array<{ id: number; role: string; content: string; createdAt: string }>>(
+    mutationFn: async (id: number) =>
+      apiRequest<Array<{ id: number; role: Role; content: string; createdAt: string }>>(
         `/api/sprinthia/conversations/${id}/messages`,
-      );
-      return items;
-    },
-    onSuccess: (items) => {
+      ),
+    onSuccess: (items, id) => {
       const mapped: Message[] = items.map((m) => ({
         id: String(m.id),
         text: m.content,
-        isUser: m.role === 'user',
+        role: m.role,
         timestamp: new Date(m.createdAt),
       }));
-      setMessages(mapped.length ? mapped : [welcomeMessage]);
-      setIsTyping(false);
-      setViewMode('chat');
+      setMessages(mapped);
+      setConversationId(id);
+      setShowHistory(false);
+      setIsThinking(false);
+      setInlineWarning(null);
     },
     onError: () => {
       Alert.alert('Unable to load conversation', 'Please try again.');
     },
   });
 
-  const toggleViewMode = () => {
+  const sendMessageMutation = useMutation({
+    mutationFn: async (message: string) => {
+      const payload: { message: string; conversationId?: number } = {
+        message,
+        conversationId: conversationId || undefined,
+      };
+
+      return apiRequest<ChatResponse>('/api/sprinthia/chat', {
+        method: 'POST',
+        data: payload,
+      });
+    },
+    onSuccess: async (data) => {
+      const aiMessage: Message = {
+        id: `${Date.now()}-ai`,
+        text: data.response,
+        role: 'assistant',
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+      setConversationId(data.conversationId);
+      setIsThinking(false);
+      setInlineWarning(null);
+      queryClient.invalidateQueries({ queryKey: ['sprinthia-conversations'] });
+
+      if (!isStar) {
+        // Refresh user to keep Remaining badge accurate
+        refreshUser?.();
+      }
+    },
+    onError: (error: Error) => {
+      console.error('Sprinthia API error:', error);
+      setIsThinking(false);
+
+      if (error.message?.toLowerCase().includes('prompt')) {
+        setInlineWarning('No prompts remaining. Purchase more to continue using Sprinthia.');
+        return;
+      }
+
+      const fallback: Message = {
+        id: `${Date.now()}-error`,
+        text: "I'm sorry, I couldn't process your request right now. Please try again shortly.",
+        role: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, fallback]);
+      Alert.alert('Connection issue', error.message || 'Failed to send message to Sprinthia.');
+    },
+  });
+
+  const handleSendMessage = () => {
+    if (!inputText.trim() || isThinking) return;
+
+    if (!isAuthenticated || isGuest) {
+      Alert.alert('Sign In Required', 'Please sign in to chat with Sprinthia AI.');
+      return;
+    }
+
+    if (isOutOfPrompts) {
+      setInlineWarning('No prompts remaining. Purchase more to continue using Sprinthia.');
+      return;
+    }
+
+    const messageText = inputText.trim();
+    const userMessage: Message = {
+      id: `${Date.now()}-user`,
+      text: messageText,
+      role: 'user',
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsThinking(true);
+    setInlineWarning(null);
+    setInputText('');
+    sendMessageMutation.mutate(messageText);
+  };
+
+  const handleQuickPrompt = (prompt: string) => {
+    setInputText(prompt);
     Keyboard.dismiss();
-    setViewMode((prev) => (prev === 'chat' ? 'history' : 'chat'));
+  };
+
+  const handleNewConversation = () => {
+    setMessages([]);
+    setConversationId(null);
+    setShowHistory(false);
+    setInlineWarning(null);
+  };
+
+  const handleCopyMessage = async (messageId: string, text: string) => {
+    try {
+      if (!Clipboard) {
+        Alert.alert('Copy unavailable', 'Clipboard module is not installed in this build.');
+        return;
+      }
+      await Clipboard.setStringAsync(text);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      Alert.alert('Copy failed', 'Could not copy response to clipboard.');
+    }
+  };
+
+  const handleSaveProgram = async (messageId: string, content: string) => {
+    if (!isAuthenticated || isGuest) {
+      Alert.alert('Sign In Required', 'Please sign in to save programs.');
+      return;
+    }
+
+    setSavingMessageId(messageId);
+    try {
+      await apiRequest('/api/programs', {
+        method: 'POST',
+        data: {
+          title: 'Training Plan from Sprinthia',
+          description: content.substring(0, 500) + (content.length > 500 ? '...' : ''),
+          category: 'training',
+          level: 'intermediate',
+          duration: 1,
+          isTextBased: true,
+          textContent: content,
+        },
+      });
+      setTimeout(() => setSavingMessageId(null), 1500);
+    } catch (err: any) {
+      console.error('Save program error:', err);
+      setSavingMessageId(null);
+      Alert.alert('Unable to save', err?.message || 'Failed to save training plan.');
+    }
   };
 
   const handleOpenDrawer = () => {
     navigation.getParent?.()?.openDrawer?.();
   };
+
+  const formattedRemaining =
+    typeof remainingPrompts === 'number' ? `${remainingPrompts} prompts` : remainingPrompts;
+
+  const showGreeting = messages.length === 0 && !isThinking;
 
   return (
     <LinearGradient
@@ -209,259 +328,285 @@ export const SprinthiaScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={[styles.container, { paddingTop: insets.top }]}
     >
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
-        {/* Header */}
+        {/* Header (mobile-first, 2 rows) */}
         <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.headerIconButton}
-              onPress={handleOpenDrawer}
-              accessibilityRole="button"
-              accessibilityLabel="Open drawer"
-            >
-              <FontAwesome5 name="bars" size={18} color={theme.colors.primary} solid />
+          <View style={styles.headerTopRow}>
+            <TouchableOpacity style={styles.drawerButton} onPress={handleOpenDrawer}>
+              <FontAwesome5 name="bars" size={18} color={WHITE} solid />
             </TouchableOpacity>
-            <View style={styles.aiAvatarContainer}>
-              <LinearGradient
-                colors={[theme.colors.primary, theme.colors.deepGold]}
-                style={styles.aiAvatar}
+            <View style={styles.titleGroup}>
+              <Text
+                weight="bold"
+                color="foreground"
+                style={styles.titleText}
+                numberOfLines={1}
               >
-                <FontAwesome5 name="robot" size={24} color="white" solid />
-              </LinearGradient>
-            </View>
-            <View style={styles.headerText}>
-              <Text variant="h3" weight="bold" color="foreground">
-                Sprinthia AI
+                Sprinthia AI Coach
               </Text>
-              <Text variant="small" color="success" weight="medium">
-                ● Online
-              </Text>
+              <Image source={poweredByAria} style={styles.poweredBy} resizeMode="contain" />
             </View>
-            <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.headerIconButton} onPress={toggleViewMode}>
-                <FontAwesome5
-                  name={viewMode === 'chat' ? 'keyboard' : 'comments'}
-                  size={18}
-                  color={theme.colors.primary}
-                  solid
-                />
+          </View>
+
+          <View style={styles.headerBottomRow}>
+            <Text color="muted" style={styles.subtitle} numberOfLines={1}>
+              Your AI track and field coach • Always available
+            </Text>
+
+            <View style={styles.headerControls}>
+              <TouchableOpacity
+                style={styles.historyButton}
+                onPress={() => setShowHistory(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Open conversation history"
+              >
+                <FontAwesome5 name="history" size={14} color="black" />
+                <Text weight="semiBold" color="foreground" style={styles.historyLabel}>
+                  History
+                </Text>
               </TouchableOpacity>
-              {/* New Conversation Button */}
-              {messages.length > 1 && viewMode === 'chat' && (
-                <TouchableOpacity style={styles.headerIconButton} onPress={handleNewConversation}>
-                  <FontAwesome5 name="plus" size={18} color={theme.colors.primary} solid />
-                </TouchableOpacity>
-              )}
+              <View style={styles.remainingBadge}>
+                <Text color="muted" style={styles.remainingLabel}>
+                  Remaining
+                </Text>
+                <Text weight="semiBold" color="foreground" numberOfLines={1} style={styles.remainingValue}>
+                  {formattedRemaining}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Messages */}
-        <ScrollView 
-          ref={scrollViewRef}
-          style={styles.messagesContainer}
-          contentContainerStyle={styles.messagesContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        {/* History Panel */}
+        <Modal
+          visible={showHistory}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setShowHistory(false)}
         >
-          {viewMode === 'chat' ? (
-            <>
-              {messages.map((message) => (
-                <MessageBubble key={message.id} message={message} />
-              ))}
-              
-              {/* Typing Indicator */}
-              {isTyping && (
-                <View style={styles.aiMessageContainer}>
-                  <View style={styles.aiAvatarSmall}>
-                    <FontAwesome5 name="robot" size={16} color={theme.colors.primary} solid />
-                  </View>
-                  <View style={styles.typingBubble}>
-                    <ActivityIndicator size="small" color={theme.colors.primary} />
-                    <Text variant="small" color="muted" style={styles.typingText}>
-                      Sprinthia is thinking...
-                    </Text>
-                  </View>
-                </View>
-              )}
-              
-              {/* Quick Prompts - show only on welcome screen */}
-              {messages.length === 1 && !isTyping && (
-                <View style={styles.quickPromptsContainer}>
-                  <Text variant="small" color="muted" weight="medium" style={styles.quickPromptsTitle}>
-                    Try asking about:
-                  </Text>
-                  <View style={styles.quickPrompts}>
-                    {quickPrompts.map((prompt, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.quickPrompt}
-                        onPress={() => handleQuickPrompt(prompt)}
-                        data-testid={`quick-prompt-${index}`}
-                      >
-                        <Text variant="small" color="primary" weight="medium">
-                          {prompt}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </>
-          ) : (
-            <View style={styles.historyContainer}>
-              <Text variant="h4" weight="semiBold" color="foreground">
-                Quick prompts
-              </Text>
-              <View style={styles.quickPrompts}>
-                {quickPrompts.map((prompt, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.quickPrompt}
-                    onPress={() => {
-                      setInputText(prompt);
-                      setViewMode('chat');
-                    }}
-                  >
-                    <Text variant="small" color="primary" weight="medium">
-                      {prompt}
+          <View style={styles.historyOverlay}>
+            <View style={[styles.historyPanel, { paddingTop: insets.top + theme.spacing.lg }]}>
+              <View style={styles.historyHeader}>
+                <Text weight="semiBold" color="foreground" style={styles.historyTitle}>
+                  Conversation History
+                </Text>
+                <View style={styles.historyHeaderActions}>
+                  <TouchableOpacity style={styles.newButton} onPress={handleNewConversation}>
+                    <FontAwesome5 name="plus" size={14} color="black" />
+                    <Text weight="semiBold" color="foreground">
+                      New
                     </Text>
                   </TouchableOpacity>
-                ))}
+                  <TouchableOpacity onPress={() => setShowHistory(false)}>
+                    <FontAwesome5 name="times" size={16} color={theme.colors.foreground} />
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              <Text variant="h4" weight="semiBold" color="foreground" style={{ marginTop: theme.spacing.lg }}>
-                Conversations
-              </Text>
-              {!isAuthenticated || isGuest ? (
-                <Text variant="body" color="muted">
-                  Sign in to view conversation history.
-                </Text>
-              ) : conversationsQuery.isLoading ? (
-                <View style={styles.historyLoadingRow}>
-                  <ActivityIndicator size="small" color={theme.colors.primary} />
-                  <Text variant="body" color="muted">
-                    Loading conversations...
-                  </Text>
-                </View>
-              ) : conversationsQuery.isError ? (
-                <Text variant="body" color="muted">
-                  Unable to load conversations.
-                </Text>
-              ) : (conversationsQuery.data?.length || 0) === 0 ? (
-                <Text variant="body" color="muted">
-                  No saved conversations yet.
-                </Text>
-              ) : (
-                <View style={styles.historyList}>
-                  {(conversationsQuery.data || []).map((c) => (
+              <View style={styles.historyContent}>
+                {!isAuthenticated || isGuest ? (
+                  <Text color="muted">Sign in to view conversation history.</Text>
+                ) : conversationsQuery.isLoading ? (
+                  <Text color="muted">Loading conversations...</Text>
+                ) : conversationsQuery.isError ? (
+                  <Text color="muted">Unable to load conversations.</Text>
+                ) : (conversationsQuery.data?.length || 0) === 0 ? (
+                  <Text color="muted">No conversations yet.</Text>
+                ) : (
+                  (conversationsQuery.data || []).map((c) => (
                     <TouchableOpacity
                       key={c.id}
-                      style={styles.historyItem}
+                      style={[
+                        styles.historyRow,
+                        conversationId === c.id && styles.historyRowActive,
+                      ]}
                       onPress={() => {
                         if (loadConversationMutation.isPending) return;
-                        setConversationId(c.id);
                         loadConversationMutation.mutate(c.id);
                       }}
                     >
                       <View style={{ flex: 1 }}>
-                        <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
+                        <Text weight="semiBold" color="foreground" numberOfLines={1}>
                           {c.title || 'Conversation'}
                         </Text>
-                        <Text variant="small" color="muted">
+                        <Text color="muted" style={styles.historyDate}>
                           {new Date(c.createdAt).toLocaleDateString()}
                         </Text>
                       </View>
-                      {loadConversationMutation.isPending && conversationId === c.id ? (
-                        <ActivityIndicator size="small" color={theme.colors.primary} />
-                      ) : (
-                        <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} solid />
-                      )}
+                      <FontAwesome5
+                        name="chevron-right"
+                        size={14}
+                        color={theme.colors.textMuted}
+                      />
                     </TouchableOpacity>
-                  ))}
+                  ))
+                )}
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Messages */}
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={[
+            styles.messagesContent,
+            {
+              paddingBottom: getScreenContentBottomPadding(insets.bottom, {
+                includeBottomNav: true,
+                extra: 80, // space for composer above tab bar
+              }),
+            },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {showGreeting && (
+            <View style={styles.greetingCard}>
+              <Text weight="semiBold" color="foreground" style={styles.greetingTitle}>
+                Hi {user?.name?.split(' ')[0] || 'there'}, how can I help you today?
+              </Text>
+              <Text color="muted" style={styles.greetingSubtitle}>
+                Ask me about training plans, race preparation, injury rehabilitation, or nutrition advice.
+              </Text>
+              <View style={styles.suggestionsGrid}>
+                {suggestions.map((s) => (
+                  <TouchableOpacity
+                    key={s}
+                    style={styles.suggestionGridItem}
+                    onPress={() => handleQuickPrompt(s)}
+                    activeOpacity={0.85}
+                  >
+                    <Text color="foreground" weight="semiBold" style={styles.suggestionText} numberOfLines={2}>
+                      {s}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {messages.map((message) => (
+            <View key={message.id} style={styles.messageBlock}>
+              <Text
+                color="muted"
+                weight="semiBold"
+                style={message.role === 'user' ? styles.messageLabelUser : styles.messageLabelAI}
+              >
+                {message.role === 'user' ? 'You' : 'Sprinthia'}
+              </Text>
+              <View
+                style={[
+                  styles.messageBubble,
+                  message.role === 'user' ? styles.userBubble : styles.aiBubble,
+                ]}
+              >
+                <FormattedSprinthiaText content={message.text} />
+                <View style={styles.messageFooter}>
+                  <Text color="muted" style={styles.messageTime}>
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                  {message.role === 'assistant' && (
+                    <View style={styles.messageActions}>
+                      <TouchableOpacity
+                        onPress={() => handleCopyMessage(message.id, message.text)}
+                        style={styles.actionButton}
+                      >
+                        <FontAwesome5
+                          name={copiedMessageId === message.id ? 'check' : 'copy'}
+                          size={14}
+                          color={copiedMessageId === message.id ? theme.colors.success : theme.colors.foreground}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleSaveProgram(message.id, message.text)}
+                        style={styles.actionButton}
+                      >
+                        <FontAwesome5
+                          name={savingMessageId === message.id ? 'check' : 'save'}
+                          size={14}
+                          color={savingMessageId === message.id ? theme.colors.success : theme.colors.foreground}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
-              )}
+              </View>
+            </View>
+          ))}
+
+          {isThinking && (
+            <View style={styles.messageBlock}>
+              <Text color="muted" weight="semiBold" style={styles.messageLabelAI}>
+                Sprinthia
+              </Text>
+              <View style={[styles.messageBubble, styles.aiBubble]}>
+                <View style={styles.typingRow}>
+                  <Text color="muted" style={styles.typingLabel}>
+                    Thinking
+                  </Text>
+                  <TypingDots />
+                </View>
+              </View>
             </View>
           )}
         </ScrollView>
 
-        {/* Input Area (only in chat mode) */}
-        {viewMode === 'chat' && (
-          <View style={[styles.inputContainer, { paddingBottom: insets.bottom || theme.spacing.md }]}>
-            <View style={styles.inputBar}>
-              <TextInput
-                style={styles.textInput}
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder={isGuest ? "Sign in to chat with Sprinthia..." : "Ask Sprinthia anything about athletics..."}
-                placeholderTextColor={theme.colors.textMuted}
-                multiline
-                maxLength={500}
-                editable={!isGuest}
-                data-testid="input-message"
-                onSubmitEditing={handleSendMessage}
-                returnKeyType="send"
+        {/* Input */}
+        <View
+          style={[
+            styles.inputWrapper,
+            { paddingBottom: getBottomNavOverlayHeight(insets.bottom) + 12 },
+          ]}
+        >
+          <View style={styles.inputShell}>
+            <TextInput
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder={
+                isGuest
+                  ? 'Sign in to chat with Sprinthia...'
+                  : 'Ask Sprinthia about training, races, rehabilitation, or nutrition...'
+              }
+              placeholderTextColor={theme.colors.textMuted}
+              multiline
+              maxLength={800}
+              editable={!isGuest && !isOutOfPrompts}
+              onSubmitEditing={handleSendMessage}
+              returnKeyType="send"
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                inputText.trim() && !isThinking && !isOutOfPrompts
+                  ? styles.sendButtonActive
+                  : styles.sendButtonDisabled,
+              ]}
+              onPress={handleSendMessage}
+              disabled={!inputText.trim() || isThinking || isOutOfPrompts || isGuest}
+            >
+              <FontAwesome5
+                name="paper-plane"
+                size={16}
+                color={inputText.trim() && !isThinking && !isOutOfPrompts ? 'white' : theme.colors.textMuted}
               />
-              <TouchableOpacity
-                style={[
-                  styles.sendButton,
-                  inputText.trim() && !isTyping ? styles.sendButtonActive : styles.sendButtonInactive
-                ]}
-                onPress={handleSendMessage}
-                disabled={!inputText.trim() || isTyping || isGuest}
-                data-testid="button-send-message"
-              >
-                {isTyping ? (
-                  <ActivityIndicator size="small" color={theme.colors.textMuted} />
-                ) : (
-                  <FontAwesome5 
-                    name="paper-plane" 
-                    size={18} 
-                    color={inputText.trim() ? 'white' : theme.colors.textMuted}
-                    solid
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
-        )}
+          {(inlineWarning || isOutOfPrompts) && (
+            <Text color="muted" style={styles.promptWarning}>
+              {inlineWarning ||
+                "You've used all your prompts. Upgrade to Pro or Star to continue using Sprinthia."}
+            </Text>
+          )}
+        </View>
       </KeyboardAvoidingView>
     </LinearGradient>
-  );
-};
-
-interface MessageBubbleProps {
-  message: Message;
-}
-
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
-  if (message.isUser) {
-    return (
-      <View style={styles.userMessageContainer}>
-        <View style={styles.userMessageBubble}>
-          <Text variant="body" color="primary-foreground">
-            {message.text}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.aiMessageContainer}>
-      <View style={styles.aiAvatarSmall}>
-        <FontAwesome5 name="robot" size={16} color={theme.colors.primary} solid />
-      </View>
-      <View style={styles.aiMessageBubble}>
-        <Text variant="body" color="foreground">
-          {message.text}
-        </Text>
-      </View>
-    </View>
   );
 };
 
@@ -476,194 +621,314 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderBottomColor: WHITE + '33',
     gap: theme.spacing.sm,
   },
-  aiAvatarContainer: {
-    position: 'relative',
-    marginRight: theme.spacing.md,
-  },
-  aiAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadows.md,
-  },
-  headerText: {
-    flex: 1,
-  },
-  headerActions: {
+  headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.md,
   },
-  headerIconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.card,
+  headerBottomRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
+    flexWrap: 'wrap',
   },
-  newChatButton: {
+  drawerButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 10,
     backgroundColor: theme.colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: theme.colors.border,
+  },
+  titleGroup: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+  },
+  titleText: {
+    fontSize: 20,
+    lineHeight: 24,
+    flex: 1,
+  },
+  poweredBy: {
+    width: 78,
+    height: 22,
+  },
+  subtitle: {
+    marginTop: 2,
+    flex: 1,
+    minWidth: 180,
+  },
+  headerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    justifyContent: 'flex-end',
+  },
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 44,
+    paddingHorizontal: 14,
+    paddingVertical: 0,
+    borderRadius: 9,
+    backgroundColor: '#fcd34d',
+  },
+  historyLabel: {
+    color: 'black',
+    fontSize: 14,
+  },
+  remainingBadge: {
+    borderWidth: 1,
+    borderColor: WHITE + '33',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    height: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 0,
+    paddingBottom: 3,
+    borderRadius: 9,
+    minWidth: 110,
+    justifyContent: 'center',
+  },
+  remainingLabel: {
+    fontSize: 11,
+    marginBottom: 0,
+    lineHeight: 13,
+  },
+  remainingValue: {
+    lineHeight: 18,
+    marginTop: -1,
+  },
+  historyOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  historyPanel: {
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+    minHeight: '65%',
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.lg,
+  },
+  historyTitle: {
+    fontSize: 18,
+  },
+  historyHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  newButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#fcd34d',
+    borderRadius: 10,
+  },
+  historyContent: {
+    gap: theme.spacing.sm,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.card,
+  },
+  historyRowActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  historyDate: {
+    marginTop: 4,
+    fontSize: 12,
   },
   messagesContainer: {
     flex: 1,
   },
   messagesContent: {
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
     gap: theme.spacing.md,
   },
-  userMessageContainer: {
-    alignItems: 'flex-end',
-  },
-  userMessageBubble: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    borderBottomRightRadius: theme.borderRadius.sm,
-    maxWidth: '80%',
-    ...theme.shadows.sm,
-  },
-  aiMessageContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.sm,
-  },
-  aiAvatarSmall: {
-    width: 32,
-    height: 32,
+  greetingCard: {
+    borderWidth: 1,
+    borderColor: WHITE + '33',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 16,
-    backgroundColor: theme.colors.muted,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: theme.spacing.xs,
-  },
-  aiMessageBubble: {
-    backgroundColor: theme.colors.card,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    borderBottomLeftRadius: theme.borderRadius.sm,
-    flex: 1,
-    maxWidth: '85%',
-    ...theme.shadows.sm,
-  },
-  typingBubble: {
-    backgroundColor: theme.colors.card,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    borderBottomLeftRadius: theme.borderRadius.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
+    padding: theme.spacing.md,
     gap: theme.spacing.sm,
-    ...theme.shadows.sm,
   },
-  typingText: {
-    marginLeft: theme.spacing.sm,
+  greetingTitle: {
+    fontSize: 18,
+    lineHeight: 24,
   },
-  quickPromptsContainer: {
-    marginTop: theme.spacing.xl,
+  greetingSubtitle: {
+    lineHeight: 20,
   },
-  quickPromptsTitle: {
-    marginBottom: theme.spacing.md,
-    textAlign: 'center',
-  },
-  quickPrompts: {
+  suggestionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+  },
+  suggestionGridItem: {
+    flexBasis: '48%',
+    flexGrow: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: WHITE + '33',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    minHeight: 52,
     justifyContent: 'center',
   },
-  quickPrompt: {
-    backgroundColor: theme.colors.card,
+  suggestionChip: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: WHITE + '33',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  suggestionText: {
+    fontSize: 14,
+  },
+  messageBlock: {
+    gap: 6,
+  },
+  messageLabelUser: {
+    color: WHITE,
+  },
+  messageLabelAI: {
+    color: WHITE,
+  },
+  messageBubble: {
+    borderRadius: 14,
+    borderLeftWidth: 4,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    ...theme.shadows.sm,
+    paddingVertical: 10,
+    gap: theme.spacing.sm,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
   },
-  historyContainer: {
-    gap: theme.spacing.md,
+  userBubble: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderColor: WHITE + '66',
+    borderLeftColor: WHITE,
   },
-  historyLoadingRow: {
+  aiBubble: {
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderColor: WHITE + '33',
+    borderLeftColor: WHITE,
+  },
+  messageFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
+    justifyContent: 'space-between',
   },
-  historyList: {
-    gap: theme.spacing.sm,
+  messageTime: {
+    fontSize: 12,
   },
-  historyItem: {
+  messageActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    gap: 10,
   },
-  inputContainer: {
+  actionButton: {
+    padding: 6,
+  },
+  typingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  typingLabel: {
+    fontSize: 14,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: WHITE,
+  },
+  inputWrapper: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: WHITE + '22',
+    backgroundColor: 'rgba(0,0,0,0.22)',
   },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: theme.colors.card,
+  inputShell: {
+    position: 'relative',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    gap: theme.spacing.sm,
-    // Avoid iOS shadow perf warning on large dynamic views
-    ...theme.shadows.none,
+    borderColor: WHITE + '33',
+    paddingRight: 56,
+    paddingLeft: 14,
+    paddingVertical: 6,
   },
   textInput: {
-    flex: 1,
-    fontSize: theme.typography.sizes.base,
-    lineHeight: 20,
+    minHeight: 48,
+    maxHeight: 140,
     color: theme.colors.foreground,
-    maxHeight: 100,
-    minHeight: 44,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: 0,
-    textAlignVertical: 'top',
+    fontSize: 15,
+    lineHeight: 22,
   },
   sendButton: {
+    position: 'absolute',
+    right: 8,
+    top: 8,
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonActive: {
-    backgroundColor: theme.colors.primary,
-    ...theme.shadows.sm,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1,
+    borderColor: WHITE + '55',
   },
-  sendButtonInactive: {
-    backgroundColor: theme.colors.muted,
+  sendButtonDisabled: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: WHITE + '22',
+  },
+  promptWarning: {
+    marginTop: 8,
+    fontSize: 13,
   },
 });
+

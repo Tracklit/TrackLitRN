@@ -33,6 +33,9 @@ interface User {
   spikes?: number | null;
   isPremium?: boolean | null;
   subscriptionTier?: string | null;
+  sprinthiaPrompts?: number | null;
+  sprinthiaProgramsCreated?: number | null;
+  sprinthiaRegenerationsUsed?: number | null;
   token?: string; // Token may be included in response
   role?: string | null;
   isCoach?: boolean | null;

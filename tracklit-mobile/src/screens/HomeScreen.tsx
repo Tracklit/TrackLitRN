@@ -65,6 +65,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [tickerCollapsed, setTickerCollapsed] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
+  const userId = user?.id;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -113,6 +114,40 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const activities = activitiesQuery.data ?? [];
   const currentActivity =
     activities.length > 0 ? activities[currentActivityIndex % activities.length] : undefined;
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications-home'],
+    queryFn: () => apiRequest<any[]>('/api/notifications'),
+    staleTime: 30000,
+    select: (data: any[] | undefined) =>
+      (data || []).filter((n: any) => n.type !== 'message_received'),
+  });
+
+  const { data: pendingRequests = [] } = useQuery({
+    queryKey: ['friend-requests-pending'],
+    queryFn: () => apiRequest<any[]>('/api/friend-requests/pending'),
+    staleTime: 30000,
+  });
+
+  const { data: conversations = [] } = useQuery({
+    queryKey: ['conversations-home'],
+    queryFn: () => apiRequest<any[]>('/api/conversations'),
+    staleTime: 30000,
+    enabled: !!userId && userId !== 'guest',
+  });
+
+  const unreadNotifications =
+    (notifications as any[]).filter((n) => !n.isRead).length + (pendingRequests as any[]).length;
+
+  const unreadMessages =
+    conversations && userId
+      ? (conversations as any[]).filter(
+          (conv) =>
+            conv.lastMessage &&
+            !conv.lastMessage.isRead &&
+            conv.lastMessage.receiverId === userId
+        ).length
+      : 0;
 
   useEffect(() => {
     if (!activities.length || isPaused || tickerCollapsed) return;
@@ -181,10 +216,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     },
     {
       title: 'Sprinthia',
-      description: 'Coming Soon',
+      description: 'Your AI coach is ready',
       iconName: 'comments',
       route: 'Sprinthia',
-      disabled: true,
+      disabled: false,
       showStar: true,
     },
   ];
@@ -228,7 +263,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
               >
-                <Icon name="bell" size={18} color={theme.colors.primary} solid />
+              <Icon name="bell" size={18} color="#94a3b8" solid />
+              {unreadNotifications > 0 && (
+                <View style={styles.badge}>
+                  <Text variant="caption" weight="bold" color="foreground">
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </Text>
+                </View>
+              )}
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.headerActionButton}
@@ -236,7 +278,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Messages"
               >
-                <Icon name="comments" size={18} color={theme.colors.primary} solid />
+              <Icon name="paper-plane" size={16} color="#94a3b8" solid />
+              {unreadMessages > 0 && (
+                <View style={styles.badge}>
+                  <Text variant="caption" weight="bold" color="foreground">
+                    {unreadMessages > 99 ? '99+' : unreadMessages}
+                  </Text>
+                </View>
+              )}
               </TouchableOpacity>
             </>
           }
@@ -408,14 +457,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.lg,
   },
   headerActionButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: 'transparent',
   },
   tickerContainer: {
     marginBottom: theme.spacing.lg,
@@ -527,5 +574,17 @@ const styles = StyleSheet.create({
   },
   cardDisabled: {
     opacity: 0.5,
+  },
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.xs,
   },
 });

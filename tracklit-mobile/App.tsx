@@ -74,16 +74,8 @@ const HomeTabScreen: React.FC<HomeTabProps> = ({ navigation }) => (
   <HomeScreen
     onNavigate={(routeName) => {
       // Some destinations are now stack screens (not bottom tabs).
-      if (routeName === 'Feed') {
-        navigation.navigate('Feed');
-        return;
-      }
       if (routeName === 'Marketplace') {
         (navigation.getParent() as any)?.navigate?.('Marketplace');
-        return;
-      }
-      if (routeName === 'Sprinthia') {
-        (navigation.getParent() as any)?.navigate?.('Sprinthia');
         return;
       }
       if (routeName === 'Chat') {
@@ -110,6 +102,7 @@ const MainTabs: React.FC = () => {
         <Tab.Screen name="Practice" component={PracticeScreen} />
         <Tab.Screen name="Programs" component={ProgramsScreen} />
         <Tab.Screen name="Feed" component={FeedScreen} />
+        <Tab.Screen name="Sprinthia" component={SprinthiaScreen} />
         <Tab.Screen name="Tools" component={ToolsScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
