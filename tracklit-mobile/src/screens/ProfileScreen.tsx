@@ -1,460 +1,763 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
   Alert,
-  Image,
-  RefreshControl,
-  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { useMutation } from '@tanstack/react-query';
-import { launchImageLibrary, Asset } from 'react-native-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { launchImageLibrary, Asset } from 'react-native-image-picker';
 
 import { Text } from '@/components/ui/Text';
-import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Avatar } from '@/components/ui/Avatar';
+import { Card, CardContent } from '@/components/ui/Card';
+import { CollapsibleCard } from '@/components/profile/CollapsibleCard';
+import { TradingCardPreview } from '@/components/profile/TradingCardPreview';
+import { ProfileImageCropModal } from '@/components/profile/ProfileImageCropModal';
+import { SelectField } from '@/components/profile/fields/SelectField';
+import { DateField } from '@/components/profile/fields/DateField';
+import { ReadOnlyField } from '@/components/profile/fields/ReadOnlyField';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiRequest } from '@/lib/api';
 import { getToken } from '@/lib/tokenStorage';
 import { env } from '@/config/env';
-import { ScreenHeader } from '@/components/ScreenHeader';
-import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
+import { countries } from '@/lib/countries';
 import theme from '@/utils/theme';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import type { RootStackParamList } from '@/navigation/types';
+
+type BackgroundType = 'color' | 'image';
 
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, logout, refreshUser } = useAuth();
-  const isGuest = user?.id === 'guest';
-  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
+  const queryClient = useQueryClient();
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(user?.name || '');
-  const [editBio, setEditBio] = useState('');
-  const [selectedImage, setSelectedImage] = useState<Asset | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
+  const [backgroundColor, setBackgroundColor] = useState('#1e293b');
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [publicName, setPublicName] = useState(user?.name || '');
+  const [publicBio, setPublicBio] = useState(user?.bio || '');
+  const [profileImageAsset, setProfileImageAsset] = useState<Asset | null>(null);
+  const [cropVisible, setCropVisible] = useState(false);
 
-  // Update profile with image mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: { name: string; bio?: string; imageAsset?: Asset }) => {
-      const token = await getToken();
-      setIsUploadingImage(true);
-      
-      try {
-        // Use FormData for multipart upload
-        const formData = new FormData();
-        formData.append('name', data.name);
-        if (data.bio) {
-          formData.append('bio', data.bio);
-        }
-        
-        // Add image if selected
-        if (data.imageAsset?.uri) {
-          const imageUri = data.imageAsset.uri;
-          const fileName = data.imageAsset.fileName || 'profile.jpg';
-          const type = data.imageAsset.type || 'image/jpeg';
-          
-          formData.append('profileImage', {
-            uri: imageUri,
-            name: fileName,
-            type: type,
-          } as any);
-        }
-        
-        const response = await fetch(`${env.API_BASE_URL}/api/user/public-profile`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            // Don't set Content-Type for FormData - RN will set it with boundary
-          },
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          const error = await response.text();
-          throw new Error(error || 'Failed to update profile');
-        }
-        
-        return response.json();
-      } finally {
-        setIsUploadingImage(false);
-      }
+  const [profileForm, setProfileForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    country: (user as any)?.country || '',
+    dateOfBirth: (user as any)?.dateOfBirth || '',
+    gender: (user as any)?.gender || '',
+    trainingGoal: (user as any)?.trainingGoal || '',
+    injuryStatus: (user as any)?.injuryStatus || '',
+    trainingDaysPerWeek: (user as any)?.trainingDaysPerWeek?.toString?.() || '',
+    sleepHours: (user as any)?.sleepHours?.toString?.() || '',
+    sleepQuality: (user as any)?.sleepQuality || '',
+    mood: (user as any)?.mood || '',
+    coachMode: (user as any)?.coachMode || '',
+  });
+
+  const isCoach = user?.isCoach === true;
+  const memberSinceYear = useMemo(() => {
+    if (!user?.createdAt) return null;
+    try {
+      return new Date(user.createdAt as any).getFullYear().toString();
+    } catch {
+      return null;
+    }
+  }, [user?.createdAt]);
+
+  const { data: coachLimits } = useQuery({
+    queryKey: ['/api/coach/limits'],
+    queryFn: () => apiRequest('/api/coach/limits'),
+    enabled: isCoach,
+  });
+
+  const { data: athletes = [] } = useQuery({
+    queryKey: ['/api/coach/athletes'],
+    queryFn: () => apiRequest('/api/coach/athletes'),
+    enabled: isCoach,
+  });
+
+  const { data: coaches = [] } = useQuery({
+    queryKey: ['/api/athlete/coaches'],
+    queryFn: () => apiRequest('/api/athlete/coaches'),
+    enabled: true,
+  });
+
+  const coachStatusMutation = useMutation({
+    mutationFn: async (value: boolean) => {
+      return apiRequest('/api/user/coach-status', {
+        method: 'PATCH',
+        data: { isCoach: value },
+      });
     },
     onSuccess: () => {
-      setIsEditing(false);
-      setSelectedImage(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/coach/limits'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/coach/athletes'] });
       refreshUser();
-      Alert.alert('Success', 'Profile updated successfully!');
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Unable to update coach status.');
+    },
+  });
+
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      const payload: any = {
+        ...profileForm,
+        trainingDaysPerWeek: profileForm.trainingDaysPerWeek
+          ? parseInt(profileForm.trainingDaysPerWeek, 10)
+          : undefined,
+        sleepHours: profileForm.sleepHours ? parseFloat(profileForm.sleepHours) : undefined,
+      };
+      return apiRequest('/api/user', { method: 'PATCH', data: payload });
+    },
+    onSuccess: () => {
+      Alert.alert('Profile updated', 'Your changes have been saved.');
+      refreshUser();
     },
     onError: (error: Error) => {
       Alert.alert('Error', error.message || 'Failed to update profile.');
     },
   });
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await refreshUser();
-    setIsRefreshing(false);
-  }, [refreshUser]);
-
-  const handleSelectImage = useCallback(async () => {
-    if (isGuest) {
-      Alert.alert('Login Required', 'Please sign in to update your profile picture.');
-      return;
-    }
-
-    try {
-      const result = await launchImageLibrary({
-        mediaType: 'photo',
-        quality: 0.8,
-        maxWidth: 500,
-        maxHeight: 500,
+  const publicProfileMutation = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      const formData = new FormData();
+      formData.append('name', publicName || '');
+      formData.append('bio', publicBio || '');
+      if (profileImageAsset?.uri) {
+        formData.append('profileImage', {
+          uri: profileImageAsset.uri,
+          name: profileImageAsset.fileName || 'profile.jpg',
+          type: profileImageAsset.type || 'image/jpeg',
+        } as any);
+      }
+      const response = await fetch(`${env.API_BASE_URL}/api/user/public-profile`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
       });
-
-      if (result.assets && result.assets.length > 0) {
-        setSelectedImage(result.assets[0]);
-        // Start editing mode if not already
-        if (!isEditing) {
-          setEditName(user?.name || '');
-          setIsEditing(true);
-        }
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to update public profile');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Unable to select image. Please check permissions.');
-    }
-  }, [isGuest, isEditing, user?.name]);
+      return response.json();
+    },
+    onSuccess: () => {
+      setProfileImageAsset(null);
+      Alert.alert('Success', 'Public profile updated.');
+      refreshUser();
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Failed to update public profile.');
+    },
+  });
 
-  const handleSaveProfile = useCallback(() => {
-    if (isGuest) {
-      Alert.alert('Login Required', 'Please sign in to edit your profile.');
-      return;
-    }
-
-    if (!editName.trim()) {
-      Alert.alert('Invalid Name', 'Please enter your name.');
-      return;
-    }
-
-    updateProfileMutation.mutate({
-      name: editName.trim(),
-      bio: editBio.trim() || undefined,
-      imageAsset: selectedImage || undefined,
+  const handleSelectProfileImage = useCallback(async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      quality: 0.9,
     });
-  }, [isGuest, editName, editBio, selectedImage, updateProfileMutation]);
-
-  const handleCancelEdit = useCallback(() => {
-    setIsEditing(false);
-    setEditName(user?.name || '');
-    setEditBio('');
-    setSelectedImage(null);
-  }, [user]);
-
-  const handleStartEdit = useCallback(() => {
-    if (isGuest) {
-      Alert.alert('Login Required', 'Please sign in to edit your profile.');
-      return;
+    if (result.assets && result.assets[0]) {
+      setProfileImageAsset(result.assets[0]);
+      setCropVisible(true);
     }
-    setEditName(user?.name || '');
-    setIsEditing(true);
-  }, [isGuest, user]);
+  }, []);
 
-  const getProfileImageUrl = () => {
-    if (selectedImage?.uri) {
-      return selectedImage.uri;
+  const handleSelectBackgroundImage = useCallback(async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      quality: 0.8,
+    });
+    if (result.assets && result.assets[0]?.uri) {
+      setBackgroundType('image');
+      setBackgroundImage(result.assets[0].uri);
     }
+  }, []);
+
+  const profileImageUrl = useMemo(() => {
+    if (profileImageAsset?.uri) return profileImageAsset.uri;
     if (user?.profileImageUrl) {
-      // Handle relative URLs
-      if (user.profileImageUrl.startsWith('/')) {
-        return `${env.API_BASE_URL}${user.profileImageUrl}`;
-      }
+      if (user.profileImageUrl.startsWith('/')) return `${env.API_BASE_URL}${user.profileImageUrl}`;
       return user.profileImageUrl;
     }
     return null;
+  }, [profileImageAsset?.uri, user?.profileImageUrl]);
+
+  const renderCoachLimitInfo = () => {
+    if (!coachLimits) return null;
+    const { currentAthletes, maxAthletes, tier } = coachLimits as any;
+    return (
+      <View style={styles.infoRow}>
+        <Text variant="body" color="muted">
+          Athletes: {currentAthletes} / {maxAthletes === 'unlimited' ? '∞' : maxAthletes}
+        </Text>
+        {tier ? (
+          <Text variant="small" color="primary">
+            {tier.toUpperCase()}
+          </Text>
+        ) : null}
+      </View>
+    );
   };
 
-  const imageUrl = getProfileImageUrl();
+  const genderOptions = [
+    { label: 'Male', value: 'male' },
+    { label: 'Female', value: 'female' },
+    { label: 'Other', value: 'other' },
+    { label: 'Prefer not to say', value: 'prefer_not_to_say' },
+  ];
+
+  const trainingGoalOptions = [
+    { label: 'Improve Speed', value: 'improve_speed' },
+    { label: 'Build Endurance', value: 'build_endurance' },
+    { label: 'Increase Strength', value: 'increase_strength' },
+    { label: 'Lose Weight', value: 'lose_weight' },
+    { label: 'Maintain Fitness', value: 'maintain_fitness' },
+    { label: 'Competition Preparation', value: 'competition_prep' },
+  ];
+
+  const sleepQualityOptions = [
+    { label: 'Poor', value: 'poor' },
+    { label: 'Fair', value: 'fair' },
+    { label: 'Good', value: 'good' },
+    { label: 'Very Good', value: 'very_good' },
+    { label: 'Excellent', value: 'excellent' },
+  ];
+
+  const moodOptions = [
+    { label: 'Poor', value: 'poor' },
+    { label: 'Low', value: 'low' },
+    { label: 'Neutral', value: 'neutral' },
+    { label: 'Good', value: 'good' },
+    { label: 'Great', value: 'great' },
+  ];
+
+  const coachModeOptions = [
+    { label: 'Supportive & Encouraging', value: 'supportive' },
+    { label: 'Analytical & Data-Driven', value: 'analytical' },
+    { label: 'Motivational & Energetic', value: 'motivational' },
+    { label: 'Balanced & Practical', value: 'balanced' },
+  ];
+
+  const trainingDaysOptions = Array.from({ length: 7 }).map((_, i) => ({
+    label: `${i + 1} day${i === 0 ? '' : 's'}`,
+    value: String(i + 1),
+  }));
+
+  const calculateAge = (dateString: string) => {
+    if (!dateString) return '';
+    const dob = new Date(dateString);
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+    const m = now.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age >= 0 ? age.toString() : '';
+  };
 
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
-    >
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },
+        ]}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            tintColor="#fff"
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-          />
-        }
       >
-        <ScreenHeader title="Profile" containerStyle={styles.header} />
+        <Text variant="h2" weight="bold" color="foreground" style={styles.title}>
+          Your Profile
+        </Text>
+        <Text variant="body" color="muted" style={styles.subtitle}>
+          Manage your personal information and settings
+        </Text>
 
-        {/* Profile Card */}
-        <Card style={styles.profileCard}>
-          <CardContent style={styles.profileContent}>
-            {/* Avatar with Edit Button */}
-            <TouchableOpacity style={styles.avatarContainer} onPress={handleSelectImage}>
-              {imageUrl ? (
-                <Image
-                  source={{ uri: imageUrl }}
-                  style={styles.avatarImage}
-                />
-              ) : (
-                <Avatar
-                  size="xl"
-                  fallback={user?.name?.[0] || 'U'}
-                  src={undefined}
-                />
-              )}
-              <View style={styles.editAvatarBadge}>
-                {isUploadingImage ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <FontAwesome5 name="camera" size={12} color="white" solid />
-                )}
-              </View>
-            </TouchableOpacity>
-
-            {/* Profile Info */}
-            {isEditing ? (
-              <View style={styles.editForm}>
-                <Text variant="body" weight="medium" color="foreground" style={styles.label}>
-                  Display Name
-                </Text>
-                <TextInput
-                  style={styles.input}
-                  value={editName}
-                  onChangeText={setEditName}
-                  placeholder="Your name"
-                  placeholderTextColor={theme.colors.textMuted}
-                />
-
-                <Text variant="body" weight="medium" color="foreground" style={styles.label}>
-                  Bio
-                </Text>
-                <TextInput
-                  style={[styles.input, styles.bioInput]}
-                  value={editBio}
-                  onChangeText={setEditBio}
-                  placeholder="Tell us about yourself..."
-                  placeholderTextColor={theme.colors.textMuted}
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                />
-
-                {selectedImage && (
-                  <View style={styles.imagePreviewRow}>
-                    <FontAwesome5 name="check-circle" size={16} color={theme.colors.success} solid />
-                    <Text variant="small" color="success" style={styles.imagePreviewText}>
-                      New photo selected
-                    </Text>
-                  </View>
-                )}
-
-                <View style={styles.editActions}>
-                  <Button
-                    variant="outline"
-                    size="md"
-                    onPress={handleCancelEdit}
-                    style={styles.editButton}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="md"
-                    onPress={handleSaveProfile}
-                    loading={updateProfileMutation.isPending}
-                    style={styles.editButton}
-                  >
-                    Save
-                  </Button>
+        {/* Header Card */}
+        <Card style={styles.headerCard}>
+          <CardContent style={styles.headerContent}>
+            <View style={styles.headerTop}>
+              <View style={styles.headerIdentity}>
+                <View style={styles.avatarRing}>
+                  <Avatar
+                    size="lg"
+                    fallback={user?.name?.charAt(0) || 'U'}
+                    src={profileImageUrl || undefined}
+                  />
+                </View>
+                <View style={styles.headerTextBlock}>
+                  <Text variant="h3" weight="bold" color="foreground">
+                    {user?.name || 'TrackLit Athlete'}
+                  </Text>
+                  <Text variant="body" color="muted">
+                    @{user?.username || 'guest'}
+                  </Text>
                 </View>
               </View>
-            ) : (
-              <View style={styles.profileInfo}>
-                <Text variant="h3" weight="bold" color="foreground">
-                  {user?.name || 'TrackLit Athlete'}
-                </Text>
-                <Text variant="body" color="muted">
-                  @{user?.username || 'guest'}
-                </Text>
-                {user?.email && (
-                  <Text variant="small" color="muted" style={styles.email}>
-                    {user.email}
-                  </Text>
-                )}
+              <View style={styles.headerActions}>
                 <Button
                   variant="outline"
                   size="sm"
-                  onPress={handleStartEdit}
-                  style={styles.editProfileButton}
+                  style={styles.headerActionButton}
+                  onPress={() => navigation.navigate('Subscriptions')}
                 >
-                  <FontAwesome5 name="edit" size={14} color={theme.colors.primary} solid />
-                  <Text variant="body" weight="medium" color="primary" style={styles.buttonText}>
-                    Edit Profile
-                  </Text>
+                  Manage Coaching
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  style={styles.headerActionButton}
+                  onPress={logout}
+                >
+                  Sign Out
                 </Button>
               </View>
-            )}
+            </View>
           </CardContent>
         </Card>
 
-        {/* Settings Section */}
-        <Card style={styles.settingsCard}>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-          </CardHeader>
-          <CardContent style={styles.settingsContent}>
-            <TouchableOpacity 
-              style={styles.settingRow}
-              onPress={() => navigation.navigate('Settings')}
+        {/* Coach Status */}
+        <CollapsibleCard
+          title="Coach Status"
+          subtitle="Enable coaching tools and athlete management"
+          defaultOpen={false}
+          cardStyle={styles.cardVariant}
+          headerStyle={styles.cardHeaderVariant}
+        >
+          <View style={styles.rowBetween}>
+            <Text variant="body" color="foreground">
+              Coaching features
+            </Text>
+            <TouchableOpacity
+              onPress={() => coachStatusMutation.mutate(!isCoach)}
+              activeOpacity={0.8}
             >
-              <FontAwesome5 name="bell" size={18} color={theme.colors.textMuted} solid />
-              <Text variant="body" color="foreground" style={styles.settingText}>
-                Notifications
-              </Text>
-              <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} solid />
+              <View
+                style={[
+                  styles.switchTrack,
+                  { backgroundColor: isCoach ? theme.colors.primary : theme.colors.border },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.switchThumb,
+                    { transform: [{ translateX: isCoach ? 18 : 0 }] },
+                  ]}
+                />
+              </View>
             </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.settingRow}
-              onPress={() => navigation.navigate('Settings')}
-            >
-              <FontAwesome5 name="lock" size={18} color={theme.colors.textMuted} solid />
-              <Text variant="body" color="foreground" style={styles.settingText}>
-                Privacy
+          </View>
+          {renderCoachLimitInfo()}
+          {isCoach && (athletes as any[]).length > 0 ? (
+            <View style={styles.listBlock}>
+              <Text variant="small" weight="medium" color="muted">
+                Athletes ({(athletes as any[]).length})
               </Text>
-              <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} solid />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.settingRow}
-              onPress={() => navigation.navigate('Settings')}
-            >
-              <FontAwesome5 name="question-circle" size={18} color={theme.colors.textMuted} solid />
-              <Text variant="body" color="foreground" style={styles.settingText}>
-                Help & Support
+              {(athletes as any[]).slice(0, 3).map((ath) => (
+                <Text key={ath.id} variant="body" color="foreground">
+                  • {ath.name || ath.username}
+                </Text>
+              ))}
+            </View>
+          ) : null}
+          {(coaches as any[]).length > 0 ? (
+            <View style={styles.listBlock}>
+              <Text variant="small" weight="medium" color="muted">
+                Coaches ({(coaches as any[]).length})
               </Text>
-              <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} solid />
-            </TouchableOpacity>
+              {(coaches as any[]).map((coach: any) => (
+                <Text key={coach.id} variant="body" color="foreground">
+                  • {coach.name || coach.username}
+                </Text>
+              ))}
+            </View>
+          ) : null}
+        </CollapsibleCard>
 
-            <TouchableOpacity 
-              style={styles.settingRow}
-              onPress={() => navigation.navigate('Settings')}
-            >
-              <FontAwesome5 name="info-circle" size={18} color={theme.colors.textMuted} solid />
-              <Text variant="body" color="foreground" style={styles.settingText}>
-                About TrackLit
-              </Text>
-              <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} solid />
-            </TouchableOpacity>
-          </CardContent>
-        </Card>
+        {/* Public Profile / Trading Card */}
+        <CollapsibleCard
+          title="Your Public Profile"
+          subtitle="This is how others see your card"
+          defaultOpen={false}
+          cardStyle={styles.cardVariant}
+          headerStyle={styles.cardHeaderVariant}
+          contentStyle={styles.publicProfileContent}
+        >
+          <TradingCardPreview
+            name={publicName}
+            username={user?.username}
+            bio={publicBio}
+            profileImageUrl={profileImageUrl || undefined}
+            subscriptionTier={user?.subscriptionTier || (user?.isPremium ? 'premium' : 'free')}
+            backgroundType={backgroundType}
+            backgroundColor={backgroundColor}
+            backgroundImage={backgroundImage}
+            memberSinceYear={memberSinceYear}
+            cardNumber={typeof user?.id === 'number' ? user.id : null}
+          />
 
-        {/* Sign Out Button */}
+          <View style={styles.sectionActions}>
+            <Button variant="outline" size="sm" onPress={handleSelectProfileImage}>
+              Change Profile Image
+            </Button>
+            <Button variant="outline" size="sm" onPress={() => setBackgroundType('color')}>
+              Solid Color
+            </Button>
+            <Button variant="outline" size="sm" onPress={handleSelectBackgroundImage}>
+              Upload Background
+            </Button>
+          </View>
+
+          <View style={styles.colorRow}>
+            {['#1e293b', '#7c3aed', '#059669', '#dc2626', '#ea580c', '#0891b2'].map((c) => (
+              <TouchableOpacity
+                key={c}
+                style={[styles.colorSwatch, { backgroundColor: c }]}
+                onPress={() => {
+                  setBackgroundType('color');
+                  setBackgroundColor(c);
+                }}
+              />
+            ))}
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text variant="body" weight="medium" color="foreground">
+              Display Name
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={publicName}
+              onChangeText={setPublicName}
+              placeholder="Your display name"
+              placeholderTextColor={theme.colors.textMuted}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text variant="body" weight="medium" color="foreground">
+              Bio
+            </Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={publicBio}
+              onChangeText={setPublicBio}
+              placeholder="Tell others about yourself..."
+              placeholderTextColor={theme.colors.textMuted}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
+
+          <Button
+            variant="default"
+            onPress={() => publicProfileMutation.mutate()}
+            loading={publicProfileMutation.isPending}
+            style={styles.saveButton}
+          >
+            Save Public Profile
+          </Button>
+        </CollapsibleCard>
+
+        {/* Profile Settings */}
+        <CollapsibleCard
+          title="Profile Settings"
+          subtitle="Private settings and preferences"
+          defaultOpen
+          cardStyle={styles.cardVariant}
+          headerStyle={styles.cardHeaderVariant}
+          contentStyle={styles.cardContentVariant}
+        >
+          <View style={styles.formGrid}>
+            {renderTextInput('Full Name', 'name')}
+            {renderTextInput('Email', 'email', 'email-address')}
+
+            <SelectField
+              label="Country"
+              value={profileForm.country}
+              options={countries.map((c) => ({ label: c, value: c }))}
+              placeholder="Select your country"
+              onChange={(val) => setProfileForm((prev) => ({ ...prev, country: val }))}
+            />
+
+            <DateField
+              label="Date of Birth"
+              value={profileForm.dateOfBirth || undefined}
+              onChange={(val) => setProfileForm((prev) => ({ ...prev, dateOfBirth: val || '' }))}
+              maximumDate={new Date()}
+            />
+
+            <ReadOnlyField
+              label="Age"
+              value={
+                profileForm.dateOfBirth
+                  ? String(calculateAge(profileForm.dateOfBirth))
+                  : undefined
+              }
+              placeholder="Set your date of birth to calculate age"
+            />
+
+            <SelectField
+              label="Gender"
+              value={profileForm.gender}
+              options={genderOptions}
+              onChange={(val) => setProfileForm((prev) => ({ ...prev, gender: val }))}
+            />
+
+            <SelectField
+              label="Training Goal"
+              value={profileForm.trainingGoal}
+              options={trainingGoalOptions}
+              onChange={(val) => setProfileForm((prev) => ({ ...prev, trainingGoal: val }))}
+            />
+
+            {renderTextInput('Injury Status', 'injuryStatus')}
+
+            <SelectField
+              label="Training Days Per Week"
+              value={profileForm.trainingDaysPerWeek}
+              options={trainingDaysOptions}
+              onChange={(val) => setProfileForm((prev) => ({ ...prev, trainingDaysPerWeek: val }))}
+            />
+
+            {renderNumericInput('Average Sleep Hours', 'sleepHours', 'numeric')}
+
+            <SelectField
+              label="Sleep Quality"
+              value={profileForm.sleepQuality}
+              options={sleepQualityOptions}
+              onChange={(val) => setProfileForm((prev) => ({ ...prev, sleepQuality: val }))}
+            />
+
+            <SelectField
+              label="Mood"
+              value={profileForm.mood}
+              options={moodOptions}
+              onChange={(val) => setProfileForm((prev) => ({ ...prev, mood: val }))}
+            />
+
+            <SelectField
+              label="AI Coach Personality"
+              value={profileForm.coachMode}
+              options={coachModeOptions}
+              onChange={(val) => setProfileForm((prev) => ({ ...prev, coachMode: val }))}
+            />
+          </View>
+          <Button
+            variant="default"
+            onPress={() => saveProfileMutation.mutate()}
+            loading={saveProfileMutation.isPending}
+            style={styles.saveButton}
+          >
+            Save Settings
+          </Button>
+        </CollapsibleCard>
+
         <Button
           variant="outline"
           size="lg"
           onPress={logout}
           style={styles.logoutButton}
         >
-          <FontAwesome5 name="sign-out-alt" size={16} color={theme.colors.destructive} solid />
-          <Text variant="body" weight="medium" style={[styles.buttonText, { color: theme.colors.destructive }]}>
-            Sign Out
-          </Text>
+          Sign Out
         </Button>
-
-        {/* Version Info */}
-        <Text variant="small" color="muted" style={styles.version}>
-          TrackLit Mobile v1.0.0
-        </Text>
       </ScrollView>
 
-    </LinearGradient>
+      <ProfileImageCropModal
+        visible={cropVisible}
+        imageUri={profileImageAsset?.uri || null}
+        onCancel={() => setCropVisible(false)}
+        onSave={() => {
+          setCropVisible(false);
+          publicProfileMutation.mutate();
+        }}
+      />
+    </View>
   );
+
+  function renderTextInput(
+    label: string,
+    key: keyof typeof profileForm,
+    keyboardType: 'default' | 'numeric' | 'email-address' = 'default',
+  ) {
+    return (
+      <View style={styles.inputGroup}>
+        <Text variant="body" weight="medium" color="foreground">
+          {label}
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={profileForm[key] as string}
+          onChangeText={(text) =>
+            setProfileForm((prev) => ({
+              ...prev,
+              [key]: text,
+            }))
+          }
+          placeholder={label}
+          placeholderTextColor={theme.colors.textMuted}
+          keyboardType={keyboardType}
+          autoCapitalize={keyboardType === 'email-address' ? 'none' : 'sentences'}
+        />
+      </View>
+    );
+  }
+
+  function renderNumericInput(
+    label: string,
+    key: keyof typeof profileForm,
+    keyboardType: 'default' | 'numeric' | 'email-address' = 'default',
+  ) {
+    return (
+      <View style={styles.inputGroup}>
+        <Text variant="body" weight="medium" color="foreground">
+          {label}
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={profileForm[key] as string}
+          onChangeText={(text) =>
+            setProfileForm((prev) => ({
+              ...prev,
+              [key]: text.replace(/[^0-9.]/g, ''),
+            }))
+          }
+          placeholder={label}
+          placeholderTextColor={theme.colors.textMuted}
+          keyboardType={keyboardType}
+        />
+      </View>
+    );
+  }
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#010a18',
   },
   content: {
-    flexGrow: 1,
     paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.lg,
   },
-  header: {
-    marginTop: theme.spacing.xl,
-    marginBottom: theme.spacing.lg,
+  title: {
+    marginTop: theme.spacing.lg,
   },
-  profileCard: {
-    marginBottom: theme.spacing.lg,
+  subtitle: {
+    marginBottom: theme.spacing.sm,
   },
-  profileContent: {
+  headerCard: {
+    backgroundColor: '#0a1529',
+    borderColor: '#1e3a8a33',
+    borderWidth: 1,
+  },
+  cardVariant: {
+    backgroundColor: '#0a1529',
+    borderColor: '#1e3a8a33',
+    borderWidth: 1,
+  },
+  cardHeaderVariant: {
+    paddingVertical: theme.spacing.md,
+  },
+  cardContentVariant: {
+    paddingBottom: theme.spacing.lg,
+  },
+  publicProfileContent: {
+    paddingBottom: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
+  headerContent: {
+    gap: theme.spacing.md,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
+    flexWrap: 'wrap',
+  },
+  headerIdentity: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
+    flex: 1,
   },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: theme.spacing.lg,
+  headerTextBlock: {
+    flexShrink: 1,
   },
-  avatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: theme.colors.primary,
-  },
-  editAvatarBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
+  avatarRing: {
+    padding: 4,
+    borderRadius: 999,
     borderWidth: 2,
-    borderColor: theme.colors.background,
+    borderColor: '#f5c842',
   },
-  profileInfo: {
+  headerActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
     alignItems: 'center',
+    flexShrink: 0,
+  },
+  headerActionButton: {
+    minWidth: 140,
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  switchTrack: {
+    width: 42,
+    height: 24,
+    borderRadius: 12,
+    padding: 3,
+    justifyContent: 'center',
+  },
+  switchThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#fff',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing.sm,
+  },
+  listBlock: {
+    marginTop: theme.spacing.sm,
     gap: theme.spacing.xs,
   },
-  email: {
-    marginTop: theme.spacing.sm,
-  },
-  editProfileButton: {
-    marginTop: theme.spacing.lg,
+  sectionActions: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
   },
-  buttonText: {
-    marginLeft: theme.spacing.sm,
-  },
-  editForm: {
-    width: '100%',
+  colorRow: {
+    flexDirection: 'row',
     gap: theme.spacing.sm,
+    marginVertical: theme.spacing.md,
   },
-  label: {
-    marginTop: theme.spacing.sm,
+  colorSwatch: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.borderRadius.md,
+  },
+  inputGroup: {
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
   input: {
     borderWidth: 1,
@@ -462,57 +765,19 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
     color: theme.colors.foreground,
-    fontSize: 16,
     backgroundColor: theme.colors.card,
   },
-  bioInput: {
+  textArea: {
     minHeight: 80,
-    textAlignVertical: 'top',
   },
-  imagePreviewRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
+  saveButton: {
     marginTop: theme.spacing.sm,
   },
-  imagePreviewText: {
-    marginLeft: theme.spacing.xs,
-  },
-  editActions: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.lg,
-  },
-  editButton: {
-    flex: 1,
-  },
-  settingsCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  settingsContent: {
-    gap: theme.spacing.xs,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  settingText: {
-    flex: 1,
-    marginLeft: theme.spacing.md,
+  formGrid: {
+    gap: theme.spacing.sm,
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
+    marginTop: theme.spacing.lg,
     borderColor: theme.colors.destructive,
-    marginBottom: theme.spacing.lg,
-  },
-  version: {
-    textAlign: 'center',
-    marginBottom: theme.spacing.xl,
   },
 });

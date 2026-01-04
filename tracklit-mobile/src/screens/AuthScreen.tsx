@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -19,11 +19,65 @@ import { Button } from '../components/ui/Button';
 import theme from '../utils/theme';
 import { LoginForm } from './auth/LoginForm';
 import { RegisterForm } from './auth/RegisterForm';
+import { ForgotPasswordForm } from './auth/ForgotPasswordForm';
+import { ResetPasswordForm } from './auth/ResetPasswordForm';
 import { env } from '@/config/env';
 
 export const AuthScreen: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<
+    'login' | 'register' | 'forgot-password' | 'reset-password'
+  >('login');
+  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [isVerifyingToken, setIsVerifyingToken] = useState(false);
   const insets = useSafeAreaInsets();
+
+  // Handle deep links for reset password (tracklitmobile://auth?resetToken=...)
+  useEffect(() => {
+    const handleUrl = async (url: string | null) => {
+      if (!url) return;
+      try {
+        const parsed = new URL(url);
+        const tokenFromUrl = parsed.searchParams.get('resetToken');
+        if (tokenFromUrl) {
+          setResetToken(tokenFromUrl);
+          setActiveTab('reset-password');
+        }
+      } catch {
+        // ignore invalid URLs
+      }
+    };
+
+    Linking.getInitialURL().then(handleUrl);
+    const sub = Linking.addEventListener('url', (event) => handleUrl(event.url));
+    return () => sub.remove();
+  }, []);
+
+  // Pre-verify reset token when present
+  useEffect(() => {
+    const verify = async () => {
+      if (!resetToken) return;
+      try {
+        setIsVerifyingToken(true);
+        const response = await fetch(`${env.API_BASE_URL}/api/auth/verify-reset-token/${resetToken}`);
+        const json = await response.json();
+        if (!json?.valid) {
+          Alert.alert('Invalid or expired link', 'Please request a new reset link.');
+          setActiveTab('forgot-password');
+        }
+      } catch {
+        Alert.alert('Unable to verify link', 'Please request a new reset link.');
+        setActiveTab('forgot-password');
+      } finally {
+        setIsVerifyingToken(false);
+      }
+    };
+    verify();
+  }, [resetToken]);
+
+  const showTabs = useMemo(
+    () => activeTab === 'login' || activeTab === 'register',
+    [activeTab]
+  );
 
   return (
     <LinearGradient
@@ -51,83 +105,106 @@ export const AuthScreen: React.FC = () => {
 
           {/* Auth Card */}
           <Card style={styles.authCard}>
-            {/* Tabs */}
-            <View style={styles.tabs}>
-              <TouchableOpacity
-                style={[
-                  styles.tab,
-                  activeTab === 'login' && styles.activeTab
-                ]}
-                onPress={() => setActiveTab('login')}
-                data-testid="tab-login"
-              >
-                <Text 
-                  variant="body" 
-                  weight="medium"
+            {/* Tabs (only for login/register) */}
+            {showTabs && (
+              <View style={styles.tabs}>
+                <TouchableOpacity
                   style={[
-                    styles.tabText,
-                    activeTab === 'login' && styles.activeTabText
+                    styles.tab,
+                    activeTab === 'login' && styles.activeTab
                   ]}
+                  onPress={() => setActiveTab('login')}
+                  data-testid="tab-login"
                 >
-                  Login
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[
-                  styles.tab,
-                  activeTab === 'register' && styles.activeTab
-                ]}
-                onPress={() => setActiveTab('register')}
-                data-testid="tab-register"
-              >
-                <Text 
-                  variant="body" 
-                  weight="medium"
+                  <Text 
+                    variant="body" 
+                    weight="medium"
+                    style={[
+                      styles.tabText,
+                      activeTab === 'login' && styles.activeTabText
+                    ]}
+                  >
+                    Login
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
                   style={[
-                    styles.tabText,
-                    activeTab === 'register' && styles.activeTabText
+                    styles.tab,
+                    activeTab === 'register' && styles.activeTab
                   ]}
+                  onPress={() => setActiveTab('register')}
+                  data-testid="tab-register"
                 >
-                  Register
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  <Text 
+                    variant="body" 
+                    weight="medium"
+                    style={[
+                      styles.tabText,
+                      activeTab === 'register' && styles.activeTabText
+                    ]}
+                  >
+                    Register
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Form Content */}
             <View style={styles.formContainer}>
-              {activeTab === 'login' ? (
-                <LoginForm onSwitchToRegister={() => setActiveTab('register')} />
-              ) : (
+              {activeTab === 'login' && (
+                <LoginForm
+                  onSwitchToRegister={() => setActiveTab('register')}
+                  onForgotPassword={() => setActiveTab('forgot-password')}
+                />
+              )}
+              {activeTab === 'register' && (
                 <RegisterForm onSwitchToLogin={() => setActiveTab('login')} />
+              )}
+              {activeTab === 'forgot-password' && (
+                <ForgotPasswordForm
+                  onBackToLogin={() => setActiveTab('login')}
+                />
+              )}
+              {activeTab === 'reset-password' && (
+                <ResetPasswordForm
+                  resetToken={resetToken}
+                  isVerifyingToken={isVerifyingToken}
+                  onBackToLogin={() => setActiveTab('login')}
+                />
               )}
             </View>
 
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text variant="small" color="muted" style={styles.dividerText}>
-                or
-              </Text>
-              <View style={styles.dividerLine} />
-            </View>
+            {/* Only show social divider for login/register */}
+            {showTabs && (
+              <>
+                <View style={styles.dividerRow}>
+                  <View style={styles.dividerLine} />
+                  <Text variant="small" color="muted" style={styles.dividerText}>
+                    or
+                  </Text>
+                  <View style={styles.dividerLine} />
+                </View>
 
-            <Button
-              variant="outline"
-              size="lg"
-              onPress={async () => {
-                try {
-                  await Linking.openURL(`${env.API_BASE_URL}/api/auth/google/mobile`);
-                } catch (e) {
-                  Alert.alert('Unable to open browser', 'Please try again.');
-                }
-              }}
-              style={styles.googleButton}
-            >
-              <FontAwesome5 name="google" size={16} color={theme.colors.primary} />
-              <Text variant="body" weight="semiBold" color="foreground" style={styles.googleButtonText}>
-                Continue with Google
-              </Text>
-            </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onPress={async () => {
+                    try {
+                      await Linking.openURL(`${env.API_BASE_URL}/api/auth/google/mobile`);
+                    } catch (e) {
+                      Alert.alert('Unable to open browser', 'Please try again.');
+                    }
+                  }}
+                  style={styles.googleButton}
+                >
+                  <FontAwesome5 name="google" size={16} color={theme.colors.primary} />
+                  <Text variant="body" weight="semiBold" color="foreground" style={styles.googleButtonText}>
+                    Continue with Google
+                  </Text>
+                </Button>
+              </>
+            )}
           </Card>
 
           {/* Features Section */}

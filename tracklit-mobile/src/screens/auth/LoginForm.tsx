@@ -18,10 +18,11 @@ interface LoginFormData {
 
 interface LoginFormProps {
   onSwitchToRegister?: () => void;
+  onForgotPassword?: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
-  const { login, continueAsGuest } = useAuth();
+export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForgotPassword }) => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     username: '',
     password: '',
@@ -146,30 +147,29 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         </View>
       </Button>
 
-      {/* Sign up link */}
+      {/* Sign up / Forgot */}
       <View style={styles.signupPrompt}>
-        <Text variant="small" color="muted">
-          Don't have an account?{' '}
-        </Text>
-        <TouchableOpacity onPress={onSwitchToRegister} data-testid="link-switch-to-register">
+        <View style={styles.signupRow}>
+          <Text variant="small" color="muted">
+            Don't have an account?{' '}
+          </Text>
+          <TouchableOpacity onPress={onSwitchToRegister} data-testid="link-switch-to-register">
+            <Text variant="small" color="primary" weight="medium">
+              Sign up
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity
+          onPress={onForgotPassword}
+          style={styles.forgotPassword}
+          data-testid="link-forgot-password"
+        >
           <Text variant="small" color="primary" weight="medium">
-            Sign up
+            Forgot your password?
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Guest access */}
-      <View style={styles.guestAccess}>
-        <Button
-          variant="outline"
-          size="sm"
-          onPress={continueAsGuest}
-          style={styles.guestButton}
-          data-testid="button-continue-guest"
-        >
-          Continue as Guest
-        </Button>
-      </View>
     </View>
   );
 };
@@ -207,18 +207,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   signupPrompt: {
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  signupRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  guestAccess: {
-    alignItems: 'center',
-    marginTop: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  guestButton: {
-    paddingHorizontal: theme.spacing.xl,
+  forgotPassword: {
+    marginTop: theme.spacing.xs,
   },
 });

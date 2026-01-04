@@ -17,16 +17,22 @@ type Props = ViewProps & {
  * `react-native-linear-gradient` (bare RN), and finally to a plain View.
  */
 export const LinearGradient: React.FC<Props> = (props) => {
+  const gradientProps = {
+    ...props,
+    start: props.start ?? { x: 0, y: 0 },
+    end: props.end ?? { x: 1, y: 1 },
+  };
+
   // Prefer Expo's implementation in Expo Go / Expo builds
   const ExpoImpl = tryRequireExpoLinearGradient();
-  if (ExpoImpl) return <ExpoImpl {...(props as any)} />;
+  if (ExpoImpl) return <ExpoImpl {...(gradientProps as any)} />;
 
   // Fallback to RN community module (bare builds)
   const RNImpl = tryRequireRNLinearGradient();
-  if (RNImpl) return <RNImpl {...(props as any)} />;
+  if (RNImpl) return <RNImpl {...(gradientProps as any)} />;
 
   // Last resort: no gradient support, just render children
-  const { children, style, ...rest } = props;
+  const { children, style, ...rest } = gradientProps;
   return (
     <View style={style} {...rest}>
       {children}
