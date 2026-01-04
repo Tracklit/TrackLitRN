@@ -98,7 +98,7 @@ export default function MyAthletesPage() {
     try {
       // Create or get existing conversation with this athlete
       const response = await apiRequest('POST', '/api/conversations/create', {
-        body: JSON.stringify({ otherUserId: athleteId })
+        otherUserId: athleteId
       });
 
       if (response.ok) {
