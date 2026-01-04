@@ -911,22 +911,22 @@ const ChatPage = () => {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {/* Pull-to-reveal indicator at top */}
-            <div className="absolute top-0 left-0 right-0 h-6 flex items-center justify-center z-20 bg-gradient-to-b from-slate-800/50 to-transparent">
-              {isDragging ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-12 h-1 bg-blue-400 rounded-full animate-pulse"></div>
-                  <div className="text-xs text-blue-400 font-medium">Release to search</div>
-                </div>
-              ) : isAtTop ? (
-                <div className="flex items-center gap-2 opacity-30">
-                  <div className="w-6 h-0.5 bg-gray-600 rounded-full"></div>
-                  <div className="text-xs text-gray-600">Pull down to search</div>
-                </div>
-              ) : null}
-            </div>
-            {/* Spacing between pull indicator and chat list */}
-            <div className="h-8"></div>
+            {/* Pull-to-reveal indicator - shows when dragging or at top */}
+              <div className="h-8 flex items-center justify-center bg-gradient-to-b from-slate-800/50 to-transparent">
+                {isDragging ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-12 h-1 bg-blue-400 rounded-full animate-pulse"></div>
+                    <div className="text-xs text-blue-400 font-medium">Release to search</div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 opacity-30">
+                    <div className="w-6 h-0.5 bg-gray-600 rounded-full"></div>
+                    <div className="text-xs text-gray-600">Pull down to search</div>
+                  </div>
+                )}
+              </div>
+            )}
+            )}
             <div className="space-y-0">
               {(channelsLoading && chatChannels.length === 0) || (conversationsLoading && conversations.length === 0) ? (
                 <div className="space-y-0">
