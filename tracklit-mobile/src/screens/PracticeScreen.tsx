@@ -253,23 +253,30 @@ export const PracticeScreen: React.FC = () => {
     });
   };
 
-  // Calculate stats from API data
-  const workouts = practiceQuery.data ?? [];
-  const journalEntries = journalQuery.data ?? [];
+  // Calculate stats from API data (defensive: ensure arrays)
+  const workouts: SavedWorkout[] = Array.isArray(practiceQuery.data)
+    ? (practiceQuery.data as SavedWorkout[])
+    : Array.isArray((practiceQuery.data as any)?.workouts)
+    ? ((practiceQuery.data as any).workouts as SavedWorkout[])
+    : [];
+  const journalEntries = Array.isArray(journalQuery.data) ? journalQuery.data : [];
   
   // Calculate this week's workouts
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  const thisWeekWorkouts = workouts.filter(w => new Date(w.createdAt) >= oneWeekAgo);
+  const thisWeekWorkouts = workouts.filter((w: SavedWorkout) => new Date(w.createdAt) >= oneWeekAgo);
   
   // Calculate total hours (sum of durations)
-  const totalMinutes = workouts.reduce((sum, w) => sum + (w.content?.duration || 0), 0);
+  const totalMinutes = workouts.reduce(
+    (sum: number, w: SavedWorkout) => sum + (w.content?.duration || 0),
+    0,
+  );
   const totalHours = (totalMinutes / 60).toFixed(1);
 
   // Calculate streak (consecutive days with workouts)
   const calculateStreak = () => {
     if (workouts.length === 0) return 0;
-    const dates = workouts.map(w => new Date(w.createdAt).toDateString());
+    const dates = workouts.map((w: SavedWorkout) => new Date(w.createdAt).toDateString());
     const uniqueDates = [...new Set(dates)].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
     
     let streak = 0;
