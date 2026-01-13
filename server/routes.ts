@@ -517,36 +517,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
   
   // Storage configuration for multer
+  // Disk storage for practice media (local uploads)
   const uploadStorage = multer.diskStorage({
     destination: (req, _file, cb) => {
-      // Use different subdirectories for program files and practice media
-      if (req.path === '/api/programs/upload') {
-        const programsUploadsDir = path.join(uploadsDir, 'programs');
-        if (!fs.existsSync(programsUploadsDir)) {
-          fs.mkdirSync(programsUploadsDir, { recursive: true });
-        }
-        cb(null, programsUploadsDir);
-      } else {
-        const practiceUploadsDir = path.join(uploadsDir, 'practice');
-        if (!fs.existsSync(practiceUploadsDir)) {
-          fs.mkdirSync(practiceUploadsDir, { recursive: true });
-        }
-        cb(null, practiceUploadsDir);
+      const practiceUploadsDir = path.join(uploadsDir, 'practice');
+      if (!fs.existsSync(practiceUploadsDir)) {
+        fs.mkdirSync(practiceUploadsDir, { recursive: true });
       }
+      cb(null, practiceUploadsDir);
     },
     filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const ext = path.extname(file.originalname);
-      
-      if (req.path === '/api/programs/upload') {
-        cb(null, 'program-' + uniqueSuffix + ext);
-      } else {
-        cb(null, 'practice-' + uniqueSuffix + ext);
-      }
+      cb(null, 'practice-' + uniqueSuffix + ext);
     },
   });
-  
-  const upload = multer({ 
+
+  // Separate upload middleware for program files - uses memory storage for Azure Blob upload
+  const programUpload = multer({
+    storage: multer.memoryStorage(),  // Keeps file in memory as buffer for Azure upload
+    limits: {
+      fileSize: 15 * 1024 * 1024, // 15MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedMimeTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ];
+      if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only PDF, Word, and Excel documents are allowed'));
+      }
+    }
+  });
+
+  const upload = multer({
     storage: uploadStorage,
     limits: {
       fileSize: 15 * 1024 * 1024, // 15MB limit
@@ -4845,7 +4854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // 3.1 Create a new program with file upload
-  app.post("/api/programs/upload", upload.single('programFile'), async (req: Request, res: Response) => {
+  app.post("/api/programs/upload", programUpload.single('programFile'), async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Not authenticated" });
@@ -4857,12 +4866,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get file info
       const file = req.file;
-      const fileUrl = `/uploads/programs/${file.filename}`;
       const fileType = file.mimetype;
-      
+      const userId = req.user!.id;
+
+      // Upload to Azure Blob Storage with user-specific path
+      let fileUrl: string;
+      try {
+        if (isBlobStorageAvailable()) {
+          // Upload to Azure Blob Storage: user-{userId}/programs/{timestamp}-{uuid}.ext
+          fileUrl = await uploadToBlob(
+            file.buffer,
+            userId,
+            BlobContainer.PROGRAMS,
+            file.originalname,
+            fileType
+          );
+          console.log(`✅ Program uploaded to Azure Blob Storage: ${fileUrl}`);
+        } else {
+          // Fallback to local storage if Azure is not configured
+          fileUrl = `/uploads/programs/${file.filename}`;
+          console.warn('⚠️  Azure Blob Storage not available. Using local storage (not persistent).');
+        }
+      } catch (uploadError) {
+        console.error('Error uploading to Azure Blob Storage:', uploadError);
+        return res.status(500).json({ error: "Failed to upload file to cloud storage" });
+      }
+
       // Create program record with file information
       const programData = {
-        userId: req.user!.id,
+        userId,
         title: req.body.title,
         description: req.body.description || '',
         category: req.body.category || 'general',
@@ -4870,13 +4902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         duration: parseInt(req.body.duration),
         visibility: req.body.visibility,
         price: req.body.price ? parseFloat(req.body.price) : 0,
-        isUploadedProgram: true,  // Ensure this is set to true for uploaded documents
-        programFileUrl: fileUrl,
-        programFileType: fileType
-      };
-      
-      const program = await dbStorage.createProgram(programData);
-      res.status(201).json(program);
+        isUploadedProgram: true,
     } catch (error: any) {
       console.error("Error creating program with file upload:", error);
       res.status(500).json({ error: "Failed to create program with file upload" });
@@ -4884,7 +4910,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // 3.2 Update program document
-  app.put("/api/programs/:id/document", upload.single('programFile'), async (req: Request, res: Response) => {
+  app.put("/api/programs/:id/document", programUpload.single('programFile'), async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Not authenticated" });
