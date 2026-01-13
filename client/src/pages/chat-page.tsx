@@ -912,6 +912,7 @@ const ChatPage = () => {
             onTouchEnd={handleTouchEnd}
           >
             {/* Pull-to-reveal indicator - shows when dragging or at top */}
+            {(isDragging || isAtTop) && (
               <div className="h-8 flex items-center justify-center bg-gradient-to-b from-slate-800/50 to-transparent">
                 {isDragging ? (
                   <div className="flex items-center gap-2">
@@ -925,7 +926,6 @@ const ChatPage = () => {
                   </div>
                 )}
               </div>
-            )}
             )}
             <div className="space-y-0">
               {(channelsLoading && chatChannels.length === 0) || (conversationsLoading && conversations.length === 0) ? (
