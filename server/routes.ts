@@ -4903,6 +4903,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         visibility: req.body.visibility,
         price: req.body.price ? parseFloat(req.body.price) : 0,
         isUploadedProgram: true,
+        programFileUrl: fileUrl,
+        programFileType: fileType
+      };
+      
+      const program = await dbStorage.createProgram(programData);
+      res.status(201).json(program);
     } catch (error: any) {
       console.error("Error creating program with file upload:", error);
       res.status(500).json({ error: "Failed to create program with file upload" });
