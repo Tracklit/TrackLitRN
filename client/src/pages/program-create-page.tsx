@@ -141,10 +141,18 @@ function ProgramCreatePage() {
       const response = await fetch("/api/programs/upload", {
         method: "POST",
         body: formData,
+        credentials: "include",  // Added credentials to include session cookie
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to upload program");
+        const errorText = await response.text();
+        let errorMessage = "Failed to upload program";
+        try {
+          const error = JSON.parse(errorText);
+          errorMessage = error.error || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       return response.json();
     },
@@ -205,12 +213,13 @@ function ProgramCreatePage() {
     }
 
     const formDataToSend = new FormData();
-    formDataToSend.append("file", uploadFile);
+    formDataToSend.append("programFile", uploadFile);  // Changed from "file" to "programFile"
     formDataToSend.append("title", formData.title);
     formDataToSend.append("description", formData.description);
     formDataToSend.append("visibility", formData.visibility);
     formDataToSend.append("price", formData.price.toString());
     formDataToSend.append("priceType", formData.priceType);
+    formDataToSend.append("duration", formData.duration.toString());  // Added missing duration field
 
     uploadProgramMutation.mutate(formDataToSend);
   };
