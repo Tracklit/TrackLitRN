@@ -97,7 +97,16 @@ export default function WorkoutToolsPage() {
       disabled: false,
       backgroundImage: toolBackgrounds[6],
       hasBackground: false
-    }
+    },
+    {
+      title: "Sprint Time Prediction",
+      description: "Calculate predicted times across sprint distances",
+      icon: <Gauge className="h-6 w-6 text-white" />,
+      href: "/tools/sprint-prediction",
+      disabled: false,
+      backgroundImage: toolBackgrounds[7],
+      hasBackground: false
+    },
   ];
   
   return (

@@ -29,6 +29,7 @@ const PhotoFinishAnalysisPageLazy = lazy(() => import("@/pages/tools/photo-finis
 const ExerciseLibraryPageLazy = lazy(() => import("@/pages/exercise-library-page"));
 const ExerciseLibraryAddPageLazy = lazy(() => import("@/pages/exercise-library-add-page"));
 const VideoAnalysisPageLazy = lazy(() => import("@/pages/video-analysis-page"));
+const SprintTimePredictionPageLazy = lazy(() => import("@/pages/sprint-time-prediction-page"));
 
 // Training & Programs
 const PracticePageLazy = lazy(() => import("@/pages/practice-page"));
@@ -121,7 +122,8 @@ const VelocityTrackerPage = () => <VelocityTrackerPageLazy />;
 const PhotoFinishAnalysisPage = () => <PhotoFinishAnalysisPageLazy />;
 const ExerciseLibraryPage = () => <ExerciseLibraryPageLazy />;
 const ExerciseLibraryAddPage = () => <ExerciseLibraryAddPageLazy />;
-const VideoAnalysisPage = () => <VideoAnalysisPageLazy />;
+const VideoAnalysisPage = () => <VideoAnalysisPageLazy />
+const SprintTimePredictionPage = () => <SprintTimePredictionPageLazy />;
 const PracticePage = () => <PracticePageLazy />;
 const JournalEntryPage = () => <JournalEntryPageLazy />;
 const WorkoutToolsPage = () => <WorkoutToolsPageLazy />;
@@ -307,6 +309,7 @@ function Router() {
           <ProtectedRoute path="/tools/journal" component={JournalPage} />
           <ProtectedRoute path="/tools/photo-finish" component={PhotoFinishPage} />
           <ProtectedRoute path="/tools/velocity-tracker" component={VelocityTrackerPage} />
+          <ProtectedRoute path="/tools/sprint-prediction" component={SprintTimePredictionPage} />
           <ProtectedRoute path="/tools/photo-finish/analysis" component={PhotoFinishAnalysisPage} />
           <ProtectedRoute path="/tools/exercise-library" component={ExerciseLibraryPage} />
           <ProtectedRoute path="/tools/exercise-library/add" component={ExerciseLibraryAddPage} />
