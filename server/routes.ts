@@ -2332,8 +2332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   const profileUpload = multer({
-    dest: 'uploads/profiles/',
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    storage: multer.memoryStorage(), // Use memory storage for Azure Blob upload
     fileFilter: (req, file, cb) => {
       const allowedTypes = /jpeg|jpg|png|gif|webp/;
       const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -2355,7 +2354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let profileImageUrl = '';      // Handle profile image upload
       if (req.file) {
         // Process image with sharp first
-        const processedBuffer = await sharp(req.file.path)
+        const processedBuffer = await sharp(req.file.buffer)
           .resize(800, 800, { 
             fit: 'inside', 
             withoutEnlargement: true 
@@ -10507,6 +10506,7 @@ Submission Details:
 
   return httpServer;
 }
+
 
 
 
