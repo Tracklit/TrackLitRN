@@ -127,7 +127,7 @@ export default function RehabPage() {
   const hasSpikes = (user?.spikes || 0) >= 50;
 
   return (
-    <div className="min-h-screen pt-20" style={{ backgroundColor: '#010a18' }}>
+    <div className="min-h-screen pt-20 pb-24" style={{ backgroundColor: '#010a18' }}>
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
