@@ -2333,6 +2333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const profileUpload = multer({
     storage: multer.memoryStorage(), // Use memory storage for Azure Blob upload
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
       const allowedTypes = /jpeg|jpg|png|gif|webp/;
       const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -2391,8 +2392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           profileImageUrl = `/uploads/profiles/${fileName}`;
         }
 
-        // Clean up the temporary multer file
-        fs.unlinkSync(req.file.path);
+        // No cleanup needed with memoryStorage
       }
 
       // Update user profile
