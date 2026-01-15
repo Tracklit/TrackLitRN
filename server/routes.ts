@@ -7640,6 +7640,20 @@ It supports multilingual interactions, replying in the same language as the athl
         programId: program.id,
         message: "Program saved successfully",
         sessionsCreated: 1
+      });
+    } catch (error: any) {
+      console.error("Error saving Sprinthia message as program:", error);
+      res.status(500).json({ error: "Failed to save program" });
+    }
+  });
+
+  // AI Consultation endpoint
+  app.post("/api/rehab/ai-consultation", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
       const { query } = req.body;
       const userId = req.user.id;
       const user = req.user;
