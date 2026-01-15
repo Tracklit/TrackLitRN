@@ -1,24 +1,19 @@
-import React, { useMemo } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import { LinearGradient } from '@/components/LinearGradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import React, { useMemo, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
+import { Search, UserPlus, Users, ChevronRight } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
-import { Card, CardContent } from '@/components/ui/Card';
+import { WebScreen } from '@/components/web/Screen';
+import { WebPageHeader } from '@/components/web/PageHeader';
+import { WebCard } from '@/components/web/Card';
+import { WebBadge } from '@/components/web/Badge';
+import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
-import type { RootStackParamList } from '@/navigation/types';
 import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -30,125 +25,150 @@ interface ConnectionItem {
   profileImageUrl?: string | null;
 }
 
+interface ConnectionRequest {
+  id: number;
+  follower: { name: string; username: string; profileImageUrl?: string | null };
+}
+
 export const ConnectionsScreen: React.FC = () => {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
 
+  const [search, setSearch] = useState('');
+
   const connectionsQuery = useQuery({
     queryKey: ['connections'],
-    queryFn: () => apiRequest<ConnectionItem[]>('/api/connections'),
+    queryFn: () => apiRequest<ConnectionItem[]>('/api/friends'),
     enabled: isAuthenticated && !isGuest,
   });
 
-  const connections = useMemo(() => connectionsQuery.data ?? [], [connectionsQuery.data]);
+  const pendingQuery = useQuery({
+    queryKey: ['connection-requests'],
+    queryFn: () => apiRequest<ConnectionRequest[]>('/api/friend-requests/pending'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
+  const filtered = useMemo(() => {
+    const data = connectionsQuery.data ?? [];
+    const q = search.trim().toLowerCase();
+    if (!q) return data;
+    return data.filter((c) =>
+      `${c.name || ''} ${c.username || ''}`.toLowerCase().includes(q),
+    );
+  }, [connectionsQuery.data, search]);
 
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+    <WebScreen
+      backgroundColor="#0b1220"
+      contentStyle={{ paddingTop: theme.spacing.lg }}
     >
-      <View style={styles.header}>
+      <View style={styles.headerRow}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
+          <ChevronRight size={18} color={theme.colors.foreground} style={{ transform: [{ rotate: '180deg' }] }} />
         </TouchableOpacity>
-        <Text variant="h3" weight="bold" color="foreground">
-          Connections
-        </Text>
-        <View style={styles.headerSpacer} />
+        <WebPageHeader title="Connections" description="Friends and coached athletes you can message and share content with." />
+        {pendingQuery.data && pendingQuery.data.length > 0 && (
+          <WebBadge variant="secondary">{pendingQuery.data.length} pending</WebBadge>
+        )}
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text variant="body" color="muted">
-          Friends and coached athletes you can message and share content with.
-        </Text>
+      <WebCard tone="muted" padding={theme.spacing.md}>
+        <View style={styles.searchRow}>
+          <Search size={16} color={theme.colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search connections..."
+            placeholderTextColor={theme.colors.textMuted}
+            value={search}
+            onChangeText={setSearch}
+          />
+          <TouchableOpacity>
+            <UserPlus size={18} color={theme.colors.foreground} />
+          </TouchableOpacity>
+        </View>
+      </WebCard>
 
-        {isGuest ? (
-          <Text variant="body" color="muted" style={styles.emptyText}>
-            Sign in to view your connections.
-          </Text>
-        ) : connectionsQuery.isLoading ? (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text variant="body" color="muted" style={styles.emptyText}>
-              Loading connections...
-            </Text>
+      {isGuest ? (
+        <Text variant="body" color="muted" style={{ textAlign: 'center' }}>
+          Sign in to view your connections.
+        </Text>
+      ) : connectionsQuery.isLoading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text variant="body" color="muted">Loading connections...</Text>
+        </View>
+      ) : connectionsQuery.isError ? (
+        <Text variant="body" color="muted" style={{ textAlign: 'center' }}>
+          Unable to load connections.
+        </Text>
+      ) : filtered.length === 0 ? (
+        <WebCard tone="muted" padding={theme.spacing.lg}>
+          <View style={styles.emptyRow}>
+            <Users size={24} color={theme.colors.textMuted} />
+            <Text variant="body" color="muted">No connections yet.</Text>
           </View>
-        ) : connectionsQuery.isError ? (
-          <Text variant="body" color="muted" style={styles.emptyText}>
-            Unable to load connections.
-          </Text>
-        ) : connections.length === 0 ? (
-          <Text variant="body" color="muted" style={styles.emptyText}>
-            No connections yet.
-          </Text>
-        ) : (
-          <View style={styles.list}>
-            {connections.map((c) => (
-              <Card key={c.id} style={styles.itemCard}>
-                <CardContent style={styles.itemContent}>
-                  <Avatar size="md" fallback={(c.name || c.username || 'U').slice(0, 2)} />
-                  <View style={styles.itemText}>
-                    <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
-                      {c.name || 'TrackLit Athlete'}
-                    </Text>
-                    <Text variant="small" color="muted" numberOfLines={1}>
-                      @{c.username || 'user'}
-                    </Text>
-                  </View>
-                  <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} solid />
-                </CardContent>
-              </Card>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    </LinearGradient>
+        </WebCard>
+      ) : (
+        filtered.map((c) => (
+          <WebCard key={c.id} tone="muted" padding={theme.spacing.md}>
+            <View style={styles.itemRow}>
+              <Avatar size="md" fallback={(c.name || c.username || 'U').slice(0, 2)} src={c.profileImageUrl || undefined} />
+              <View style={{ flex: 1, gap: theme.spacing.xs }}>
+                <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
+                  {c.name || 'TrackLit Athlete'}
+                </Text>
+                <Text variant="small" color="muted" numberOfLines={1}>
+                  @{c.username || 'user'}
+                </Text>
+              </View>
+              <ChevronRight size={14} color={theme.colors.textMuted} />
+            </View>
+          </WebCard>
+        ))
+      )}
+    </WebScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: '#0f172a',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: '#1f2937',
   },
-  headerSpacer: { flex: 1 },
-  content: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.lg,
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    backgroundColor: '#0f172a',
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    color: theme.colors.foreground,
   },
   center: {
     alignItems: 'center',
+    gap: theme.spacing.sm,
     paddingVertical: theme.spacing.xl,
-    gap: theme.spacing.md,
   },
-  emptyText: { textAlign: 'center', lineHeight: 22 },
-  list: { gap: theme.spacing.sm },
-  itemCard: { marginBottom: 0 },
-  itemContent: {
+  emptyRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
   },
-  itemText: { flex: 1, gap: 2 },
 });
+
+

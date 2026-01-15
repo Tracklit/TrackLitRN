@@ -2,14 +2,14 @@
 // Based on HSL color values from the web application
 
 export const colors = {
-  // Primary colors - exact HSL values from web app
-  primary: '#F5C842', // hsl(45, 93%, 58%) - Gold
-  primaryForeground: '#000000', // hsl(0, 0%, 0%)
-  secondary: '#E2994B', // hsl(38, 92%, 50%) - Deep gold  
-  secondaryForeground: '#000000', // hsl(0, 0%, 0%)
-  deepGold: '#E2994B', // alias for secondary used in some components
-  accent: '#F5C842', // hsl(45, 93%, 58%) - Gold
-  accentForeground: '#000000', // hsl(0, 0%, 0%)
+  // Primary colors - web purple
+  primary: '#5b21b6',
+  primaryForeground: '#FFFFFF', // hsl(0, 0%, 100%)
+  secondary: '#7c3aed',
+  secondaryForeground: '#FFFFFF', // hsl(0, 0%, 100%)
+  deepGold: '#7c3aed', // legacy alias
+  accent: '#7c3aed',
+  accentForeground: '#FFFFFF', // hsl(0, 0%, 100%)
   
   // Background colors - dark theme
   background: 'transparent', // Allows gradient to show through
@@ -28,7 +28,7 @@ export const colors = {
   // Border and input colors
   border: '#334155', // hsl(220, 20%, 20%)
   input: '#334155', // hsl(220, 20%, 20%)
-  ring: '#F5C842', // hsl(45, 93%, 58%) - Gold
+  ring: '#7c3aed',
   
   // Status colors
   destructive: '#E53935', // hsl(0, 70%, 50%)
@@ -43,10 +43,10 @@ export const colors = {
   // Sidebar colors
   sidebar: 'rgba(21, 26, 35, 0.9)', // hsl(220, 30%, 8%) with 90% opacity
   sidebarForeground: '#F2F2F2', // hsl(0, 0%, 95%)
-  sidebarPrimary: '#F5C842', // hsl(45, 93%, 58%) - Gold
-  sidebarPrimaryForeground: '#000000', // hsl(0, 0%, 0%)
-  sidebarAccent: '#F5C842', // hsl(45, 93%, 58%) - Gold
-  sidebarAccentForeground: '#000000', // hsl(0, 0%, 0%)
+  sidebarPrimary: '#5b21b6',
+  sidebarPrimaryForeground: '#FFFFFF', // hsl(0, 0%, 100%)
+  sidebarAccent: '#7c3aed',
+  sidebarAccentForeground: '#FFFFFF', // hsl(0, 0%, 100%)
   sidebarBorder: '#475569', // hsl(220, 20%, 20%)
   
   // Chart colors
@@ -65,6 +65,16 @@ export const colors = {
   textPrimary: '#F2F2F2',
   textSecondary: '#A6A6A6',
   textMuted: '#7A7A7A',
+
+  // Web parity colors (Programs/Practice/Tools)
+  webPurpleStart: '#5b21b6',
+  webPurpleEnd: '#7c3aed',
+  webBlueStart: '#1e3a8a',
+  webIndigoDeep: '#1e1b4b',
+  webNotificationBackground: '#010a18',
+  webChatBackground: '#0b1220',
+  webCardBorder: 'rgba(168, 85, 247, 0.1)',
+  webBorderLight: 'rgba(255, 255, 255, 0.1)',
 };
 
 // Gradient background - exact replica from web app
@@ -81,7 +91,25 @@ export const gradients = {
     locations: [0, 1],
     start: {x: 0, y: 0},
     end: {x: 1, y: 1},
-  }
+  },
+  webPurple: {
+    colors: ['#5b21b6', '#7c3aed'],
+    locations: [0, 1],
+    start: {x: 0, y: 0},
+    end: {x: 1, y: 1},
+  },
+  webPurpleDeep: {
+    colors: ['#1e1b4b', '#581c87', '#1e3a8a'],
+    locations: [0, 0.5, 1],
+    start: {x: 0, y: 0},
+    end: {x: 1, y: 1},
+  },
+  webHeader: {
+    colors: ['rgba(91, 33, 182, 0.95)', 'rgba(124, 58, 237, 0.95)'],
+    locations: [0, 1],
+    start: {x: 0, y: 0},
+    end: {x: 1, y: 1},
+  },
 };
 
 // Backward-compatible alias for existing screens that use theme.gradient
@@ -111,6 +139,7 @@ export const borderRadius = {
   lg: 8, // var(--radius) - main radius used throughout app
   xl: 12,
   round: 9999, // fully rounded
+  webCard: 6,
 };
 
 // Typography system
@@ -177,6 +206,13 @@ export const shadows = {
     shadowOpacity: 0.25,
     shadowRadius: 50,
     elevation: 25,
+  },
+  webCard: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.3,
+    shadowRadius: 30,
+    elevation: 12,
   },
 };
 

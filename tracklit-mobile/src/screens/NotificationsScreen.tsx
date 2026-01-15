@@ -37,6 +37,20 @@ interface NotificationItem {
   createdAt: string;
 }
 
+const getNotificationIcon = (type: string) => {
+  switch (type) {
+    case 'friend_request':
+    case 'connection_request':
+      return { name: 'user-plus', color: '#3b82f6' };
+    case 'friend_accepted':
+      return { name: 'check', color: '#22c55e' };
+    case 'meet_invitation':
+      return { name: 'trophy', color: theme.colors.primary };
+    default:
+      return { name: 'bell', color: 'rgba(255,255,255,0.6)' };
+  }
+};
+
 export const NotificationsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -113,16 +127,20 @@ export const NotificationsScreen: React.FC = () => {
     >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
+          <FontAwesome5 name="arrow-left" size={18} color="white" solid />
         </TouchableOpacity>
         <View style={styles.headerText}>
           <Text variant="h3" weight="bold" color="foreground">
             Notifications
           </Text>
-          <Text variant="small" color="muted">
-            {unreadCount} unread
-          </Text>
         </View>
+        {unreadCount > 0 && (
+          <View style={styles.unreadBadge}>
+            <Text variant="small" weight="bold" color="primary-foreground">
+              {unreadCount}
+            </Text>
+          </View>
+        )}
         <TouchableOpacity
           style={styles.headerIconButton}
           onPress={() => markAllReadMutation.mutate()}
@@ -160,36 +178,53 @@ export const NotificationsScreen: React.FC = () => {
           </Text>
         ) : (
           <View style={styles.list}>
-            {notifications.map((n) => (
-              <TouchableOpacity
-                key={n.id}
-                onPress={() => handleNotificationPress(n)}
-                activeOpacity={0.8}
-              >
-                <Card
-                  style={
-                    n.isRead
-                      ? styles.itemCard
-                      : ({ ...styles.itemCard, ...styles.itemCardUnread } as any)
-                  }
-                >
-                  <CardContent style={styles.itemContent}>
-                    <View style={styles.itemHeaderRow}>
-                      <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
-                        {n.title}
+            {notifications.map((n, index) => {
+              const icon = getNotificationIcon(n.type);
+              const prev = notifications[index - 1];
+              const showDivider = index > 0 && prev && n.isRead && prev.isRead === false;
+              return (
+                <View key={n.id}>
+                  {showDivider && (
+                    <View style={styles.dividerRow}>
+                      <View style={styles.dividerLine} />
+                      <Text variant="small" color="muted" style={styles.dividerText}>
+                        Older notifications
                       </Text>
-                      {!n.isRead && <View style={styles.unreadDot} />}
+                      <View style={styles.dividerLine} />
                     </View>
-                    <Text variant="small" color="muted" style={styles.itemMessage}>
-                      {n.message}
-                    </Text>
-                    <Text variant="small" color="muted">
-                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
-                    </Text>
-                  </CardContent>
-                </Card>
-              </TouchableOpacity>
-            ))}
+                  )}
+                  <TouchableOpacity onPress={() => handleNotificationPress(n)} activeOpacity={0.8}>
+                    <Card
+                      style={
+                        n.isRead
+                          ? styles.itemCard
+                          : ({ ...styles.itemCard, ...styles.itemCardUnread } as any)
+                      }
+                    >
+                      <CardContent style={styles.itemContent}>
+                        <View style={styles.itemIcon}>
+                          <FontAwesome5 name={icon.name as any} size={14} color={icon.color} solid />
+                        </View>
+                        <View style={styles.itemBody}>
+                          <View style={styles.itemHeaderRow}>
+                            <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
+                              {n.title}
+                            </Text>
+                            {!n.isRead && <View style={styles.unreadDot} />}
+                          </View>
+                          <Text variant="small" color="muted" style={styles.itemMessage}>
+                            {n.message}
+                          </Text>
+                          <Text variant="small" color="muted">
+                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+                          </Text>
+                        </View>
+                      </CardContent>
+                    </Card>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -198,48 +233,86 @@ export const NotificationsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: theme.colors.webNotificationBackground },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.webBorderLight,
+    backgroundColor: theme.colors.webNotificationBackground,
     gap: theme.spacing.md,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerText: { flex: 1 },
+  unreadBadge: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.sm,
+  },
   headerIconButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.webBorderLight,
   },
   content: { padding: theme.spacing.lg, gap: theme.spacing.md },
   center: { alignItems: 'center', paddingVertical: theme.spacing.xl, gap: theme.spacing.md },
   emptyText: { textAlign: 'center', lineHeight: 22, paddingVertical: theme.spacing.xl },
   list: { gap: theme.spacing.sm },
-  itemCard: { marginBottom: 0 },
-  itemCardUnread: { borderColor: theme.colors.primary },
-  itemContent: { gap: theme.spacing.xs },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginVertical: theme.spacing.sm,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.webBorderLight,
+  },
+  dividerText: {
+    opacity: 0.7,
+  },
+  itemCard: {
+    marginBottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: theme.colors.webBorderLight,
+  },
+  itemCardUnread: { borderColor: '#3b82f6' },
+  itemContent: { flexDirection: 'row', gap: theme.spacing.md },
+  itemIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginTop: 2,
+  },
+  itemBody: { flex: 1, gap: theme.spacing.xs },
   itemHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: theme.spacing.sm },
   itemMessage: { lineHeight: 18 },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#3b82f6',
   },
 });

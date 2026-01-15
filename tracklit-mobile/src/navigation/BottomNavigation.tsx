@@ -33,13 +33,13 @@ const navItems: NavItem[] = [
   {
     title: 'Practice',
     routeName: 'Practice',
-    iconName: 'calendar-alt',
+    iconName: 'calendar',
     key: 'practice'
   },
   {
     title: 'Programs',
     routeName: 'Programs',
-    iconName: 'book',
+    iconName: 'book-open',
     key: 'programs'
   },
   {

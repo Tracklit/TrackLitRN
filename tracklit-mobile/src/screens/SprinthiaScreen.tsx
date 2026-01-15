@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -68,11 +68,14 @@ const poweredByAria = require('../assets/powered-by-aria.png');
 const WHITE = '#ffffff';
 
 const TypingDots: React.FC = () => {
-  const dots = [
-    useRef(new Animated.Value(0.3)).current,
-    useRef(new Animated.Value(0.3)).current,
-    useRef(new Animated.Value(0.3)).current,
-  ];
+  const dots = useMemo(
+    () => [
+      new Animated.Value(0.3),
+      new Animated.Value(0.3),
+      new Animated.Value(0.3),
+    ],
+    [],
+  );
 
   useEffect(() => {
     const animations = dots.map((dot, index) =>

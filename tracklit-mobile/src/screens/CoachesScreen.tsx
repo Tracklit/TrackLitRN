@@ -1,27 +1,20 @@
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
-import { LinearGradient } from '@/components/LinearGradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
+import { Search, MapPin, Trophy, ChevronRight } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { WebScreen } from '@/components/web/Screen';
+import { WebPageHeader } from '@/components/web/PageHeader';
+import { WebCard } from '@/components/web/Card';
+import { WebBadge } from '@/components/web/Badge';
+import { WebButton } from '@/components/web/Button';
+import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
-import type { RootStackParamList } from '@/navigation/types';
 import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -38,7 +31,6 @@ interface Coach {
 }
 
 export const CoachesScreen: React.FC = () => {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
@@ -60,160 +52,124 @@ export const CoachesScreen: React.FC = () => {
     );
   }, [coachesQuery.data, search]);
 
-  const handleConnect = () => {
-    Alert.alert(
-      'Connect to coach',
-      'Coach connection requests will be wired to the same flow as the web app next.',
-    );
-  };
-
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
-    >
-      <View style={styles.header}>
+    <WebScreen backgroundColor="#0b1220" contentStyle={{ paddingTop: theme.spacing.lg }}>
+      <View style={styles.headerRow}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
+          <ChevronRight size={18} color={theme.colors.foreground} style={{ transform: [{ rotate: '180deg' }] }} />
         </TouchableOpacity>
-        <Text variant="h3" weight="bold" color="foreground">
-          Coaches
-        </Text>
-        <View style={styles.headerSpacer} />
+        <WebPageHeader title="Coaches" description="Connect with experienced track and field coaches." />
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search coaches by name or username…"
-          placeholderTextColor={theme.colors.textMuted}
-          value={search}
-          onChangeText={setSearch}
-        />
+      <WebCard tone="muted" padding={theme.spacing.md}>
+        <View style={styles.searchRow}>
+          <Search size={16} color={theme.colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search coaches by name, username, or bio..."
+            placeholderTextColor={theme.colors.textMuted}
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
+      </WebCard>
 
-        {isGuest ? (
-          <Text variant="body" color="muted" style={styles.emptyText}>
-            Sign in to browse coaches.
-          </Text>
-        ) : coachesQuery.isLoading ? (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text variant="body" color="muted" style={styles.emptyText}>
-              Loading coaches...
-            </Text>
+      {isGuest ? (
+        <Text variant="body" color="muted" style={{ textAlign: 'center' }}>
+          Sign in to browse coaches.
+        </Text>
+      ) : coachesQuery.isLoading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text variant="body" color="muted">Loading coaches...</Text>
+        </View>
+      ) : coachesQuery.isError ? (
+        <Text variant="body" color="muted" style={{ textAlign: 'center' }}>
+          Unable to load coaches.
+        </Text>
+      ) : filtered.length === 0 ? (
+        <WebCard tone="muted" padding={theme.spacing.lg}>
+          <View style={styles.emptyRow}>
+            <Trophy size={24} color={theme.colors.textMuted} />
+            <Text variant="body" color="muted">No coaches found.</Text>
           </View>
-        ) : coachesQuery.isError ? (
-          <Text variant="body" color="muted" style={styles.emptyText}>
-            Unable to load coaches.
-          </Text>
-        ) : filtered.length === 0 ? (
-          <Text variant="body" color="muted" style={styles.emptyText}>
-            No coaches found.
-          </Text>
-        ) : (
-          <View style={styles.list}>
-            {filtered.map((coach) => (
-              <Card key={coach.id} style={styles.card}>
-                <CardContent style={styles.cardContent}>
-                  <View style={styles.cardHeaderRow}>
-                    <Avatar
-                      size="lg"
-                      fallback={coach.name?.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                    />
-                    <View style={styles.cardText}>
-                      <View style={styles.nameRow}>
-                        <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
-                          {coach.name}
-                        </Text>
-                        {!!coach.isVerified && (
-                          <FontAwesome5 name="check-circle" size={14} color={theme.colors.primary} solid />
-                        )}
-                      </View>
-                      <Text variant="small" color="muted" numberOfLines={1}>
-                        @{coach.username}
-                      </Text>
-                      {!!coach.location && (
-                        <Text variant="small" color="muted" numberOfLines={1}>
-                          {coach.location}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-
-                  {!!coach.bio && (
-                    <Text variant="small" color="muted" style={styles.bio} numberOfLines={3}>
-                      {coach.bio}
-                    </Text>
+        </WebCard>
+      ) : (
+        filtered.map((coach) => (
+          <WebCard key={coach.id} tone="muted" padding={theme.spacing.md}>
+            <View style={styles.itemRow}>
+              <Avatar
+                size="lg"
+                fallback={coach.name?.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                src={coach.profileImageUrl || undefined}
+              />
+              <View style={{ flex: 1, gap: theme.spacing.xs }}>
+                <View style={styles.nameRow}>
+                  <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
+                    {coach.name}
+                  </Text>
+                  {!!coach.isVerified && (
+                    <WebBadge variant="secondary">Verified</WebBadge>
                   )}
-
-                  <Button variant="outline" size="sm" onPress={handleConnect}>
-                    <FontAwesome5 name="user-plus" size={14} color={theme.colors.primary} solid />
-                    <Text variant="small" weight="medium" color="primary" style={styles.buttonText}>
-                      Connect
+                </View>
+                <Text variant="small" color="muted" numberOfLines={1}>
+                  @{coach.username}
+                </Text>
+                {!!coach.location && (
+                  <View style={styles.locationRow}>
+                    <MapPin size={12} color={theme.colors.textMuted} />
+                    <Text variant="small" color="muted" numberOfLines={1}>
+                      {coach.location}
                     </Text>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    </LinearGradient>
+                  </View>
+                )}
+                {!!coach.bio && (
+                  <Text variant="small" color="muted" numberOfLines={3}>
+                    {coach.bio}
+                  </Text>
+                )}
+              </View>
+              <ChevronRight size={14} color={theme.colors.textMuted} />
+            </View>
+            <WebButton variant="outline" size="sm" onPress={() => {}}>
+              Connect
+            </WebButton>
+          </WebCard>
+        ))
+      )}
+    </WebScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: '#0f172a',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
-  },
-  headerSpacer: { flex: 1 },
-  content: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.lg,
-  },
-  searchInput: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    borderColor: '#1f2937',
   },
-  center: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
-    gap: theme.spacing.md,
-  },
-  emptyText: { textAlign: 'center', lineHeight: 22 },
-  list: { gap: theme.spacing.md },
-  card: { marginBottom: 0 },
-  cardContent: { gap: theme.spacing.sm },
-  cardHeaderRow: {
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
+    backgroundColor: '#0f172a',
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
   },
-  cardText: { flex: 1, gap: 2 },
+  searchInput: { flex: 1, color: theme.colors.foreground },
+  center: { alignItems: 'center', gap: theme.spacing.sm, paddingVertical: theme.spacing.xl },
+  emptyRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  itemRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-  bio: { lineHeight: 18 },
-  buttonText: { marginLeft: theme.spacing.sm },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 });
+
+

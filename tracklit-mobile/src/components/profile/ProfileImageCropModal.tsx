@@ -1,12 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import {
-  Modal,
-  View,
-  StyleSheet,
-  PanResponder,
-  Animated,
-  Image,
-} from 'react-native';
+import { Modal, View, StyleSheet, PanResponder, Animated } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';

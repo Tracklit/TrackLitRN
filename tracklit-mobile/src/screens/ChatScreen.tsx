@@ -7,13 +7,13 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import { ChevronRight } from 'lucide-react-native';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
@@ -23,6 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '../utils/theme';
+import { WebScreen } from '@/components/web/Screen';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -96,15 +97,15 @@ export const ChatScreen: React.FC = () => {
   const hasError = groupsQuery.isError || conversationsQuery.isError;
 
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+    <WebScreen
+      backgroundColor={theme.colors.webChatBackground}
+      scrollable={false}
+      contentStyle={{ paddingTop: theme.spacing.lg }}
     >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} />
+          <ChevronRight size={20} color={theme.colors.foreground} style={{ transform: [{ rotate: '180deg' }] }} />
         </TouchableOpacity>
         <Text variant="h3" weight="bold" color="foreground">
           Messages
@@ -170,7 +171,7 @@ export const ChatScreen: React.FC = () => {
                     key={group.id} 
                     onPress={() => handleGroupPress(group)}
                   >
-                    <Card style={styles.chatCard}>
+                      <Card style={styles.chatCard}>
                       <CardContent style={styles.chatContent}>
                         <View style={styles.avatarContainer}>
                           {group.imageUrl ? (
@@ -233,7 +234,7 @@ export const ChatScreen: React.FC = () => {
                     key={conversation.id} 
                     onPress={() => handleConversationPress(conversation)}
                   >
-                    <Card style={styles.chatCard}>
+                      <Card style={styles.chatCard}>
                       <CardContent style={styles.chatContent}>
                         <View style={styles.avatarContainer}>
                           <Avatar 
@@ -290,7 +291,7 @@ export const ChatScreen: React.FC = () => {
           <FontAwesome5 name="plus" size={18} color={theme.colors.primaryForeground} solid />
         </TouchableOpacity>
       )}
-    </LinearGradient>
+    </WebScreen>
   );
 };
 
@@ -304,13 +305,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.webBorderLight,
+    backgroundColor: 'rgba(0,0,0,0.2)',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.md,
@@ -342,6 +344,8 @@ const styles = StyleSheet.create({
   },
   chatCard: {
     marginBottom: theme.spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: theme.colors.webBorderLight,
   },
   chatContent: {
     flexDirection: 'row',
@@ -364,7 +368,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.webPurpleStart,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -372,7 +376,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 6,
     borderWidth: 2,
-    borderColor: theme.colors.background,
+    borderColor: theme.colors.webChatBackground,
   },
   fab: {
     position: 'absolute',

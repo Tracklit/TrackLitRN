@@ -36,6 +36,7 @@ import { StartGunScreen } from './src/screens/StartGunScreen';
 import { PhotoFinishScreen } from './src/screens/PhotoFinishScreen';
 import { PhotoFinishAnalysisScreen } from './src/screens/PhotoFinishAnalysisScreen';
 import { JournalScreen } from './src/screens/JournalScreen';
+import { JournalEntryScreen } from './src/screens/JournalEntryScreen';
 import { IntervalTimerScreen } from './src/screens/IntervalTimerScreen';
 import { SprinthiaScreen } from './src/screens/SprinthiaScreen';
 import { MeetsScreen } from './src/screens/MeetsScreen';
@@ -125,6 +126,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="PhotoFinish" component={PhotoFinishScreen} />
     <RootStack.Screen name="PhotoFinishAnalysis" component={PhotoFinishAnalysisScreen} />
     <RootStack.Screen name="Journal" component={JournalScreen} />
+    <RootStack.Screen name="JournalEntry" component={JournalEntryScreen} />
     <RootStack.Screen name="IntervalTimer" component={IntervalTimerScreen} />
     <RootStack.Screen name="VideoAnalysis" component={VideoAnalysisScreen} />
     <RootStack.Screen name="ExerciseLibrary" component={ExerciseLibraryScreen} />
@@ -265,7 +267,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Rehabilitation',
           icon: 'heart',
           onPress: () =>
-            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Rehab' } }),
+            navigateIntoAppStack({ screen: 'Rehab' }),
         },
       ],
     },
@@ -304,7 +306,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Connections',
           icon: 'user-check',
           onPress: () =>
-            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Connections' } }),
+            navigateIntoAppStack({ screen: 'Connections' }),
         },
         {
           label: 'Feed',
@@ -316,14 +318,14 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Group Chat',
           icon: 'comments',
           onPress: () =>
-            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Chat' } }),
+            navigateIntoAppStack({ screen: 'Chat' }),
         },
         {
           label: 'My Athletes',
           icon: 'bullseye',
           requiresCoach: true,
           onPress: () =>
-            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Athletes' } }),
+            navigateIntoAppStack({ screen: 'Athletes' }),
         },
         {
           label: 'Roster Stats',
@@ -336,13 +338,13 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Athletes',
           icon: 'users',
           onPress: () =>
-            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Athletes' } }),
+            navigateIntoAppStack({ screen: 'Athletes' }),
         },
         {
           label: 'Coaches',
           icon: 'award',
           onPress: () =>
-            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Coaches' } }),
+            navigateIntoAppStack({ screen: 'Coaches' }),
         },
         {
           label: 'Groups',
@@ -371,7 +373,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Spikes',
           icon: 'coins',
           onPress: () =>
-            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Spikes' } }),
+            navigateIntoAppStack({ screen: 'Spikes' }),
         },
         {
           label: 'Profile Settings',
@@ -383,7 +385,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'My Subscriptions',
           icon: 'heart',
           onPress: () =>
-            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Subscriptions' } }),
+            navigateIntoAppStack({ screen: 'Subscriptions' }),
         },
       ],
     },

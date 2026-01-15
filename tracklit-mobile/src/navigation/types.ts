@@ -7,7 +7,7 @@ export type TabParamList = {
   Feed: undefined;
   Sprinthia: undefined;
   Tools: undefined;
-  Profile: undefined;
+  Profile: { focusCoachToggle?: boolean } | undefined;
 };
 
 export type RootStackParamList = {
@@ -24,6 +24,7 @@ export type RootStackParamList = {
   StartGun: undefined;
   PhotoFinish: undefined;
   Journal: undefined;
+  JournalEntry: { date: string };
   IntervalTimer: undefined;
   VideoAnalysis: undefined;
   ExerciseLibrary: undefined;

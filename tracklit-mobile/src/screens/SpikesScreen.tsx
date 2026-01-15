@@ -1,31 +1,28 @@
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import { LinearGradient } from '@/components/LinearGradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
+import { Coins, Crown, Gift, MessageSquare, Award, RefreshCw, ChevronRight } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { WebScreen } from '@/components/web/Screen';
+import { WebPageHeader } from '@/components/web/PageHeader';
+import { WebCard } from '@/components/web/Card';
+import { WebTabs, WebTabsList, WebTabsTrigger, WebTabsContent } from '@/components/web/Tabs';
+import { WebSeparator } from '@/components/web/Separator';
+import { WebProgress } from '@/components/web/Progress';
+import { WebButton } from '@/components/web/Button';
+import { WebBadge } from '@/components/web/Badge';
+import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import type { RootStackParamList } from '@/navigation/types';
 import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-type TabKey = 'overview' | 'history' | 'achievements';
+type TabKey = 'achievements' | 'rewards' | 'premium' | 'history';
 
 interface LoginStreak {
   currentStreak: number;
@@ -36,7 +33,6 @@ interface SpikeTransaction {
   id: number;
   amount: number;
   type: string;
-  source?: string | null;
   description?: string | null;
   createdAt: string;
 }
@@ -52,12 +48,11 @@ interface UserAchievement {
 }
 
 export const SpikesScreen: React.FC = () => {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated, refreshUser } = useAuth();
   const isGuest = user?.id === 'guest';
 
-  const [tab, setTab] = useState<TabKey>('overview');
+  const [tab, setTab] = useState<TabKey>('achievements');
 
   const spikesBalance = Number((user as any)?.spikes ?? 0);
 
@@ -92,312 +87,217 @@ export const SpikesScreen: React.FC = () => {
   const achievements = useMemo(() => achievementsQuery.data ?? [], [achievementsQuery.data]);
 
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
-    >
-      <View style={styles.header}>
+    <WebScreen backgroundColor="#0b1220" contentStyle={{ paddingTop: theme.spacing.lg }}>
+      <View style={styles.headerRow}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
+          <ChevronRight size={18} color={theme.colors.foreground} style={{ transform: [{ rotate: '180deg' }] }} />
         </TouchableOpacity>
-        <Text variant="h3" weight="bold" color="foreground">
-          Spikes
-        </Text>
-        <View style={styles.headerSpacer} />
+        <WebPageHeader
+          title="Spikes"
+          description="Your in-app currency for rewards and premium features - automatically earned!"
+        />
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Tabs */}
-        <View style={styles.tabs}>
-          <TouchableOpacity style={[styles.tab, tab === 'overview' && styles.activeTab]} onPress={() => setTab('overview')}>
-            <Text variant="small" weight="medium" color={tab === 'overview' ? 'foreground' : 'muted'}>
-              Overview
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.tab, tab === 'achievements' && styles.activeTab]} onPress={() => setTab('achievements')}>
-            <Text variant="small" weight="medium" color={tab === 'achievements' ? 'foreground' : 'muted'}>
-              Achievements
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.tab, tab === 'history' && styles.activeTab]} onPress={() => setTab('history')}>
-            <Text variant="small" weight="medium" color={tab === 'history' ? 'foreground' : 'muted'}>
-              History
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {!isAuthenticated || isGuest ? (
-          <Text variant="body" color="muted" style={styles.emptyText}>
-            Sign in to view your Spikes.
-          </Text>
-        ) : tab === 'overview' ? (
-          <>
-            <Card style={styles.card}>
-              <CardHeader>
-                <CardTitle>
-                  {spikesBalance} Spikes
-                </CardTitle>
-              </CardHeader>
-              <CardContent style={{ gap: theme.spacing.md }}>
-                <Text variant="small" color="muted">
-                  Spikes are earned automatically as you train, compete, and engage.
-                </Text>
-
-                <View style={styles.progressBox}>
-                  <View style={styles.progressRow}>
-                    <Text variant="small" color="muted">
-                      Pro Tier Progress
-                    </Text>
-                    <Text variant="small" color="muted">
-                      {Math.min(spikesBalance, 1000)}/1000
-                    </Text>
-                  </View>
-                  <View style={styles.progressTrack}>
-                    <View style={[styles.progressFill, { width: `${Math.min((spikesBalance / 1000) * 100, 100)}%` }]} />
-                  </View>
+      <View style={styles.grid}>
+        <WebCard tone="muted" padding={theme.spacing.lg}>
+          <View style={styles.cardHeader}>
+            <View style={styles.titleRow}>
+              <Coins size={16} color={theme.colors.primary} />
+              <Text variant="body" weight="semiBold" color="foreground">
+                {spikesBalance} Spikes
+              </Text>
+            </View>
+            <Text variant="small" color="muted">Spikes are automatically earned by completing activities</Text>
+          </View>
+          <View style={{ gap: theme.spacing.md }}>
+            <View>
+              <View style={styles.progressRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs }}>
+                  <Crown size={14} color="#f59e0b" />
+                  <Text variant="small" weight="medium" color="foreground">Pro Tier Status</Text>
                 </View>
-              </CardContent>
-            </Card>
-
-            <Card style={styles.card}>
-              <CardHeader>
-                <CardTitle>Login Streak</CardTitle>
-              </CardHeader>
-              <CardContent style={{ gap: theme.spacing.md }}>
-                {streakQuery.isLoading ? (
-                  <View style={styles.center}>
-                    <ActivityIndicator size="small" color={theme.colors.primary} />
-                    <Text variant="small" color="muted">
-                      Loading streak…
-                    </Text>
-                  </View>
-                ) : (
-                  <>
-                    <View style={styles.streakRow}>
-                      <View>
-                        <Text variant="body" weight="semiBold" color="foreground">
-                          {streak.currentStreak}-day streak
-                        </Text>
-                        <Text variant="small" color="muted">
-                          Best: {streak.longestStreak} days
-                        </Text>
-                      </View>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onPress={() => checkInMutation.mutate()}
-                        loading={checkInMutation.isPending}
-                      >
-                        Check in
-                      </Button>
-                    </View>
-
-                    <View style={styles.dotsRow}>
-                      {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                        <View
-                          key={d}
-                          style={[
-                            styles.dot,
-                            d <= Math.min(streak.currentStreak, 7) ? styles.dotActive : styles.dotInactive,
-                          ]}
-                        />
-                      ))}
-                    </View>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card style={styles.card}>
-              <CardHeader>
-                <CardTitle>How to Earn Spikes</CardTitle>
-              </CardHeader>
-              <CardContent style={{ gap: theme.spacing.md }}>
-                <Text variant="small" color="muted">- Compete in meets</Text>
-                <Text variant="small" color="muted">- Complete training sessions</Text>
-                <Text variant="small" color="muted">- Participate in groups and chats</Text>
-                <Text variant="small" color="muted">- Maintain a daily login streak</Text>
-              </CardContent>
-            </Card>
-          </>
-        ) : tab === 'achievements' ? (
-          <Card style={styles.card}>
-            <CardHeader>
-              <CardTitle>Achievements</CardTitle>
-            </CardHeader>
-            <CardContent style={{ gap: theme.spacing.sm }}>
-              {achievementsQuery.isLoading ? (
-                <View style={styles.center}>
-                  <ActivityIndicator size="large" color={theme.colors.primary} />
-                  <Text variant="body" color="muted">Loading achievements…</Text>
-                </View>
-              ) : achievementsQuery.isError ? (
-                <Text variant="body" color="muted" style={styles.emptyText}>
-                  Unable to load achievements.
+                <Text variant="small" color="muted">1,000 Spikes needed</Text>
+              </View>
+              <WebProgress value={(spikesBalance / 1000) * 100} />
+            </View>
+            {spikesBalance >= 500 && (
+              <WebCard tone="light" padding={theme.spacing.md}>
+                <Text variant="body" weight="semiBold" color="foreground">Star Tier Available!</Text>
+                <WebProgress value={Math.min((spikesBalance / 1000) * 100, 100)} style={{ marginTop: theme.spacing.sm }} />
+              </WebCard>
+            )}
+            <WebCard tone="muted" padding={theme.spacing.md}>
+              <View style={styles.progressRow}>
+                <Text variant="body" weight="semiBold" color="foreground">
+                  Login Streak
                 </Text>
-              ) : achievements.length === 0 ? (
-                <Text variant="body" color="muted" style={styles.emptyText}>
-                  No achievements yet.
-                </Text>
+                <WebButton
+                  variant="outline"
+                  size="sm"
+                  onPress={() => checkInMutation.mutate()}
+                  disabled={checkInMutation.isPending}
+                >
+                  {checkInMutation.isPending ? 'Checking…' : 'Check in'}
+                </WebButton>
+              </View>
+              {streakQuery.isLoading ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
               ) : (
-                achievements.map((a) => (
-                  <View key={a.id} style={styles.achievementRow}>
-                    <View style={styles.achievementIcon}>
-                      <FontAwesome5
-                        name={a.isCompleted ? 'check-circle' : 'trophy'}
-                        size={16}
-                        color={a.isCompleted ? theme.colors.success : theme.colors.primary}
-                        solid
+                <View style={{ gap: theme.spacing.xs }}>
+                  <Text variant="small" color="muted">
+                    {streak.currentStreak}-day streak • Best: {streak.longestStreak} days
+                  </Text>
+                  <View style={styles.dotsRow}>
+                    {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+                      <View
+                        key={d}
+                        style={[
+                          styles.dot,
+                          d <= Math.min(streak.currentStreak, 7) ? styles.dotActive : styles.dotInactive,
+                        ]}
                       />
-                    </View>
-                    <View style={styles.achievementText}>
-                      <Text variant="body" weight="semiBold" color="foreground">
-                        {a.name}
-                      </Text>
-                      <Text variant="small" color="muted">
-                        {a.description}
-                      </Text>
-                    </View>
-                    <Text variant="small" color="muted">
-                      +{a.spikeReward ?? 0}
-                    </Text>
+                    ))}
                   </View>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <Card style={styles.card}>
-            <CardHeader>
-              <CardTitle>Transaction History</CardTitle>
-            </CardHeader>
-            <CardContent style={{ gap: theme.spacing.sm }}>
-              {transactionsQuery.isLoading ? (
-                <View style={styles.center}>
-                  <ActivityIndicator size="large" color={theme.colors.primary} />
-                  <Text variant="body" color="muted">Loading history…</Text>
                 </View>
-              ) : transactionsQuery.isError ? (
-                <Text variant="body" color="muted" style={styles.emptyText}>
-                  Unable to load transactions.
-                </Text>
-              ) : transactions.length === 0 ? (
-                <Text variant="body" color="muted" style={styles.emptyText}>
-                  No transactions yet.
-                </Text>
-              ) : (
-                transactions.map((t) => (
-                  <View key={t.id} style={styles.transactionRow}>
-                    <View style={styles.transactionLeft}>
-                      <Text variant="body" weight="semiBold" color="foreground">
-                        {t.amount > 0 ? `+${t.amount}` : `${t.amount}`} Spikes
-                      </Text>
-                      <Text variant="small" color="muted" numberOfLines={1}>
-                        {t.description || t.source || t.type}
-                      </Text>
-                    </View>
-                    <Text variant="small" color="muted">
-                      {formatDistanceToNow(new Date(t.createdAt), { addSuffix: true })}
-                    </Text>
-                  </View>
-                ))
               )}
-            </CardContent>
-          </Card>
-        )}
-      </ScrollView>
-    </LinearGradient>
+            </WebCard>
+          </View>
+        </WebCard>
+
+        <WebCard tone="muted" padding={theme.spacing.lg}>
+          <Text variant="body" weight="semiBold" color="foreground" style={{ marginBottom: theme.spacing.sm }}>
+            How to Earn Spikes
+          </Text>
+          <View style={{ gap: theme.spacing.md }}>
+            <View style={styles.howRow}>
+              <Award size={16} color={theme.colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text variant="small" weight="medium" color="foreground">Compete in Meets</Text>
+                <Text variant="small" color="muted">Automatically earn 20-100 Spikes per meet</Text>
+              </View>
+            </View>
+            <View style={styles.howRow}>
+              <RefreshCw size={16} color={theme.colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text variant="small" weight="medium" color="foreground">Daily & Weekly Challenges</Text>
+                <Text variant="small" color="muted">Earn bonus Spikes for challenges</Text>
+              </View>
+            </View>
+            <View style={styles.howRow}>
+              <MessageSquare size={16} color={theme.colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text variant="small" weight="medium" color="foreground">Engage in Groups</Text>
+                <Text variant="small" color="muted">Earn Spikes for participation</Text>
+              </View>
+            </View>
+            <View style={styles.howRow}>
+              <Gift size={16} color={theme.colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text variant="small" weight="medium" color="foreground">Daily Login</Text>
+                <Text variant="small" color="muted">Earn 5-15 Spikes daily</Text>
+              </View>
+            </View>
+          </View>
+        </WebCard>
+      </View>
+
+      <WebTabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
+        <WebTabsList>
+          <WebTabsTrigger value="achievements">Achievements</WebTabsTrigger>
+          <WebTabsTrigger value="rewards">Rewards</WebTabsTrigger>
+          <WebTabsTrigger value="premium">Premium</WebTabsTrigger>
+          <WebTabsTrigger value="history">History</WebTabsTrigger>
+        </WebTabsList>
+
+        <WebTabsContent value="achievements">
+          {achievementsQuery.isLoading ? (
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          ) : achievements.length === 0 ? (
+            <Text variant="body" color="muted">No achievements yet.</Text>
+          ) : (
+            achievements.map((a) => (
+              <WebCard key={a.id} tone="muted" padding={theme.spacing.md}>
+                <View style={styles.howRow}>
+                  <Award size={16} color={a.isCompleted ? theme.colors.success : theme.colors.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text variant="body" weight="semiBold" color="foreground">{a.name}</Text>
+                    <Text variant="small" color="muted">{a.description}</Text>
+                  </View>
+                  {a.spikeReward ? (
+                    <WebBadge variant="secondary">+{a.spikeReward}</WebBadge>
+                  ) : null}
+                </View>
+              </WebCard>
+            ))
+          )}
+        </WebTabsContent>
+
+        <WebTabsContent value="rewards">
+          <WebCard tone="muted" padding={theme.spacing.md}>
+            <Text variant="body" color="muted">Rewards coming soon.</Text>
+          </WebCard>
+        </WebTabsContent>
+
+        <WebTabsContent value="premium">
+          <WebCard tone="muted" padding={theme.spacing.md}>
+            <Text variant="body" color="muted">Premium features mirror the web: Pro/Star unlocks.</Text>
+          </WebCard>
+        </WebTabsContent>
+
+        <WebTabsContent value="history">
+          {transactionsQuery.isLoading ? (
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          ) : transactions.length === 0 ? (
+            <Text variant="body" color="muted">No transactions yet.</Text>
+          ) : (
+            transactions.map((t) => (
+              <View key={t.id} style={{ marginBottom: theme.spacing.sm }}>
+                <WebCard tone="muted" padding={theme.spacing.md}>
+                  <Text variant="body" weight="semiBold" color="foreground">
+                    {t.type} • {t.amount} Spikes
+                  </Text>
+                  {t.description ? (
+                    <Text variant="small" color="muted">{t.description}</Text>
+                  ) : null}
+                  <WebSeparator style={{ marginTop: theme.spacing.sm }} />
+                  <Text variant="small" color="muted">
+                    {new Date(t.createdAt).toLocaleDateString()}
+                  </Text>
+                </WebCard>
+              </View>
+            ))
+          )}
+        </WebTabsContent>
+      </WebTabs>
+    </WebScreen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: '#0f172a',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: '#1f2937',
   },
-  headerSpacer: { flex: 1 },
-  content: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.lg,
-  },
-  tabs: {
-    flexDirection: 'row',
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.muted,
-    padding: theme.spacing.xs,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-  },
-  activeTab: {
-    backgroundColor: theme.colors.backgroundSolid,
-  },
-  emptyText: { textAlign: 'center', lineHeight: 22, paddingVertical: theme.spacing.xl },
-  card: { marginBottom: 0 },
-  center: { alignItems: 'center', gap: theme.spacing.sm, paddingVertical: theme.spacing.md },
-  progressBox: { gap: theme.spacing.sm },
-  progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  progressTrack: {
+  grid: { gap: theme.spacing.md },
+  cardHeader: { gap: theme.spacing.sm },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+  progressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  howRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+  dotsRow: { flexDirection: 'row', gap: theme.spacing.sm },
+  dot: {
+    width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.colors.muted,
-    overflow: 'hidden',
   },
-  progressFill: {
-    height: 8,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 4,
-  },
-  streakRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  dotsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: theme.spacing.sm },
-  dot: { width: 8, height: 8, borderRadius: 4 },
   dotActive: { backgroundColor: theme.colors.primary },
-  dotInactive: { backgroundColor: theme.colors.muted },
-  transactionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  transactionLeft: { flex: 1, paddingRight: theme.spacing.md, gap: 2 },
-  achievementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  achievementIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.primary + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  achievementText: { flex: 1, gap: 2 },
+  dotInactive: { backgroundColor: '#1f2937' },
 });
+
+

@@ -31,6 +31,8 @@ type PriceType = 'spikes' | 'money';
 
 type DurationWeeks = 1 | 2 | 4 | 6 | 8 | 12;
 
+type CreateMethod = 'builder' | 'upload' | 'text' | 'sprinthia' | 'import';
+
 export const ProgramCreateScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -43,6 +45,7 @@ export const ProgramCreateScreen: React.FC = () => {
   const [priceType, setPriceType] = useState<PriceType>('spikes');
   const [price, setPrice] = useState('0');
   const [duration, setDuration] = useState<DurationWeeks>(4);
+  const [method, setMethod] = useState<CreateMethod>('builder');
 
   const createProgramMutation = useMutation({
     mutationFn: async () => {
@@ -87,29 +90,118 @@ export const ProgramCreateScreen: React.FC = () => {
 
   const pill = (selected: boolean) => [styles.pill, selected && styles.pillActive];
 
+  const methods = [
+    {
+      id: 'upload' as const,
+      title: 'Upload Document',
+      description: 'Share existing training documents in PDF or DOCX format.',
+      icon: 'file-upload',
+    },
+    {
+      id: 'builder' as const,
+      title: 'Program Builder',
+      description: 'Create a structured program with sessions and exercises.',
+      icon: 'clipboard-list',
+    },
+    {
+      id: 'text' as const,
+      title: 'Text Based',
+      description: 'Create a simple text-based program for Practice view.',
+      icon: 'keyboard',
+    },
+    {
+      id: 'sprinthia' as const,
+      title: 'Build With Sprinthia',
+      description: 'Generate a text program with AI assistance.',
+      icon: 'robot',
+    },
+    {
+      id: 'import' as const,
+      title: 'Import from Sheets',
+      description: 'Connect Google Sheets for auto-sync.',
+      icon: 'upload',
+    },
+  ];
+
+  const handleMethodPress = (next: CreateMethod) => {
+    if (next === 'builder') {
+      setMethod(next);
+      return;
+    }
+    Alert.alert('Coming Soon', 'This creation method is not available on mobile yet.');
+  };
+
   return (
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
       style={[styles.container, { paddingTop: insets.top }]}
     >
-      <View style={styles.header}>
+      <LinearGradient
+        colors={theme.gradients.webHeader.colors}
+        start={theme.gradients.webHeader.start}
+        end={theme.gradients.webHeader.end}
+        style={styles.header}
+      >
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
+          <FontAwesome5 name="arrow-left" size={18} color="white" solid />
         </TouchableOpacity>
-        <Text variant="h3" weight="bold" color="foreground">
+        <Text variant="h3" weight="bold" color="primary-foreground">
           Create Program
         </Text>
         <View style={styles.headerSpacer} />
-      </View>
+      </LinearGradient>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
         showsVerticalScrollIndicator={false}
       >
-        <Card style={{ marginBottom: 0 }}>
-          <CardHeader>
-            <CardTitle>Basics</CardTitle>
+        <View style={styles.pageHeader}>
+          <Text variant="h3" weight="bold" color="foreground">
+            Create New Program
+          </Text>
+          <Text variant="body" color="muted">
+            Build a training program for your athletes or share with the community.
+          </Text>
+        </View>
+
+        <View style={styles.methodGrid}>
+          {methods.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.methodCard, method === item.id && styles.methodCardActive]}
+              activeOpacity={0.85}
+              onPress={() => handleMethodPress(item.id)}
+            >
+              <LinearGradient
+                colors={theme.gradients.webPurple.colors}
+                start={theme.gradients.webPurple.start}
+                end={theme.gradients.webPurple.end}
+                style={styles.methodCardContent}
+              >
+                <View style={styles.methodIcon}>
+                  <FontAwesome5 name={item.icon as any} size={20} color="white" solid />
+                </View>
+                <Text variant="body" weight="bold" color="primary-foreground" style={styles.methodTitle}>
+                  {item.title}
+                </Text>
+                <Text variant="small" color="primary-foreground" style={styles.methodDescription}>
+                  {item.description}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Card style={styles.card}>
+          <CardHeader style={styles.cardHeader}>
+            <View style={styles.cardHeaderRow}>
+              <FontAwesome5 name="book-open" size={16} color={theme.colors.primary} solid />
+              <CardTitle>Build Custom Program</CardTitle>
+            </View>
+            <Text variant="small" color="muted">
+              Create a structured training program with custom sessions and exercises.
+            </Text>
           </CardHeader>
           <CardContent style={{ gap: theme.spacing.md }}>
             <TextInput
@@ -134,7 +226,12 @@ export const ProgramCreateScreen: React.FC = () => {
             <View style={styles.pillRow}>
               {(['public', 'private', 'premium'] as const).map((v) => (
                 <TouchableOpacity key={v} style={pill(visibility === v)} onPress={() => setVisibility(v)}>
-                  <Text variant="small" weight="medium" color={visibility === v ? 'foreground' : 'muted'}>
+                  <Text
+                    variant="small"
+                    weight="medium"
+                    color={visibility === v ? 'foreground' : 'muted'}
+                    style={visibility === v ? styles.pillTextActive : undefined}
+                  >
                     {v}
                   </Text>
                 </TouchableOpacity>
@@ -147,7 +244,12 @@ export const ProgramCreateScreen: React.FC = () => {
             <View style={styles.pillRow}>
               {([1, 2, 4, 6, 8, 12] as const).map((w) => (
                 <TouchableOpacity key={w} style={pill(duration === w)} onPress={() => setDuration(w)}>
-                  <Text variant="small" weight="medium" color={duration === w ? 'foreground' : 'muted'}>
+                  <Text
+                    variant="small"
+                    weight="medium"
+                    color={duration === w ? 'foreground' : 'muted'}
+                    style={duration === w ? styles.pillTextActive : undefined}
+                  >
                     {w}w
                   </Text>
                 </TouchableOpacity>
@@ -160,7 +262,12 @@ export const ProgramCreateScreen: React.FC = () => {
             <View style={styles.pillRow}>
               {(['spikes', 'money'] as const).map((t) => (
                 <TouchableOpacity key={t} style={pill(priceType === t)} onPress={() => setPriceType(t)}>
-                  <Text variant="small" weight="medium" color={priceType === t ? 'foreground' : 'muted'}>
+                  <Text
+                    variant="small"
+                    weight="medium"
+                    color={priceType === t ? 'foreground' : 'muted'}
+                    style={priceType === t ? styles.pillTextActive : undefined}
+                  >
                     {t}
                   </Text>
                 </TouchableOpacity>
@@ -208,13 +315,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.webBorderLight,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.md,
@@ -224,13 +331,68 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     gap: theme.spacing.lg,
   },
+  pageHeader: {
+    gap: theme.spacing.sm,
+  },
+  methodGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
+    justifyContent: 'space-between',
+  },
+  methodCard: {
+    width: '48%',
+    borderRadius: theme.borderRadius.webCard,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: theme.colors.webBorderLight,
+  },
+  methodCardActive: {
+    borderColor: theme.colors.primary,
+  },
+  methodCardContent: {
+    minHeight: 140,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+  },
+  methodIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  methodTitle: {
+    textAlign: 'center',
+  },
+  methodDescription: {
+    textAlign: 'center',
+    opacity: 0.85,
+  },
+  card: {
+    marginBottom: 0,
+    borderRadius: theme.borderRadius.webCard,
+    borderWidth: 1,
+    borderColor: theme.colors.webCardBorder,
+  },
+  cardHeader: {
+    gap: theme.spacing.sm,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    color: 'white',
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   textArea: {
     minHeight: 100,
@@ -249,12 +411,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
+    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   pillActive: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primary + '20',
+    borderColor: 'white',
+    backgroundColor: 'white',
+  },
+  pillTextActive: {
+    color: theme.colors.webPurpleStart,
   },
   buttonText: { marginLeft: theme.spacing.sm },
   helperText: { textAlign: 'center', lineHeight: 18 },

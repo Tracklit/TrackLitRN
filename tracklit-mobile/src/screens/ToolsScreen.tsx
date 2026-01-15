@@ -16,7 +16,6 @@ import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
 import theme from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
-import { ScreenHeader } from '@/components/ScreenHeader';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 
 type ToolScreen = Extract<
@@ -36,7 +35,6 @@ interface Tool {
   title: string;
   description: string;
   icon: string;
-  gradient: string[];
   comingSoon?: boolean;
   screen?: ToolScreen;
 }
@@ -48,92 +46,60 @@ export const ToolsScreen: React.FC = () => {
 
   const tools: Tool[] = [
     {
-      id: '1',
-      title: 'Stopwatch',
-      description: 'Precision timing for workouts and races',
-      icon: 'stopwatch',
-      gradient: [theme.colors.primary, theme.colors.deepGold],
-      screen: 'Stopwatch',
-    },
-    {
-      id: '2',
-      title: 'Start Gun',
-      description: 'Practice race starts with audio cues',
-      icon: 'flag-checkered',
-      gradient: ['#FF6B6B', '#FF8E8E'],
-      screen: 'StartGun',
-    },
-    {
-      id: '3',
-      title: 'Photo Finish',
-      description: 'Analyze race finishes frame by frame',
-      icon: 'camera',
-      gradient: ['#4ECDC4', '#6ED0CA'],
-      screen: 'PhotoFinish',
-    },
-    {
-      id: '4',
-      title: 'Training Journal',
-      description: 'Record your training thoughts and insights',
-      icon: 'book',
-      gradient: ['#9B59B6', '#BB7BD1'],
-      screen: 'Journal',
-    },
-    {
-      id: '5',
-      title: 'Interval Timer',
-      description: 'Customizable work/rest interval training',
-      icon: 'clock',
-      gradient: ['#E74C3C', '#F1948A'],
-      screen: 'IntervalTimer',
-    },
-    {
-      id: '6',
-      title: 'Wind Meter',
-      description: 'Check wind conditions for sprints and jumps',
-      icon: 'wind',
-      gradient: ['#95E1D3', '#A8E6CF'],
-      comingSoon: true,
-    },
-    {
-      id: '7',
-      title: 'Split Calculator',
-      description: 'Calculate splits for middle distance races',
-      icon: 'calculator',
-      gradient: ['#FFA07A', '#FFB347'],
-      comingSoon: true,
-    },
-    {
-      id: '8',
+      id: 'video-analysis',
       title: 'Video Analysis',
-      description: 'AI-powered biomechanical analysis',
-      icon: 'video',
-      gradient: ['#3498DB', '#5DADE2'],
+      description: 'AI-powered race video analysis with Sprinthia',
+      icon: 'play-circle',
       screen: 'VideoAnalysis',
     },
     {
-      id: '9',
-      title: 'Heat Generator',
-      description: 'Generate heats and lane assignments',
-      icon: 'users',
-      gradient: ['#F39C12', '#F7DC6F'],
-      comingSoon: true,
+      id: 'photo-finish',
+      title: 'Photo Finish',
+      description: 'Analyze race videos with timing overlays',
+      icon: 'flag-checkered',
+      screen: 'PhotoFinish',
     },
     {
-      id: '10',
+      id: 'start-gun',
+      title: 'Start Gun',
+      description: 'Simulate a race start signal',
+      icon: 'volume-up',
+      screen: 'StartGun',
+    },
+    {
+      id: 'stopwatch',
+      title: 'Stopwatch',
+      description: 'Track your time with precision',
+      icon: 'stopwatch',
+      screen: 'Stopwatch',
+    },
+    {
+      id: 'journal',
+      title: 'Journal',
+      description: 'View and search your workout notes',
+      icon: 'book',
+      screen: 'Journal',
+    },
+    {
+      id: 'exercise-library',
       title: 'Exercise Library',
-      description: 'Save and organize training videos and clips',
-      icon: 'book-open',
-      gradient: ['#2ECC71', '#58D68D'],
+      description: 'Store and organize your training videos',
+      icon: 'video',
       screen: 'ExerciseLibrary',
     },
     {
-      id: '11',
+      id: 'velocity-tracker',
       title: 'Velocity Tracker',
-      description: 'Track speed from time and distance',
+      description: 'Track speed and acceleration metrics',
       icon: 'tachometer-alt',
-      gradient: ['#8E44AD', '#A569BD'],
       screen: 'VelocityTracker',
+    },
+    {
+      id: 'sprint-time-prediction',
+      title: 'Sprint Time Prediction',
+      description: 'Calculate predicted times across sprint distances',
+      icon: 'tachometer-alt',
+      comingSoon: true,
     },
   ];
 
@@ -197,20 +163,23 @@ export const ToolsScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={[styles.container, { paddingTop: insets.top }]}
     >
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader
-          title="Training Tools"
-          subtitle="Essential tools for athletes and coaches"
-          containerStyle={styles.header}
-        />
-
-        {/* Tools Grid */}
+        <LinearGradient
+          colors={theme.gradients.webHeader.colors}
+          start={theme.gradients.webHeader.start}
+          end={theme.gradients.webHeader.end}
+          style={styles.header}
+        >
+          <Text variant="h3" weight="bold" color="primary-foreground">
+            Tools
+          </Text>
+        </LinearGradient>
         <View style={styles.toolsGrid}>
           {tools.map((tool) => (
             <TouchableOpacity
@@ -218,63 +187,48 @@ export const ToolsScreen: React.FC = () => {
               onPress={() => handleToolPress(tool)}
               data-testid={`tool-${tool.id}`}
               style={styles.toolButton}
+              activeOpacity={0.8}
             >
-              <Card style={styles.toolCard}>
-                <CardContent style={styles.toolContent}>
-                  {/* Tool Icon with Gradient Background */}
-                  <View style={styles.toolIconContainer}>
-                    <LinearGradient
-                      colors={tool.gradient}
-                      style={styles.toolIconGradient}
-                    >
-                      <FontAwesome5 
-                        name={tool.icon} 
-                        size={28} 
-                        color="white"
-                        solid 
-                      />
-                    </LinearGradient>
-                  </View>
-                  
-                  {/* Tool Info */}
-                  <View style={styles.toolInfo}>
-                    <Text variant="body" weight="semiBold" color="foreground">
-                      {tool.title}
-                    </Text>
-                    <Text variant="small" color="muted" style={styles.toolDescription}>
-                      {tool.description}
-                    </Text>
-                    
-                    {/* Coming Soon Badge */}
-                    {tool.comingSoon && (
-                      <View style={styles.comingSoonBadge}>
-                        <Text variant="small" color="primary" weight="medium">
-                          Coming Soon
+              <Card style={[styles.toolCard, tool.comingSoon && styles.toolCardDisabled]}>
+                {tool.comingSoon ? (
+                  <CardContent style={styles.toolContent}>
+                    <View style={styles.toolTextCenter}>
+                      <View style={styles.toolTitleRow}>
+                        <Text variant="body" weight="bold" color="muted">
+                          {tool.title}
+                        </Text>
+                        <FontAwesome5 name="lock" size={10} color={theme.colors.textMuted} solid />
+                      </View>
+                      <Text variant="small" color="muted" style={styles.toolDescription}>
+                        {tool.description}
+                      </Text>
+                      <Text variant="small" color="muted" style={styles.comingSoonText}>
+                        Coming soon
+                      </Text>
+                    </View>
+                  </CardContent>
+                ) : (
+                  <LinearGradient
+                    colors={theme.gradients.webPurple.colors}
+                    start={theme.gradients.webPurple.start}
+                    end={theme.gradients.webPurple.end}
+                    style={styles.toolGradient}
+                  >
+                    <CardContent style={styles.toolContent}>
+                      <View style={styles.toolTextCenter}>
+                        <Text variant="body" weight="bold" color="primary-foreground">
+                          {tool.title}
+                        </Text>
+                        <Text variant="small" color="primary-foreground" style={styles.toolDescription}>
+                          {tool.description}
                         </Text>
                       </View>
-                    )}
-                  </View>
-                  
-                  {/* Arrow Icon */}
-                  <View style={styles.arrowIcon}>
-                    <FontAwesome5 
-                      name="chevron-right" 
-                      size={16} 
-                      color={theme.colors.textMuted}
-                      solid 
-                    />
-                  </View>
-                </CardContent>
+                    </CardContent>
+                  </LinearGradient>
+                )}
               </Card>
             </TouchableOpacity>
           ))}
-        </View>
-
-        {/* Footer Note */}
-        <View style={styles.footer}>
-          <Text variant="small" color="muted" style={styles.footerText}>
-            More tools are being added regularly. Have a suggestion? Let us know!
-          </Text>
         </View>
       </ScrollView>
     </LinearGradient>
@@ -288,65 +242,62 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl * 2,
+    paddingTop: theme.spacing.xl,
   },
   header: {
-    alignItems: 'center',
-    marginTop: theme.spacing.xl,
-    marginBottom: theme.spacing.xl,
+    borderRadius: theme.borderRadius.webCard,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
   toolsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.spacing.md,
+    justifyContent: 'space-between',
   },
   toolButton: {
-    marginBottom: theme.spacing.sm,
+    width: '48%',
+    marginBottom: theme.spacing.md,
   },
   toolCard: {
+    height: 112,
+    borderRadius: theme.borderRadius.webCard,
+    overflow: 'hidden',
+    padding: 0,
     marginBottom: 0,
+    borderWidth: 0.5,
+    borderColor: 'rgba(148, 163, 184, 0.25)',
+    backgroundColor: 'transparent',
+    ...theme.shadows.webCard,
+  },
+  toolCardDisabled: {
+    backgroundColor: 'rgba(15, 23, 42, 0.3)',
+    borderColor: theme.colors.border,
+  },
+  toolGradient: {
+    flex: 1,
   },
   toolContent: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    justifyContent: 'center',
+  },
+  toolTextCenter: {
+    alignItems: 'center',
+    textAlign: 'center',
+  },
+  toolTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  toolIconContainer: {
-    marginRight: theme.spacing.lg,
-  },
-  toolIconGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadows.md,
-  },
-  toolInfo: {
-    flex: 1,
-    marginRight: theme.spacing.md,
+    gap: theme.spacing.xs,
   },
   toolDescription: {
     marginTop: theme.spacing.xs,
-    lineHeight: 18,
-  },
-  comingSoonBadge: {
-    alignSelf: 'flex-start',
-    marginTop: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs / 2,
-    backgroundColor: theme.colors.primary + '20', // 20% opacity
-    borderRadius: theme.borderRadius.sm,
-  },
-  arrowIcon: {
-    opacity: 0.5,
-  },
-  footer: {
-    marginTop: theme.spacing.xl * 2,
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-  },
-  footerText: {
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 16,
+  },
+  comingSoonText: {
+    marginTop: theme.spacing.xs,
   },
 });

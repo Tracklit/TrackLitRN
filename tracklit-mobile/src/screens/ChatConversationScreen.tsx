@@ -247,8 +247,7 @@ export const ChatConversationScreen: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
+      colors={[theme.colors.webChatBackground, theme.colors.webChatBackground]}
       style={[styles.container, { paddingTop: insets.top }]}
     >
       <KeyboardAvoidingView 
@@ -258,7 +257,7 @@ export const ChatConversationScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} />
+            <FontAwesome5 name="arrow-left" size={20} color="white" />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
             <Text variant="body" weight="bold" color="foreground" numberOfLines={1}>
@@ -401,9 +400,9 @@ export const ChatConversationScreen: React.FC = () => {
                 {sendMessageMutation.isPending || sendMediaMutation.isPending ? (
                   <ActivityIndicator size="small" color={theme.colors.textMuted} />
                 ) : (
-                  <FontAwesome5 
-                    name="paper-plane" 
-                    size={16} 
+                  <FontAwesome5
+                    name="paper-plane"
+                    size={16}
                     color={pendingMedia || messageText.trim() ? 'white' : theme.colors.textMuted}
                     solid
                   />
@@ -430,13 +429,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.webBorderLight,
+    backgroundColor: 'rgba(0,0,0,0.2)',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.md,
@@ -482,11 +482,11 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   ownMessageBubble: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: 'white',
     borderBottomRightRadius: theme.borderRadius.sm,
   },
   otherMessageBubble: {
-    backgroundColor: theme.colors.card,
+    backgroundColor: '#374151',
     borderBottomLeftRadius: theme.borderRadius.sm,
   },
   deletedMessage: {
@@ -497,6 +497,7 @@ const styles = StyleSheet.create({
   },
   senderName: {
     marginBottom: theme.spacing.xs,
+    color: '#93c5fd',
   },
   messageTime: {
     marginTop: theme.spacing.xs,
@@ -506,6 +507,9 @@ const styles = StyleSheet.create({
   inputContainer: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.webBorderLight,
   },
   attachmentRow: {
     flexDirection: 'row',
@@ -515,9 +519,9 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
     marginBottom: theme.spacing.sm,
     borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.card,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.webBorderLight,
   },
   attachmentRemove: {
     width: 28,
@@ -529,6 +533,8 @@ const styles = StyleSheet.create({
   },
   inputCard: {
     marginBottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: theme.colors.webBorderLight,
   },
   inputContent: {
     flexDirection: 'row',
@@ -542,14 +548,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.muted,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.webBorderLight,
   },
   textInput: {
     flex: 1,
     fontSize: theme.typography.sizes.base,
-    color: theme.colors.foreground,
+    color: 'white',
     maxHeight: 100,
     paddingVertical: theme.spacing.sm,
   },
@@ -561,7 +567,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonActive: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.webPurpleStart,
     ...theme.shadows.sm,
   },
   sendButtonInactive: {

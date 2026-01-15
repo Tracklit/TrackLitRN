@@ -8,8 +8,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { launchImageLibrary, Asset } from 'react-native-image-picker';
 
@@ -30,13 +31,14 @@ import { env } from '@/config/env';
 import { countries } from '@/lib/countries';
 import theme from '@/utils/theme';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import type { RootStackParamList } from '@/navigation/types';
+import type { RootStackParamList, TabParamList } from '@/navigation/types';
 
 type BackgroundType = 'color' | 'image';
 
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<TabParamList, 'Profile'>>();
   const { user, logout, refreshUser } = useAuth();
   const queryClient = useQueryClient();
 
@@ -64,6 +66,7 @@ export const ProfileScreen: React.FC = () => {
   });
 
   const isCoach = user?.isCoach === true;
+  const focusCoachToggle = route.params?.focusCoachToggle === true;
   const memberSinceYear = useMemo(() => {
     if (!user?.createdAt) return null;
     try {
@@ -332,7 +335,7 @@ export const ProfileScreen: React.FC = () => {
         <CollapsibleCard
           title="Coach Status"
           subtitle="Enable coaching tools and athlete management"
-          defaultOpen={false}
+          defaultOpen={focusCoachToggle}
           cardStyle={styles.cardVariant}
           headerStyle={styles.cardHeaderVariant}
         >
