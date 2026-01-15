@@ -46,6 +46,9 @@ export type RootStackParamList = {
   Coaches: undefined;
   Athletes: undefined;
   Rehab: undefined;
+  RehabHamstringProgram: undefined;
+  RehabFootProgram: undefined;
+  RehabProgramComingSoon: { title: string; category: string };
   Spikes: undefined;
   Subscriptions: undefined;
   PhotoFinishAnalysis: undefined;

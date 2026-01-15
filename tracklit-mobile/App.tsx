@@ -49,6 +49,9 @@ import { ConnectionsScreen } from './src/screens/ConnectionsScreen';
 import { CoachesScreen } from './src/screens/CoachesScreen';
 import { AthletesScreen } from './src/screens/AthletesScreen';
 import { RehabScreen } from './src/screens/RehabScreen';
+import { HamstringRehabProgramScreen } from './src/screens/rehab/HamstringRehabProgramScreen';
+import { FootRehabProgramScreen } from './src/screens/rehab/FootRehabProgramScreen';
+import { RehabProgramComingSoonScreen } from './src/screens/rehab/RehabProgramComingSoonScreen';
 import { SpikesScreen } from './src/screens/SpikesScreen';
 import { SubscriptionsScreen } from './src/screens/SubscriptionsScreen';
 import { ClubsScreen } from './src/screens/ClubsScreen';
@@ -148,6 +151,9 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="ClubManagement" component={ClubManagementScreen} />
     <RootStack.Screen name="CreateGroup" component={CreateGroupScreen} />
     <RootStack.Screen name="Rehab" component={RehabScreen} />
+    <RootStack.Screen name="RehabHamstringProgram" component={HamstringRehabProgramScreen} />
+    <RootStack.Screen name="RehabFootProgram" component={FootRehabProgramScreen} />
+    <RootStack.Screen name="RehabProgramComingSoon" component={RehabProgramComingSoonScreen} />
     <RootStack.Screen name="Spikes" component={SpikesScreen} />
     <RootStack.Screen name="Subscriptions" component={SubscriptionsScreen} />
   </RootStack.Navigator>
@@ -268,6 +274,12 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           icon: 'heart',
           onPress: () =>
             navigateIntoAppStack({ screen: 'Rehab' }),
+        },
+        {
+          label: 'Sprinthia',
+          icon: 'robot',
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'Sprinthia' }),
         },
       ],
     },

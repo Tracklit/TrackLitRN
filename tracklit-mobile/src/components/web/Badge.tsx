@@ -28,6 +28,8 @@ const styles = StyleSheet.create({
   text: {
     fontSize: theme.typography.sizes.xs,
     fontWeight: theme.typography.weights.medium as any,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   default: { backgroundColor: '#1f2937' },
   defaultText: { color: '#f8fafc' },

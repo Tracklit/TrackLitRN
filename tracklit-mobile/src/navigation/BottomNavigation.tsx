@@ -128,6 +128,13 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const parent = navigation.getParent();
+  const parentState = parent?.getState();
+  const parentRoute = parentState?.routes[parentState.index ?? 0];
+
+  if (parentRoute?.name && parentRoute.name !== 'MainTabs') {
+    return null;
+  }
 
   return (
     <View style={[
