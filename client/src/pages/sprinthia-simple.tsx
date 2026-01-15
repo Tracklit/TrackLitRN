@@ -345,6 +345,10 @@ export default function SprinthiaSimple() {
       toast({
         title: "Failed to save",
         description: "Could not save program",
+        variant: "destructive",
+      });
+      setSavingMessageId(null);
+    }
   };
 
   return (
