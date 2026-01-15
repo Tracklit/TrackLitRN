@@ -312,22 +312,29 @@ export default function SprinthiaSimple() {
     try {
       setSavingMessageId(messageId);
       
-      // Create a program from the AI response
-      const response = await apiRequest('POST', '/api/programs', {
-        name: 'Training Plan from Sprinthia',
-        description: content.substring(0, 500) + (content.length > 500 ? '...' : ''),
-        content: content,
-        category: 'training',
-        level: 'intermediate',
-        duration: 'Custom',
-        workoutsPerWeek: 0
+      // Prompt user for program title
+      const programTitle = prompt("Enter a title for this program:", "Recovery Program from Sprinthia");
+      if (!programTitle) {
+        setSavingMessageId(null);
+        return;
+      }
+
+      // Detect if content is rehab-related
+      const isRehab = /rehab|rehabilitation|recovery|injury|strain|pain|heal|hamstring|ankle|knee|shoulder|back/i.test(content);
+
+      // Save as structured program with sessions
+      const response = await apiRequest('POST', '/api/sprinthia/save-as-program', {
+        messageContent: content,
+        programTitle: programTitle,
+        programType: isRehab ? "rehab" : "training",
+        duration: 4
       });
 
       if (response.ok) {
-        const program = await response.json();
+        const result = await response.json();
         toast({
           title: "Program saved!",
-          description: "Training plan saved to your programs",
+          description: `${result.sessionsCreated} sessions created in your programs`,
         });
         setTimeout(() => setSavingMessageId(null), 2000);
       } else {
@@ -337,11 +344,7 @@ export default function SprinthiaSimple() {
       console.error('Error saving program:', err);
       toast({
         title: "Failed to save",
-        description: "Could not save training plan as program",
-        variant: "destructive",
-      });
-      setSavingMessageId(null);
-    }
+        description: "Could not save program",
   };
 
   return (
