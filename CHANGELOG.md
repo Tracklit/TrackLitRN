@@ -1,125 +1,123 @@
-# TrackLit - Change Log
+# TrackLit - Change Log Update - January 14, 2026
 
-All notable changes to the TrackLit application will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-
----
-
-## [Unreleased] - 2025-12-20
-
-### Fixed
-- **Exercise Library Upload** - Fixed critical bug where video uploads were failing
-  - Issue: FormData was empty when submitting uploads, causing 400 Bad Request errors
-  - Root Cause: `new FormData(e.currentTarget)` wasn't capturing file input in React
-  - Solution: Modified `handleUpload` to explicitly query file input and append to FormData
-  - Files Changed:
-    - `client/src/pages/exercise-library-add-page.tsx` - Enhanced file handling with debug logging
-    - `server/routes.ts` - Added comprehensive debug logging for uploads
-  - Commit: 0bc02002
-  - Status: ⏳ Awaiting deployment (Image build required)
+## [2026-01-14] - Sprinthia Integration & UI Fixes
 
 ### Added
-- Enhanced logging for exercise library operations
-  - Upload endpoint logs file presence, body keys, and content-type
-  - GET endpoint logs user ID, pagination, filters, and result counts
-  - Debug console messages for file attachment tracking
+- **Save Sprinthia Responses as Programs** - New feature to convert AI coaching responses into training programs
+  - New endpoint: `POST /api/sprinthia/save-as-program`
+  - Creates text-based programs with full AI response preserved
+  - Auto-detects rehab vs training content based on keywords
+  - Stores content across workout fields (500 chars each: short/medium/long distance + notes)
+  - User prompted for custom program title via browser prompt
+  - Programs appear in user's Programs section with category "Rehabilitation" or "Training"
+  - Commits: f0f69f0e, 6b35fc55, d34e7a1f, 1f80df1a
+  - Image: **20260114-184124** ✅ **Deployed**
 
----
+- **Sprint Time Prediction Tool** - Calculate predicted times across 12 sprint distances
+  - Based on Dick's (1987) conversion matrix methodology
+  - Distances: 30m, 40m, 50m, 60m, 80m, 100m, 110m, 110mH, 150m, 200m, 220y, 250m
+  - Custom velocity decay algorithms for each distance
+  - New page route: `/sprint-time-prediction`
+  - Commits: 4df15c3f, e065e2bd
+  - Image: **20260114-101500** ✅ **Deployed**
 
-## Previous Changes
+### Changed
+- **Rehab Page AI Consultation** - Now redirects to Sprinthia for AI consultations
+  - Button text: "Start AI Consultation with Sprinthia"
+  - Navigates to `/sprinthia` route instead of opening inline modal
+  - Improves UX by consolidating all AI interactions in one place
+  - Commit: 79d3575b
+  - Image: **20260114-184124** ✅ **Deployed**
 
-### 2025-12-20 - Azure Blob Storage Integration
+### Fixed
+- **Profile Photo Persistence** - Fixed uploads not persisting across app restarts
+  - Root cause: multer diskStorage saves to container filesystem (ephemeral)
+  - Solution: Changed multer to memoryStorage for in-memory buffer handling
+  - Updated sharp to use `req.file.buffer` instead of file path
+  - Removed `fs.unlinkSync` call incompatible with memory storage
+  - Photos now properly saved to Azure Blob Storage user-specific folders
+  - Commits: ea83d1da, 99fe1623
+  - Image: **20260114-110500** ✅ **Deployed**
 
-#### Added
-- **User-Specific Folder Structure** in Azure Blob Storage
-  - Each user gets dedicated folders: `user-{userId}/{container}/`
-  - Organized containers: profile-images, video-analysis, exercise-library, photo-finish, messages, programs
-  - Permanent file storage replacing ephemeral container storage
-  - Image: 20251220-162329
+- **Rehab Page Layout** - Fixed bottom content hidden under navigation bar
+  - Added `pb-24` (96px) bottom padding to main container
+  - Prevents injury categories from being obscured by bottom nav
+  - Commit: 142729ac
+  - Image: **20260114-094500** ✅ **Deployed**
 
-#### Fixed
-- **Profile Picture Persistence** - Images now survive app restarts
-  - Migrated from local container storage to Azure Blob Storage
-  - Storage Account: stkvnx2h6p44qw4 (Standard_LRS, westus)
-  - Image: 20251220-155516
+### Technical Details
 
-- **JSON Response Format** - Exercise library upload error responses
-  - Changed `.send("text")` to `.json({ error: "text" })` for consistent API responses
-  - Fixed "Unexpected token 'N'" parsing errors in client
-  - Image: 20251220-164255
+**New API Endpoint:**
+```
+POST /api/sprinthia/save-as-program
+Authentication: Required (req.isAuthenticated())
 
-#### Changed
-- **Blob Storage Architecture**
-  ```
-  6 Containers with user-specific folders:
-  ├── profile-images/user-{userId}/profile-images/{timestamp}-{uuid}.jpg
-  ├── video-analysis/user-{userId}/video-analysis/{timestamp}-{uuid}.mp4
-  ├── exercise-library/user-{userId}/exercise-library/{timestamp}-{uuid}.(mp4|jpg)
-  ├── photo-finish/user-{userId}/photo-finish/{timestamp}-{uuid}.jpg
-  ├── messages/user-{userId}/messages/{timestamp}-{uuid}.(jpg|mp4)
-  └── programs/user-{userId}/programs/{timestamp}-{uuid}.pdf
-  ```
+Request Body:
+{
+  messageContent: string,    // AI response text (full Sprinthia message)
+  programTitle: string,      // User-provided program name
+  programType?: string,      // "rehab" or "training" (default: "rehab")
+  duration?: number          // Program duration in weeks (default: 4)
+}
 
-### 2025-12-19 - UI and Navigation Fixes
+Response (200):
+{
+  success: true,
+  programId: number,         // Created program ID
+  message: "Program saved successfully",
+  sessionsCreated: 1         // Always 1 for text-based programs
+}
 
-#### Fixed
-- **My Subscriptions 404 Error** - Route mismatch
-  - Changed `/explore` to `/coaches` navigation
-  - Image: 20251220-141629
+Response (400):
+{
+  error: "Message content and program title are required"
+}
 
-- **Coaches Page Dropdown** - Visibility issue
-  - Updated styling: `bg-slate-900 text-white`
-  - Image: 20251220-131907
-
-### Earlier Changes
-
-#### Database Schema
-- Consolidated migrations: `0000_consolidated_base_schema.sql`
-- Friendships table implementation (replaced notification-based system)
-- Track & Field specialties added to profile settings
-- Coach-athlete relationship cleanup (dropped unused `coach_athletes` table)
-
-#### Features
-- Specialties system for track & field athletes
-- Enhanced profile settings with specialty selection
-- Improved coaches page with proper filtering
-- My Athletes page fixes for coaches
-
----
-
-## Deployment Notes
-
-### Current Production Version
-- Image: 20251220-185559 (requires rebuild with latest fixes)
-- ACR: tracklitdevkvnx2h.azurecr.io/tracklit-app
-- App Service: app-tracklit-dev-kvnx2h
-- Database: pg-tracklit-dev-kvnx2h.postgres.database.azure.com
-- Storage: stkvnx2h6p44qw4.blob.core.windows.net
-
-### To Deploy Latest Changes
-```powershell
-cd C:\TrackLitRN
-$timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-docker build -t "tracklitdevkvnx2h.azurecr.io/tracklit-app:$timestamp" .
-docker push "tracklitdevkvnx2h.azurecr.io/tracklit-app:$timestamp"
-az webapp config container set --name app-tracklit-dev-kvnx2h --resource-group rg-tracklit-dev --container-image-name "tracklitdevkvnx2h.azurecr.io/tracklit-app:$timestamp"
-az webapp restart --name app-tracklit-dev-kvnx2h --resource-group rg-tracklit-dev
+Response (500):
+{
+  error: "Failed to save program"
+}
 ```
 
----
+**Implementation Details:**
+- Creates program with `dbStorage.createProgram()` using category "Rehabilitation" or "Training"
+- Single text-based session created via `dbStorage.createProgramSession()`
+- Content distribution:
+  - `shortDistanceWorkout`: First 500 characters
+  - `mediumDistanceWorkout`: Characters 500-1000
+  - `longDistanceWorkout`: Characters 1000-1500
+  - `notes`: Remaining content (1500+)
+- Program description: First 500 chars + "..." if longer
+- Level: "Intermediate" (default)
+- isPublic: false (private to user)
+- price: 0 (free)
 
-## Known Issues
+**Files Modified:**
+- `server/routes.ts` - Added save-as-program endpoint after line 7590
+- `client/src/pages/sprinthia-simple.tsx` - Updated handleSaveAsProgram function
+- `client/src/pages/rehab-page.tsx` - Changed AI consultation button to navigate to Sprinthia
 
-### Active
-- Exercise library upload fix needs deployment
-  - Code committed: ✅
-  - Image built: ⏳ Pending
-  - Deployed: ⏳ Pending
+**Docker Images Built:**
+- 20260114-094500 - Rehab page padding fix
+- 20260114-100000 - Sprint prediction tool initial
+- 20260114-101500 - Sprint prediction calculations fix ✅
+- 20260114-104500 - Profile photo fix attempt 1 (had fs.unlinkSync error)
+- 20260114-105500 - Profile photo fix attempt 2 (blank app)
+- 20260114-110500 - Profile photo clean build with --no-cache ✅
+- 20260114-181949 - Sprinthia save endpoint (syntax error)
+- 20260114-182347 - Syntax fix for toast
+- 20260114-183843 - Text-based program (syntax error)
+- 20260114-184124 - Final deployment with all fixes ✅
 
-### Resolved
-- ✅ Profile pictures disappearing after restart - Fixed with Azure Blob Storage
-- ✅ Empty FormData on video uploads - Fixed with explicit file appending
-- ✅ JSON parsing errors on upload failures - Fixed with consistent response format
-- ✅ My Subscriptions 404 errors - Fixed with correct routing
-- ✅ Coaches dropdown invisible - Fixed with proper styling
+**GitHub Repository:**
+- Remote: https://github.com/Tracklit/TrackLitRN.git
+- Branch: main
+- All 7 commits pushed successfully on 2026-01-14
+
+**Production Deployment:**
+- App Service: app-tracklit-dev-kvnx2h
+- Resource Group: rg-tracklit-dev
+- Container Registry: tracklitdevkvnx2h.azurecr.io
+- Current Image: tracklitdevkvnx2h.azurecr.io/tracklit-app:20260114-184124
+- Status: ✅ Running and fully operational
+
