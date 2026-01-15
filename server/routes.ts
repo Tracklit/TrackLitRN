@@ -7609,10 +7609,6 @@ It supports multilingual interactions, replying in the same language as the athl
         return res.status(400).json({ error: "Message content and program title are required" });
       }
 
-      // Parse the AI message to extract structured program data
-      // This is a simple parser - could be enhanced with more sophisticated parsing
-      const lines = messageContent.split('\n').filter((line: string) => line.trim());
-      
       // Create the program
       const program = await dbStorage.createProgram({
         userId,
@@ -7620,92 +7616,30 @@ It supports multilingual interactions, replying in the same language as the athl
         category: programType === "rehab" ? "Rehabilitation" : "Training",
         level: "Intermediate",
         duration,
-        totalSessions: duration * 7, // Assume daily activities
-        description: "AI-generated program from Sprinthia consultation",
+        totalSessions: 1, // Single text-based session
+        description: messageContent.slice(0, 500) + (messageContent.length > 500 ? '...' : ''),
         isPublic: false,
         price: 0
       });
 
-      // Create sessions from the content
-      // Parse weeks and days if structured, otherwise create weekly blocks
-      let dayNumber = 1;
-      let currentWeek = 1;
-      let sessionTitle = "";
-      let sessionContent: string[] = [];
-
-      const createSession = async () => {
-        if (sessionContent.length > 0) {
-          await dbStorage.createProgramSession({
-            programId: program.id,
-            dayNumber,
-            weekNumber: currentWeek,
-            title: sessionTitle || `Day ${dayNumber}`,
-            isRestDay: sessionTitle.toLowerCase().includes('rest'),
-            shortDistanceWorkout: sessionContent.join('\n').slice(0, 500),
-            notes: "AI-generated from Sprinthia"
-          });
-          dayNumber++;
-          sessionContent = [];
-        }
-      };
-
-      for (const line of lines) {
-        // Detect week headers
-        if (line.match(/week\s+\d+/i)) {
-          await createSession();
-          const weekMatch = line.match(/week\s+(\d+)/i);
-          if (weekMatch) currentWeek = parseInt(weekMatch[1]);
-          continue;
-        }
-
-        // Detect day headers
-        if (line.match(/day\s+\d+|monday|tuesday|wednesday|thursday|friday|saturday|sunday/i)) {
-          await createSession();
-          sessionTitle = line;
-          continue;
-        }
-
-        // Collect content for current session
-        if (line.trim().startsWith('-') || line.trim().startsWith('•') || line.match(/^\d+\./)) {
-          sessionContent.push(line);
-        }
-      }
-
-      // Create final session if any content remains
-      await createSession();
-
-      // If no sessions were parsed, create a single session with all content
-      if (dayNumber === 1) {
-        await dbStorage.createProgramSession({
-          programId: program.id,
-          dayNumber: 1,
-          weekNumber: 1,
-          title: programTitle,
-          isRestDay: false,
-          shortDistanceWorkout: messageContent.slice(0, 500),
-          mediumDistanceWorkout: messageContent.length > 500 ? messageContent.slice(500, 1000) : undefined,
-          notes: "AI-generated complete program from Sprinthia"
-        });
-      }
+      // Create a single text-based session with the full AI response
+      await dbStorage.createProgramSession({
+        programId: program.id,
+        dayNumber: 1,
+        weekNumber: 1,
+        title: programTitle,
+        isRestDay: false,
+        shortDistanceWorkout: messageContent.slice(0, 500),
+        mediumDistanceWorkout: messageContent.length > 500 ? messageContent.slice(500, 1000) : undefined,
+        longDistanceWorkout: messageContent.length > 1000 ? messageContent.slice(1000, 1500) : undefined,
+        notes: messageContent.length > 1500 ? messageContent.slice(1500) : "AI-generated program from Sprinthia"
+      });
 
       res.json({
         success: true,
         programId: program.id,
         message: "Program saved successfully",
-        sessionsCreated: dayNumber - 1 || 1
-      });
-    } catch (error: any) {
-      console.error("Error saving Sprinthia message as program:", error);
-      res.status(500).json({ error: "Failed to save program" });
-    }
-  });
-
-  app.post("/api/rehab/ai-consultation", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
-    }
-
-    try {
+        sessionsCreated: 1
       const { query } = req.body;
       const userId = req.user.id;
       const user = req.user;

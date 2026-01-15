@@ -334,7 +334,7 @@ export default function SprinthiaSimple() {
         const result = await response.json();
         toast({
           title: "Program saved!",
-          description: `${result.sessionsCreated} sessions created in your programs`,
+          description: "Training plan added to your programs",
         });
         setTimeout(() => setSavingMessageId(null), 2000);
       } else {
