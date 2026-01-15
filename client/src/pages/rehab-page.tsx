@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Link } from "wouter";
-import { 
-  Heart, 
-  Zap, 
-  Bone, 
+import { Link, useLocation } from "wouter";
+import {
+  Heart,
+  Zap,
+  Bone,
   Activity,
   ArrowRight,
   Sparkles,
@@ -80,6 +80,7 @@ const rehabCategories = [
 export default function RehabPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [aiQuery, setAiQuery] = useState("");
   const [isAiOpen, setIsAiOpen] = useState(false);
 
@@ -157,12 +158,11 @@ export default function RehabPage() {
             <CardContent>
               {!isAiOpen ? (
                 <Button 
-                  onClick={() => setIsAiOpen(true)}
+                  onClick={() => setLocation("/sprinthia")}
                   className="w-full bg-purple-600 hover:bg-purple-700"
-                  disabled={!isStarUser && !hasSpikes}
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Start AI Consultation
+                  Start AI Consultation with Sprinthia
                 </Button>
               ) : (
                 <div className="space-y-4">
