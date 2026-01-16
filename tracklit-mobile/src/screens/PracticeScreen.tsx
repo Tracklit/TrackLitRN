@@ -151,31 +151,10 @@ export const PracticeScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={[styles.container, { paddingTop: insets.top }]}
     >
-      <View style={styles.fixedHeader}>
-        <LinearGradient
-          colors={theme.gradients.webHeader.colors}
-          start={theme.gradients.webHeader.start}
-          end={theme.gradients.webHeader.end}
-          style={[styles.headerGradient, { paddingTop: insets.top + theme.spacing.sm }]}
-        >
-          <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => setShowProgramPicker(true)}
-            >
-              <FontAwesome5 name="clipboard-list" size={12} color="white" solid />
-              <Text variant="small" weight="medium" color="primary-foreground" style={styles.headerButtonText}>
-                Your Programs
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-      </View>
-
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + 72, paddingBottom: contentBottomPadding },
+          { paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -186,6 +165,30 @@ export const PracticeScreen: React.FC = () => {
           />
         }
       >
+        <LinearGradient
+          colors={theme.gradients.webHeader.colors}
+          start={theme.gradients.webHeader.start}
+          end={theme.gradients.webHeader.end}
+          style={styles.header}
+        >
+          <Text variant="h3" weight="bold" color="primary-foreground">
+            Practice
+          </Text>
+        </LinearGradient>
+
+        <Button
+          variant="outline"
+          onPress={() => setShowProgramPicker(true)}
+          style={styles.programsButton}
+        >
+          <View style={styles.programsButtonContent}>
+            <FontAwesome5 name="clipboard-list" size={14} color={theme.colors.primaryForeground} solid />
+            <Text variant="small" weight="medium" color="primary-foreground">
+              Your Programs
+            </Text>
+          </View>
+        </Button>
+
         {selectedProgram ? (
           <View style={styles.contentContainer}>
             {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent ? (
@@ -283,7 +286,9 @@ export const PracticeScreen: React.FC = () => {
               Contact your coach to get a program assigned to your account.
             </Text>
             <Button variant="outline" onPress={() => setShowProgramPicker(true)} style={styles.emptyButton}>
+              <Text variant="body" weight="medium" color="primary-foreground">
               View Available Programs
+              </Text>
             </Button>
           </LinearGradient>
         )}
@@ -494,38 +499,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  fixedHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  headerGradient: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
-    width: '100%',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: theme.borderRadius.sm,
-  },
-  headerButtonText: {
-    marginLeft: theme.spacing.xs,
-  },
   scrollContent: {
-    paddingTop: 80,
+    paddingTop: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
+  },
+  header: {
+    borderRadius: theme.borderRadius.webCard,
+    padding: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.md,
+  },
+  programsButton: {
+    alignSelf: 'center',
+    marginBottom: theme.spacing.md,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  programsButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
   },
   contentContainer: {
     marginTop: theme.spacing.lg,

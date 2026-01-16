@@ -211,7 +211,7 @@ export const SpikesScreen: React.FC = () => {
                 <ActivityIndicator size="large" color={theme.colors.textMuted} />
               </WebCard>
             ) : (
-              <WebCard tone="muted" padding={theme.spacing.md}>
+            <WebCard tone="muted" padding={theme.spacing.md}>
                 <Text variant="body" weight="semiBold" color="foreground" style={{ marginBottom: theme.spacing.sm }}>
                   Login Streak
                 </Text>
@@ -228,28 +228,28 @@ export const SpikesScreen: React.FC = () => {
                       </Text>
                     </View>
                   </View>
-                  <WebButton
-                    variant="outline"
-                    size="sm"
-                    onPress={() => checkInMutation.mutate()}
-                    disabled={checkInMutation.isPending}
-                  >
+                <WebButton
+                  variant="outline"
+                  size="sm"
+                  onPress={() => checkInMutation.mutate()}
+                  disabled={checkInMutation.isPending}
+                >
                     {checkInMutation.isPending ? 'Checking…' : 'Check In'}
-                  </WebButton>
-                </View>
-                <View style={styles.dotsRow}>
-                  {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                    <View
-                      key={d}
-                      style={[
-                        styles.dot,
-                        d <= Math.min(streak.currentStreak, 7) ? styles.dotActive : styles.dotInactive,
-                      ]}
-                    />
-                  ))}
-                </View>
+                </WebButton>
+              </View>
+                  <View style={styles.dotsRow}>
+                    {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+                      <View
+                        key={d}
+                        style={[
+                          styles.dot,
+                          d <= Math.min(streak.currentStreak, 7) ? styles.dotActive : styles.dotInactive,
+                        ]}
+                      />
+                    ))}
+                  </View>
               </WebCard>
-            )}
+              )}
           </View>
         </WebCard>
 
@@ -340,7 +340,7 @@ export const SpikesScreen: React.FC = () => {
           {achievementsQuery.isLoading ? (
             <View style={styles.centeredBlock}>
               <ActivityIndicator size="large" color={theme.colors.textMuted} />
-            </View>
+                  </View>
           ) : achievements.length > 0 ? (
             <View style={{ gap: theme.spacing.md }}>
               <WebCard tone="muted" padding={theme.spacing.lg}>
@@ -475,7 +475,7 @@ export const SpikesScreen: React.FC = () => {
                   <Text variant="small" weight="medium" color="foreground">150 Spikes</Text>
                 </View>
               </View>
-            </WebCard>
+          </WebCard>
           </View>
         </WebTabsContent>
 
@@ -546,7 +546,7 @@ export const SpikesScreen: React.FC = () => {
             </View>
           ) : (
             <WebCard tone="muted" padding={theme.spacing.lg}>
-              <Text variant="body" weight="semiBold" color="foreground">
+                  <Text variant="body" weight="semiBold" color="foreground">
                 Transaction History
               </Text>
               <Text variant="small" color="muted">
@@ -589,7 +589,7 @@ export const SpikesScreen: React.FC = () => {
                   </Text>
                 </View>
               )}
-            </WebCard>
+                </WebCard>
           )}
         </WebTabsContent>
       </WebTabs>

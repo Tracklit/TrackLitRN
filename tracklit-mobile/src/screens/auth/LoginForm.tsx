@@ -78,14 +78,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    Alert.alert(
-      'Google Sign-In',
-      'Google authentication coming soon!',
-      [{ text: 'OK' }]
-    );
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.form}>
@@ -123,30 +115,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
         </Button>
       </View>
 
-      {/* Divider */}
-      <View style={styles.divider}>
-        <View style={styles.dividerLine} />
-        <Text variant="small" color="muted" style={styles.dividerText}>
-          Or continue with
-        </Text>
-        <View style={styles.dividerLine} />
-      </View>
-
-      {/* Google Sign-in */}
-      <Button
-        variant="outline"
-        size="lg"
-        onPress={handleGoogleSignIn}
-        style={styles.googleButton}
-        data-testid="button-google-signin"
-      >
-        <View style={styles.googleButtonContent}>
-          <Text variant="body" weight="medium" color="foreground">
-            Continue with Google
-          </Text>
-        </View>
-      </Button>
-
       {/* Sign up / Forgot */}
       <View style={styles.signupPrompt}>
         <View style={styles.signupRow}>
@@ -183,28 +151,6 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     marginTop: theme.spacing.md,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: theme.spacing.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: theme.colors.border,
-  },
-  dividerText: {
-    paddingHorizontal: theme.spacing.md,
-    textTransform: 'uppercase',
-  },
-  googleButton: {
-    marginBottom: theme.spacing.lg,
-  },
-  googleButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   signupPrompt: {
     alignItems: 'center',

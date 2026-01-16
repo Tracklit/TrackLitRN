@@ -83,7 +83,7 @@ export const ConnectionsScreen: React.FC = () => {
             value={search}
             onChangeText={setSearch}
           />
-          <TouchableOpacity>
+          <TouchableOpacity style={styles.addButton}>
             <UserPlus size={18} color={theme.colors.foreground} />
           </TouchableOpacity>
         </View>
@@ -157,6 +157,14 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: theme.colors.foreground,
+  },
+  addButton: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   center: {
     alignItems: 'center',

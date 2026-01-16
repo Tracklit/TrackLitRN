@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
@@ -257,13 +258,21 @@ export const FeedScreen: React.FC = () => {
 
       {canInteract && (
         <TouchableOpacity
-          style={[styles.fab, { bottom: insets.bottom + theme.spacing.xl }]}
+          style={[
+            styles.fab,
+            { bottom: insets.bottom + theme.layout.bottomNavHeight + theme.spacing.xl },
+          ]}
           onPress={() => setIsComposerOpen(true)}
           data-testid="button-create-post"
         >
-          <Text variant="h3" color="foreground">
-            +
-          </Text>
+          <LinearGradient
+            colors={theme.gradients.webPurple.colors}
+            start={theme.gradients.webPurple.start}
+            end={theme.gradients.webPurple.end}
+            style={styles.fabGradient}
+          >
+            <FontAwesome5 name="plus" size={18} color="white" solid />
+          </LinearGradient>
         </TouchableOpacity>
       )}
 
@@ -382,10 +391,15 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: theme.colors.primary,
+    overflow: 'hidden',
+    ...theme.shadows.lg,
+    zIndex: 50,
+    elevation: 20,
+  },
+  fabGradient: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.lg,
   },
   modalBackdrop: {
     flex: 1,

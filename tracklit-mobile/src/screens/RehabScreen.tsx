@@ -137,20 +137,20 @@ export const RehabScreen: React.FC = () => {
             Get personalized rehabilitation guidance from our AI specialist. Describe your injury, symptoms, and current status for a customized recovery program.
           </Text>
         </View>
-        <WebButton
+          <WebButton
           onPress={() => navigation.navigate('Sprinthia')}
           style={styles.aiButton}
-        >
-          <Sparkles size={16} color={theme.colors.primaryForeground} />
-          <Text variant="body" weight="bold" color="primary-foreground">
+          >
+            <Sparkles size={16} color={theme.colors.primaryForeground} />
+            <Text variant="body" weight="bold" color="primary-foreground">
             Start AI Consultation with Sprinthia
-          </Text>
-        </WebButton>
+            </Text>
+          </WebButton>
         {!isStarUser && (
-          <Text variant="small" color="muted">
-            This consultation will cost 50 Spikes. You currently have {spikes} Spikes.
-          </Text>
-        )}
+              <Text variant="small" color="muted">
+                This consultation will cost 50 Spikes. You currently have {spikes} Spikes.
+              </Text>
+            )}
       </LinearGradient>
 
       <View style={styles.grid}>
