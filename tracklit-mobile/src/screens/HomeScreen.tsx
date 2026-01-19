@@ -208,19 +208,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       route: 'Tools',
     },
     {
-      title: 'Race',
-      description: 'Coming Soon',
-      iconName: 'trophy',
-      route: 'Meets',
-      disabled: true,
-    },
-    {
       title: 'Sprinthia',
       description: 'Your AI coach is ready',
       iconName: 'comments',
       route: 'Sprinthia',
       disabled: false,
       showStar: true,
+    },
+    {
+      title: 'Race',
+      description: 'Coming Soon',
+      iconName: 'trophy',
+      route: 'Meets',
+      disabled: true,
     },
   ];
 
