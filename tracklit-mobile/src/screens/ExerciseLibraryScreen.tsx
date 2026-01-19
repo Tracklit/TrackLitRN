@@ -60,6 +60,8 @@ export const ExerciseLibraryScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const canUse = isAuthenticated && !isGuest;
 
@@ -163,6 +165,13 @@ export const ExerciseLibraryScreen: React.FC = () => {
   });
 
   const items = useMemo(() => libraryQuery.data?.exercises ?? [], [libraryQuery.data]);
+  const filteredItems = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return items;
+    return items.filter((item) =>
+      `${item.name} ${item.description ?? ''}`.toLowerCase().includes(term)
+    );
+  }, [items, searchTerm]);
 
   const handleDelete = (exerciseId: number) => {
     Alert.alert('Delete item?', 'This will remove it from your library.', [
@@ -192,12 +201,50 @@ export const ExerciseLibraryScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text variant="h2" weight="bold" color="foreground">
-            Exercise Library
-          </Text>
-          <Text variant="body" color="muted">
-            Save training videos and reference clips.
-          </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
+          </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text variant="h2" weight="bold" color="foreground">
+              Exercise Library
+            </Text>
+            <Text variant="body" color="muted">
+              Save training videos and reference clips.
+            </Text>
+          </View>
+          <View style={styles.backButton} />
+        </View>
+
+        <View style={styles.toolsRow}>
+          <View style={styles.viewToggle}>
+            <TouchableOpacity
+              style={[styles.toggleButton, viewMode === 'grid' && styles.toggleActive]}
+              onPress={() => setViewMode('grid')}
+            >
+              <FontAwesome5 name="th-large" size={14} color={theme.colors.foreground} solid />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleButton, viewMode === 'list' && styles.toggleActive]}
+              onPress={() => setViewMode('list')}
+            >
+              <FontAwesome5 name="list" size={14} color={theme.colors.foreground} solid />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.searchWrap}>
+            <FontAwesome5 name="search" size={14} color={theme.colors.textMuted} solid />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search library..."
+              placeholderTextColor={theme.colors.textMuted}
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+            />
+          </View>
         </View>
 
         <Card style={styles.actionsCard}>
@@ -246,14 +293,14 @@ export const ExerciseLibraryScreen: React.FC = () => {
           <Text variant="body" color="muted" style={styles.emptyText}>
             Unable to load your library.
           </Text>
-        ) : items.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <Text variant="body" color="muted" style={styles.emptyText}>
             No items yet.
           </Text>
         ) : (
-          <View style={styles.list}>
-            {items.map((item) => (
-              <Card key={item.id} style={styles.itemCard}>
+          <View style={[styles.list, viewMode === 'grid' && styles.grid]}>
+            {filteredItems.map((item) => (
+              <Card key={item.id} style={[styles.itemCard, viewMode === 'grid' && styles.itemCardGrid]}>
                 <CardContent style={styles.itemContent}>
                   <View style={styles.itemRow}>
                     <View style={styles.itemIcon}>
@@ -272,13 +319,15 @@ export const ExerciseLibraryScreen: React.FC = () => {
                         {item.description || item.type}
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      onPress={() => handleDelete(item.id)}
-                      disabled={deleteMutation.isPending}
-                      style={styles.deleteButton}
-                    >
-                      <FontAwesome5 name="trash" size={16} color={theme.colors.destructive} solid />
-                    </TouchableOpacity>
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity
+                        onPress={() => handleDelete(item.id)}
+                        disabled={deleteMutation.isPending}
+                        style={styles.deleteButton}
+                      >
+                        <FontAwesome5 name="trash" size={16} color={theme.colors.destructive} solid />
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   {resolveUrl(item.fileUrl) && (
@@ -350,8 +399,57 @@ const styles = StyleSheet.create({
     gap: theme.spacing.lg,
   },
   header: {
-    marginTop: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.lg,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
     gap: theme.spacing.xs,
+  },
+  toolsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.xs,
+  },
+  toggleButton: {
+    width: 34,
+    height: 34,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleActive: {
+    backgroundColor: theme.colors.backgroundSolid,
+  },
+  searchWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.card,
+    height: 40,
+  },
+  searchInput: {
+    flex: 1,
+    color: theme.colors.foreground,
   },
   actionsCard: { marginBottom: 0 },
   actionRow: { flexDirection: 'row', gap: theme.spacing.md },
@@ -365,7 +463,15 @@ const styles = StyleSheet.create({
   },
   emptyText: { textAlign: 'center', paddingVertical: theme.spacing.lg },
   list: { gap: theme.spacing.sm },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
+  },
   itemCard: { marginBottom: 0 },
+  itemCardGrid: {
+    width: '48%',
+  },
   itemContent: { paddingVertical: theme.spacing.md },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
   itemIcon: {
@@ -386,6 +492,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
+  },
+  itemActions: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   urlText: { marginTop: theme.spacing.sm },
   modalBackdrop: {

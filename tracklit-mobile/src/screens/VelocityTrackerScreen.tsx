@@ -9,12 +9,15 @@ import {
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import theme from '@/utils/theme';
+import type { RootStackParamList } from '@/navigation/types';
 
 type TabKey = 'live' | 'manual' | 'calculator';
 
@@ -46,6 +49,7 @@ function formatPacePer100m(speedMps: number): string {
 
 export const VelocityTrackerScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const [activeTab, setActiveTab] = useState<TabKey>('live');
 
@@ -152,15 +156,26 @@ export const VelocityTrackerScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <View style={styles.titleRow}>
-            <FontAwesome5 name="bolt" size={22} color={theme.colors.primary} solid />
-            <Text variant="h2" weight="bold" color="foreground">
-              Velocity Tracker
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
+          </TouchableOpacity>
+          <View style={styles.headerText}>
+            <View style={styles.titleRow}>
+              <FontAwesome5 name="bolt" size={22} color={theme.colors.primary} solid />
+              <Text variant="h2" weight="bold" color="foreground">
+                Velocity Tracker
+              </Text>
+            </View>
+            <Text variant="body" color="muted">
+              Track speed from time + distance.
             </Text>
           </View>
-          <Text variant="body" color="muted">
-            Track speed from time + distance.
-          </Text>
+          <View style={styles.backButton} />
         </View>
 
         {/* Tabs */}
@@ -198,7 +213,12 @@ export const VelocityTrackerScreen: React.FC = () => {
         {activeTab === 'live' && (
           <Card>
             <CardHeader>
-              <CardTitle>Stopwatch</CardTitle>
+              <CardTitle style={styles.cardTitleRow}>
+                <FontAwesome5 name="stopwatch" size={16} color={theme.colors.primary} solid />
+                <Text variant="body" weight="semiBold" color="foreground">
+                  Stopwatch
+                </Text>
+              </CardTitle>
             </CardHeader>
             <CardContent style={{ gap: theme.spacing.md }}>
               <Text variant="h2" weight="bold" color="foreground" style={styles.monoTime}>
@@ -245,7 +265,12 @@ export const VelocityTrackerScreen: React.FC = () => {
         {activeTab === 'manual' && (
           <Card>
             <CardHeader>
-              <CardTitle>Manual entry</CardTitle>
+              <CardTitle style={styles.cardTitleRow}>
+                <FontAwesome5 name="calculator" size={16} color={theme.colors.primary} solid />
+                <Text variant="body" weight="semiBold" color="foreground">
+                  Manual entry
+                </Text>
+              </CardTitle>
             </CardHeader>
             <CardContent style={{ gap: theme.spacing.md }}>
               <TextInput
@@ -277,7 +302,12 @@ export const VelocityTrackerScreen: React.FC = () => {
         {activeTab === 'calculator' && (
           <Card>
             <CardHeader>
-              <CardTitle>Required speed</CardTitle>
+              <CardTitle style={styles.cardTitleRow}>
+                <FontAwesome5 name="bullseye" size={16} color={theme.colors.primary} solid />
+                <Text variant="body" weight="semiBold" color="foreground">
+                  Required speed
+                </Text>
+              </CardTitle>
             </CardHeader>
             <CardContent style={{ gap: theme.spacing.md }}>
               <TextInput
@@ -398,7 +428,19 @@ const styles = StyleSheet.create({
     gap: theme.spacing.lg,
   },
   header: {
-    marginTop: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.lg,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
     gap: theme.spacing.xs,
   },
   titleRow: {
@@ -406,10 +448,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.md,
   },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
   tabs: {
     flexDirection: 'row',
     borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.muted,
+    backgroundColor: theme.colors.card,
     padding: theme.spacing.xs,
   },
   tab: {

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { launchImageLibrary, type Asset } from 'react-native-image-picker';
 
@@ -15,14 +15,18 @@ import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
+type PhotoFinishAnalysisRouteProp = RouteProp<RootStackParamList, 'PhotoFinishAnalysis'>;
 
 export const PhotoFinishAnalysisScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
-  const [asset, setAsset] = useState<Asset | null>(null);
+  const route = useRoute<PhotoFinishAnalysisRouteProp>();
+  const [asset, setAsset] = useState<Asset | null>(
+    route.params?.uri ? { uri: route.params?.uri, fileName: route.params?.fileName } : null
+  );
 
   const pickPhoto = async () => {
-    const result = await launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 1 });
+    const result = await launchImageLibrary({ mediaType: 'video', selectionLimit: 1 });
     if (result.didCancel) return;
     if (result.errorCode) return;
     const selected = result.assets?.[0] ?? null;
@@ -45,7 +49,7 @@ export const PhotoFinishAnalysisScreen: React.FC = () => {
               Photo Finish Analysis
             </Text>
             <Text variant="small" color="muted">
-              Frame-by-frame tools (mobile parity work)
+              Frame-by-frame tools (video flow)
             </Text>
           </View>
           <View style={styles.iconBtn} />
@@ -53,11 +57,11 @@ export const PhotoFinishAnalysisScreen: React.FC = () => {
 
         <Card style={styles.card}>
           <CardHeader>
-            <CardTitle>Pick a finish photo</CardTitle>
+            <CardTitle>Pick a finish video</CardTitle>
           </CardHeader>
           <CardContent style={{ gap: theme.spacing.md }}>
             <Button variant="default" size="lg" onPress={pickPhoto}>
-              <FontAwesome5 name="images" size={16} color="white" solid />
+              <FontAwesome5 name="video" size={16} color="white" solid />
               <Text variant="body" weight="bold" color="primary-foreground" style={{ marginLeft: theme.spacing.sm }}>
                 Choose from library
               </Text>
@@ -65,11 +69,14 @@ export const PhotoFinishAnalysisScreen: React.FC = () => {
 
             {asset?.uri ? (
               <View style={styles.previewWrap}>
-                <Image source={{ uri: asset.uri }} style={styles.preview} resizeMode="contain" />
+                <FontAwesome5 name="video" size={36} color={theme.colors.textMuted} solid />
+                <Text variant="small" color="muted">
+                  {asset.fileName || 'Selected video'}
+                </Text>
               </View>
             ) : (
               <Text variant="body" color="muted" style={{ textAlign: 'center' }}>
-                No image selected yet.
+                No video selected yet.
               </Text>
             )}
           </CardContent>
@@ -125,6 +132,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
   },
   preview: {
     width: '100%',

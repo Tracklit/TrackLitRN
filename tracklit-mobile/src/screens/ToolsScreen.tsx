@@ -28,6 +28,7 @@ type ToolScreen = Extract<
   | 'VideoAnalysis'
   | 'ExerciseLibrary'
   | 'VelocityTracker'
+  | 'SprintTimePrediction'
 >;
 
 interface Tool {
@@ -99,7 +100,7 @@ export const ToolsScreen: React.FC = () => {
       title: 'Sprint Time Prediction',
       description: 'Calculate predicted times across sprint distances',
       icon: 'tachometer-alt',
-      comingSoon: true,
+      screen: 'SprintTimePrediction',
     },
   ];
 

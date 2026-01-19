@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Alert,
   ScrollView,
 } from 'react-native';
@@ -12,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { launchCamera, launchImageLibrary, Asset } from 'react-native-image-picker';
+import { launchImageLibrary, Asset } from 'react-native-image-picker';
 
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
@@ -24,56 +23,35 @@ export const PhotoFinishScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selectedImage, setSelectedImage] = useState<Asset | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  const handleTakePhoto = useCallback(async () => {
-    try {
-      const result = await launchCamera({
-        mediaType: 'photo',
-        quality: 1,
-        saveToPhotos: true,
-      });
-
-      if (result.assets && result.assets.length > 0) {
-        setSelectedImage(result.assets[0]);
-      }
-    } catch (error) {
-      Alert.alert('Camera Error', 'Unable to access camera. Please check permissions.');
-    }
-  }, []);
 
   const handleSelectFromLibrary = useCallback(async () => {
     try {
       const result = await launchImageLibrary({
-        mediaType: 'photo',
-        quality: 1,
+        mediaType: 'video',
+        selectionLimit: 1,
       });
 
       if (result.assets && result.assets.length > 0) {
         setSelectedImage(result.assets[0]);
+        navigation.navigate('PhotoFinishAnalysis', {
+          uri: result.assets[0].uri,
+          fileName: result.assets[0].fileName,
+        });
       }
     } catch (error) {
-      Alert.alert('Library Error', 'Unable to access photo library. Please check permissions.');
+      Alert.alert('Library Error', 'Unable to access video library. Please check permissions.');
     }
   }, []);
 
   const handleAnalyze = useCallback(() => {
     if (!selectedImage) {
-      Alert.alert('No Image', 'Please select or take a photo first.');
+      Alert.alert('No Video', 'Please select a video first.');
       return;
     }
-
-    setIsAnalyzing(true);
-    
-    // Simulate analysis (in production, this would call an API)
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      Alert.alert(
-        'Analysis Complete',
-        'Photo finish analysis with frame-by-frame breakdown is coming soon! This feature will help you analyze race finishes in detail.',
-        [{ text: 'OK' }]
-      );
-    }, 2000);
+    navigation.navigate('PhotoFinishAnalysis', {
+      uri: selectedImage.uri,
+      fileName: selectedImage.fileName,
+    });
   }, [selectedImage]);
 
   const handleClearImage = useCallback(() => {
@@ -111,19 +89,20 @@ export const PhotoFinishScreen: React.FC = () => {
         </View>
 
         <Text variant="body" color="muted" style={styles.description}>
-          Capture or select a race finish photo to analyze frame by frame.
+          Upload a race finish video to analyze frame by frame.
         </Text>
 
-        {/* Image Preview */}
+        {/* Video Preview */}
         <Card style={styles.imageCard}>
           <CardContent style={styles.imageContainer}>
             {selectedImage ? (
               <View style={styles.imageWrapper}>
-                <Image
-                  source={{ uri: selectedImage.uri }}
-                  style={styles.previewImage}
-                  resizeMode="contain"
-                />
+                <View style={styles.videoPlaceholder}>
+                  <FontAwesome5 name="video" size={48} color={theme.colors.textMuted} solid />
+                  <Text variant="small" color="muted" style={styles.placeholderText}>
+                    {selectedImage.fileName || 'Selected video'}
+                  </Text>
+                </View>
                 <TouchableOpacity
                   style={styles.clearButton}
                   onPress={handleClearImage}
@@ -133,9 +112,9 @@ export const PhotoFinishScreen: React.FC = () => {
               </View>
             ) : (
               <View style={styles.placeholder}>
-                <FontAwesome5 name="camera" size={48} color={theme.colors.textMuted} solid />
+                <FontAwesome5 name="video" size={48} color={theme.colors.textMuted} solid />
                 <Text variant="body" color="muted" style={styles.placeholderText}>
-                  No image selected
+                  No video selected
                 </Text>
               </View>
             )}
@@ -147,24 +126,12 @@ export const PhotoFinishScreen: React.FC = () => {
           <Button
             variant="default"
             size="lg"
-            onPress={handleTakePhoto}
-            style={styles.actionButton}
-          >
-            <FontAwesome5 name="camera" size={18} color="white" solid />
-            <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
-              Take Photo
-            </Text>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="lg"
             onPress={handleSelectFromLibrary}
             style={styles.actionButton}
           >
-            <FontAwesome5 name="images" size={18} color={theme.colors.foreground} solid />
-            <Text variant="body" weight="bold" color="foreground" style={styles.buttonText}>
-              Choose from Library
+            <FontAwesome5 name="upload" size={18} color="white" solid />
+            <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
+              Select Video
             </Text>
           </Button>
         </View>
@@ -175,12 +142,11 @@ export const PhotoFinishScreen: React.FC = () => {
             variant="default"
             size="lg"
             onPress={handleAnalyze}
-            loading={isAnalyzing}
             style={styles.analyzeButton}
           >
             <FontAwesome5 name="search" size={18} color="white" solid />
             <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
-              {isAnalyzing ? 'Analyzing...' : 'Analyze Photo'}
+              Analyze Video
             </Text>
           </Button>
         )}
@@ -206,19 +172,19 @@ export const PhotoFinishScreen: React.FC = () => {
             <View style={styles.infoItem}>
               <FontAwesome5 name="check-circle" size={16} color={theme.colors.primary} solid />
               <Text variant="body" color="muted" style={styles.infoText}>
-                Capture or select a photo of the race finish
+                Upload a video of the race finish
               </Text>
             </View>
             <View style={styles.infoItem}>
               <FontAwesome5 name="check-circle" size={16} color={theme.colors.primary} solid />
               <Text variant="body" color="muted" style={styles.infoText}>
-                AI analyzes the image frame by frame
+                Analyze the video frame by frame
               </Text>
             </View>
             <View style={styles.infoItem}>
               <FontAwesome5 name="check-circle" size={16} color={theme.colors.primary} solid />
               <Text variant="body" color="muted" style={styles.infoText}>
-                Get detailed breakdown of finish positions
+                Get a detailed breakdown of finish positions
               </Text>
             </View>
           </CardContent>
@@ -268,10 +234,14 @@ const styles = StyleSheet.create({
     height: 230,
     position: 'relative',
   },
-  previewImage: {
-    width: '100%',
-    height: '100%',
+  videoPlaceholder: {
+    flex: 1,
     borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
   },
   clearButton: {
     position: 'absolute',

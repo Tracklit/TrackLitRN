@@ -30,6 +30,7 @@ export type RootStackParamList = {
   ExerciseLibrary: undefined;
   ExerciseLibraryAdd: undefined;
   VelocityTracker: undefined;
+  SprintTimePrediction: undefined;
   ProgramDetail: { id: number | string };
   ProgramCreate: undefined;
   Meets: undefined;
@@ -51,7 +52,7 @@ export type RootStackParamList = {
   RehabProgramComingSoon: { title: string; category: string };
   Spikes: undefined;
   Subscriptions: undefined;
-  PhotoFinishAnalysis: undefined;
+  PhotoFinishAnalysis: { uri?: string; fileName?: string };
 };
 
 export type AuthStackParamList = {

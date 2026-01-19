@@ -36,6 +36,23 @@ This table is our checklist: **web source** → **mobile target** → **required
 | Subscriptions | `client/src/pages/my-subscriptions-page.tsx`, `subscription-management-page.tsx` | (missing) | My subs; subscribers; offerings; attach programs | `/api/subscriptions*` |
 | Google sign-in | `client/src/pages/auth-page.tsx` | (missing) | Mobile OAuth flow that results in a JWT for `Authorization` | `/api/auth/google*` (+ mobile bridge if needed) |
 
+## Tools parity map (web → mobile)
+Focused mapping for Tools screens to drive 1:1 parity work.
+
+| Tool | Web route/page | Mobile screen | Current delta | Parity target |
+|---|---|---|---|---|
+| Tools grid | `client/src/pages/training-tools-page.tsx` (`/tools`, `/training-tools`) | `tracklit-mobile/src/screens/ToolsScreen.tsx` | Mobile shows Interval Timer + Sprint Prediction as coming soon | Match web list; remove/disable Interval Timer; enable Sprint Prediction |
+| Start Gun | `client/src/pages/tools/start-gun-page.tsx` | `tracklit-mobile/src/screens/StartGunScreen.tsx` | Mobile lacks header/back + web control panel UI | Rebuild UI to match web (circular buttons, settings, volume) |
+| Stopwatch | `client/src/pages/tools/stopwatch-page.tsx` | `tracklit-mobile/src/screens/StopwatchScreen.tsx` | Mobile has basic controls; lacks large circular UI | Match web layout and styling |
+| Journal | `client/src/pages/tools/journal-page.tsx` | `tracklit-mobile/src/screens/JournalScreen.tsx` | Mobile renders `content` object → crash; UI doesn’t match web | Fix render; adopt web search/sort/create/edit patterns |
+| Journal entry | `client/src/pages/journal-entry-page.tsx` | `tracklit-mobile/src/screens/JournalEntryScreen.tsx` | Mobile uses different schema/UI | Align to web entry model + fields |
+| Photo Finish | `client/src/pages/tools/photo-finish-page.tsx` + analysis route | `tracklit-mobile/src/screens/PhotoFinishScreen.tsx` + `PhotoFinishAnalysisScreen.tsx` | Mobile is photo-based; web is video upload/analysis | Switch to video pick + auto-navigate to analysis |
+| Interval Timer | `client/src/pages/tools/interval-timer-page.tsx` | `tracklit-mobile/src/screens/IntervalTimerScreen.tsx` | Web is “Coming Soon”; mobile is functional | Hide/disable in mobile Tools grid to match web |
+| Velocity Tracker | `client/src/pages/tools/velocity-tracker.tsx` | `tracklit-mobile/src/screens/VelocityTrackerScreen.tsx` | Mobile tabs + styling diverge; no back | Match web tabs/layout + add header/back |
+| Video Analysis | `client/src/pages/video-analysis-page.tsx` | `tracklit-mobile/src/screens/VideoAnalysisScreen.tsx` | Mobile UI is simplified | Match web step flow and styling |
+| Exercise Library | `client/src/pages/exercise-library-page.tsx` | `tracklit-mobile/src/screens/ExerciseLibraryScreen.tsx` | Mobile UI simplified; missing grid/list, search, share actions | Add web features where feasible |
+| Sprint Time Prediction | `client/src/pages/sprint-time-prediction-page.tsx` | (missing) | Mobile missing screen and route | Add mobile screen and wire to Tools |
+
 ## Notes / common root causes
 - **Unreachable screens**: screens exist but aren’t reachable from any button/menu.
 - **Bottom bar overlap**: FABs + content padding need a single standard.

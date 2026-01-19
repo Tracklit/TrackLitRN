@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { launchImageLibrary, type Asset } from 'react-native-image-picker';
@@ -24,6 +26,7 @@ import { getToken } from '@/lib/tokenStorage';
 import { env } from '@/config/env';
 import { queryClient } from '@/lib/queryClient';
 import theme from '@/utils/theme';
+import type { RootStackParamList } from '@/navigation/types';
 
 type PromptId =
   | 'sprint-form'
@@ -55,6 +58,7 @@ interface VideoAnalysisItem {
 
 export const VideoAnalysisScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
 
@@ -200,12 +204,23 @@ export const VideoAnalysisScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text variant="h2" weight="bold" color="foreground">
-            Video Analysis
-          </Text>
-          <Text variant="body" color="muted">
-            Upload sprint videos and analyze technique.
-          </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
+          </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text variant="h2" weight="bold" color="foreground">
+              Video Analysis
+            </Text>
+            <Text variant="body" color="muted">
+              Upload sprint videos and analyze technique.
+            </Text>
+          </View>
+          <View style={styles.backButton} />
         </View>
 
         <Card style={styles.actionsCard}>
@@ -429,7 +444,19 @@ const styles = StyleSheet.create({
     gap: theme.spacing.lg,
   },
   header: {
-    marginTop: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.lg,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
     gap: theme.spacing.xs,
   },
   actionsCard: {

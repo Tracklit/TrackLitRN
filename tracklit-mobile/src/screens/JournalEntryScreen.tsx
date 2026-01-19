@@ -33,13 +33,8 @@ export const JournalEntryScreen: React.FC = () => {
 
   const [title, setTitle] = useState(`Journal Entry - ${date}`);
   const [notes, setNotes] = useState('');
-  const [type] = useState('workout');
-  const [mood, setMood] = useState(5);
-  const [energy, setEnergy] = useState(5);
-  const [motivation, setMotivation] = useState(5);
-  const [confidence, setConfidence] = useState(5);
-  const [soreness, setSoreness] = useState(5);
-  const [isPublic, setIsPublic] = useState(false);
+  const [moodRating, setMoodRating] = useState(5);
+  const [isPublic, setIsPublic] = useState(true);
 
   const createMutation = useMutation({
     mutationFn: async () =>
@@ -48,14 +43,10 @@ export const JournalEntryScreen: React.FC = () => {
         data: {
           title: title.trim(),
           notes: notes.trim(),
-          type,
+          type: 'workout',
           isPublic,
           content: {
-            mood,
-            energy,
-            motivation,
-            confidence,
-            soreness,
+            moodRating,
             date,
           },
         },
@@ -129,35 +120,19 @@ export const JournalEntryScreen: React.FC = () => {
 
         <View style={styles.section}>
           <Text variant="body" weight="semiBold" color="foreground">
-            How are you feeling? (1-10)
+            Mood Rating: {moodRating}/10
           </Text>
-          {[
-            { label: 'Mood', value: mood, setter: setMood },
-            { label: 'Energy', value: energy, setter: setEnergy },
-            { label: 'Motivation', value: motivation, setter: setMotivation },
-            { label: 'Confidence', value: confidence, setter: setConfidence },
-            { label: 'Soreness', value: soreness, setter: setSoreness },
-          ].map((item) => (
-            <View key={item.label} style={styles.sliderRow}>
-              <Text variant="small" color="muted" style={styles.sliderLabel}>
-                {item.label}
-              </Text>
-              <Slider
-                style={styles.slider}
-                minimumValue={1}
-                maximumValue={10}
-                step={1}
-                value={item.value}
-                onValueChange={item.setter}
-                minimumTrackTintColor={theme.colors.primary}
-                maximumTrackTintColor={theme.colors.border}
-                thumbTintColor={theme.colors.primary}
-              />
-              <Text variant="small" color="foreground" style={styles.sliderValue}>
-                {item.value}
-              </Text>
-            </View>
-          ))}
+          <Slider
+            style={styles.slider}
+            minimumValue={1}
+            maximumValue={10}
+            step={1}
+            value={moodRating}
+            onValueChange={setMoodRating}
+            minimumTrackTintColor={theme.colors.primary}
+            maximumTrackTintColor={theme.colors.border}
+            thumbTintColor={theme.colors.primary}
+          />
         </View>
 
         <View style={styles.section}>
@@ -228,20 +203,8 @@ const styles = StyleSheet.create({
     minHeight: 120,
     textAlignVertical: 'top',
   },
-  sliderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  sliderLabel: {
-    width: 80,
-  },
   slider: {
-    flex: 1,
-  },
-  sliderValue: {
-    width: 24,
-    textAlign: 'right',
+    width: '100%',
   },
   switchRow: {
     flexDirection: 'row',

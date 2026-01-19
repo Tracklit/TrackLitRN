@@ -63,6 +63,7 @@ import { VideoAnalysisScreen } from './src/screens/VideoAnalysisScreen';
 import { ExerciseLibraryScreen } from './src/screens/ExerciseLibraryScreen';
 import { ExerciseLibraryAddScreen } from './src/screens/ExerciseLibraryAddScreen';
 import { VelocityTrackerScreen } from './src/screens/VelocityTrackerScreen';
+import { SprintTimePredictionScreen } from './src/screens/SprintTimePredictionScreen';
 import type { TabParamList, RootStackParamList, AuthStackParamList } from './src/navigation/types';
 import { queryClient } from './src/lib/queryClient';
 import theme from './src/utils/theme';
@@ -135,6 +136,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="ExerciseLibrary" component={ExerciseLibraryScreen} />
     <RootStack.Screen name="ExerciseLibraryAdd" component={ExerciseLibraryAddScreen} />
     <RootStack.Screen name="VelocityTracker" component={VelocityTrackerScreen} />
+    <RootStack.Screen name="SprintTimePrediction" component={SprintTimePredictionScreen} />
     <RootStack.Screen name="ProgramDetail" component={ProgramDetailScreen} />
     <RootStack.Screen name="ProgramCreate" component={ProgramCreateScreen} />
     <RootStack.Screen name="Meets" component={MeetsScreen} />
