@@ -316,10 +316,6 @@ export const SprinthiaScreen: React.FC = () => {
     }
   };
 
-  const handleOpenDrawer = () => {
-    navigation.getParent?.()?.openDrawer?.();
-  };
-
   const formattedRemaining =
     typeof remainingPrompts === 'number' ? `${remainingPrompts} prompts` : remainingPrompts;
 
@@ -339,9 +335,6 @@ export const SprinthiaScreen: React.FC = () => {
         {/* Header (mobile-first, 2 rows) */}
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
-            <TouchableOpacity style={styles.drawerButton} onPress={handleOpenDrawer}>
-              <FontAwesome5 name="bars" size={18} color={WHITE} solid />
-            </TouchableOpacity>
             <View style={styles.titleGroup}>
               <Text
                 weight="bold"

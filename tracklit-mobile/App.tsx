@@ -281,7 +281,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Sprinthia',
           icon: 'comments',
           onPress: () =>
-            navigateIntoAppStack({ screen: 'Sprinthia' }),
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Sprinthia' } }),
         },
       ],
     },

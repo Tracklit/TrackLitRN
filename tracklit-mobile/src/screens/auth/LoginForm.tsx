@@ -68,11 +68,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
         );
       }
     } catch (error) {
-      Alert.alert(
-        'Login Failed',
-        'An error occurred. Please try again.',
-        [{ text: 'OK' }]
-      );
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'An error occurred. Please try again.';
+      Alert.alert('Login Failed', message, [{ text: 'OK' }]);
     } finally {
       setLoading(false);
     }

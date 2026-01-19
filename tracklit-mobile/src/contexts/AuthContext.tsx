@@ -227,7 +227,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (DEBUG_AUTH) {
           console.log('[AUTH] WARNING: No token in login response!');
         }
+        const errorMessage =
+          (response as any)?.error ||
+          (response as any)?.message ||
+          'Invalid username or password. Please try again.';
         setHasValidToken(false);
+        throw new Error(errorMessage);
       }
 
       // Store user data (without token in user object)
@@ -240,7 +245,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('[AUTH] Login failed:', error);
       setHasValidToken(false);
-      return false;
+      throw error;
     }
   }, []);
 
