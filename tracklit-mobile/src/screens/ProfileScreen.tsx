@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +38,7 @@ type BackgroundType = 'color' | 'image';
 
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<TabParamList, 'Profile'>>();
   const { user, logout, refreshUser } = useAuth();
@@ -46,7 +48,7 @@ export const ProfileScreen: React.FC = () => {
   const [backgroundColor, setBackgroundColor] = useState('#1e293b');
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [publicName, setPublicName] = useState(user?.name || '');
-  const [publicBio, setPublicBio] = useState(user?.bio || '');
+  const [publicBio, setPublicBio] = useState((user as any)?.bio || '');
   const [profileImageAsset, setProfileImageAsset] = useState<Asset | null>(null);
   const [cropVisible, setCropVisible] = useState(false);
 
@@ -68,13 +70,14 @@ export const ProfileScreen: React.FC = () => {
   const isCoach = user?.isCoach === true;
   const focusCoachToggle = route.params?.focusCoachToggle === true;
   const memberSinceYear = useMemo(() => {
-    if (!user?.createdAt) return null;
+    const createdAt = (user as any)?.createdAt;
+    if (!createdAt) return null;
     try {
-      return new Date(user.createdAt as any).getFullYear().toString();
+      return new Date(createdAt as any).getFullYear().toString();
     } catch {
       return null;
     }
-  }, [user?.createdAt]);
+  }, [(user as any)?.createdAt]);
 
   const { data: coachLimits } = useQuery({
     queryKey: ['/api/coach/limits'],
@@ -272,6 +275,8 @@ export const ProfileScreen: React.FC = () => {
     return age >= 0 ? age.toString() : '';
   };
 
+  const isNarrowHeader = screenWidth < 390;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
@@ -289,10 +294,10 @@ export const ProfileScreen: React.FC = () => {
         </Text>
 
         {/* Header Card */}
-        <Card style={styles.headerCard}>
-          <CardContent style={styles.headerContent}>
-            <View style={styles.headerTop}>
-              <View style={styles.headerIdentity}>
+        <Card style={styles.headerCard} contentStyle={styles.nonStretchingCard}>
+          <CardContent style={styles.nonStretchingCardContent}>
+            <View style={[styles.headerTop, isNarrowHeader && styles.headerTopNarrow]}>
+              <View style={[styles.headerIdentity, isNarrowHeader && styles.headerIdentityNarrow]}>
                 <View style={styles.avatarRing}>
                   <Avatar
                     size="lg"
@@ -300,20 +305,20 @@ export const ProfileScreen: React.FC = () => {
                     src={profileImageUrl || undefined}
                   />
                 </View>
-                <View style={styles.headerTextBlock}>
-                  <Text variant="h3" weight="bold" color="foreground">
+                <View style={[styles.headerTextBlock, isNarrowHeader && styles.headerTextBlockNarrow]}>
+                  <Text variant="h3" weight="bold" color="foreground" numberOfLines={1} ellipsizeMode="tail">
                     {user?.name || 'TrackLit Athlete'}
                   </Text>
-                  <Text variant="body" color="muted">
+                  <Text variant="body" color="muted" numberOfLines={1} ellipsizeMode="tail">
                     @{user?.username || 'guest'}
                   </Text>
                 </View>
               </View>
-              <View style={styles.headerActions}>
+              <View style={[styles.headerActions, isNarrowHeader && styles.headerActionsNarrow]}>
                 <Button
                   variant="outline"
                   size="sm"
-                  style={styles.headerActionButton}
+                  style={[styles.headerActionButton, isNarrowHeader && styles.headerActionButtonNarrow]}
                   onPress={() => navigation.navigate('Subscriptions')}
                 >
                   Manage Coaching
@@ -321,7 +326,7 @@ export const ProfileScreen: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  style={styles.headerActionButton}
+                  style={[styles.headerActionButton, isNarrowHeader && styles.headerActionButtonNarrow]}
                   onPress={logout}
                 >
                   Sign Out
@@ -682,7 +687,15 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   headerContent: {
-    gap: theme.spacing.md,
+  },
+  nonStretchingCard: {
+    // Prevent Card's internal wrapper from stretching in ScrollView (Android in particular).
+    flex: 0,
+  },
+  nonStretchingCardContent: {
+    // Prevent `CardContent` from stretching to fill ScrollView viewport on Android
+    // (which can cause the header card to become huge / visually glitchy).
+    flex: 0,
   },
   headerTop: {
     flexDirection: 'row',
@@ -690,14 +703,27 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     flexWrap: 'wrap',
   },
+  headerTopNarrow: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
   headerIdentity: {
     flexDirection: 'row',
     gap: theme.spacing.md,
     alignItems: 'center',
     flex: 1,
   },
+  headerIdentityNarrow: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    flex: 0,
+  },
   headerTextBlock: {
     flexShrink: 1,
+  },
+  headerTextBlockNarrow: {
+    marginTop: theme.spacing.sm,
+    width: '100%',
   },
   avatarRing: {
     padding: 4,
@@ -711,8 +737,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 0,
   },
+  headerActionsNarrow: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    width: '100%',
+    marginTop: theme.spacing.md,
+  },
   headerActionButton: {
     minWidth: 140,
+  },
+  headerActionButtonNarrow: {
+    minWidth: 0,
+    width: '100%',
   },
   rowBetween: {
     flexDirection: 'row',
