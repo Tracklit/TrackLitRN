@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -13,12 +13,16 @@ import {
   Keyboard,
   Animated,
   Easing,
+  Pressable,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { Mic, MicOff, Volume2, VolumeX, Languages } from 'lucide-react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
+import * as Speech from 'expo-speech';
+import Voice from '@react-native-voice/voice';
 // Clipboard is optional: if native module isn't available yet, we degrade gracefully.
 let Clipboard: typeof import('expo-clipboard') | null = null;
 try {
@@ -35,6 +39,7 @@ import { queryClient } from '@/lib/queryClient';
 import theme from '../utils/theme';
 import { FormattedSprinthiaText } from '../utils/sprinthiaFormat';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '../utils/layoutPadding';
+import { cleanSpeechText } from '../utils/speechText';
 
 type Role = 'user' | 'assistant';
 
@@ -62,6 +67,18 @@ const suggestions = [
   'Race strategy for 400m',
   'Hamstring injury recovery',
   'Pre-race nutrition',
+];
+
+const languageOptions = [
+  { code: 'en-US', label: 'English (US)' },
+  { code: 'es-ES', label: 'Español' },
+  { code: 'fr-FR', label: 'Français' },
+  { code: 'de-DE', label: 'Deutsch' },
+  { code: 'it-IT', label: 'Italiano' },
+  { code: 'pt-BR', label: 'Português' },
+  { code: 'zh-CN', label: '中文' },
+  { code: 'ja-JP', label: '日本語' },
+  { code: 'ko-KR', label: '한국어' },
 ];
 
 const poweredByAria = require('../assets/powered-by-aria.png');
@@ -144,6 +161,13 @@ export const SprinthiaScreen: React.FC = () => {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [savingMessageId, setSavingMessageId] = useState<string | null>(null);
   const [inlineWarning, setInlineWarning] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en-US');
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const micPulse = useRef(new Animated.Value(1)).current;
+  const micPulseAnimation = useRef<Animated.CompositeAnimation | null>(null);
 
   const remainingPrompts = isStar ? 'Unlimited' : user?.sprinthiaPrompts ?? 0;
   const isOutOfPrompts = !isStar && ((user?.sprinthiaPrompts ?? 0) <= 0);
@@ -153,6 +177,60 @@ export const SprinthiaScreen: React.FC = () => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 50);
   }, [messages, isThinking]);
+
+  useEffect(() => {
+    if (!isListening) {
+      micPulseAnimation.current?.stop();
+      micPulse.setValue(1);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(micPulse, {
+          toValue: 1.08,
+          duration: 500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(micPulse, {
+          toValue: 1,
+          duration: 500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    micPulseAnimation.current = animation;
+    animation.start();
+
+    return () => {
+      animation.stop();
+      micPulse.setValue(1);
+    };
+  }, [isListening, micPulse]);
+
+  useEffect(() => {
+    Voice.onSpeechStart = () => setIsListening(true);
+    Voice.onSpeechEnd = () => setIsListening(false);
+    Voice.onSpeechResults = (event) => {
+      const transcript = event.value?.[0];
+      if (transcript) {
+        setInputText(transcript);
+      }
+      setIsListening(false);
+    };
+    Voice.onSpeechError = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+      Alert.alert('Voice input failed', event.error?.message || 'Unable to capture voice input.');
+    };
+
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners).catch(() => undefined);
+      Speech.stop();
+    };
+  }, []);
 
   const conversationsQuery = useQuery({
     queryKey: ['sprinthia-conversations'],
@@ -267,12 +345,65 @@ export const SprinthiaScreen: React.FC = () => {
     Keyboard.dismiss();
   };
 
+  const speakText = useCallback(
+    (text: string) => {
+      const cleaned = cleanSpeechText(text);
+      if (!cleaned.trim()) return;
+      Speech.stop();
+      setIsSpeaking(true);
+      Speech.speak(cleaned, {
+        language: selectedLanguage,
+        rate: 1.0,
+        pitch: 1.0,
+        onDone: () => setIsSpeaking(false),
+        onStopped: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
+      });
+    },
+    [selectedLanguage]
+  );
+
+  const stopSpeaking = useCallback(() => {
+    Speech.stop();
+    setIsSpeaking(false);
+  }, []);
+
+  const startVoiceInput = useCallback(async () => {
+    if (isListening) return;
+    try {
+      setIsListening(true);
+      await Voice.start(selectedLanguage);
+    } catch (error: any) {
+      console.error('Voice start error:', error);
+      setIsListening(false);
+      Alert.alert('Voice input failed', error?.message || 'Unable to start voice input.');
+    }
+  }, [isListening, selectedLanguage]);
+
+  const stopVoiceInput = useCallback(async () => {
+    try {
+      await Voice.stop();
+    } catch (error: any) {
+      console.error('Voice stop error:', error);
+    } finally {
+      setIsListening(false);
+    }
+  }, []);
+
   const handleNewConversation = () => {
     setMessages([]);
     setConversationId(null);
     setShowHistory(false);
     setInlineWarning(null);
   };
+
+  useEffect(() => {
+    if (!autoSpeak || isThinking || messages.length === 0) return;
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role === 'assistant') {
+      speakText(lastMessage.text);
+    }
+  }, [autoSpeak, isThinking, messages, speakText]);
 
   const handleCopyMessage = async (messageId: string, text: string) => {
     try {
@@ -355,6 +486,29 @@ export const SprinthiaScreen: React.FC = () => {
 
             <View style={styles.headerControls}>
               <TouchableOpacity
+                style={[
+                  styles.iconToggle,
+                  autoSpeak ? styles.autoSpeakActive : styles.autoSpeakInactive,
+                ]}
+                onPress={() => setAutoSpeak((prev) => !prev)}
+                accessibilityRole="button"
+                accessibilityLabel={autoSpeak ? 'Disable auto speak' : 'Enable auto speak'}
+              >
+                {autoSpeak ? (
+                  <Volume2 size={16} color={WHITE} />
+                ) : (
+                  <VolumeX size={16} color={WHITE} />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.iconToggle, styles.languageButton]}
+                onPress={() => setShowLanguageMenu(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Change language"
+              >
+                <Languages size={16} color={WHITE} />
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={styles.historyButton}
                 onPress={() => setShowHistory(true)}
                 accessibilityRole="button"
@@ -376,6 +530,38 @@ export const SprinthiaScreen: React.FC = () => {
             </View>
           </View>
         </View>
+
+        <Modal
+          visible={showLanguageMenu}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setShowLanguageMenu(false)}
+        >
+          <Pressable style={styles.languageOverlay} onPress={() => setShowLanguageMenu(false)}>
+            <Pressable style={[styles.languageMenu, { marginTop: insets.top + 80 }]} onPress={() => undefined}>
+              {languageOptions.map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[
+                    styles.languageOption,
+                    selectedLanguage === lang.code && styles.languageOptionActive,
+                  ]}
+                  onPress={() => {
+                    setSelectedLanguage(lang.code);
+                    setShowLanguageMenu(false);
+                  }}
+                >
+                  <Text
+                    weight={selectedLanguage === lang.code ? 'semiBold' : 'regular'}
+                    color="foreground"
+                  >
+                    {lang.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         {/* History Panel */}
         <Modal
@@ -510,6 +696,16 @@ export const SprinthiaScreen: React.FC = () => {
                   {message.role === 'assistant' && (
                     <View style={styles.messageActions}>
                       <TouchableOpacity
+                        onPress={() => (isSpeaking ? stopSpeaking() : speakText(message.text))}
+                        style={styles.actionButton}
+                      >
+                        {isSpeaking ? (
+                          <VolumeX size={14} color={theme.colors.primary} />
+                        ) : (
+                          <Volume2 size={14} color={theme.colors.foreground} />
+                        )}
+                      </TouchableOpacity>
+                      <TouchableOpacity
                         onPress={() => handleCopyMessage(message.id, message.text)}
                         style={styles.actionButton}
                       >
@@ -560,39 +756,61 @@ export const SprinthiaScreen: React.FC = () => {
             { paddingBottom: getBottomNavOverlayHeight(insets.bottom) + 12 },
           ]}
         >
-          <View style={styles.inputShell}>
-            <TextInput
-              style={styles.textInput}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder={
-                isGuest
-                  ? 'Sign in to chat with Sprinthia...'
-                  : 'Ask Sprinthia about training, races, rehabilitation, or nutrition...'
-              }
-              placeholderTextColor={theme.colors.textMuted}
-              multiline
-              maxLength={800}
-              editable={!isGuest && !isOutOfPrompts}
-              onSubmitEditing={handleSendMessage}
-              returnKeyType="send"
-            />
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                inputText.trim() && !isThinking && !isOutOfPrompts
-                  ? styles.sendButtonActive
-                  : styles.sendButtonDisabled,
-              ]}
-              onPress={handleSendMessage}
-              disabled={!inputText.trim() || isThinking || isOutOfPrompts || isGuest}
-            >
-              <FontAwesome5
-                name="paper-plane"
-                size={16}
-                color={inputText.trim() && !isThinking && !isOutOfPrompts ? 'white' : theme.colors.textMuted}
+          <View style={styles.inputRow}>
+            <Animated.View style={{ transform: [{ scale: micPulse }] }}>
+              <TouchableOpacity
+                style={[
+                  styles.micButton,
+                  isListening ? styles.micButtonActive : styles.micButtonInactive,
+                ]}
+                onPress={isListening ? stopVoiceInput : startVoiceInput}
+                disabled={isGuest || isOutOfPrompts || isThinking}
+                accessibilityRole="button"
+                accessibilityLabel={isListening ? 'Stop recording' : 'Start recording'}
+              >
+                {isListening ? <MicOff size={18} color={WHITE} /> : <Mic size={18} color={WHITE} />}
+              </TouchableOpacity>
+            </Animated.View>
+            <View style={styles.inputShell}>
+              <TextInput
+                style={styles.textInput}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder={
+                  isListening
+                    ? 'Listening...'
+                    : isGuest
+                      ? 'Sign in to chat with Sprinthia...'
+                      : 'Ask Sprinthia about training, races, rehabilitation, or nutrition...'
+                }
+                placeholderTextColor={theme.colors.textMuted}
+                multiline
+                maxLength={800}
+                editable={!isGuest && !isOutOfPrompts && !isListening && !isThinking}
+                onSubmitEditing={handleSendMessage}
+                returnKeyType="send"
               />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sendButton,
+                  inputText.trim() && !isThinking && !isOutOfPrompts && !isListening
+                    ? styles.sendButtonActive
+                    : styles.sendButtonDisabled,
+                ]}
+                onPress={handleSendMessage}
+                disabled={!inputText.trim() || isThinking || isOutOfPrompts || isGuest || isListening}
+              >
+                <FontAwesome5
+                  name="paper-plane"
+                  size={16}
+                  color={
+                    inputText.trim() && !isThinking && !isOutOfPrompts && !isListening
+                      ? 'white'
+                      : theme.colors.textMuted
+                  }
+                />
+              </TouchableOpacity>
+            </View>
           </View>
           {(inlineWarning || isOutOfPrompts) && (
             <Text color="muted" style={styles.promptWarning}>
@@ -669,6 +887,27 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
     justifyContent: 'flex-end',
   },
+  iconToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: WHITE + '33',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  autoSpeakActive: {
+    backgroundColor: '#22c55e',
+    borderColor: '#22c55e',
+  },
+  autoSpeakInactive: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderColor: WHITE + '33',
+  },
+  languageButton: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
   historyButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -703,6 +942,27 @@ const styles = StyleSheet.create({
   remainingValue: {
     lineHeight: 18,
     marginTop: -1,
+  },
+  languageOverlay: {
+    flex: 1,
+    alignItems: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    paddingRight: theme.spacing.lg,
+  },
+  languageMenu: {
+    width: 200,
+    backgroundColor: theme.colors.popover,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    overflow: 'hidden',
+  },
+  languageOption: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  languageOptionActive: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   historyOverlay: {
     flex: 1,
@@ -885,6 +1145,27 @@ const styles = StyleSheet.create({
     borderTopColor: WHITE + '22',
     backgroundColor: 'rgba(0,0,0,0.22)',
   },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  micButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  micButtonActive: {
+    backgroundColor: '#ef4444',
+    borderColor: '#ef4444',
+  },
+  micButtonInactive: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderColor: WHITE + '33',
+  },
   inputShell: {
     position: 'relative',
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -894,6 +1175,7 @@ const styles = StyleSheet.create({
     paddingRight: 56,
     paddingLeft: 14,
     paddingVertical: 6,
+    flex: 1,
   },
   textInput: {
     minHeight: 48,
