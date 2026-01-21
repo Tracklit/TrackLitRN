@@ -5544,6 +5544,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =====================================
+  // PROGRAM TEMPLATE ROUTES
+  // =====================================
+
+  // Get user's program templates
+  app.get("/api/programs/templates", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programs = await dbStorage.getUserPrograms(req.user!.id);
+      const templates = programs.filter(p => p.isTemplate === true);
+      res.json(templates);
+    } catch (error: any) {
+      console.error("Error fetching templates:", error);
+      res.status(500).json({ error: "Failed to fetch templates" });
+    }
+  });
+
+  // Save a program as a template
+  app.post("/api/programs/:id/save-as-template", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if user is the owner of this program
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to save this program as a template" });
+      }
+      
+      // Get all sessions from the original program
+      const sessions = await dbStorage.getProgramSessions(programId);
+      
+      // Create a new template program (copy of the original)
+      const templateTitle = req.body.templateTitle || `${program.title} (Template)`;
+      const templateProgram = await dbStorage.createProgram({
+        userId: req.user!.id,
+        title: templateTitle,
+        description: program.description,
+        category: program.category,
+        level: program.level,
+        duration: program.duration,
+        visibility: 'private', // Templates are always private
+        isTemplate: true,
+        isUploadedProgram: program.isUploadedProgram,
+        programFileUrl: program.programFileUrl,
+        programFileType: program.programFileType,
+        isTextBased: program.isTextBased,
+        textContent: program.textContent,
+      });
+      
+      // Copy all sessions to the template
+      for (const session of sessions) {
+        await dbStorage.createProgramSession({
+          programId: templateProgram.id,
+          weekNumber: session.weekNumber,
+          dayNumber: session.dayNumber,
+          content: session.content,
+          shortDistanceWorkout: session.shortDistanceWorkout,
+          mediumDistanceWorkout: session.mediumDistanceWorkout,
+          longDistanceWorkout: session.longDistanceWorkout,
+          preActivation1: session.preActivation1,
+          preActivation2: session.preActivation2,
+          extraSession: session.extraSession,
+          title: session.title,
+          description: session.description,
+          isRestDay: session.isRestDay,
+          notes: session.notes,
+        });
+      }
+      
+      res.status(201).json({
+        template: templateProgram,
+        copiedSessions: sessions.length,
+        message: "Program saved as template successfully"
+      });
+    } catch (error: any) {
+      console.error("Error saving template:", error);
+      res.status(500).json({ error: "Failed to save program as template" });
+    }
+  });
+
+  // Create a new program from a template
+  app.post("/api/programs/create-from-template/:templateId", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const templateId = parseInt(req.params.templateId);
+      const template = await dbStorage.getProgram(templateId);
+      
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+      
+      // Check if user is the owner of this template
+      if (template.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to use this template" });
+      }
+      
+      // Check if it's actually a template
+      if (!template.isTemplate) {
+        return res.status(400).json({ error: "This is not a template program" });
+      }
+      
+      // Get all sessions from the template
+      const templateSessions = await dbStorage.getProgramSessions(templateId);
+      
+      // Create a new program from the template
+      const { title, startDate, athleteId } = req.body;
+      const newProgram = await dbStorage.createProgram({
+        userId: req.user!.id,
+        title: title || template.title.replace(' (Template)', ''),
+        description: template.description,
+        category: template.category,
+        level: template.level,
+        duration: template.duration,
+        visibility: 'private',
+        isTemplate: false,
+        templateSourceId: templateId,
+        startDate: startDate ? new Date(startDate) : new Date(),
+        isUploadedProgram: template.isUploadedProgram,
+        programFileUrl: template.programFileUrl,
+        programFileType: template.programFileType,
+        isTextBased: template.isTextBased,
+        textContent: template.textContent,
+      });
+      
+      // Copy all sessions to the new program
+      for (const session of templateSessions) {
+        await dbStorage.createProgramSession({
+          programId: newProgram.id,
+          weekNumber: session.weekNumber,
+          dayNumber: session.dayNumber,
+          content: session.content,
+          shortDistanceWorkout: session.shortDistanceWorkout,
+          mediumDistanceWorkout: session.mediumDistanceWorkout,
+          longDistanceWorkout: session.longDistanceWorkout,
+          preActivation1: session.preActivation1,
+          preActivation2: session.preActivation2,
+          extraSession: session.extraSession,
+          title: session.title,
+          description: session.description,
+          isRestDay: session.isRestDay,
+          notes: session.notes,
+        });
+      }
+      
+      // If an athleteId is provided, assign the program to that athlete
+      if (athleteId) {
+        await dbStorage.createProgramAssignment({
+          programId: newProgram.id,
+          assignerId: req.user!.id,
+          assigneeId: athleteId,
+          status: 'pending',
+        });
+      }
+      
+      res.status(201).json({
+        program: newProgram,
+        copiedSessions: templateSessions.length,
+        message: "Program created from template successfully"
+      });
+    } catch (error: any) {
+      console.error("Error creating from template:", error);
+      res.status(500).json({ error: "Failed to create program from template" });
+    }
+  });
+
+  // =====================================
   // USER SUBSCRIPTION ROUTES
   // =====================================
 
@@ -6181,7 +6360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // 7.1 Get potential assignees for a program (club members, athletes, etc.)
+  // 7.1 Get potential assignees for a program (club members, athletes, friends, etc.)
   app.get("/api/programs/:id/potential-assignees", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
@@ -6206,11 +6385,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get coach's athletes (if user is a coach)
       const coachAthletes = req.user!.isCoach ? await dbStorage.getCoachAthletes(req.user!.id) : [];
       
-      // Combine both lists and remove duplicates
+      // Get friends - coaches can assign programs to their friends too
+      const friends = await dbStorage.getFriends(req.user!.id);
+      
+      // Combine all lists and remove duplicates
       const allPotentialAssignees = [...clubMembers];
+      
+      // Add coach athletes
       coachAthletes.forEach(athlete => {
         if (!allPotentialAssignees.find(member => member.id === athlete.id)) {
           allPotentialAssignees.push(athlete);
+        }
+      });
+      
+      // Add friends
+      friends.forEach(friend => {
+        if (!allPotentialAssignees.find(member => member.id === friend.id)) {
+          allPotentialAssignees.push(friend);
         }
       });
       
@@ -6222,6 +6413,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         !existingAssigneeIds.includes(member.id) && 
         member.id !== req.user!.id
       );
+      
+      console.log(`Potential assignees for program ${programId}: clubMembers=${clubMembers.length}, coachAthletes=${coachAthletes.length}, friends=${friends.length}, eligible=${eligibleAssignees.length}`);
       
       res.json(eligibleAssignees);
     } catch (error: any) {

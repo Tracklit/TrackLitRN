@@ -154,6 +154,22 @@ function EditableCell({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                if (value) {
+                  navigator.clipboard.writeText(value);
+                }
+              }}
+              title="Copy to clipboard"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              Copy
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 px-3" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 setIsEditing(false);
               }}
             >
@@ -214,6 +230,11 @@ function ProgramEditorPage() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Template state
+  const [saveAsTemplateDialogOpen, setSaveAsTemplateDialogOpen] = useState(false);
+  const [templateTitle, setTemplateTitle] = useState('');
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   
   // Text-based program state
   const [textContent, setTextContent] = useState('');
@@ -288,7 +309,17 @@ function ProgramEditorPage() {
             duration: data.duration || 7,
           });
           
-          return data.sessions;
+          // Transform sessions to add weekNumber based on dayNumber
+          // dayNumber 0-6 = week 0, dayNumber 7-13 = week 1, etc.
+          const transformedSessions = data.sessions.map((session: any) => ({
+            ...session,
+            weekNumber: Math.floor((session.dayNumber || 0) / 7),
+            dayNumber: (session.dayNumber || 0) % 7, // Convert to day within week (0-6)
+          }));
+          
+          console.log("Transformed sessions:", transformedSessions.slice(0, 3));
+          
+          return transformedSessions;
         }
         return [];
       } catch (err) {
@@ -712,6 +743,133 @@ function ProgramEditorPage() {
     });
   };
 
+  // Handle copying a week (duplicate all sessions to a new week)
+  const handleCopyWeek = async (weekNumber: number) => {
+    // Find all sessions in this week that have actual content
+    const weekSessions = sessions.filter((s: Session) => 
+      Number(s.weekNumber) === Number(weekNumber)
+    );
+    
+    console.log(`Copying week ${weekNumber}, found ${weekSessions.length} sessions:`, weekSessions);
+    
+    // Create a new week after the last existing week
+    const lastWeek = weeks.length > 0 ? weeks[weeks.length - 1] : null;
+    const newWeekNumber = lastWeek ? lastWeek.weekNumber + 1 : 0;
+    const baseDate = form.getValues("startDate") 
+      ? new Date(form.getValues("startDate")) 
+      : new Date();
+    const newStartDate = getWeekStartDate(baseDate, newWeekNumber);
+    
+    // Add the new week to UI first
+    setWeeks(prevWeeks => [...prevWeeks, {
+      weekNumber: newWeekNumber,
+      startDate: newStartDate,
+      days: [],
+    }]);
+    
+    // Copy each session to the new week
+    let copiedCount = 0;
+    for (const session of weekSessions) {
+      // Extract the workout content - prioritize shortDistanceWorkout as that's where content is stored
+      const workoutContent = session.shortDistanceWorkout || session.description || session.content || "";
+      
+      // Skip sessions without any content
+      if (!workoutContent.trim()) {
+        console.log(`Skipping empty session for day ${session.dayNumber}`);
+        continue;
+      }
+      
+      // Calculate absolute day number for the new week
+      // session.dayNumber is already 0-6 within the week (due to transformation)
+      const absoluteDayNumber = (newWeekNumber * 7) + session.dayNumber;
+      
+      const newDate = addDays(newStartDate, session.dayNumber);
+      const sessionData = {
+        programId,
+        dayNumber: absoluteDayNumber, // Store as absolute day number in DB
+        content: workoutContent,
+        isRestDay: session.isRestDay || false,
+        date: format(newDate, "yyyy-MM-dd"),
+        title: workoutContent.split('\n')[0] || "Training Session",
+        description: workoutContent,
+        shortDistanceWorkout: workoutContent, // This is the key field for display
+      };
+      
+      console.log(`Copying session to week ${newWeekNumber}, day ${session.dayNumber}, absoluteDay ${absoluteDayNumber}:`, sessionData);
+      
+      try {
+        const response = await fetch(`/api/programs/${programId}/sessions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sessionData)
+        });
+        
+        if (response.ok) {
+          copiedCount++;
+          const result = await response.json();
+          console.log("Session copied successfully:", result);
+        } else {
+          const errorText = await response.text();
+          console.error("Failed to copy session:", errorText);
+        }
+      } catch (error) {
+        console.error("Error copying session:", error);
+      }
+    }
+    
+    // Refresh sessions to show the copied data
+    await refetchSessions();
+    
+    toast({
+      title: "Week copied",
+      description: `Week ${weekNumber + 1} copied to Week ${newWeekNumber + 1} with ${copiedCount} workout(s).`,
+    });
+  };
+
+  // Handle saving program as template
+  const handleSaveAsTemplate = async () => {
+    if (!templateTitle.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a template name",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSavingTemplate(true);
+    try {
+      const response = await fetch(`/api/programs/${programId}/save-as-template`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateTitle: templateTitle.trim() })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: "Template saved",
+          description: `"${templateTitle}" has been saved as a template with ${data.copiedSessions} session(s).`,
+        });
+        setSaveAsTemplateDialogOpen(false);
+        setTemplateTitle('');
+        // Refresh programs list
+        queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save template');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save program as template",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
   // Create a local state to store session content
   const [localSessionContent, setLocalSessionContent] = useState<{
     [key: string]: {
@@ -770,6 +928,10 @@ function ProgramEditorPage() {
     const date = getDateForWeekDay(weekNumber, dayNumber);
     const cellKey = `${weekNumber}-${dayNumber}`;
     
+    // Convert weekNumber + dayNumber to absolute dayNumber for database storage
+    // Week 0, Day 3 = absolute day 3; Week 1, Day 3 = absolute day 10
+    const absoluteDayNumber = (weekNumber * 7) + dayNumber;
+    
     // First, update our local cache
     setSavedSessions(prev => ({
       ...prev,
@@ -784,18 +946,18 @@ function ProgramEditorPage() {
       console.error("Could not save to localStorage:", e);
     }
     
-    // Check if session exists already
+    // Check if session exists already (using frontend weekNumber/dayNumber)
     const existingSession = sessions.find((s: Session) => 
       Number(s.weekNumber) === Number(weekNumber) && Number(s.dayNumber) === Number(dayNumber)
     );
     
-    console.log("Saving session content:", { content, weekNumber, dayNumber });
+    console.log("Saving session content:", { content, weekNumber, dayNumber, absoluteDayNumber });
     
     // Prepare complete session data to ensure all fields are properly set
+    // Use absoluteDayNumber for database storage
     const sessionData = {
       programId,
-      weekNumber,
-      dayNumber,
+      dayNumber: absoluteDayNumber, // Store as absolute day number in DB
       content,
       isRestDay,
       date: format(date, "yyyy-MM-dd"),
@@ -813,6 +975,7 @@ function ProgramEditorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...existingSession,
+          dayNumber: absoluteDayNumber, // Override with absolute day number
           ...sessionData
         })
       })
@@ -1503,6 +1666,61 @@ function ProgramEditorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Save as Template Dialog */}
+      <Dialog open={saveAsTemplateDialogOpen} onOpenChange={setSaveAsTemplateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save as Template</DialogTitle>
+            <DialogDescription>
+              Save this program as a reusable template. You can use templates to quickly create new programs for your athletes.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="templateName" className="text-sm font-medium">
+                Template Name
+              </label>
+              <Input
+                id="templateName"
+                placeholder="e.g., Sprint Training 4-Week Block"
+                value={templateTitle}
+                onChange={(e) => setTemplateTitle(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                setSaveAsTemplateDialogOpen(false);
+                setTemplateTitle('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveAsTemplate}
+              disabled={!templateTitle.trim() || isSavingTemplate}
+            >
+              {isSavingTemplate ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Save Template
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <Button
@@ -1515,6 +1733,18 @@ function ProgramEditorPage() {
           <h1 className="text-2xl font-bold">Program Editor</h1>
         </div>
         <div className="flex gap-2">
+          {/* Save as Template Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setTemplateTitle(program?.title ? `${program.title} (Template)` : '');
+              setSaveAsTemplateDialogOpen(true);
+            }}
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            Save as Template
+          </Button>
           <Button
             type="submit"
             form="program-editor-form"
@@ -1688,15 +1918,26 @@ function ProgramEditorPage() {
                       <h3 className="text-lg font-medium">
                         Week {week.weekNumber + 1}: {format(week.startDate, "MMM d")} - {format(addDays(week.startDate, 6), "MMM d, yyyy")}
                       </h3>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                        onClick={() => handleDeleteWeek(week.weekNumber)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete Week
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                          onClick={() => handleCopyWeek(week.weekNumber)}
+                        >
+                          <Copy className="h-4 w-4 mr-1" />
+                          Copy Week
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                          onClick={() => handleDeleteWeek(week.weekNumber)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete Week
+                        </Button>
+                      </div>
                     </div>
                     
                     <Table>

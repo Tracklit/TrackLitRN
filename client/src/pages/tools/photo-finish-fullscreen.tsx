@@ -634,8 +634,10 @@ export default function PhotoFinishFullscreen({
 
   return (
     <div 
-      className="fixed inset-0 bg-black text-white flex flex-col"
+      className="fixed top-0 left-0 right-0 bottom-0 bg-black text-white flex flex-col z-50"
       style={{ 
+        height: '100dvh', // Dynamic viewport height for mobile browsers
+        minHeight: '-webkit-fill-available',
         touchAction: 'none',
         userSelect: 'none',
         WebkitUserSelect: 'none',
@@ -863,10 +865,10 @@ export default function PhotoFinishFullscreen({
       </div>
 
       {/* Timeline Scrubber - No background bar */}
-      <div className="bg-gray-900 h-32 flex-shrink-0 mb-4">
-        <div className="px-6 pt-2 pb-8 h-full relative">
+      <div className="bg-gray-900 flex-shrink-0" style={{ height: '140px', paddingBottom: '16px' }}>
+        <div className="px-6 pt-2 h-full relative">
           {/* Timeline with vertical markers */}
-          <div className="h-full relative overflow-hidden">
+          <div className="h-20 relative overflow-visible">
             <div
               ref={timelineRef}
               className={`h-full w-full relative ${isTimelineLocked ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}

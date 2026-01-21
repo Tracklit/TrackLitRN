@@ -9,4 +9,10 @@ dist
 npm-debug.log*
 .DS_Store
 coverage
-.nyc_output
+.nyc_outputtracklit-mobile
+temp-logs
+temp-logs-frontend
+temp-logs-latest2
+logs-final
+uploads
+*.zip

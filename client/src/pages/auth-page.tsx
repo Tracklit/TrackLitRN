@@ -162,13 +162,29 @@ export default function AuthPage() {
 
   // Handle login submission
   const onLoginSubmit = (data: LoginData) => {
-    loginMutation.mutate(data);
+    loginMutation.mutate(data, {
+      onError: (error: Error) => {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: error.message || 'Invalid username or password',
+        });
+      },
+    });
   };
 
   // Handle register submission
   const onRegisterSubmit = (data: z.infer<typeof registerFormSchema>) => {
     const { confirmPassword, ...userData } = data;
-    registerMutation.mutate(userData);
+    registerMutation.mutate(userData, {
+      onError: (error: Error) => {
+        toast({
+          variant: 'destructive',
+          title: 'Registration Failed',
+          description: error.message || 'Could not create account',
+        });
+      },
+    });
   };
 
   // Handle forgot password submission
@@ -367,6 +383,12 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
+                  
+                  {loginMutation.isError && (
+                    <div className="p-3 rounded-md bg-destructive/10 border border-destructive text-destructive text-sm">
+                      {loginMutation.error?.message || 'Invalid username or password'}
+                    </div>
+                  )}
                   
                   <Button 
                     type="submit" 
