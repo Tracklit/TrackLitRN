@@ -504,6 +504,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   );
+
+  // Apple OAuth Routes (Sign in with Apple)
+  app.get('/api/auth/apple',
+    passport.authenticate('apple')
+  );
+
+  // Mobile Apple OAuth entrypoint (deep-link back into the app)
+  app.get('/api/auth/apple/mobile',
+    passport.authenticate('apple', { state: 'tracklitmobile' })
+  );
+
+  // Apple requires POST callback (uses form_post response mode)
+  app.post('/api/auth/apple/callback',
+    passport.authenticate('apple', { 
+      failureRedirect: '/auth?error=apple_auth_failed',
+      session: true 
+    }),
+    async (req, res) => {
+      try {
+        const user = req.user as User;
+        if (!user) {
+          return res.redirect('/auth?error=no_user');
+        }
+
+        // If this login started from mobile, return a JWT via deep link.
+        const state = typeof req.body.state === 'string' ? req.body.state : '';
+        if (state === 'tracklitmobile') {
+          const secret =
+            process.env.JWT_SECRET ||
+            process.env.SESSION_SECRET ||
+            'track-meet-jwt-secret-key';
+          const token = jwt.sign({ id: user.id }, secret, { expiresIn: '30d' });
+
+          // Send token back to the native app via Expo scheme.
+          const redirectUrl = `tracklitmobile://auth?token=${encodeURIComponent(token)}`;
+          return res.redirect(redirectUrl);
+        }
+
+        // Check if user needs onboarding
+        const needsOnboarding = !user.username || !user.name;
+
+        // Redirect to dashboard or onboarding
+        if (needsOnboarding) {
+          res.redirect('/onboarding');
+        } else {
+          res.redirect('/dashboard');
+        }
+      } catch (error: any) {
+        console.error('[APPLE-AUTH] Callback error:', error);
+        res.redirect('/auth?error=callback_failed');
+      }
+    }
+  );
   
   // Initialize default achievements
   await initializeDefaultAchievements();

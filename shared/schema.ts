@@ -36,6 +36,7 @@ export const users = pgTable("users", {
   streakCount: integer("streak_count").default(0), // Login/activity streak
   badges: text("badges").array(), // Earned badges/achievements
   coachMode: text("coach_mode").default("supportive"), // AI coach personality (supportive, motivational, analytical, tough_love)
+  appleId: text("apple_id").unique(), // Apple Sign-In identifier
   createdAt: timestamp("created_at").defaultNow(),
 });
 
