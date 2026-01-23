@@ -21,8 +21,8 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Mic, MicOff, Volume2, VolumeX, Languages } from 'lucide-react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
-import * as Speech from 'expo-speech';
 import Voice from '@react-native-voice/voice';
+import * as Speech from 'expo-speech';
 // Clipboard is optional: if native module isn't available yet, we degrade gracefully.
 let Clipboard: typeof import('expo-clipboard') | null = null;
 try {

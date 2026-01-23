@@ -19,6 +19,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { apiRequest } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '../utils/theme';
@@ -60,6 +61,7 @@ export const ProgramDetailScreen: React.FC = () => {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<ProgramDetailRouteProp>();
   const programId = route.params?.id;
+  const { user } = useAuth();
 
   // Fetch program details
   const programQuery = useQuery({
@@ -69,6 +71,7 @@ export const ProgramDetailScreen: React.FC = () => {
   });
 
   const program = programQuery.data;
+  const isOwner = !!program && !!user?.id && program.userId === user.id;
 
   const getLevelColor = (level?: string) => {
     switch (level?.toLowerCase()) {
@@ -243,6 +246,17 @@ export const ProgramDetailScreen: React.FC = () => {
           </CardContent>
         </Card>
 
+        {isOwner && (
+          <Button
+            variant="default"
+            size="lg"
+            onPress={() => navigation.navigate('ProgramEditor', { id: program.id })}
+            style={styles.editButton}
+          >
+            Edit Program
+          </Button>
+        )}
+
         {/* Sessions by Week */}
         <Text variant="h4" weight="semiBold" color="foreground" style={styles.sessionsTitle}>
           Training Schedule
@@ -383,6 +397,9 @@ const styles = StyleSheet.create({
   },
   overviewCard: {
     marginBottom: theme.spacing.xl,
+  },
+  editButton: {
+    marginBottom: theme.spacing.lg,
   },
   overviewHeader: {
     marginBottom: theme.spacing.md,

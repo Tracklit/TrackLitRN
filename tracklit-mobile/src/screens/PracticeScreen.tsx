@@ -287,7 +287,7 @@ export const PracticeScreen: React.FC = () => {
             </Text>
             <Button variant="outline" onPress={() => setShowProgramPicker(true)} style={styles.emptyButton}>
               <Text variant="body" weight="medium" color="primary-foreground">
-              View Available Programs
+                View Available Programs
               </Text>
             </Button>
           </LinearGradient>

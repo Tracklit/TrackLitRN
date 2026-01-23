@@ -10,6 +10,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
+import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import theme from '@/utils/theme';
 
@@ -122,12 +123,8 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
           </ScrollView>
 
           <Card style={styles.footerCard}>
-            <CardContent>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Text variant="body" weight="medium" color="primary-foreground">
-                  Close
-                </Text>
-              </TouchableOpacity>
+            <CardContent style={styles.closeContent}>
+              <Button variant="outline" size="md" onPress={onClose} title="Close" />
             </CardContent>
           </Card>
         </LinearGradient>
@@ -223,9 +220,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.6)',
     borderWidth: 0,
   },
-  closeButton: {
+  closeContent: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
   },
 });
 

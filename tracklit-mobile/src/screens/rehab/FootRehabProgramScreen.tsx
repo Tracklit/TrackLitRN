@@ -24,6 +24,7 @@ import { WebProgress } from '@/components/web/Progress';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
+import { queryClient } from '@/lib/queryClient';
 import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -179,7 +180,7 @@ export const FootRehabProgramScreen: React.FC = () => {
 
   const assignProgramMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/rehab/assign-program', {
+      return apiRequest<{ programId?: number | string }>('/api/rehab/assign-program', {
         method: 'POST',
         data: {
           programType: 'chronic-foot',
@@ -188,8 +189,26 @@ export const FootRehabProgramScreen: React.FC = () => {
         },
       });
     },
-    onSuccess: () => {
-      Alert.alert('Rehab Program Assigned!', 'Your foot recovery program has been assigned and will guide your training until completion.');
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['user-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      Alert.alert(
+        'Rehab Program Assigned!',
+        'Your foot recovery program has been assigned and is ready in Programs and Practice.',
+        [
+          {
+            text: 'View Program',
+            onPress: () => {
+              if (response?.programId !== undefined) {
+                navigation.navigate('ProgramDetail', { id: response.programId });
+              } else {
+                navigation.navigate('MainTabs', { screen: 'Programs' } as never);
+              }
+            },
+          },
+          { text: 'Close', style: 'cancel' },
+        ],
+      );
     },
     onError: () => {
       Alert.alert('Assignment Failed', 'Unable to assign the program. Please try again.');

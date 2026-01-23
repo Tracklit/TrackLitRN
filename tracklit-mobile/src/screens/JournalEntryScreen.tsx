@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
+import { Audio } from 'expo-av';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -19,7 +20,10 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
+import { getToken } from '@/lib/tokenStorage';
+import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
+import { env } from '@/config/env';
 import theme from '@/utils/theme';
 
 type JournalEntryRouteProp = RouteProp<RootStackParamList, 'JournalEntry'>;
@@ -30,11 +34,28 @@ export const JournalEntryScreen: React.FC = () => {
   const route = useRoute<JournalEntryRouteProp>();
   const dateParam = route.params?.date;
   const date = dateParam || new Date().toISOString().split('T')[0];
+  const { user } = useAuth();
 
   const [title, setTitle] = useState(`Journal Entry - ${date}`);
   const [notes, setNotes] = useState('');
   const [moodRating, setMoodRating] = useState(5);
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [recordingUri, setRecordingUri] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+
+  const hasVoiceAccess = user?.subscriptionTier === 'pro' || user?.subscriptionTier === 'star' || user?.isPremium === true;
+
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync().catch(() => undefined);
+      }
+    };
+  }, [sound]);
 
   const createMutation = useMutation({
     mutationFn: async () =>
@@ -46,7 +67,7 @@ export const JournalEntryScreen: React.FC = () => {
           type: 'workout',
           isPublic,
           content: {
-            moodRating,
+            mood: moodRating,
             date,
           },
         },
@@ -67,6 +88,109 @@ export const JournalEntryScreen: React.FC = () => {
       return;
     }
     createMutation.mutate();
+  };
+
+  const handleStartRecording = async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Microphone access is required to record audio.');
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const { recording: nextRecording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      setRecording(nextRecording);
+      setIsRecording(true);
+      setRecordingUri(null);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      Alert.alert('Recording Error', 'Unable to start recording.');
+    }
+  };
+
+  const handleStopRecording = async () => {
+    if (!recording) return;
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      setRecording(null);
+      setIsRecording(false);
+      setRecordingUri(uri ?? null);
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+      Alert.alert('Recording Error', 'Unable to stop recording.');
+    }
+  };
+
+  const handlePlayRecording = async () => {
+    if (!recordingUri) return;
+    try {
+      if (sound) {
+        await sound.unloadAsync();
+      }
+      const { sound: nextSound } = await Audio.Sound.createAsync({ uri: recordingUri });
+      setSound(nextSound);
+      setIsPlaying(true);
+      await nextSound.playAsync();
+      nextSound.setOnPlaybackStatusUpdate((status) => {
+        if (!status.isLoaded) return;
+        if (status.didJustFinish) {
+          setIsPlaying(false);
+        }
+      });
+    } catch (error) {
+      console.error('Error playing recording:', error);
+      Alert.alert('Playback Error', 'Unable to play recording.');
+    }
+  };
+
+  const handleTranscribe = async () => {
+    if (!recordingUri) {
+      Alert.alert('No Recording', 'Record audio before transcribing.');
+      return;
+    }
+    if (!hasVoiceAccess) {
+      Alert.alert('Premium Required', 'Voice transcription requires a Pro or Star subscription.');
+      return;
+    }
+
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      formData.append('audio', {
+        uri: recordingUri,
+        name: 'recording.m4a',
+        type: 'audio/m4a',
+      } as any);
+
+      const token = await getToken();
+      const response = await fetch(`${env.API_BASE_URL}/api/transcribe`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to transcribe');
+      }
+
+      if (data?.text) {
+        setNotes((prev) => `${prev ? `${prev}\n\n` : ''}${data.text}`);
+      }
+    } catch (error: any) {
+      console.error('Transcription error:', error);
+      Alert.alert('Transcription Error', error.message || 'Unable to transcribe recording.');
+    } finally {
+      setIsTranscribing(false);
+    }
   };
 
   return (
@@ -116,6 +240,44 @@ export const JournalEntryScreen: React.FC = () => {
             multiline
             numberOfLines={6}
           />
+        </View>
+
+        <View style={styles.section}>
+          <Text variant="body" weight="semiBold" color="foreground">
+            Voice Note
+          </Text>
+          <View style={styles.voiceRow}>
+            <Button
+              variant={isRecording ? 'outline' : 'default'}
+              size="sm"
+              onPress={isRecording ? handleStopRecording : handleStartRecording}
+              disabled={!hasVoiceAccess}
+            >
+              {isRecording ? 'Stop recording' : 'Start recording'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={handlePlayRecording}
+              disabled={!recordingUri || isPlaying}
+            >
+              {isPlaying ? 'Playing...' : 'Play'}
+            </Button>
+          </View>
+          <Button
+            variant="outline"
+            size="sm"
+            onPress={handleTranscribe}
+            loading={isTranscribing}
+            disabled={!recordingUri || !hasVoiceAccess}
+          >
+            Transcribe to notes
+          </Button>
+          {!hasVoiceAccess && (
+            <Text variant="caption" color="muted">
+              Voice transcription is available for Pro and Star members.
+            </Text>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -190,6 +352,11 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: theme.spacing.sm,
+  },
+  voiceRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    alignItems: 'center',
   },
   input: {
     borderWidth: 1,

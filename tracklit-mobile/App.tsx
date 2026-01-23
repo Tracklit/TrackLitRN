@@ -59,6 +59,7 @@ import { ClubDetailScreen } from './src/screens/ClubDetailScreen';
 import { ClubManagementScreen } from './src/screens/ClubManagementScreen';
 import { CreateGroupScreen } from './src/screens/CreateGroupScreen';
 import { ProgramCreateScreen } from './src/screens/ProgramCreateScreen';
+import { ProgramEditorScreen } from './src/screens/ProgramEditorScreen';
 import { VideoAnalysisScreen } from './src/screens/VideoAnalysisScreen';
 import { ExerciseLibraryScreen } from './src/screens/ExerciseLibraryScreen';
 import { ExerciseLibraryAddScreen } from './src/screens/ExerciseLibraryAddScreen';
@@ -139,6 +140,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="SprintTimePrediction" component={SprintTimePredictionScreen} />
     <RootStack.Screen name="ProgramDetail" component={ProgramDetailScreen} />
     <RootStack.Screen name="ProgramCreate" component={ProgramCreateScreen} />
+    <RootStack.Screen name="ProgramEditor" component={ProgramEditorScreen} />
     <RootStack.Screen name="Meets" component={MeetsScreen} />
     <RootStack.Screen name="CreateMeet" component={CreateMeetScreen} />
     <RootStack.Screen name="Results" component={ResultsScreen} />

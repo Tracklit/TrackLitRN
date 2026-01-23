@@ -740,7 +740,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Audio transcription endpoint
-  app.post('/api/transcribe', audioUpload.single('file'), transcribeAudioHandler);
+  app.post(
+    '/api/transcribe',
+    audioUpload.fields([
+      { name: 'file', maxCount: 1 },
+      { name: 'audio', maxCount: 1 },
+    ]),
+    (req: Request, res: Response) => {
+      if (!req.file && req.files) {
+        const files = req.files as Record<string, Express.Multer.File[]>;
+        const resolved = files.file?.[0] ?? files.audio?.[0];
+        if (resolved) {
+          (req as Request & { file?: Express.Multer.File }).file = resolved;
+        }
+      }
+      return transcribeAudioHandler(req, res);
+    }
+  );
   
   // Upload media
   app.post('/api/practice/media', upload.single('file'), async (req: Request, res: Response) => {
@@ -5245,6 +5261,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete program session" });
     }
   });
+
+  // 4.4 Batch upsert program sessions
+  app.put("/api/programs/:programId/sessions/batch", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const programId = parseInt(req.params.programId);
+      if (isNaN(programId)) {
+        return res.status(400).json({ error: "Invalid program ID" });
+      }
+
+      const program = await dbStorage.getProgram(programId);
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to update sessions in this program" });
+      }
+
+      const batchSchema = z.object({
+        sessions: z.array(
+          insertProgramSessionSchema.partial().extend({
+            id: z.number().optional(),
+          })
+        ).min(1),
+        deleteSessionIds: z.array(z.number()).optional(),
+      });
+
+      const parsed = batchSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid session batch payload", details: parsed.error.format() });
+      }
+
+      const { sessions, deleteSessionIds } = parsed.data;
+
+      const toUpdate = sessions.filter((session) => typeof session.id === "number");
+      const toCreate = sessions.filter((session) => !session.id);
+
+      const createPayload = toCreate.map((session) => {
+        const { id: _id, programId: _programId, ...rest } = session;
+        return { ...rest, programId };
+      });
+
+      const missingDayNumber = createPayload.find((session) => session.dayNumber === undefined || session.dayNumber === null);
+      if (missingDayNumber) {
+        return res.status(400).json({ error: "dayNumber is required for new sessions" });
+      }
+
+      if (createPayload.length > 0) {
+        await dbStorage.createProgramSessionBatch(createPayload);
+      }
+
+      if (toUpdate.length > 0) {
+        await Promise.all(toUpdate.map(async (session) => {
+          const { id, programId: _programId, ...rest } = session;
+          if (!id) return;
+          await dbStorage.updateProgramSession(id, { ...rest, programId });
+        }));
+      }
+
+      if (deleteSessionIds && deleteSessionIds.length > 0) {
+        for (const sessionId of deleteSessionIds) {
+          const existing = await dbStorage.getProgramSession(sessionId);
+          if (existing && existing.programId === programId) {
+            await dbStorage.deleteProgramSession(sessionId);
+          }
+        }
+      }
+
+      const updatedSessions = await dbStorage.getProgramSessions(programId);
+      res.json({ sessions: updatedSessions });
+    } catch (error: any) {
+      console.error("Error batch upserting program sessions:", error);
+      res.status(500).json({ error: "Failed to update program sessions" });
+    }
+  });
   
   // Gym data endpoint using program and day number for frontend compatibility
   app.get('/api/programs/:programId/days/:dayNumber/gym-data', async (req, res) => {
@@ -7570,8 +7665,76 @@ It supports multilingual interactions, replying in the same language as the athl
     }
 
     try {
-      const { programType, programData } = req.body;
+      const { programType, programData, dailyPrograms } = req.body;
       const userId = req.user.id;
+
+      if (!programData?.title) {
+        return res.status(400).json({ error: "Program title is required" });
+      }
+
+      const flattenDailyPrograms = () => {
+        if (!dailyPrograms || typeof dailyPrograms !== "object") return [];
+        const grouped = Object.values(dailyPrograms) as Array<
+          Array<{ day: number; focus?: string; exercises?: string[]; intensity?: string }>
+        >;
+        return grouped.flat().filter(Boolean).sort((a, b) => a.day - b.day);
+      };
+
+      const dailyItems = flattenDailyPrograms();
+      const phaseCount = Array.isArray(programData?.phases) ? programData.phases.length : 0;
+      const totalDays = dailyItems.length > 0 ? dailyItems.length : Math.max(phaseCount * 7, 7);
+      const totalSessions = dailyItems.length > 0 ? dailyItems.length : Math.max(phaseCount, 1);
+
+      const program = await dbStorage.createProgram({
+        userId,
+        title: programData.title,
+        description: programData.description || "Rehabilitation program",
+        visibility: "private",
+        price: 0,
+        priceType: "spikes",
+        category: "Rehabilitation",
+        level: "intermediate",
+        duration: totalDays,
+        totalSessions,
+      });
+
+      const buildDateKey = (offset: number) => {
+        const date = new Date();
+        date.setDate(date.getDate() + offset);
+        const month = date.toLocaleDateString("en-US", { month: "short" });
+        const day = date.getDate();
+        return `${month}-${day}`;
+      };
+
+      if (dailyItems.length > 0) {
+        const sessions = dailyItems.map((dayItem, index) => ({
+          programId: program.id,
+          dayNumber: dayItem.day || index + 1,
+          title: `Day ${dayItem.day || index + 1} • ${dayItem.focus || "Recovery"}`,
+          description: dayItem.intensity ? `Intensity: ${dayItem.intensity}` : dayItem.focus,
+          date: buildDateKey(index),
+          preActivation1: dayItem.focus || "Rehabilitation",
+          shortDistanceWorkout: dayItem.exercises?.join(" • ") || undefined,
+          extraSession: dayItem.intensity ? `Intensity: ${dayItem.intensity}` : undefined,
+        }));
+        await dbStorage.createProgramSessionBatch(sessions);
+      } else if (Array.isArray(programData?.phases) && programData.phases.length > 0) {
+        const sessions = programData.phases.map((phase: any, index: number) => ({
+          programId: program.id,
+          dayNumber: index + 1,
+          title: phase.name || `Phase ${index + 1}`,
+          description: phase.days || "Rehabilitation phase",
+          date: buildDateKey(index * 7),
+          preActivation1: Array.isArray(phase.goals) ? phase.goals.join(" • ") : phase.goals,
+          shortDistanceWorkout: Array.isArray(phase.exercises)
+            ? phase.exercises.map((ex: any) => ex.name || ex).join(" • ")
+            : undefined,
+          extraSession: Array.isArray(phase.exercises)
+            ? phase.exercises.map((ex: any) => ex.description || ex).join(" | ")
+            : undefined,
+        }));
+        await dbStorage.createProgramSessionBatch(sessions);
+      }
 
       // Create a notification for program assignment
       await dbStorage.createNotification({
@@ -7580,14 +7743,15 @@ It supports multilingual interactions, replying in the same language as the athl
         title: "Rehabilitation Program Assigned",
         message: `Your ${programData.title} has been assigned and will guide your recovery.`,
         actionUrl: "/assigned-programs",
-        isRead: false
+        isRead: false,
       });
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: "Rehab program assigned successfully",
         programType,
-        title: programData.title
+        title: programData.title,
+        programId: program.id,
       });
     } catch (error: any) {
       console.error("Error assigning rehab program:", error);
