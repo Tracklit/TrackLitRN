@@ -730,7 +730,7 @@ export default function AuthPage() {
               
               <div className="mt-6 text-center text-sm text-darkGray">
                 <p>
-                  Already have an account?{" "}}
+                  Already have an account?{" "}
                   <button 
                     className="text-primary font-medium hover:underline" 
                     onClick={() => setActiveTab('login')}
