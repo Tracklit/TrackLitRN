@@ -36,6 +36,7 @@ export const users = pgTable("users", {
   streakCount: integer("streak_count").default(0), // Login/activity streak
   badges: text("badges").array(), // Earned badges/achievements
   coachMode: text("coach_mode").default("supportive"), // AI coach personality (supportive, motivational, analytical, tough_love)
+  appleId: text("apple_id").unique(), // Apple Sign-In identifier
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1550,6 +1551,9 @@ export const trainingPrograms = pgTable("training_programs", {
   googleSheetId: text("google_sheet_id"), // Google Sheet ID
   isTextBased: boolean("is_text_based").default(false),
   textContent: text("text_content"), // Free-form text content for text-based programs
+  isTemplate: boolean("is_template").default(false), // Template that can be reused
+  templateSourceId: integer("template_source_id"), // ID of the template this program was created from
+  startDate: timestamp("start_date"), // When the program starts
   createdAt: timestamp("created_at").defaultNow(),
 });
 

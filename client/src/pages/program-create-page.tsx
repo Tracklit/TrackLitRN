@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
@@ -20,7 +20,9 @@ import {
   CheckCircle2,
   Bot,
   Zap,
-  Crown
+  Crown,
+  Copy,
+  Calendar
 } from "lucide-react";
 import { 
   Select, 
@@ -40,6 +42,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import { GoogleSheetImportDialog } from "@/components/google-sheet-import-dialog";
 
 interface CreateProgramForm {
@@ -67,7 +80,7 @@ function ProgramCreatePage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   
-  const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'text' | 'sprinthia' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'text' | 'sprinthia' | 'template' | null>(null);
   const [isNavigatingToEdit, setIsNavigatingToEdit] = useState(false);
   const [isImportDrawerOpen, setIsImportDrawerOpen] = useState(false);
   const [formData, setFormData] = useState<CreateProgramForm>({
@@ -83,6 +96,23 @@ function ProgramCreatePage() {
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  
+  // Template state
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [templateProgramTitle, setTemplateProgramTitle] = useState('');
+  const [templateStartDate, setTemplateStartDate] = useState<Date | undefined>(new Date());
+  const [isCreatingFromTemplate, setIsCreatingFromTemplate] = useState(false);
+  
+  // Fetch user's templates
+  const { data: templates = [], isLoading: templatesLoading } = useQuery({
+    queryKey: ['/api/programs/templates'],
+    queryFn: async () => {
+      const response = await fetch('/api/programs/templates', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      return response.json();
+    },
+    enabled: selectedMethod === 'template',
+  });
   
   // Sprinthia form state
   const [sprinthiaData, setSprinthiaData] = useState<SprinthiaFormData>({
@@ -513,6 +543,29 @@ function ProgramCreatePage() {
                         </div>
                       </div>
                     )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card 
+              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
+              style={{ 
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
+                borderRadius: '6px',
+                boxShadow: '0 0 10px 4px rgba(16, 185, 129, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+              }}
+              onClick={() => setSelectedMethod('template')}
+            >
+              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="flex justify-center">
+                    <Copy className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold mb-1 text-white">From Template</h2>
+                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Create a program from one of your saved templates</p>
                   </div>
                 </div>
               </CardContent>
@@ -1155,6 +1208,154 @@ function ProgramCreatePage() {
                   </Card>
                 )}
               </div>
+            )}
+
+            {selectedMethod === 'template' && (
+              <Card className="border-2 border-emerald-500/30">
+                <CardHeader className="bg-gradient-to-r from-emerald-500/10 to-emerald-600/10">
+                  <CardTitle className="flex items-center">
+                    <Copy className="h-5 w-5 mr-2 text-emerald-500" />
+                    Create from Template
+                  </CardTitle>
+                  <CardDescription>
+                    Choose one of your saved templates to quickly create a new program
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {templatesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+                    </div>
+                  ) : templates.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Copy className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No Templates Yet</h3>
+                      <p className="text-muted-foreground mb-4">
+                        You haven't saved any program templates yet. Create a program first, then save it as a template from the Program Editor.
+                      </p>
+                      <Button variant="outline" onClick={() => setSelectedMethod('builder')}>
+                        Create a Program
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div>
+                        <Label>Select Template</Label>
+                        <Select
+                          value={selectedTemplateId?.toString() || ''}
+                          onValueChange={(value) => {
+                            const template = templates.find((t: any) => t.id === parseInt(value));
+                            setSelectedTemplateId(parseInt(value));
+                            if (template) {
+                              setTemplateProgramTitle(template.title.replace(' (Template)', ''));
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Choose a template..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {templates.map((template: any) => (
+                              <SelectItem key={template.id} value={template.id.toString()}>
+                                {template.title} ({template.duration} days)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {selectedTemplateId && (
+                        <>
+                          <div>
+                            <Label>Program Title</Label>
+                            <Input
+                              value={templateProgramTitle}
+                              onChange={(e) => setTemplateProgramTitle(e.target.value)}
+                              placeholder="Enter program title"
+                              className="mt-1"
+                            />
+                          </div>
+
+                          <div>
+                            <Label>Start Date</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="w-full mt-1 justify-start text-left font-normal"
+                                >
+                                  <Calendar className="mr-2 h-4 w-4" />
+                                  {templateStartDate ? format(templateStartDate, "PPP") : "Pick a date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={templateStartDate}
+                                  onSelect={setTemplateStartDate}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+
+                          <Button 
+                            className="w-full bg-emerald-600 hover:bg-emerald-700"
+                            disabled={!templateProgramTitle.trim() || isCreatingFromTemplate}
+                            onClick={async () => {
+                              setIsCreatingFromTemplate(true);
+                              try {
+                                const response = await fetch(`/api/programs/create-from-template/${selectedTemplateId}`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  credentials: 'include',
+                                  body: JSON.stringify({
+                                    title: templateProgramTitle,
+                                    startDate: templateStartDate?.toISOString(),
+                                  })
+                                });
+                                
+                                if (response.ok) {
+                                  const data = await response.json();
+                                  toast({
+                                    title: "Program Created",
+                                    description: `"${templateProgramTitle}" has been created from template with ${data.copiedSessions} session(s).`,
+                                  });
+                                  queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+                                  setLocation(`/programs/${data.program.id}/edit`);
+                                } else {
+                                  const error = await response.json();
+                                  throw new Error(error.error || 'Failed to create program');
+                                }
+                              } catch (error: any) {
+                                toast({
+                                  title: "Error",
+                                  description: error.message || "Failed to create program from template",
+                                  variant: "destructive",
+                                });
+                              } finally {
+                                setIsCreatingFromTemplate(false);
+                              }
+                            }}
+                          >
+                            {isCreatingFromTemplate ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Create Program from Template
+                              </>
+                            )}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
           </div>
         )}

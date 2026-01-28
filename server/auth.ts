@@ -1,6 +1,7 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import AppleStrategy from "passport-apple";
 import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
@@ -258,6 +259,82 @@ export function setupAuth(app: Express) {
     console.log('[GOOGLE-AUTH] Google OAuth strategy configured');
   } else {
     console.warn('[GOOGLE-AUTH] Google OAuth not configured - missing credentials');
+  }
+
+  // Apple OAuth Strategy (Sign in with Apple)
+  if (process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY) {
+    passport.use(
+      new AppleStrategy(
+        {
+          clientID: process.env.APPLE_CLIENT_ID,
+          teamID: process.env.APPLE_TEAM_ID,
+          keyID: process.env.APPLE_KEY_ID,
+          privateKeyString: process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          callbackURL: `/api/auth/apple/callback`,
+          scope: ['name', 'email'],
+          passReqToCallback: false
+        },
+        async (
+          accessToken: string,
+          refreshToken: string,
+          idToken: any,
+          profile: any,
+          done: (error: any, user?: any) => void
+        ) => {
+          try {
+            // Apple provides email only on first sign-in, so we store the Apple ID
+            const appleId = idToken.sub;
+            const email = idToken.email || profile?.email;
+            const name = profile?.name 
+              ? `${profile.name.firstName || ''} ${profile.name.lastName || ''}`.trim()
+              : null;
+
+            console.log('[APPLE-AUTH] Processing auth:', { appleId, email, hasName: !!name });
+
+            // First, try to find user by Apple ID (stored in a field)
+            let user = await storage.getUserByAppleId?.(appleId);
+
+            if (!user && email) {
+              // If not found by Apple ID, try by email
+              user = await storage.getUserByEmail(email);
+              
+              if (user) {
+                // Link Apple ID to existing account
+                await storage.updateUser(user.id, { appleId });
+                console.log(`[APPLE-AUTH] Linked Apple ID to existing user: ${user.id}`);
+              }
+            }
+
+            if (!user) {
+              // Create new user from Apple profile
+              if (!email) {
+                return done(new Error('Email is required for new account creation. Please allow email access.'), undefined);
+              }
+
+              const username = email.split('@')[0] + '_' + Math.random().toString(36).substr(2, 5);
+              user = await storage.createUser({
+                username,
+                email,
+                name: name || email.split('@')[0],
+                password: await hashPassword(randomBytes(32).toString('hex')), // Random password for OAuth users
+                appleId,
+              });
+              console.log(`[APPLE-AUTH] Created new user from Apple: ${user.id}`);
+            } else {
+              console.log(`[APPLE-AUTH] Existing user logged in: ${user.id}`);
+            }
+
+            return done(null, user);
+          } catch (error) {
+            console.error('[APPLE-AUTH] Error:', error);
+            return done(error as Error, undefined);
+          }
+        }
+      )
+    );
+    console.log('[APPLE-AUTH] Apple OAuth strategy configured');
+  } else {
+    console.warn('[APPLE-AUTH] Apple Sign-In not configured - missing credentials');
   }
 
 
