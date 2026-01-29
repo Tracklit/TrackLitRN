@@ -526,6 +526,14 @@ export const insertUserSchema = createInsertSchema(users).omit({
   isPremium: true,
   role: true,
   bio: true,
+}).extend({
+  // Transform dateOfBirth string to Date object
+  dateOfBirth: z.union([
+    z.string().transform((val) => val ? new Date(val) : undefined),
+    z.date(),
+    z.undefined(),
+    z.null()
+  ]).optional().nullable(),
 });
 
 export const insertMeetSchema = createInsertSchema(meets).omit({
