@@ -282,12 +282,15 @@ const connectRedis = async (retryCount = 0): Promise<boolean> => {
 export const redisReady = connectRedis().catch((err) => {
   console.error('Redis connection initialization failed:', err);
   return false;
-});export interface IStorage {
+});
+
+export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByAppleId(appleId: string): Promise<User | undefined>;
+  getUserByAppleSub(appleSub: string): Promise<User | undefined>;
   searchUsers(query: string): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
@@ -613,6 +616,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByAppleId(appleId: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.appleId, appleId));
+    return user;
+  }
+
+  async getUserByAppleSub(appleSub: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.appleSub, appleSub));
     return user;
   }
 

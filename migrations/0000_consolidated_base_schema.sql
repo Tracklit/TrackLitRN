@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     password TEXT NOT NULL,
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
+    apple_sub TEXT UNIQUE,
     bio TEXT,
     profile_image_url TEXT,
     is_coach BOOLEAN DEFAULT false,

@@ -16,3 +16,5 @@ temp-logs-latest2
 logs-final
 uploads
 *.zip
+tracklit-mobile
+.cursor

@@ -3,15 +3,18 @@
     "name": "TrackLit Mobile",
     "slug": "tracklit-mobile",
     "scheme": "tracklitmobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "sdkVersion": "51.0.0",
     "platforms": ["ios", "android"],
     "ios": {
-      "bundleIdentifier": "com.tracklit.mobile",
+      "bundleIdentifier": "com.tracklit.app",
       "supportsTablet": true,
       "deploymentTarget": "14.0",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Allow TrackLit to access your microphone for Sprinthia voice input."
+        "NSMicrophoneUsageDescription": "Allow TrackLit to access your microphone for Sprinthia voice input.",
+        "NSPhotoLibraryUsageDescription": "Allow TrackLit to access your photo library for uploads.",
+        "NSPhotoLibraryAddUsageDescription": "Allow TrackLit to save media to your photo library.",
+        "NSSpeechRecognitionUsageDescription": "Allow TrackLit to transcribe your voice notes."
       }
     },
     "android": {

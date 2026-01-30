@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
+  appleSub: text("apple_sub").unique(),
   isPremium: boolean("is_premium").default(false),
   subscriptionTier: text("subscription_tier").default("free"), // free, pro, star
   isCoach: boolean("is_coach").default(false),

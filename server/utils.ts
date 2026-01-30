@@ -121,12 +121,18 @@ export function serveStatic(app: Express) {
     }
   }));
 
-  // fall through to index.html if the file doesn't exist (but skip /assets/ requests)
+  // fall through to index.html if the file doesn't exist (but skip /assets/ and /api requests)
   app.use(/.*/, (req, res, next) => {
     // Don't serve index.html for asset requests - let them 404 instead
     if (req.originalUrl.startsWith('/assets/')) {
       console.log(`Skipping index.html fallback for asset request: ${req.originalUrl}`);
       return res.status(404).send('Asset not found');
+    }
+
+    // Don't serve index.html for API requests - return JSON 404 instead
+    if (req.originalUrl.startsWith('/api/')) {
+      console.warn(`API route not found: ${req.originalUrl}`);
+      return res.status(404).json({ error: 'API route not found' });
     }
 
     console.log(`Serving index.html fallback for: ${req.originalUrl}`);

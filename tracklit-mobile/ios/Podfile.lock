@@ -220,6 +220,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - ExpoAppleAuthentication (8.0.8):
+    - ExpoModulesCore
   - ExpoAsset (10.0.10):
     - ExpoModulesCore
   - ExpoClipboard (6.0.3):
@@ -1624,6 +1626,7 @@ DEPENDENCIES:
   - expo-dev-launcher (from `../node_modules/expo-dev-launcher`)
   - expo-dev-menu (from `../node_modules/expo-dev-menu`)
   - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface/ios`)
+  - ExpoAppleAuthentication (from `../node_modules/expo-apple-authentication/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoClipboard (from `../node_modules/expo-clipboard/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
@@ -1731,6 +1734,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-dev-menu"
   expo-dev-menu-interface:
     :path: "../node_modules/expo-dev-menu-interface/ios"
+  ExpoAppleAuthentication:
+    :path: "../node_modules/expo-apple-authentication/ios"
   ExpoAsset:
     :path: "../node_modules/expo-asset/ios"
   ExpoClipboard:
@@ -1896,6 +1901,7 @@ SPEC CHECKSUMS:
   expo-dev-launcher: c29af9b1c2154b6c01a73460d76c60688154350b
   expo-dev-menu: 0b75095ff9557cc0ca07bacd43534a31978e14be
   expo-dev-menu-interface: 540a154388e6ae7027b406827737e82b0d25da27
+  ExpoAppleAuthentication: 9413ae9a5e631a424cc04c1b13b0694dbab7d594
   ExpoAsset: 286fee7ba711ce66bf20b315e68106b13b8629fc
   ExpoClipboard: 243e22ff4161bbffcd3d2db469ae860ddc1156be
   ExpoFileSystem: 2988caaf68b7cb706e36d382829d99811d9d76a5

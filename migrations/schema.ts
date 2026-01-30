@@ -215,6 +215,7 @@ export const users = pgTable("users", {
 	password: text().notNull(),
 	name: text().notNull(),
 	email: text().notNull(),
+	appleSub: text("apple_sub"),
 	events: text().array(),
 	isPremium: boolean("is_premium").default(false),
 	role: text().default('athlete'),
@@ -235,6 +236,7 @@ export const users = pgTable("users", {
 			name: "users_default_club_id_fkey"
 		}),
 	unique("users_username_unique").on(table.username),
+	unique("users_apple_sub_unique").on(table.appleSub),
 ]);
 
 export const practiceSessions = pgTable("practice_sessions", {

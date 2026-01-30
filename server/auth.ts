@@ -8,6 +8,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { storage } from "./storage";
 import { User, User as SelectUser, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
@@ -49,6 +50,14 @@ declare global {
 // JWT Configuration
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || "track-meet-jwt-secret-key";
 const JWT_EXPIRES_IN = "30d"; // 30 days to match session expiry
+
+const APPLE_JWKS = createRemoteJWKSet(new URL("https://appleid.apple.com/auth/keys"));
+const APPLE_ISSUER = "https://appleid.apple.com";
+const APPLE_MOBILE_AUDIENCES = [
+  process.env.APPLE_IOS_BUNDLE_ID,
+  "com.tracklit.app",
+  "com.tracklit.mobile",
+].filter((value): value is string => Boolean(value));
 
 // Generate JWT token for a user
 function generateToken(user: SelectUser): string {
@@ -101,6 +110,43 @@ async function comparePasswords(supplied: string, stored: string) {
     console.error("Error comparing passwords:", error);
     return false;
   }
+}
+
+async function verifyAppleIdentityToken(
+  identityToken: string,
+  audience: string | string[] = APPLE_MOBILE_AUDIENCES,
+) {
+  const { payload } = await jwtVerify(identityToken, APPLE_JWKS, {
+    issuer: APPLE_ISSUER,
+    audience,
+  });
+  return payload;
+}
+
+function buildDisplayName(fullName?: { givenName?: string | null; familyName?: string | null }) {
+  const given = fullName?.givenName?.trim() ?? "";
+  const family = fullName?.familyName?.trim() ?? "";
+  const combined = `${given} ${family}`.trim();
+  return combined || "TrackLit Athlete";
+}
+
+async function buildUniqueUsername(base: string) {
+  const normalized = base
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 20);
+  let candidate = normalized || `apple_${randomBytes(4).toString("hex")}`;
+  let attempts = 0;
+  while (attempts < 5) {
+    const existing = await storage.getUserByUsername(candidate);
+    if (!existing) {
+      return candidate;
+    }
+    candidate = `${candidate}_${Math.floor(Math.random() * 1000)}`;
+    attempts += 1;
+  }
+  return `${normalized || "apple"}_${randomBytes(4).toString("hex")}`;
 }
 
 // Helper function to determine if user needs onboarding
@@ -345,6 +391,79 @@ export function setupAuth(app: Express) {
       done(null, user);
     } catch (error) {
       done(error);
+    }
+  });
+
+  app.post("/api/auth/apple/mobile", async (req, res) => {
+    try {
+      const { identityToken, fullName, email } = req.body;
+
+      if (!identityToken) {
+        return res.status(400).json({ error: "Apple identity token is required" });
+      }
+
+      const payload = await verifyAppleIdentityToken(identityToken);
+      const appleSub = typeof payload.sub === "string" ? payload.sub : undefined;
+      const emailFromToken = typeof payload.email === "string" ? payload.email : undefined;
+      const resolvedEmail = email || emailFromToken;
+
+      if (!appleSub) {
+        return res.status(400).json({ error: "Apple identity token is missing subject" });
+      }
+
+      let user = await storage.getUserByAppleSub(appleSub);
+
+      if (!user && resolvedEmail) {
+        const emailUser = await storage.getUserByEmail(resolvedEmail);
+        if (emailUser?.appleSub && emailUser.appleSub !== appleSub) {
+          return res.status(409).json({ error: "Apple account already linked to a different user." });
+        }
+
+        if (emailUser) {
+          const updates: Partial<User> = {};
+          if (!emailUser.appleSub) {
+            updates.appleSub = appleSub;
+          }
+          if (!emailUser.name) {
+            updates.name = buildDisplayName(fullName);
+          }
+          if (Object.keys(updates).length > 0) {
+            user = await storage.updateUser(emailUser.id, updates);
+          } else {
+            user = emailUser;
+          }
+        }
+      }
+
+      if (!user) {
+        if (!resolvedEmail) {
+          return res.status(400).json({ error: "Apple account email is required on first sign-in." });
+        }
+        const username = await buildUniqueUsername(resolvedEmail.split("@")[0] || `apple_${appleSub.slice(0, 8)}`);
+        const name = buildDisplayName(fullName);
+        const password = await hashPassword(randomBytes(32).toString("hex"));
+        user = await storage.createUser({
+          username,
+          email: resolvedEmail,
+          name,
+          password,
+          appleSub,
+        });
+      }
+
+      const token = generateToken(user);
+      const { password: _password, ...safeUser } = user as any;
+
+      res.status(200).json({ user: safeUser, token });
+    } catch (error) {
+      const errorInfo = {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        claim: (error as any)?.claim,
+        reason: (error as any)?.reason,
+      };
+      console.error("[APPLE-AUTH] Mobile auth error:", errorInfo);
+      res.status(500).json({ error: "Apple sign in failed" });
     }
   });
 

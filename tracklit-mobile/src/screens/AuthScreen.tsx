@@ -9,6 +9,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -22,6 +23,8 @@ import { RegisterForm } from './auth/RegisterForm';
 import { ForgotPasswordForm } from './auth/ForgotPasswordForm';
 import { ResetPasswordForm } from './auth/ResetPasswordForm';
 import { env } from '@/config/env';
+import { apiRequest } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const AuthScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -29,7 +32,10 @@ export const AuthScreen: React.FC = () => {
   >('login');
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [isVerifyingToken, setIsVerifyingToken] = useState(false);
+  const [isAppleAvailable, setIsAppleAvailable] = useState(false);
+  const [isAppleLoading, setIsAppleLoading] = useState(false);
   const insets = useSafeAreaInsets();
+  const { loginWithToken } = useAuth();
 
   // Handle deep links for reset password (tracklitmobile://auth?resetToken=...)
   useEffect(() => {
@@ -74,10 +80,74 @@ export const AuthScreen: React.FC = () => {
     verify();
   }, [resetToken]);
 
+  useEffect(() => {
+    if (Platform.OS !== 'ios') {
+      setIsAppleAvailable(false);
+      return;
+    }
+
+    AppleAuthentication.isAvailableAsync()
+      .then(setIsAppleAvailable)
+      .catch(() => setIsAppleAvailable(false));
+  }, []);
+
   const showTabs = useMemo(
     () => activeTab === 'login' || activeTab === 'register',
     [activeTab]
   );
+
+  const handleAppleSignIn = async () => {
+    if (isAppleLoading) return;
+
+    try {
+      setIsAppleLoading(true);
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        Alert.alert('Apple Sign In Failed', 'Unable to retrieve Apple identity token.');
+        return;
+      }
+
+      const response = await apiRequest<{ token?: string; user?: { token?: string } }>(
+        '/api/auth/apple/mobile',
+        {
+          method: 'POST',
+          data: {
+            identityToken: credential.identityToken,
+            fullName: credential.fullName,
+            email: credential.email,
+          },
+          skipAuth: true,
+        },
+      );
+
+      const token = response?.token || response?.user?.token;
+      if (!token) {
+        Alert.alert('Apple Sign In Failed', 'Unable to authenticate with Apple.');
+        return;
+      }
+
+      const success = await loginWithToken(token);
+      if (!success) {
+        Alert.alert('Apple Sign In Failed', 'Unable to start your session.');
+      }
+    } catch (error: any) {
+      if (error?.code === 'ERR_CANCELED') {
+        return;
+      }
+      Alert.alert(
+        'Apple Sign In Failed',
+        error?.message || 'Something went wrong. Please try again.',
+      );
+    } finally {
+      setIsAppleLoading(false);
+    }
+  };
 
   return (
     <LinearGradient
@@ -203,6 +273,23 @@ export const AuthScreen: React.FC = () => {
                     Continue with Google
                   </Text>
                 </Button>
+
+                {Platform.OS === 'ios' && isAppleAvailable && (
+                  <View style={styles.appleButtonWrapper}>
+                    <AppleAuthentication.AppleAuthenticationButton
+                      buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                      cornerRadius={12}
+                      style={styles.appleButton}
+                      onPress={handleAppleSignIn}
+                    />
+                    {isAppleLoading && (
+                      <Text variant="small" color="muted" style={styles.appleLoadingText}>
+                        Connecting to Apple...
+                      </Text>
+                    )}
+                  </View>
+                )}
               </>
             )}
           </Card>
@@ -325,6 +412,17 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     marginLeft: theme.spacing.sm,
+  },
+  appleButtonWrapper: {
+    marginTop: theme.spacing.md,
+    alignItems: 'center',
+  },
+  appleButton: {
+    width: '100%',
+    height: 52,
+  },
+  appleLoadingText: {
+    marginTop: theme.spacing.xs,
   },
   featuresSection: {
     marginTop: theme.spacing.xl,

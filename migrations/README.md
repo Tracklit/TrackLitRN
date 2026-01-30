@@ -37,6 +37,7 @@ If you already have a database with data, use the individual migration files in 
 4. `add_country_dateofbirth.sql` - User profile fields
 5. `add-friendships-table.sql` - Friendships feature
 6. `add-coach-specialties.sql` - Coaching specialties
+7. `add-apple-sub.sql` - Apple Sign In user identifier
 
 Run each migration that hasn't been applied yet:
 
