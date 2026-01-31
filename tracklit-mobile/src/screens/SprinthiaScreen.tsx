@@ -18,7 +18,7 @@ import {
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { Mic, MicOff, Volume2, VolumeX, Languages } from 'lucide-react-native';
+import { Mic, StopCircle, Volume2, VolumeX, Languages } from 'lucide-react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import Voice from '@react-native-voice/voice';
@@ -168,6 +168,7 @@ export const SprinthiaScreen: React.FC = () => {
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const micPulse = useRef(new Animated.Value(1)).current;
   const micPulseAnimation = useRef<Animated.CompositeAnimation | null>(null);
+  const isVoiceActiveRef = useRef(false);
 
   const remainingPrompts = isStar ? 'Unlimited' : user?.sprinthiaPrompts ?? 0;
   const isOutOfPrompts = !isStar && ((user?.sprinthiaPrompts ?? 0) <= 0);
@@ -210,27 +211,75 @@ export const SprinthiaScreen: React.FC = () => {
     };
   }, [isListening, micPulse]);
 
+  const startVoiceInput = useCallback(async () => {
+    if (isVoiceActiveRef.current) return;
+    try {
+      isVoiceActiveRef.current = true;
+      setIsListening(true);
+      await Voice.start(selectedLanguage);
+    } catch (error: any) {
+      const message = error?.message?.toLowerCase?.() || '';
+      if (message.includes('already started')) {
+        setIsListening(true);
+        isVoiceActiveRef.current = true;
+        return;
+      }
+      console.error('Voice start error:', error);
+      isVoiceActiveRef.current = false;
+      setIsListening(false);
+      Alert.alert('Voice input failed', error?.message || 'Unable to start voice input.');
+    }
+  }, [selectedLanguage]);
+
+  const stopVoiceInput = useCallback(async () => {
+    if (!isVoiceActiveRef.current) {
+      setIsListening(false);
+      return;
+    }
+    try {
+      await Voice.stop();
+    } catch (error: any) {
+      console.error('Voice stop error:', error);
+    } finally {
+      isVoiceActiveRef.current = false;
+      setIsListening(false);
+    }
+  }, []);
+
   useEffect(() => {
-    Voice.onSpeechStart = () => setIsListening(true);
-    Voice.onSpeechEnd = () => setIsListening(false);
+    Voice.onSpeechStart = () => {
+      isVoiceActiveRef.current = true;
+      setIsListening(true);
+    };
+    Voice.onSpeechEnd = () => {
+      // Do not flip UI off; user explicitly stops recording.
+    };
     Voice.onSpeechResults = (event) => {
       const transcript = event.value?.[0];
       if (transcript) {
         setInputText(transcript);
       }
-      setIsListening(false);
+      // Keep listening until the user explicitly stops.
     };
     Voice.onSpeechError = (event) => {
+      const message = event.error?.message || '';
       console.error('Speech recognition error:', event.error);
+      if (message.toLowerCase().includes('already started')) {
+        isVoiceActiveRef.current = true;
+        setIsListening(true);
+        return;
+      }
+      isVoiceActiveRef.current = false;
       setIsListening(false);
-      Alert.alert('Voice input failed', event.error?.message || 'Unable to capture voice input.');
+      Alert.alert('Voice input failed', message || 'Unable to capture voice input.');
     };
 
     return () => {
+      isVoiceActiveRef.current = false;
       Voice.destroy().then(Voice.removeAllListeners).catch(() => undefined);
       Speech.stop();
     };
-  }, []);
+  }, [stopVoiceInput]);
 
   const conversationsQuery = useQuery({
     queryKey: ['sprinthia-conversations'],
@@ -292,11 +341,21 @@ export const SprinthiaScreen: React.FC = () => {
         refreshUser?.();
       }
     },
-    onError: (error: Error) => {
+    onError: (error: Error & { status?: number }) => {
       console.error('Sprinthia API error:', error);
       setIsThinking(false);
 
-      if (error.message?.toLowerCase().includes('prompt')) {
+      const lowerMessage = error.message?.toLowerCase?.() || '';
+      const isUnauthorized = error.status === 401 || lowerMessage.includes('unauthorized');
+
+      if (isUnauthorized) {
+        setInlineWarning('Session expired. Please sign in again to keep chatting with Sprinthia.');
+        refreshUser?.();
+        Alert.alert('Sign in required', 'Your session expired. Please sign in again to continue.');
+        return;
+      }
+
+      if (lowerMessage.includes('prompt')) {
         setInlineWarning('No prompts remaining. Purchase more to continue using Sprinthia.');
         return;
       }
@@ -366,28 +425,6 @@ export const SprinthiaScreen: React.FC = () => {
   const stopSpeaking = useCallback(() => {
     Speech.stop();
     setIsSpeaking(false);
-  }, []);
-
-  const startVoiceInput = useCallback(async () => {
-    if (isListening) return;
-    try {
-      setIsListening(true);
-      await Voice.start(selectedLanguage);
-    } catch (error: any) {
-      console.error('Voice start error:', error);
-      setIsListening(false);
-      Alert.alert('Voice input failed', error?.message || 'Unable to start voice input.');
-    }
-  }, [isListening, selectedLanguage]);
-
-  const stopVoiceInput = useCallback(async () => {
-    try {
-      await Voice.stop();
-    } catch (error: any) {
-      console.error('Voice stop error:', error);
-    } finally {
-      setIsListening(false);
-    }
   }, []);
 
   const handleNewConversation = () => {
@@ -764,11 +801,12 @@ export const SprinthiaScreen: React.FC = () => {
                   isListening ? styles.micButtonActive : styles.micButtonInactive,
                 ]}
                 onPress={isListening ? stopVoiceInput : startVoiceInput}
-                disabled={isGuest || isOutOfPrompts || isThinking}
+                disabled={isGuest || isOutOfPrompts || (!isListening && isThinking)}
                 accessibilityRole="button"
                 accessibilityLabel={isListening ? 'Stop recording' : 'Start recording'}
+                accessibilityHint={isListening ? 'Tap to stop and use the transcription' : 'Tap to start recording'}
               >
-                {isListening ? <MicOff size={18} color={WHITE} /> : <Mic size={18} color={WHITE} />}
+                {isListening ? <StopCircle size={20} color={WHITE} /> : <Mic size={18} color={WHITE} />}
               </TouchableOpacity>
             </Animated.View>
             <View style={styles.inputShell}>
@@ -778,7 +816,7 @@ export const SprinthiaScreen: React.FC = () => {
                 onChangeText={setInputText}
                 placeholder={
                   isListening
-                    ? 'Listening...'
+                    ? 'Listening... tap mic to stop'
                     : isGuest
                       ? 'Sign in to chat with Sprinthia...'
                       : 'Ask Sprinthia about training, races, rehabilitation, or nutrition...'

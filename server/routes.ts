@@ -7557,6 +7557,8 @@ It supports multilingual interactions, replying in the same language as the athl
       };
       
       try {
+        const requestId = Math.random().toString(36).slice(2, 8);
+        const requestStart = Date.now();
         const requestPayload = {
           user_id: user.id.toString(),
           user_input: userContextForAria,
@@ -7565,7 +7567,9 @@ It supports multilingual interactions, replying in the same language as the athl
         };
         
         console.log('📤 Sending to Aria API:', {
+          request_id: requestId,
           user_id: requestPayload.user_id,
+          user_email: user.email,
           user_input_length: requestPayload.user_input.length,
           system_prompt_length: requestPayload.system_prompt.length,
           conversation_history_count: requestPayload.conversation_history.length,
@@ -7577,6 +7581,7 @@ It supports multilingual interactions, replying in the same language as the athl
         // - conversation_history: Should be included in the messages array
         // If Aria API is not using these, responses will remain academic/formal
         
+        const ariaStart = Date.now();
         const ariaResponse = await fetch(`${ariaApiUrl}/ask`, {
           method: 'POST',
           headers: {
@@ -7586,11 +7591,19 @@ It supports multilingual interactions, replying in the same language as the athl
         });
 
         if (!ariaResponse.ok) {
+          const ariaDurationMs = Date.now() - ariaStart;
           const errorText = await ariaResponse.text();
           console.error(`Aria API error (${ariaResponse.status}):`, errorText);
+          console.error('⏱️ Sprinthia timing (failed):', {
+            request_id: requestId,
+            user_id: user.id,
+            aria_ms: ariaDurationMs,
+            total_ms: Date.now() - requestStart
+          });
           throw new Error(`Aria API returned ${ariaResponse.status}`);
         }
 
+        const ariaDurationMs = Date.now() - ariaStart;
         const ariaData = await ariaResponse.json();
         let aiResponse = ariaData.recommendation || ariaData.response || "I'm here to help with your training. Could you please rephrase your question?";
         
@@ -7600,6 +7613,12 @@ It supports multilingual interactions, replying in the same language as the athl
         aiResponse = cleanAIResponse(aiResponse, message);
         
         console.log('✨ After cleaning:', aiResponse.substring(0, 200) + '...');
+        console.log('⏱️ Sprinthia timing:', {
+          request_id: requestId,
+          user_id: user.id,
+          aria_ms: ariaDurationMs,
+          total_ms: Date.now() - requestStart
+        });
 
         // Save AI response
         await dbStorage.createSprinthiaMessage({

@@ -83,14 +83,21 @@ export async function apiRequest<T = any>(
       const errorMessage =
         payload?.error ||
         payload?.message ||
+        text ||
         response.statusText ||
         'Request failed';
-      
+
       if (DEBUG_API) {
         console.log(`[API] Error ${response.status}:`, errorMessage);
       }
-      
-      throw new Error(errorMessage);
+
+      const error = new Error(errorMessage) as Error & {
+        status?: number;
+        payload?: unknown;
+      };
+      error.status = response.status;
+      error.payload = payload ?? text;
+      throw error;
     }
 
     return payload as T;

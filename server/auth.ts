@@ -13,7 +13,7 @@ import { storage } from "./storage";
 import { User, User as SelectUser, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import { sendEmail, generatePasswordResetToken, generatePasswordResetEmail } from "./utils/email";
-import { getBaseUrl } from "./utils/url-helper";
+import { getBaseUrl, getOAuthCallbackUrl } from "./utils/url-helper";
 
 // Age calculation utility
 function calculateAge(dateOfBirth: string | null | undefined): number | null {
@@ -267,7 +267,7 @@ export function setupAuth(app: Express) {
         {
           clientID: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: `/api/auth/google/callback`,
+          callbackURL: getOAuthCallbackUrl("google"),
           scope: ['profile', 'email']
         },
         async (accessToken, refreshToken, profile, done) => {
@@ -316,7 +316,7 @@ export function setupAuth(app: Express) {
           teamID: process.env.APPLE_TEAM_ID,
           keyID: process.env.APPLE_KEY_ID,
           privateKeyString: process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-          callbackURL: `/api/auth/apple/callback`,
+          callbackURL: getOAuthCallbackUrl("apple"),
           scope: ['name', 'email'],
           passReqToCallback: false
         },
@@ -402,7 +402,24 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Apple identity token is required" });
       }
 
-      const payload = await verifyAppleIdentityToken(identityToken);
+      let payload: any;
+      try {
+        payload = await verifyAppleIdentityToken(identityToken);
+      } catch (error) {
+        const errorInfo = {
+          message: error instanceof Error ? error.message : String(error),
+          code: (error as any)?.code,
+          claim: (error as any)?.claim,
+          reason: (error as any)?.reason,
+          audiences: APPLE_MOBILE_AUDIENCES,
+          token_length: identityToken?.length,
+        };
+        console.error("[APPLE-AUTH] Mobile identity token invalid:", errorInfo);
+        return res.status(401).json({
+          error: "Apple identity token invalid",
+          ...(isProduction ? {} : { details: errorInfo }),
+        });
+      }
       const appleSub = typeof payload.sub === "string" ? payload.sub : undefined;
       const emailFromToken = typeof payload.email === "string" ? payload.email : undefined;
       const resolvedEmail = email || emailFromToken;
