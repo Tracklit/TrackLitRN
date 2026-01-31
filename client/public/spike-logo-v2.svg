@@ -1,0 +1,30 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Version 2: More detailed spike with threads/grip -->
+  <defs>
+    <linearGradient id="spikeGradient2" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#d97706;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fcd34d;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="threadGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#92400e;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#92400e;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main spike body -->
+  <path d="M12 2 L15.5 20 L8.5 20 Z" fill="url(#spikeGradient2)" stroke="#b45309" stroke-width="0.5"/>
+  
+  <!-- Threaded grip lines -->
+  <line x1="9.5" y1="12" x2="14.5" y2="12" stroke="url(#threadGradient)" stroke-width="0.8"/>
+  <line x1="9.8" y1="14" x2="14.2" y2="14" stroke="url(#threadGradient)" stroke-width="0.8"/>
+  <line x1="10.1" y1="16" x2="13.9" y2="16" stroke="url(#threadGradient)" stroke-width="0.8"/>
+  <line x1="10.4" y1="18" x2="13.6" y2="18" stroke="url(#threadGradient)" stroke-width="0.8"/>
+  
+  <!-- Sharp tip highlight -->
+  <path d="M12 2 L13.5 6 L10.5 6 Z" fill="#fef3c7" opacity="0.9"/>
+  
+  <!-- Base threading detail -->
+  <rect x="8" y="20" width="8" height="2" rx="1" fill="#78350f"/>
+  <line x1="9" y1="21" x2="15" y2="21" stroke="#451a03" stroke-width="0.5"/>
+</svg>

@@ -121,11 +121,15 @@ export function serveStatic(app: Express) {
     }
   }));
 
-  // fall through to index.html if the file doesn't exist (but skip /assets/ and /api requests)
+  // fall through to index.html if the file doesn't exist (but skip static file requests and /api)
   app.use(/.*/, (req, res, next) => {
-    // Don't serve index.html for asset requests - let them 404 instead
-    if (req.originalUrl.startsWith('/assets/')) {
-      console.log(`Skipping index.html fallback for asset request: ${req.originalUrl}`);
+    // Static file extensions that should NOT fall through to index.html
+    const staticExtensions = ['.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.map', '.json', '.webp', '.mp4', '.webm', '.mov'];
+    const hasStaticExtension = staticExtensions.some(ext => req.originalUrl.toLowerCase().endsWith(ext));
+    
+    // Don't serve index.html for asset requests or static files - let them 404 instead
+    if (req.originalUrl.startsWith('/assets/') || hasStaticExtension) {
+      console.log(`Skipping index.html fallback for static request: ${req.originalUrl}`);
       return res.status(404).send('Asset not found');
     }
 
