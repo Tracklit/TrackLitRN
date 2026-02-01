@@ -311,15 +311,20 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 Coaches
               </div>
             </Link>
-            <div
-              className="flex items-center justify-between px-4 py-2 rounded-md text-xs font-medium text-gray-500 opacity-50 cursor-not-allowed"
-            >
-              <div className="flex items-center">
-                <FontAwesomeIcon icon={faUsers} className="h-4 w-4 mr-3" />
-                Groups
-              </div>
-              <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Coming Soon</span>
-            </div>
+            {(currentUser as any)?.isCoach && (
+              <Link href="/athlete-groups">
+                <div
+                  className={cn(
+                    "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
+                    location === "/athlete-groups" ? "bg-primary text-primary-foreground" : "text-gray-300"
+                  )}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <FontAwesomeIcon icon={faUsers} className="h-4 w-4 mr-3" />
+                  Groups
+                </div>
+              </Link>
+            )}
             
             {/* Admin Section - Only show for admin users */}
             {(currentUser as any)?.role === 'admin' && (
