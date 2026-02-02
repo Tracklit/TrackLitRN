@@ -74,10 +74,10 @@ export const StopwatchScreen: React.FC = () => {
     <LinearGradient
       colors={['#020617', '#0f172a', '#020617']}
       locations={[0, 0.5, 1]}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <ScrollView
-        style={styles.scroll}
+        style={[styles.scroll, { paddingTop: insets.top }]}
         contentContainerStyle={[
           styles.content,
           { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true }) },

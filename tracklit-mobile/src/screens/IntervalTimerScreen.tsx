@@ -147,7 +147,7 @@ export const IntervalTimerScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <View
         style={[
@@ -156,7 +156,7 @@ export const IntervalTimerScreen: React.FC = () => {
         ]}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}

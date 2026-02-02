@@ -23,14 +23,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import Voice from '@react-native-voice/voice';
 import * as Speech from 'expo-speech';
-// Clipboard is optional: if native module isn't available yet, we degrade gracefully.
-let Clipboard: typeof import('expo-clipboard') | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  Clipboard = require('expo-clipboard');
-} catch (err) {
-  console.warn('expo-clipboard not available; copy actions will be disabled until native modules are rebuilt.', err);
-}
+import * as Clipboard from 'expo-clipboard';
 
 import { Text } from '../components/ui/Text';
 import { apiRequest } from '@/lib/api';
@@ -40,6 +33,7 @@ import theme from '../utils/theme';
 import { FormattedSprinthiaText } from '../utils/sprinthiaFormat';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '../utils/layoutPadding';
 import { cleanSpeechText } from '../utils/speechText';
+import poweredByAria from '../assets/powered-by-aria.png';
 
 type Role = 'user' | 'assistant';
 
@@ -81,7 +75,6 @@ const languageOptions = [
   { code: 'ko-KR', label: '한국어' },
 ];
 
-const poweredByAria = require('../assets/powered-by-aria.png');
 const WHITE = '#ffffff';
 
 const TypingDots: React.FC = () => {

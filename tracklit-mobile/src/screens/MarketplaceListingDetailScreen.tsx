@@ -120,8 +120,8 @@ export const MarketplaceListingDetailScreen: React.FC = () => {
   const reviewCount = (reviewsQuery.data ?? []).length;
 
   return (
-    <LinearGradient colors={theme.gradient.background} locations={theme.gradient.locations} style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]} showsVerticalScrollIndicator={false}>
+    <LinearGradient colors={theme.gradient.background} locations={theme.gradient.locations} style={styles.container}>
+      <ScrollView style={{ paddingTop: insets.top }} contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />

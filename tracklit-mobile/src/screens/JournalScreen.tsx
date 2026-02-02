@@ -250,7 +250,7 @@ export const JournalScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <KeyboardAvoidingView
         style={styles.flex}
@@ -258,7 +258,7 @@ export const JournalScreen: React.FC = () => {
         keyboardVerticalOffset={insets.top}
       >
         <ScrollView
-          style={styles.flex}
+          style={[styles.flex, { paddingTop: insets.top }]}
           contentContainerStyle={[
             styles.content,
             { paddingBottom: insets.bottom + theme.spacing.xl },

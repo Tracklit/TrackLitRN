@@ -98,9 +98,10 @@ export const MarketplaceScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <ScrollView
+        style={{ paddingTop: insets.top }}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: contentBottomPadding }]}
         refreshControl={
           <RefreshControl

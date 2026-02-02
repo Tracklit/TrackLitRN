@@ -278,8 +278,9 @@ export const ProfileScreen: React.FC = () => {
   const isNarrowHeader = screenWidth < 390;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <ScrollView
+        style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.content,
           { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },

@@ -250,9 +250,9 @@ export const ProgramEditorScreen: React.FC = () => {
       <LinearGradient
         colors={theme.gradient.background}
         locations={theme.gradient.locations}
-        style={[styles.container, { paddingTop: insets.top }]}
+        style={styles.container}
       >
-        <View style={styles.loadingContainer}>
+        <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text variant="body" color="muted" style={styles.loadingText}>
             Loading program...
@@ -267,9 +267,9 @@ export const ProgramEditorScreen: React.FC = () => {
       <LinearGradient
         colors={theme.gradient.background}
         locations={theme.gradient.locations}
-        style={[styles.container, { paddingTop: insets.top }]}
+        style={styles.container}
       >
-        <View style={styles.loadingContainer}>
+        <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
           <Text variant="body" color="muted">
             Unable to load program.
           </Text>
@@ -285,9 +285,9 @@ export const ProgramEditorScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
         </TouchableOpacity>

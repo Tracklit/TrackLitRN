@@ -121,7 +121,7 @@ export const FeedDetailScreen: React.FC<Props> = ({ route }) => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <KeyboardAvoidingView
         style={styles.flex}
@@ -129,7 +129,7 @@ export const FeedDetailScreen: React.FC<Props> = ({ route }) => {
         keyboardVerticalOffset={insets.top + 64}
       >
         <ScrollView
-          style={styles.flex}
+          style={[styles.flex, { paddingTop: insets.top }]}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >

@@ -194,9 +194,10 @@ export const VideoAnalysisScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <ScrollView
+        style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.content,
           { paddingBottom: insets.bottom + theme.spacing.xl },

@@ -217,7 +217,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\nset -euo pipefail\n\n# Ensure NODE_BINARY is defined for downstream scripts.\nNODE_BINARY=\"${NODE_BINARY:-node}\"\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"${ENTRY_FILE:-}\" ]]; then\n  # Match Expo's resolved entry (same strategy as Android).\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute)\"\nfi\n\n# Force React Native CLI bundling for iOS release builds.\nexport CLI_PATH=\"$PROJECT_ROOT/node_modules/react-native/scripts/bundle.js\"\nexport BUNDLE_COMMAND=\"bundle\"\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n# The React Native script writes the bundle here for iOS.\nBUNDLE_FILE=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/main.jsbundle\"\nexport BUNDLE_FILE\n# Export for downstream (Python) validation.\nexport BUNDLE_OUTPUT=\"$BUNDLE_FILE\"\n\nif [[ ! -f \"$BUNDLE_FILE\" ]]; then\n  echo \"error: React Native bundle was not generated (missing $BUNDLE_FILE). Ensure node_modules are installed and bundling ran.\" >&2\n  exit 1\nfi\n\n# Validate bundle content (Metro prelude or Hermes bytecode header).\n/usr/bin/python3 - <<'PY'\nimport os\nimport sys\n\nbundle_path = os.environ.get(\"BUNDLE_OUTPUT\") or os.environ.get(\"BUNDLE_FILE\")\nif not bundle_path or not os.path.exists(bundle_path):\n    print(\"error: React Native bundle output missing for validation.\", file=sys.stderr)\n    sys.exit(1)\n\nwith open(bundle_path, \"rb\") as handle:\n    data = handle.read(4096)\n\n# Hermes bytecode magic (little-endian): 0x03BC1FC6\nif len(data) >= 4 and int.from_bytes(data[:4], \"little\") == 0x03BC1FC6:\n    sys.exit(0)\n\n# Metro JS prelude should define the module system globals.\nif b\"__r\" in data and b\"__d\" in data:\n    sys.exit(0)\n\nprint(\"error: React Native bundle missing Metro prelude or Hermes bytecode header. Check bundling entry and CLI config.\", file=sys.stderr)\nsys.exit(1)\nPY\n\n";
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\nset -euo pipefail\n\n# Ensure NODE_BINARY is defined for downstream scripts.\nNODE_BINARY=\"${NODE_BINARY:-node}\"\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"${ENTRY_FILE:-}\" ]]; then\n  # Match Expo's resolved entry (same strategy as Android).\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute)\"\nfi\n\n# Force React Native CLI bundling for iOS release builds.\nexport CLI_PATH=\"$PROJECT_ROOT/node_modules/react-native/scripts/bundle.js\"\nexport BUNDLE_COMMAND=\"bundle\"\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n# In Debug, React Native loads JS from Metro and does not generate a bundle.\nif [[ \"${SKIP_BUNDLING:-}\" == \"1\" ]]; then\n  echo \"SKIP_BUNDLING enabled; skipping bundle validation.\"\n  exit 0\nfi\n\n# The React Native script writes the bundle here for iOS.\nBUNDLE_FILE=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/main.jsbundle\"\nexport BUNDLE_FILE\n# Export for downstream (Python) validation.\nexport BUNDLE_OUTPUT=\"$BUNDLE_FILE\"\n\nif [[ ! -f \"$BUNDLE_FILE\" ]]; then\n  echo \"error: React Native bundle was not generated (missing $BUNDLE_FILE). Ensure node_modules are installed and bundling ran.\" >&2\n  exit 1\nfi\n\n# Validate bundle content (Metro prelude or Hermes bytecode header).\n/usr/bin/python3 - <<'PY'\nimport os\nimport sys\n\nbundle_path = os.environ.get(\"BUNDLE_OUTPUT\") or os.environ.get(\"BUNDLE_FILE\")\nif not bundle_path or not os.path.exists(bundle_path):\n    print(\"error: React Native bundle output missing for validation.\", file=sys.stderr)\n    sys.exit(1)\n\nwith open(bundle_path, \"rb\") as handle:\n    data = handle.read(4096)\n\n# Hermes bytecode magic (little-endian): 0x03BC1FC6\nif len(data) >= 4 and int.from_bytes(data[:4], \"little\") == 0x03BC1FC6:\n    sys.exit(0)\n\n# Metro JS prelude should define the module system globals.\nif b\"__r\" in data and b\"__d\" in data:\n    sys.exit(0)\n\nprint(\"error: React Native bundle missing Metro prelude or Hermes bytecode header. Check bundling entry and CLI config.\", file=sys.stderr)\nsys.exit(1)\nPY\n\n";
 		};
 		08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -251,7 +251,6 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
 				"${PODS_ROOT}/../../node_modules/react-native-vector-icons/Fonts/AntDesign.ttf",
@@ -275,10 +274,8 @@
 				"${PODS_ROOT}/../../node_modules/react-native-vector-icons/Fonts/Zocial.ttf",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/react-native-image-picker/RNImagePickerPrivacyInfo.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
@@ -286,7 +283,6 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AntDesign.ttf",
@@ -310,10 +306,8 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Zocial.ttf",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNImagePickerPrivacyInfo.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -352,10 +346,14 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-TrackLitMobile/Pods-TrackLitMobile-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;

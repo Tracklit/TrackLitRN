@@ -248,14 +248,14 @@ export const ChatConversationScreen: React.FC = () => {
   return (
     <LinearGradient
       colors={[theme.colors.webChatBackground, theme.colors.webChatBackground]}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <FontAwesome5 name="arrow-left" size={20} color="white" />
           </TouchableOpacity>

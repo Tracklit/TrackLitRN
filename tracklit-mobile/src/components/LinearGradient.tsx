@@ -1,5 +1,7 @@
 import React from 'react';
 import { UIManager, View, type ViewProps } from 'react-native';
+import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
+import RNLinearGradient from 'react-native-linear-gradient';
 
 type Props = ViewProps & {
   colors: string[];
@@ -23,13 +25,15 @@ export const LinearGradient: React.FC<Props> = (props) => {
     end: props.end ?? { x: 1, y: 1 },
   };
 
-  // Prefer Expo's implementation in Expo Go / Expo builds
-  const ExpoImpl = tryRequireExpoLinearGradient();
-  if (ExpoImpl) return <ExpoImpl {...(gradientProps as any)} />;
+  // Prefer Expo's implementation in Expo / dev-client builds
+  if (hasNativeViewManager('ViewManagerAdapter_ExpoLinearGradient')) {
+    return <ExpoLinearGradient {...(gradientProps as any)} />;
+  }
 
   // Fallback to RN community module (bare builds)
-  const RNImpl = tryRequireRNLinearGradient();
-  if (RNImpl) return <RNImpl {...(gradientProps as any)} />;
+  if (hasNativeViewManager('BVLinearGradient')) {
+    return <RNLinearGradient {...(gradientProps as any)} />;
+  }
 
   // Last resort: no gradient support, just render children
   const { children, style, ...rest } = gradientProps;
@@ -49,33 +53,3 @@ function hasNativeViewManager(viewManagerName: string): boolean {
     return false;
   }
 }
-
-function tryRequireExpoLinearGradient(): React.ComponentType<any> | null {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mod = require('expo-linear-gradient');
-    const Impl = mod?.LinearGradient ?? null;
-
-    // In bare RN builds it's common to have the JS package installed but NOT have
-    // Expo Modules native view managers registered (leading to UIManager crash).
-    // Guard against that and fall back to react-native-linear-gradient instead.
-    if (Impl && hasNativeViewManager('ViewManagerAdapter_ExpoLinearGradient')) return Impl;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function tryRequireRNLinearGradient(): React.ComponentType<any> | null {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mod = require('react-native-linear-gradient');
-    const Impl = mod?.default ?? mod ?? null;
-    if (Impl && hasNativeViewManager('BVLinearGradient')) return Impl;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-

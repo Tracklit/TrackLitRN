@@ -391,13 +391,13 @@ export const ProgramCreateScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <LinearGradient
         colors={theme.gradients.webHeader.colors}
         start={theme.gradients.webHeader.start}
         end={theme.gradients.webHeader.end}
-        style={styles.header}
+        style={[styles.header, { paddingTop: insets.top }]}
       >
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <FontAwesome5 name="arrow-left" size={18} color="white" solid />

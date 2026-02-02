@@ -20,9 +20,9 @@ import { Card, CardContent } from '@/components/ui/Card';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
-const marksAudio = require('../../assets/audio/on-your-marks.mp3');
-const setAudio = require('../../assets/audio/set.mp3');
-const bangAudio = require('../../assets/audio/bang.mp3');
+import marksAudio from '../../assets/audio/on-your-marks.mp3';
+import setAudio from '../../assets/audio/set.mp3';
+import bangAudio from '../../assets/audio/bang.mp3';
 
 Sound.setCategory('Playback');
 
@@ -125,9 +125,10 @@ export const StartGunScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <ScrollView
+        style={{ paddingTop: insets.top }}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
