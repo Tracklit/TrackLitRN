@@ -6,26 +6,13 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import sharp from "sharp";
+import { uploadToBlob, isBlobStorageAvailable, BlobContainer } from "./azure-storage";
 
 const router = Router();
 
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for image uploads - use memory storage for Azure Blob upload
 const upload = multer({ 
-  storage: storage,
+  storage: multer.memoryStorage(), // Use memory storage for Azure Blob upload
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit (increased for videos)
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
@@ -36,22 +23,49 @@ const upload = multer({
   }
 });
 
-// Helper function to compress and optimize uploaded images
-async function compressAndOptimizeImage(inputPath: string, outputPath: string, maxSize: number = 96): Promise<void> {
+// Helper function to compress and optimize uploaded images (buffer version for Azure)
+async function compressAndOptimizeImageBuffer(buffer: Buffer, maxSize: number = 96): Promise<Buffer> {
   try {
-    await sharp(inputPath)
+    return await sharp(buffer)
       .resize(maxSize, maxSize, { 
         fit: 'cover',
         position: 'center'
       })
       .webp({ quality: 90 })
-      .toFile(outputPath);
-    
-    // Remove original file
-    fs.unlinkSync(inputPath);
+      .toBuffer();
   } catch (error) {
     console.error('Error compressing image:', error);
     throw error;
+  }
+}
+
+// Helper function to upload image to Azure Blob Storage
+async function uploadChatImage(buffer: Buffer, userId: number, prefix: string, maxSize: number = 96): Promise<string> {
+  // Compress image
+  const compressedBuffer = await compressAndOptimizeImageBuffer(buffer, maxSize);
+  const fileName = `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.webp`;
+  
+  if (isBlobStorageAvailable()) {
+    // Upload to Azure Blob Storage
+    const url = await uploadToBlob(
+      compressedBuffer,
+      userId,
+      BlobContainer.MESSAGES,
+      fileName,
+      'image/webp'
+    );
+    console.log(`✅ Chat image uploaded to Azure: ${url}`);
+    return url;
+  } else {
+    // Fallback to local storage (non-persistent)
+    console.warn('⚠️  Azure Blob Storage not available, using local storage');
+    const uploadDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    const filePath = path.join(uploadDir, fileName);
+    fs.writeFileSync(filePath, compressedBuffer);
+    return `/uploads/${fileName}`;
   }
 }
 
@@ -307,20 +321,14 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
     // Generate invite code
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    // Handle image upload with compression
+    // Handle image upload with compression and Azure Blob Storage
     let imageUrl = null;
     if (req.file) {
       try {
-        const originalPath = req.file.path;
-        const optimizedFilename = req.file.filename.replace(/\.[^/.]+$/, '.webp');
-        const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
-        
-        await compressAndOptimizeImage(originalPath, optimizedPath, 96);
-        imageUrl = `/uploads/${optimizedFilename}`;
+        imageUrl = await uploadChatImage(req.file.buffer, userId, 'group', 96);
       } catch (error) {
-        console.error('Error processing image:', error);
-        // Fallback to original if compression fails
-        imageUrl = `/uploads/${req.file.filename}`;
+        console.error('Error uploading group image:', error);
+        // Continue without image if upload fails
       }
     }
 
@@ -460,24 +468,18 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
       return res.status(403).json({ error: "Only admins can update group details" });
     }
 
-    // Handle image upload with compression
+    // Handle image upload with compression and Azure Blob Storage
     let imageUrl = group.image;
     console.log('File upload received:', req.file);
     console.log('Current group image:', group.image);
     
     if (req.file) {
       try {
-        const originalPath = req.file.path;
-        const optimizedFilename = req.file.filename.replace(/\.[^/.]+$/, '.webp');
-        const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
-        
-        await compressAndOptimizeImage(originalPath, optimizedPath, 96);
-        imageUrl = `/uploads/${optimizedFilename}`;
+        imageUrl = await uploadChatImage(req.file.buffer, userId, 'group', 96);
         console.log('New compressed image URL:', imageUrl);
       } catch (error) {
-        console.error('Error processing image:', error);
-        // Fallback to original if compression fails
-        imageUrl = `/uploads/${req.file.filename}`;
+        console.error('Error uploading group image:', error);
+        // Keep existing image if upload fails
       }
     } else {
       console.log('No file uploaded in request');
@@ -1056,7 +1058,7 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('media'), async 
     `);
     const user = userResult.rows[0];
 
-    // Determine message type and media URL with compression
+    // Determine message type and media URL with compression and Azure Blob Storage
     let finalMessageType = "text";
     let mediaUrl = null;
     const messageText = text?.trim() || "";
@@ -1067,20 +1069,38 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('media'), async 
       
       if (isVideo) {
         finalMessageType = "video";
-        mediaUrl = `/uploads/${file.filename}`;
+        // Upload video to Azure Blob Storage
+        try {
+          const fileName = `video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}${path.extname(file.originalname)}`;
+          if (isBlobStorageAvailable()) {
+            mediaUrl = await uploadToBlob(
+              file.buffer,
+              userId,
+              BlobContainer.MESSAGES,
+              fileName,
+              file.mimetype
+            );
+            console.log(`✅ Video uploaded to Azure: ${mediaUrl}`);
+          } else {
+            // Fallback to local storage
+            const uploadDir = path.join(process.cwd(), 'uploads');
+            if (!fs.existsSync(uploadDir)) {
+              fs.mkdirSync(uploadDir, { recursive: true });
+            }
+            fs.writeFileSync(path.join(uploadDir, fileName), file.buffer);
+            mediaUrl = `/uploads/${fileName}`;
+          }
+        } catch (error) {
+          console.error('Error uploading video:', error);
+          return res.status(500).json({ error: "Failed to upload video" });
+        }
       } else if (isImage) {
         finalMessageType = "image";
         try {
-          const originalPath = file.path;
-          const optimizedFilename = file.filename.replace(/\.[^/.]+$/, '.webp');
-          const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
-          
-          await compressAndOptimizeImage(originalPath, optimizedPath, 400); // Larger for message images
-          mediaUrl = `/uploads/${optimizedFilename}`;
+          mediaUrl = await uploadChatImage(file.buffer, userId, 'message', 800); // Larger for message images
         } catch (error) {
-          console.error('Error processing message image:', error);
-          // Fallback to original if compression fails
-          mediaUrl = `/uploads/${file.filename}`;
+          console.error('Error uploading message image:', error);
+          return res.status(500).json({ error: "Failed to upload image" });
         }
       }
     }

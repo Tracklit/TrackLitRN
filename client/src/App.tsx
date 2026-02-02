@@ -52,6 +52,7 @@ const CompetitionCalendarPageLazy = lazy(() => import("@/pages/competition-calen
 // Social & Athletes
 const ConnectionsPageLazy = lazy(() => import("@/pages/connections-page"));
 const MyAthletesPageLazy = lazy(() => import("@/pages/my-athletes-page"));
+const AthleteGroupsPageLazy = lazy(() => import("@/pages/athlete-groups-page"));
 const AthletesPageLazy = lazy(() => import("@/pages/athletes-page"));
 const CoachesPageLazy = lazy(() => import("@/pages/coaches-page"));
 const RosterStatsPageLazy = lazy(() => import("@/pages/roster-stats-page"));
@@ -140,6 +141,7 @@ const ResultsPage = () => <ResultsPageLazy />;
 const CompetitionCalendarPage = () => <CompetitionCalendarPageLazy />;
 const ConnectionsPage = () => <ConnectionsPageLazy />;
 const MyAthletesPage = () => <MyAthletesPageLazy />;
+const AthleteGroupsPage = () => <AthleteGroupsPageLazy />;
 const AthletesPage = () => <AthletesPageLazy />;
 const CoachesPage = () => <CoachesPageLazy />;
 const RosterStatsPage = () => <RosterStatsPageLazy />;
@@ -342,6 +344,7 @@ function Router() {
         {/* Social */}
         <ProtectedRoute path="/connections" component={ConnectionsPage} />
         <ProtectedRoute path="/my-athletes" component={MyAthletesPage} />
+        <ProtectedRoute path="/athlete-groups" component={AthleteGroupsPage} />
         <ProtectedRoute path="/athletes" component={AthletesPage} />
         <ProtectedRoute path="/coaches" component={CoachesPage} />
         <ProtectedRoute path="/roster-stats" component={RosterStatsPage} />

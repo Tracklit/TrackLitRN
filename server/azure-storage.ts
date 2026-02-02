@@ -2,17 +2,18 @@ import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-bl
 import { v4 as uuidv4 } from 'uuid';
 
 const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING || '';
-const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME || 'stkvnx2h6p44qw4';
+const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME || 'sttnrusd7q77fcs';
 const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY || '';
 
 // Container names for different content types
+// These must match the actual container names in Azure Storage
 export enum BlobContainer {
-  PROFILE_IMAGES = 'profile-images',
-  VIDEO_ANALYSIS = 'video-analysis',
-  PHOTO_FINISH = 'photo-finish',
-  EXERCISE_LIBRARY = 'exercise-library',
-  MESSAGES = 'messages',
-  PROGRAMS = 'programs'
+  PROFILE_IMAGES = 'profiles',      // Profile pictures
+  VIDEO_ANALYSIS = 'videos',        // Video analysis and uploads
+  PHOTO_FINISH = 'uploads',         // Photo finish images
+  EXERCISE_LIBRARY = 'uploads',     // Exercise library media
+  MESSAGES = 'uploads',             // Chat message attachments
+  PROGRAMS = 'uploads'              // Program attachments
 }
 
 let blobServiceClient: BlobServiceClient | null = null;
@@ -56,7 +57,7 @@ export function initializeBlobStorage() {
  * Upload a file buffer to Azure Blob Storage with user-specific path structure
  * @param buffer File buffer to upload
  * @param userId User ID for folder organization
- * @param container Container type (profile-images, video-analysis, etc.)
+ * @param container Container type (profiles, videos, uploads, etc.)
  * @param originalName Original filename
  * @param contentType MIME type
  * @returns Public URL of the uploaded blob
