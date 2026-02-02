@@ -42,6 +42,7 @@ vite.config.ts.*
 
 # Expo / React Native
 tracklit-mobile/.expo
+tracklit-mobile/ios/.xcode.env.local
 tracklit-mobile/ios/Pods
 tracklit-mobile/ios/build
 tracklit-mobile/android/app/build

@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
+import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import { ProgramPickerModal } from '@/components/practice/ProgramPickerModal';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
@@ -149,9 +149,10 @@ export const PracticeScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <ScrollView
+        style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: contentBottomPadding },
@@ -304,7 +305,7 @@ export const PracticeScreen: React.FC = () => {
       />
 
       <TouchableOpacity
-        style={styles.targetTimesButton}
+        style={[styles.targetTimesButton, { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg }]}
         onPress={() => setShowTargetTimes(true)}
       >
         <LinearGradient

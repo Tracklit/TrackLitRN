@@ -493,7 +493,7 @@ export const SprinthiaScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
@@ -501,7 +501,7 @@ export const SprinthiaScreen: React.FC = () => {
         keyboardVerticalOffset={0}
       >
         {/* Header (mobile-first, 2 rows) */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           <View style={styles.headerTopRow}>
             <View style={styles.titleGroup}>
               <Text

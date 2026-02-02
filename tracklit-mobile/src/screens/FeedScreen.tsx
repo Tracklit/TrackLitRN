@@ -24,7 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
-import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
+import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 
 type FeedFilter = 'all' | 'connections';
@@ -171,9 +171,9 @@ export const FeedScreen: React.FC = () => {
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
-      style={[styles.container, { paddingTop: insets.top }]}
+      style={styles.container}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <Text variant="h2" weight="bold" color="foreground">
           Feed
         </Text>
@@ -260,7 +260,7 @@ export const FeedScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.fab,
-            { bottom: insets.bottom + theme.layout.bottomNavHeight + theme.spacing.xl },
+            { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg },
           ]}
           onPress={() => setIsComposerOpen(true)}
           data-testid="button-create-post"
