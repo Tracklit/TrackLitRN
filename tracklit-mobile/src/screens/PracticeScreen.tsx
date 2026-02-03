@@ -152,6 +152,7 @@ export const PracticeScreen: React.FC = () => {
       style={styles.container}
     >
       <ScrollView
+        contentInsetAdjustmentBehavior="never"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.scrollContent,
@@ -172,7 +173,7 @@ export const PracticeScreen: React.FC = () => {
           end={theme.gradients.webHeader.end}
           style={styles.header}
         >
-          <Text variant="h3" weight="bold" color="primary-foreground">
+          <Text variant="h2" weight="bold" color="primary-foreground">
             Practice
           </Text>
         </LinearGradient>
@@ -501,12 +502,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.sm,
   },
   header: {
     borderRadius: theme.borderRadius.webCard,
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.sm,
+    paddingLeft: theme.spacing.md,
+    paddingVertical: 0,
+    minHeight: theme.layout.headerHeight + theme.spacing.lg,
+    justifyContent: 'center',
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.md,
     gap: theme.spacing.md,
@@ -567,8 +571,10 @@ const styles = StyleSheet.create({
   emptyGradientCard: {
     marginTop: theme.spacing.xl,
     borderRadius: theme.borderRadius.webCard,
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
+    minHeight: theme.layout.headerHeight + theme.spacing.massive * 2,
     gap: theme.spacing.md,
+    overflow: 'hidden',
     ...theme.shadows.md,
   },
   emptyTitle: {
@@ -580,6 +586,7 @@ const styles = StyleSheet.create({
   emptyButton: {
     borderColor: 'rgba(255,255,255,0.2)',
     backgroundColor: 'rgba(255,255,255,0.1)',
+    alignSelf: 'flex-start',
   },
   workoutCard: {
     padding: theme.spacing.lg,

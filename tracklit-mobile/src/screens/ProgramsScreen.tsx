@@ -174,8 +174,12 @@ export const ProgramsScreen: React.FC = () => {
       style={styles.container}
     >
       <ScrollView
+        contentInsetAdjustmentBehavior="never"
         style={{ paddingTop: insets.top }}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: contentBottomPadding }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: contentBottomPadding },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -192,7 +196,7 @@ export const ProgramsScreen: React.FC = () => {
           end={theme.gradients.webHeader.end}
           style={styles.header}
         >
-          <Text variant="h3" weight="bold" color="primary-foreground">
+          <Text variant="h2" weight="bold" color="primary-foreground">
             Programs
           </Text>
 
@@ -213,7 +217,7 @@ export const ProgramsScreen: React.FC = () => {
               onPress={() => setShowFilterModal(true)}
             >
               <FontAwesome5 name="filter" size={14} color="white" solid />
-              <Text variant="small" weight="medium" color="primary-foreground" style={styles.filterText}>
+              <Text variant="caption" weight="medium" color="primary-foreground" style={styles.filterText}>
                 Filter
               </Text>
               <FontAwesome5 name="chevron-down" size={10} color="white" solid />
@@ -885,11 +889,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.sm,
   },
   header: {
     borderRadius: theme.borderRadius.webCard,
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.sm,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
+    minHeight: theme.layout.headerHeight + theme.spacing.massive,
+    justifyContent: 'center',
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.md,
     gap: theme.spacing.md,
@@ -916,7 +924,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: theme.colors.foreground,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: theme.typography.sizes.xs,
   },
   filterButton: {
     flexDirection: 'row',

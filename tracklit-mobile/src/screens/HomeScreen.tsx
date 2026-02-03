@@ -347,7 +347,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     )}
                   </View>
                 </View>
-                <Text variant="body" weight="medium" color="foreground" numberOfLines={2}>
+                <Text variant="body" weight="medium" color="foreground" numberOfLines={3}>
                   {currentActivity?.description ??
                     'Athletes are crushing their sessions today. Tap Feed to see more.'}
                 </Text>
@@ -481,14 +481,17 @@ const styles = StyleSheet.create({
   tickerCard: {
     borderRadius: 12,
     paddingVertical: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
     paddingHorizontal: theme.spacing.lg,
-    minHeight: 90,
+    minHeight: 100,
     borderWidth: 0.5,
     borderColor: 'rgba(148, 163, 184, 0.25)',
     shadowColor: '#000',
     shadowOpacity: 0.4,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
+    width: '100%',
+    alignSelf: 'stretch',
   },
   tickerControls: {
     position: 'absolute',

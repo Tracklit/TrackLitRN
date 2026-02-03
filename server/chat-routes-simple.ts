@@ -10,6 +10,26 @@ import { uploadToBlob, isBlobStorageAvailable, BlobContainer } from "./azure-sto
 
 const router = Router();
 
+const tableColumnsCache = new Map<string, Set<string>>();
+
+const getTableColumns = async (tableName: string): Promise<Set<string>> => {
+  const cached = tableColumnsCache.get(tableName);
+  if (cached) {
+    return cached;
+  }
+  const result = await db.execute(sql`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = ${tableName}
+  `);
+  const columns = new Set(result.rows.map((row: any) => row.column_name));
+  tableColumnsCache.set(tableName, columns);
+  return columns;
+};
+
+const getChatGroupColumns = async (): Promise<Set<string>> =>
+  getTableColumns("chat_groups");
+
 // Configure multer for image uploads - use memory storage for Azure Blob upload
 const upload = multer({ 
   storage: multer.memoryStorage(), // Use memory storage for Azure Blob upload
@@ -182,25 +202,138 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
     const userId = req.user!.id;
     console.log('UNIFIED: Fetching channels for user ID:', userId);
     
-    // Get chat groups using existing structure with member_ids arrays
+    const columns = await getChatGroupColumns();
+    const imageColumn = columns.has("image")
+      ? "cg.image"
+      : columns.has("avatar_url")
+        ? "cg.avatar_url"
+        : null;
+    const imageSelect = imageColumn ? sql.raw(imageColumn) : sql.raw("NULL");
+
+    const createdByColumn = columns.has("creator_id")
+      ? "cg.creator_id"
+      : columns.has("created_by")
+        ? "cg.created_by"
+        : null;
+    const createdBySelect = createdByColumn ? sql.raw(createdByColumn) : sql.raw("NULL");
+
+    const adminIdsColumn = columns.has("admin_ids") ? "cg.admin_ids" : null;
+    const adminIdsSelect = adminIdsColumn ? sql.raw(adminIdsColumn) : sql.raw("ARRAY[]::integer[]");
+
+    const memberIdsColumn = columns.has("member_ids") ? "cg.member_ids" : null;
+
+    const isPrivateColumn = columns.has("is_private")
+      ? "cg.is_private"
+      : columns.has("is_direct")
+        ? "cg.is_direct"
+        : null;
+    const isPrivateSelect = isPrivateColumn ? sql.raw(isPrivateColumn) : sql.raw("false");
+    const hasPrivacyFlag = Boolean(isPrivateColumn);
+
+    const chatGroupMemberColumns = await getTableColumns("chat_group_members");
+    const legacyGroupMemberColumns = await getTableColumns("group_members");
+    const memberTable =
+      chatGroupMemberColumns.size > 0
+        ? "chat_group_members"
+        : legacyGroupMemberColumns.size > 0
+          ? "group_members"
+          : null;
+
+    const chatGroupMessageColumns = await getTableColumns("chat_group_messages");
+    const legacyMessageColumns = await getTableColumns("messages");
+    const messageTable =
+      chatGroupMessageColumns.size > 0
+        ? "chat_group_messages"
+        : legacyMessageColumns.size > 0
+          ? "messages"
+          : null;
+    const messageColumns = messageTable ? await getTableColumns(messageTable) : new Set<string>();
+    const messageTextColumn = messageColumns.has("text")
+      ? "text"
+      : messageColumns.has("content")
+        ? "content"
+        : null;
+    const messageCreatedAtColumn = messageColumns.has("created_at") ? "created_at" : null;
+
+    const memberIdsSource = memberIdsColumn
+      ? "cg.member_ids"
+      : memberTable
+        ? "members.member_ids"
+        : "ARRAY[]::integer[]";
+    const memberIdsSelect = memberIdsColumn
+      ? sql.raw("cg.member_ids")
+      : memberTable
+        ? sql.raw("COALESCE(members.member_ids, ARRAY[]::integer[])")
+        : sql.raw("ARRAY[]::integer[]");
+
+    const memberJoin = memberTable && !memberIdsColumn
+      ? sql`
+        LEFT JOIN (
+          SELECT group_id, array_agg(user_id) as member_ids
+          FROM ${sql.raw(memberTable)}
+          GROUP BY group_id
+        ) members ON members.group_id = cg.id
+      `
+      : sql``;
+
+    const lastMessageSelect = columns.has("last_message")
+      ? sql.raw("cg.last_message")
+      : messageTable && messageTextColumn && messageCreatedAtColumn
+        ? sql.raw(`(
+            SELECT m.${messageTextColumn}
+            FROM ${messageTable} m
+            WHERE m.group_id = cg.id
+            ORDER BY m.${messageCreatedAtColumn} DESC
+            LIMIT 1
+          )`)
+        : sql.raw("NULL");
+
+    const lastMessageAtSelect = columns.has("last_message_at")
+      ? sql.raw("cg.last_message_at::text")
+      : messageTable && messageCreatedAtColumn
+        ? sql.raw(`(
+            SELECT m.${messageCreatedAtColumn}::text
+            FROM ${messageTable} m
+            WHERE m.group_id = cg.id
+            ORDER BY m.${messageCreatedAtColumn} DESC
+            LIMIT 1
+          )`)
+        : sql.raw("NULL");
+
+    const messageCountSelect = columns.has("message_count")
+      ? sql.raw("COALESCE(cg.message_count, 0)")
+      : messageTable
+        ? sql.raw(`COALESCE((
+            SELECT COUNT(*)::integer
+            FROM ${messageTable} m
+            WHERE m.group_id = cg.id
+          ), 0)`)
+        : sql.raw("0");
+
+    const whereClause = hasPrivacyFlag
+      ? sql`${userId} = ANY(${sql.raw(memberIdsSource)}) OR ${sql.raw(`${isPrivateColumn} = false`)}`
+      : sql`${userId} = ANY(${sql.raw(memberIdsSource)})`;
+
+    // Get chat groups with dynamic compatibility for legacy schema
     const groups = await db.execute(sql`
       SELECT 
         'group' as channel_type,
-        id,
-        name,
-        description,
-        image,
-        creator_id as created_by,
-        admin_ids,
-        member_ids,
-        is_private,
-        created_at::text,
-        last_message,
-        last_message_at::text,
-        COALESCE(message_count, 0) as message_count,
+        cg.id,
+        cg.name,
+        cg.description,
+        ${imageSelect} as image,
+        ${createdBySelect} as created_by,
+        ${adminIdsSelect} as admin_ids,
+        ${memberIdsSelect} as member_ids,
+        ${isPrivateSelect} as is_private,
+        cg.created_at::text,
+        ${lastMessageSelect} as last_message,
+        ${lastMessageAtSelect} as last_message_at,
+        ${messageCountSelect} as message_count,
         null as other_user_id
-      FROM chat_groups
-      WHERE ${userId} = ANY(member_ids) OR is_private = false
+      FROM chat_groups cg
+      ${memberJoin}
+      WHERE ${whereClause}
     `);
     
     // Get direct message conversations as channels

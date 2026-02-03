@@ -165,6 +165,7 @@ export const ToolsScreen: React.FC = () => {
       style={styles.container}
     >
       <ScrollView
+        contentInsetAdjustmentBehavior="never"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.scrollContent,
@@ -178,7 +179,7 @@ export const ToolsScreen: React.FC = () => {
           end={theme.gradients.webHeader.end}
           style={styles.header}
         >
-          <Text variant="h3" weight="bold" color="primary-foreground">
+          <Text variant="h2" weight="bold" color="primary-foreground">
             Tools
           </Text>
         </LinearGradient>
@@ -243,12 +244,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.sm,
   },
   header: {
     borderRadius: theme.borderRadius.webCard,
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.sm,
+    paddingLeft: theme.spacing.md,
+    paddingVertical: 0,
+    minHeight: theme.layout.headerHeight + theme.spacing.lg,
+    justifyContent: 'center',
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
   },

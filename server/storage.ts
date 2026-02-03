@@ -166,6 +166,21 @@ import session from "express-session";
 import { RedisStore } from "connect-redis";
 import { createClient } from "redis";
 
+let notificationColumnsCache: Set<string> | null = null;
+
+const getNotificationColumns = async (): Promise<Set<string>> => {
+  if (notificationColumnsCache) {
+    return notificationColumnsCache;
+  }
+  const result = await db.execute(sql`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = 'notifications'
+  `);
+  notificationColumnsCache = new Set(result.rows.map((row: any) => row.column_name));
+  return notificationColumnsCache;
+};
+
 // Create Redis client for Azure Redis Cache
 const getRedisConfig = () => {
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -2545,13 +2560,41 @@ export class DatabaseStorage implements IStorage {
 
   // Notification operations
   async getNotifications(userId: number, limit: number = 25, offset: number = 0): Promise<Notification[]> {
-    return await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit)
-      .offset(offset);
+    const columns = await getNotificationColumns();
+    const relatedIdSelect = columns.has("related_id") ? sql`related_id` : sql`NULL::integer`;
+    const relatedTypeSelect = columns.has("related_type") ? sql`related_type` : sql`NULL::text`;
+
+    const result = await db.execute(sql`
+      SELECT
+        id,
+        user_id,
+        type,
+        title,
+        message,
+        action_url,
+        is_read,
+        created_at,
+        ${relatedIdSelect} as related_id,
+        ${relatedTypeSelect} as related_type
+      FROM notifications
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `);
+
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      userId: row.user_id,
+      type: row.type,
+      title: row.title,
+      message: row.message,
+      relatedId: row.related_id ?? null,
+      relatedType: row.related_type ?? null,
+      actionUrl: row.action_url ?? null,
+      isRead: row.is_read,
+      createdAt: row.created_at,
+    })) as Notification[];
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
@@ -3028,30 +3071,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFollowing(userId: number): Promise<any[]> {
-    // Get users that this user is following (where they sent accepted friend requests)
-    const followingNotifications = await db
-      .select({
-        id: notifications.id,
-        userId: notifications.userId,
-        type: notifications.type,
-        title: notifications.title,
-        message: notifications.message,
-        relatedId: notifications.relatedId,
-        isRead: notifications.isRead,
-        createdAt: notifications.createdAt
-      })
-      .from(notifications)
-      .where(
-        and(
-          eq(notifications.type, 'friend_accepted'),
-          eq(notifications.relatedId, userId) // This user was the recipient of the acceptance
-        )
-      );
+    const columns = await getNotificationColumns();
+    if (!columns.has("related_id")) {
+      return [];
+    }
+
+    const followingNotifications = await db.execute(sql`
+      SELECT
+        id,
+        user_id,
+        type,
+        title,
+        message,
+        related_id,
+        is_read,
+        created_at
+      FROM notifications
+      WHERE type = 'friend_accepted'
+        AND related_id = ${userId}
+    `);
 
     // Get user details for each person this user is following
     const following = [];
-    for (const notification of followingNotifications) {
-      const followedUserId = notification.userId;
+    for (const notification of followingNotifications.rows as any[]) {
+      const followedUserId = notification.user_id;
       if (followedUserId) {
         const [followedUser] = await db.select().from(users).where(eq(users.id, followedUserId));
         if (followedUser) {
@@ -3075,28 +3118,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPendingFriendRequests(userId: number): Promise<any[]> {
-    // Get unread friend request notifications for this user
-    const requests = await db
-      .select({
-        id: notifications.id,
-        fromUserId: notifications.relatedId,
-        message: notifications.message,
-        createdAt: notifications.createdAt
-      })
-      .from(notifications)
-      .where(
-        and(
-          eq(notifications.userId, userId),
-          eq(notifications.type, 'friend_request_received'),
-          eq(notifications.isRead, false)
-        )
-      );
+    const columns = await getNotificationColumns();
+    if (!columns.has("related_id")) {
+      return [];
+    }
+
+    const requests = await db.execute(sql`
+      SELECT
+        id,
+        related_id,
+        message,
+        created_at
+      FROM notifications
+      WHERE user_id = ${userId}
+        AND type = 'friend_request_received'
+        AND is_read = false
+    `);
 
     // Get user details for each request sender
     const requestsWithUsers = [];
-    for (const request of requests) {
-      if (request.fromUserId) {
-        const [user] = await db.select().from(users).where(eq(users.id, request.fromUserId));
+    for (const request of requests.rows as any[]) {
+      if (request.related_id) {
+        const [user] = await db.select().from(users).where(eq(users.id, request.related_id));
         if (user) {
           requestsWithUsers.push({
             id: request.id,
@@ -3106,7 +3149,7 @@ export class DatabaseStorage implements IStorage {
               name: user.name,
               bio: user.bio
             },
-            createdAt: request.createdAt
+            createdAt: request.created_at
           });
         }
       }

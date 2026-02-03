@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -54,13 +54,13 @@ const getNotificationIcon = (type: string) => {
 export const NotificationsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, hasValidToken, logout } = useAuth();
   const isGuest = user?.id === 'guest';
 
   const notificationsQuery = useQuery({
     queryKey: ['notifications'],
     queryFn: () => apiRequest<NotificationItem[]>('/api/notifications?limit=50&offset=0'),
-    enabled: isAuthenticated && !isGuest,
+    enabled: isAuthenticated && !isGuest && hasValidToken,
   });
 
   const notifications = useMemo(() => notificationsQuery.data ?? [], [notificationsQuery.data]);
@@ -118,6 +118,15 @@ export const NotificationsScreen: React.FC = () => {
   };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const hasForcedLogout = useRef(false);
+  const notificationsError = notificationsQuery.error as (Error & { status?: number }) | null;
+
+  useEffect(() => {
+    if (notificationsError?.status === 401 && !hasForcedLogout.current) {
+      hasForcedLogout.current = true;
+      logout();
+    }
+  }, [notificationsError?.status, logout]);
 
   return (
     <LinearGradient
@@ -154,7 +163,7 @@ export const NotificationsScreen: React.FC = () => {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
         showsVerticalScrollIndicator={false}
       >
-        {isGuest ? (
+        {isGuest || !hasValidToken ? (
           <Text variant="body" color="muted" style={styles.emptyText}>
             Sign in to view notifications.
           </Text>
@@ -166,7 +175,9 @@ export const NotificationsScreen: React.FC = () => {
         ) : notificationsQuery.isError ? (
           <View style={styles.center}>
             <Text variant="body" color="muted" style={styles.emptyText}>
-              Unable to load notifications.
+              {notificationsError?.status === 401
+                ? 'Session expired. Please sign in again.'
+                : `Unable to load notifications.${notificationsError?.message ? ` ${notificationsError.message}` : ''}`}
             </Text>
             <Button variant="outline" onPress={() => notificationsQuery.refetch()}>
               Retry

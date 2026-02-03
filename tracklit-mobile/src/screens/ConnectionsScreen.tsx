@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import React, { useMemo, useState, useCallback } from 'react';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
-import { Search, UserPlus, Users, ChevronRight } from 'lucide-react-native';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Search, UserPlus, Users, ChevronRight, MessageCircle, UserMinus } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
@@ -34,6 +34,7 @@ export const ConnectionsScreen: React.FC = () => {
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
+  const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
 
@@ -48,6 +49,64 @@ export const ConnectionsScreen: React.FC = () => {
     queryFn: () => apiRequest<ConnectionRequest[]>('/api/friend-requests/pending'),
     enabled: isAuthenticated && !isGuest,
   });
+
+  // Remove connection mutation
+  const removeConnectionMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      return apiRequest<{ success: boolean }>(`/api/follow/${userId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['connections'] });
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      Alert.alert('Success', 'Connection removed.');
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Failed to remove connection');
+    },
+  });
+
+  const handleConnectionPress = useCallback((connection: ConnectionItem) => {
+    Alert.alert(
+      connection.name || 'TrackLit Athlete',
+      `@${connection.username || 'user'}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Message',
+          onPress: () => {
+            navigation.navigate('ChatConversation', {
+              conversationId: connection.id,
+              type: 'direct',
+            });
+          },
+        },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Remove Connection',
+              `Are you sure you want to remove ${connection.name || connection.username} from your connections?`,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Remove',
+                  style: 'destructive',
+                  onPress: () => removeConnectionMutation.mutate(connection.id),
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  }, [navigation, removeConnectionMutation]);
+
+  const handleAddConnection = useCallback(() => {
+    navigation.navigate('Athletes');
+  }, [navigation]);
 
   const filtered = useMemo(() => {
     const data = connectionsQuery.data ?? [];
@@ -83,7 +142,7 @@ export const ConnectionsScreen: React.FC = () => {
             value={search}
             onChangeText={setSearch}
           />
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity style={styles.addButton} onPress={handleAddConnection}>
             <UserPlus size={18} color={theme.colors.foreground} />
           </TouchableOpacity>
         </View>
@@ -111,20 +170,30 @@ export const ConnectionsScreen: React.FC = () => {
         </WebCard>
       ) : (
         filtered.map((c) => (
-          <WebCard key={c.id} tone="muted" padding={theme.spacing.md}>
-            <View style={styles.itemRow}>
-              <Avatar size="md" fallback={(c.name || c.username || 'U').slice(0, 2)} src={c.profileImageUrl || undefined} />
-              <View style={{ flex: 1, gap: theme.spacing.xs }}>
-                <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
-                  {c.name || 'TrackLit Athlete'}
-                </Text>
-                <Text variant="small" color="muted" numberOfLines={1}>
-                  @{c.username || 'user'}
-                </Text>
+          <TouchableOpacity key={c.id} onPress={() => handleConnectionPress(c)} activeOpacity={0.7}>
+            <WebCard tone="muted" padding={theme.spacing.md}>
+              <View style={styles.itemRow}>
+                <Avatar size="md" fallback={(c.name || c.username || 'U').slice(0, 2)} src={c.profileImageUrl || undefined} />
+                <View style={{ flex: 1, gap: theme.spacing.xs }}>
+                  <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
+                    {c.name || 'TrackLit Athlete'}
+                  </Text>
+                  <Text variant="small" color="muted" numberOfLines={1}>
+                    @{c.username || 'user'}
+                  </Text>
+                </View>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={styles.messageButton}
+                    onPress={() => navigation.navigate('ChatConversation', { conversationId: c.id, type: 'direct' })}
+                  >
+                    <MessageCircle size={16} color={theme.colors.primary} />
+                  </TouchableOpacity>
+                  <ChevronRight size={14} color={theme.colors.textMuted} />
+                </View>
               </View>
-              <ChevronRight size={14} color={theme.colors.textMuted} />
-            </View>
-          </WebCard>
+            </WebCard>
+          </TouchableOpacity>
         ))
       )}
     </WebScreen>
@@ -176,6 +245,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  messageButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(147, 51, 234, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

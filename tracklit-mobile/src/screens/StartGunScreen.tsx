@@ -13,18 +13,17 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Slider from '@react-native-community/slider';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import Sound from 'react-native-sound';
+import { Audio } from 'expo-av';
 
 import { Text } from '@/components/ui/Text';
 import { Card, CardContent } from '@/components/ui/Card';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
-import marksAudio from '../../assets/audio/on-your-marks.mp3';
-import setAudio from '../../assets/audio/set.mp3';
-import bangAudio from '../../assets/audio/bang.mp3';
-
-Sound.setCategory('Playback');
+// Audio assets - use require for expo-av compatibility
+const marksAudio = require('../../assets/audio/on-your-marks.mp3');
+const setAudio = require('../../assets/audio/set.mp3');
+const bangAudio = require('../../assets/audio/bang.mp3');
 
 const delay = (ms: number) =>
   new Promise<void>((resolve) => {
@@ -45,45 +44,63 @@ export const StartGunScreen: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const sequenceIdRef = useRef(0);
-  const marksRef = useRef<Sound | null>(null);
-  const setRef = useRef<Sound | null>(null);
-  const bangRef = useRef<Sound | null>(null);
+  const marksRef = useRef<Audio.Sound | null>(null);
+  const setRef = useRef<Audio.Sound | null>(null);
+  const bangRef = useRef<Audio.Sound | null>(null);
 
   useEffect(() => {
-    marksRef.current = new Sound(marksAudio, (error) => {
-      if (error) {
-        console.error('Failed to load on-your-marks audio', error);
+    const loadSounds = async () => {
+      try {
+        // Configure audio mode for playback
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+        });
+
+        const { sound: marksSound } = await Audio.Sound.createAsync(marksAudio);
+        marksRef.current = marksSound;
+
+        const { sound: setSound } = await Audio.Sound.createAsync(setAudio);
+        setRef.current = setSound;
+
+        const { sound: bangSound } = await Audio.Sound.createAsync(bangAudio);
+        bangRef.current = bangSound;
+      } catch (error) {
+        console.error('Failed to load audio files', error);
       }
-    });
-    setRef.current = new Sound(setAudio, (error) => {
-      if (error) {
-        console.error('Failed to load set audio', error);
-      }
-    });
-    bangRef.current = new Sound(bangAudio, (error) => {
-      if (error) {
-        console.error('Failed to load bang audio', error);
-      }
-    });
+    };
+
+    loadSounds();
 
     return () => {
-      marksRef.current?.release();
-      setRef.current?.release();
-      bangRef.current?.release();
+      marksRef.current?.unloadAsync();
+      setRef.current?.unloadAsync();
+      bangRef.current?.unloadAsync();
     };
   }, []);
 
-  const playSound = (sound: Sound | null): Promise<void> =>
-    new Promise((resolve) => {
-      if (!sound) {
-        resolve();
-        return;
-      }
-      sound.setVolume(isMuted ? 0 : volume / 100);
-      sound.stop(() => {
-        sound.play(() => resolve());
+  const playSound = async (sound: Audio.Sound | null): Promise<void> => {
+    if (!sound) return;
+    try {
+      await sound.setVolumeAsync(isMuted ? 0 : volume / 100);
+      await sound.setPositionAsync(0);
+      await sound.playAsync();
+      // Wait for playback to complete
+      return new Promise((resolve) => {
+        const checkStatus = async () => {
+          const status = await sound.getStatusAsync();
+          if (status.isLoaded && !status.isPlaying) {
+            resolve();
+          } else {
+            setTimeout(checkStatus, 100);
+          }
+        };
+        setTimeout(checkStatus, 100);
       });
-    });
+    } catch (error) {
+      console.error('Error playing sound', error);
+    }
+  };
 
   const startSequence = async () => {
     if (isRunning) return;
@@ -113,12 +130,16 @@ export const StartGunScreen: React.FC = () => {
     }
   };
 
-  const resetSequence = () => {
+  const resetSequence = async () => {
     sequenceIdRef.current += 1;
     setIsRunning(false);
-    marksRef.current?.stop(() => undefined);
-    setRef.current?.stop(() => undefined);
-    bangRef.current?.stop(() => undefined);
+    try {
+      await marksRef.current?.stopAsync();
+      await setRef.current?.stopAsync();
+      await bangRef.current?.stopAsync();
+    } catch (error) {
+      // Ignore errors when stopping sounds that aren't playing
+    }
   };
 
   return (

@@ -43,31 +43,31 @@ const styles = StyleSheet.create({
   // Variants
   h1: {
     fontSize: theme.typography.sizes['4xl'],
-    lineHeight: theme.typography.sizes['4xl'] * theme.typography.lineHeights.tight,
+    lineHeight: Math.ceil(theme.typography.sizes['4xl'] * theme.typography.lineHeights.tight),
   },
   h2: {
     fontSize: theme.typography.sizes['3xl'],
-    lineHeight: theme.typography.sizes['3xl'] * theme.typography.lineHeights.tight,
+    lineHeight: Math.ceil(theme.typography.sizes['3xl'] * theme.typography.lineHeights.tight),
   },
   h3: {
     fontSize: theme.typography.sizes['2xl'],
-    lineHeight: theme.typography.sizes['2xl'] * theme.typography.lineHeights.tight,
+    lineHeight: Math.ceil(theme.typography.sizes['2xl'] * theme.typography.lineHeights.tight),
   },
   h4: {
     fontSize: theme.typography.sizes.xl,
-    lineHeight: theme.typography.sizes.xl * theme.typography.lineHeights.normal,
+    lineHeight: Math.ceil(theme.typography.sizes.xl * theme.typography.lineHeights.normal),
   },
   body: {
     fontSize: theme.typography.sizes.base,
-    lineHeight: theme.typography.sizes.base * theme.typography.lineHeights.normal,
+    lineHeight: Math.ceil(theme.typography.sizes.base * theme.typography.lineHeights.normal),
   },
   caption: {
     fontSize: theme.typography.sizes.sm,
-    lineHeight: theme.typography.sizes.sm * theme.typography.lineHeights.normal,
+    lineHeight: Math.ceil(theme.typography.sizes.sm * theme.typography.lineHeights.normal),
   },
   small: {
     fontSize: theme.typography.sizes.xs,
-    lineHeight: theme.typography.sizes.xs * theme.typography.lineHeights.normal,
+    lineHeight: Math.ceil(theme.typography.sizes.xs * theme.typography.lineHeights.normal),
   },
   
   // Colors
