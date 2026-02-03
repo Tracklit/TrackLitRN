@@ -890,7 +890,7 @@ const styles = StyleSheet.create({
   header: {
     borderRadius: theme.borderRadius.webCard,
     padding: theme.spacing.lg,
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.md,
     gap: theme.spacing.md,
   },

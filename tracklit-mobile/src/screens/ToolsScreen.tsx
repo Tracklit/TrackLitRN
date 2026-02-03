@@ -249,6 +249,7 @@ const styles = StyleSheet.create({
   header: {
     borderRadius: theme.borderRadius.webCard,
     padding: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
   },
   toolsGrid: {

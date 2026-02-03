@@ -322,11 +322,11 @@ export const FeedScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: theme.spacing.lg,
   },
   header: {
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
   },
   filterRow: {
     flexDirection: 'row',
@@ -334,6 +334,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.muted,
     padding: theme.spacing.xs,
     marginBottom: theme.spacing.lg,
+    marginHorizontal: theme.spacing.lg,
   },
   filterButton: {
     flex: 1,
@@ -346,6 +347,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: theme.spacing.xl * 3,
+    paddingHorizontal: theme.spacing.lg,
     gap: theme.spacing.md,
   },
   card: {
