@@ -166,10 +166,25 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    
+    // In production, sanitize error messages to avoid exposing internal details
+    let message = err.message || "Internal Server Error";
+    if (isProduction && status >= 500) {
+      // Log full error for debugging but don't expose to client
+      console.error('[ERROR]', err);
+      
+      // Check for database connection errors
+      if (message.includes('Failed query') || 
+          message.includes('connection') || 
+          message.includes('ECONNREFUSED') ||
+          message.includes('timeout')) {
+        message = "Service temporarily unavailable. Please try again.";
+      } else {
+        message = "An unexpected error occurred. Please try again.";
+      }
+    }
 
     res.status(status).json({ message });
-    throw err;
   });
 
   // Production deployments use environment PORT, development uses 5000

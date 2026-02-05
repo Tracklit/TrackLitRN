@@ -748,13 +748,24 @@ export function setupAuth(app: Express) {
   });
   
   // Emergency endpoint for production debugging
-  app.get('/api/health', (req, res) => {
-    res.status(200).json({
-      status: 'ok',
+  app.get('/api/health', async (req, res) => {
+    // Import here to avoid circular dependencies
+    const { checkDatabaseConnection } = await import('./db');
+    
+    let dbHealthy = false;
+    try {
+      dbHealthy = await checkDatabaseConnection();
+    } catch (error) {
+      console.error('Health check DB error:', error);
+    }
+    
+    res.status(dbHealthy ? 200 : 503).json({
+      status: dbHealthy ? 'ok' : 'degraded',
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
       authenticated: !!req.user,
-      session: !!req.sessionID
+      session: !!req.sessionID,
+      database: dbHealthy ? 'connected' : 'disconnected'
     });
   });
 }

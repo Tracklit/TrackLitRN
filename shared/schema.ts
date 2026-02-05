@@ -423,20 +423,19 @@ export const clubs = pgTable("clubs", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  logoUrl: text("logo_url"),
   ownerId: integer("owner_id").notNull().references(() => users.id),
   isPrivate: boolean("is_private").default(false),
-  // isPaid and price removed as they don't exist in the actual DB
-  inviteCode: text("invite_code"), // Unique invite code for the club
-  logoUrl: text("logo_url"),
-  logoThumbUrl: text("logo_thumb_url"), // 200x200 square logo
-  logoMediumUrl: text("logo_medium_url"), // 400x300 logo
-  logoLargeUrl: text("logo_large_url"), // 800x400 logo
-  bannerUrl: text("banner_url"), // New field for club banner image
-  bannerThumbUrl: text("banner_thumb_url"), // 200x200 square banner
-  bannerMediumUrl: text("banner_medium_url"), // 400x300 banner
-  bannerLargeUrl: text("banner_large_url"), // 800x400 banner
   createdAt: timestamp("created_at").defaultNow(),
-  isPremium: boolean("is_premium").default(false), // Whether the club has premium features
+  inviteCode: text("invite_code"), // Unique invite code for the club
+  bannerUrl: text("banner_url"),
+  isPremium: boolean("is_premium").default(false),
+  logoThumbUrl: text("logo_thumb_url"),
+  logoMediumUrl: text("logo_medium_url"),
+  logoLargeUrl: text("logo_large_url"),
+  bannerThumbUrl: text("banner_thumb_url"),
+  bannerMediumUrl: text("banner_medium_url"),
+  bannerLargeUrl: text("banner_large_url"),
 });
 
 export const clubsRelations = relations(clubs, ({ one, many }) => ({
