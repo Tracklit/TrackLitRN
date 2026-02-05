@@ -21,7 +21,17 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Mic, StopCircle, Volume2, VolumeX, Languages } from 'lucide-react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
-import Voice from '@react-native-voice/voice';
+// import Voice from '@react-native-voice/voice';
+const Voice = {
+  start: async (_: any) => { Alert.alert('Feature Disabled', 'Voice input is temporarily disabled on Android.'); },
+  stop: async () => { },
+  destroy: async () => { },
+  removeAllListeners: () => { },
+  onSpeechStart: null as any,
+  onSpeechEnd: null as any,
+  onSpeechResults: null as any,
+  onSpeechError: null as any,
+};
 import * as Speech from 'expo-speech';
 import * as Clipboard from 'expo-clipboard';
 
@@ -209,7 +219,10 @@ export const SprinthiaScreen: React.FC = () => {
     try {
       isVoiceActiveRef.current = true;
       setIsListening(true);
-      await Voice.start(selectedLanguage);
+      // await Voice.start(selectedLanguage);
+      Alert.alert('Voice Disabled', 'Voice input is temporarily unavailable.');
+      setIsListening(false);
+      isVoiceActiveRef.current = false;
     } catch (error: any) {
       const message = error?.message?.toLowerCase?.() || '';
       if (message.includes('already started')) {
@@ -247,14 +260,14 @@ export const SprinthiaScreen: React.FC = () => {
     Voice.onSpeechEnd = () => {
       // Do not flip UI off; user explicitly stops recording.
     };
-    Voice.onSpeechResults = (event) => {
+    Voice.onSpeechResults = (event: any) => {
       const transcript = event.value?.[0];
       if (transcript) {
         setInputText(transcript);
       }
       // Keep listening until the user explicitly stops.
     };
-    Voice.onSpeechError = (event) => {
+    Voice.onSpeechError = (event: any) => {
       const message = event.error?.message || '';
       console.error('Speech recognition error:', event.error);
       if (message.toLowerCase().includes('already started')) {

@@ -1,4 +1,4 @@
-import type { DocumentPickerResponse } from 'react-native-document-picker';
+import * as DocumentPicker from 'expo-document-picker';
 
 import { env } from '@/config/env';
 import { getToken } from './tokenStorage';
@@ -6,7 +6,7 @@ import { getToken } from './tokenStorage';
 type UploadFields = Record<string, string | number | boolean | undefined | null>;
 
 type UploadProgramPayload = {
-  file: DocumentPickerResponse;
+  file: DocumentPicker.DocumentPickerAsset;
   fields: UploadFields;
 };
 
@@ -19,8 +19,8 @@ export const uploadProgramFile = async ({ file, fields }: UploadProgramPayload) 
   const formData = new FormData();
   formData.append('programFile', {
     uri: file.uri,
-    name: file.name ?? 'program-upload',
-    type: file.type ?? 'application/octet-stream',
+    name: file.name,
+    type: file.mimeType ?? 'application/octet-stream',
   } as any);
 
   Object.entries(fields).forEach(([key, value]) => {
@@ -39,7 +39,7 @@ export const uploadProgramFile = async ({ file, fields }: UploadProgramPayload) 
     console.log('[UPLOAD] POST /api/programs/upload', {
       hasToken: !!token,
       fileName: file.name,
-      fileType: file.type,
+      fileType: file.mimeType,
     });
   }
 

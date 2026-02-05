@@ -15,7 +15,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
-import DocumentPicker, { type DocumentPickerResponse } from 'react-native-document-picker';
+import * as DocumentPicker from 'expo-document-picker';
 
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
@@ -54,12 +54,12 @@ type SprinthiaFormData = {
   workoutsPerWeek: number;
   gymWorkoutsPerWeek: number;
   blockFocus:
-    | 'speed'
-    | 'speed-maintenance'
-    | 'speed-endurance'
-    | 'mixed'
-    | 'short-to-long'
-    | 'long-to-short';
+  | 'speed'
+  | 'speed-maintenance'
+  | 'speed-endurance'
+  | 'mixed'
+  | 'short-to-long'
+  | 'long-to-short';
   aiPrompt: string;
 };
 
@@ -77,7 +77,7 @@ export const ProgramCreateScreen: React.FC = () => {
   const [price, setPrice] = useState('0');
   const [duration, setDuration] = useState<DurationWeeks>(4);
   const [textContent, setTextContent] = useState('');
-  const [uploadFile, setUploadFile] = useState<DocumentPickerResponse | null>(null);
+  const [uploadFile, setUploadFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importTitle, setImportTitle] = useState('');
   const [importDescription, setImportDescription] = useState('');
@@ -326,18 +326,16 @@ export const ProgramCreateScreen: React.FC = () => {
 
   const pickUploadFile = async () => {
     try {
-      const file = await DocumentPicker.pickSingle({
-        type: DocumentPicker.types.allFiles,
-        copyTo: 'cachesDirectory',
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
       });
-      setUploadFile({
-        ...file,
-        uri: file.fileCopyUri ?? file.uri,
-      });
+
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+      setUploadFile(file);
     } catch (error) {
-      if (DocumentPicker.isCancel(error)) {
-        return;
-      }
       Alert.alert('File selection failed', 'Unable to select a document.');
     }
   };
