@@ -2294,6 +2294,7 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         email: users.email,
         isPremium: users.isPremium,
+        subscriptionTier: users.subscriptionTier,
         spikes: users.spikes,
         role: users.role,
         createdAt: users.createdAt,
@@ -2309,7 +2310,7 @@ export class DatabaseStorage implements IStorage {
     
     return userResults.map(user => ({
       ...user,
-      subscription: user.isPremium ? 'pro' : 'free',
+      subscriptionTier: user.subscriptionTier || 'free',
       isBlocked: false // For now, since we don't have this field yet
     }));
   }
