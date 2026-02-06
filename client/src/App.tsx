@@ -85,6 +85,15 @@ const SpikesPageLazy = lazy(() => import("@/pages/spikes-page"));
 const RehabPageLazy = lazy(() => import("@/pages/rehab-page"));
 const HamstringRehabPageLazy = lazy(() => import("@/pages/rehab/acute-muscle/hamstring"));
 const FootRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/foot"));
+// Acute Muscle Injuries
+const QuadRehabPageLazy = lazy(() => import("@/pages/rehab/acute-muscle/quad"));
+const CalfRehabPageLazy = lazy(() => import("@/pages/rehab/acute-muscle/calf"));
+const GroinRehabPageLazy = lazy(() => import("@/pages/rehab/acute-muscle/groin"));
+// Chronic Injuries
+const ChronicHamstringRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/hamstring"));
+const ChronicQuadRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/quad"));
+const ChronicCalfRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/calf"));
+const ChronicGroinRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/groin"));
 
 // AI & Special Features
 const SprinthiaPageLazy = lazy(() => import("@/pages/sprinthia-simple"));
@@ -166,6 +175,15 @@ const SpikesPage = () => <SpikesPageLazy />;
 const RehabPage = () => <RehabPageLazy />;
 const HamstringRehabPage = () => <HamstringRehabPageLazy />;
 const FootRehabPage = () => <FootRehabPageLazy />;
+// Acute muscle injury pages
+const QuadRehabPage = () => <QuadRehabPageLazy />;
+const CalfRehabPage = () => <CalfRehabPageLazy />;
+const GroinRehabPage = () => <GroinRehabPageLazy />;
+// Chronic injury pages
+const ChronicHamstringRehabPage = () => <ChronicHamstringRehabPageLazy />;
+const ChronicQuadRehabPage = () => <ChronicQuadRehabPageLazy />;
+const ChronicCalfRehabPage = () => <ChronicCalfRehabPageLazy />;
+const ChronicGroinRehabPage = () => <ChronicGroinRehabPageLazy />;
 const SprinthiaPage = () => <SprinthiaPageLazy />;
 const VideoPlayerPage = () => <VideoPlayerPageLazy />;
 const ArcadePage = () => <ArcadePageLazy />;
@@ -357,7 +375,14 @@ function Router() {
         {/* Rehab */}
         <ProtectedRoute path="/rehab" component={RehabPage} />
         <ProtectedRoute path="/rehab/acute-muscle/hamstring" component={HamstringRehabPage} />
+        <ProtectedRoute path="/rehab/acute-muscle/quad" component={QuadRehabPage} />
+        <ProtectedRoute path="/rehab/acute-muscle/calf" component={CalfRehabPage} />
+        <ProtectedRoute path="/rehab/acute-muscle/groin" component={GroinRehabPage} />
         <ProtectedRoute path="/rehab/chronic-injuries/foot" component={FootRehabPage} />
+        <ProtectedRoute path="/rehab/chronic-injuries/hamstring" component={ChronicHamstringRehabPage} />
+        <ProtectedRoute path="/rehab/chronic-injuries/quad" component={ChronicQuadRehabPage} />
+        <ProtectedRoute path="/rehab/chronic-injuries/calf" component={ChronicCalfRehabPage} />
+        <ProtectedRoute path="/rehab/chronic-injuries/groin" component={ChronicGroinRehabPage} />
         
         {/* AI */}
         <ProtectedRoute path="/sprinthia" component={SprinthiaPage} />
