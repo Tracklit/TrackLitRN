@@ -94,6 +94,7 @@ const ChronicHamstringRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-i
 const ChronicQuadRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/quad"));
 const ChronicCalfRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/calf"));
 const ChronicGroinRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/groin"));
+const ChronicOtherTendonsRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/other-tendons"));
 // Back Injuries
 const BackLigamentRehabPageLazy = lazy(() => import("@/pages/rehab/back-injuries/ligament"));
 const BackDiscRehabPageLazy = lazy(() => import("@/pages/rehab/back-injuries/disc"));
@@ -194,6 +195,7 @@ const ChronicHamstringRehabPage = () => <ChronicHamstringRehabPageLazy />;
 const ChronicQuadRehabPage = () => <ChronicQuadRehabPageLazy />;
 const ChronicCalfRehabPage = () => <ChronicCalfRehabPageLazy />;
 const ChronicGroinRehabPage = () => <ChronicGroinRehabPageLazy />;
+const ChronicOtherTendonsRehabPage = () => <ChronicOtherTendonsRehabPageLazy />;
 // Back injury pages
 const BackLigamentRehabPage = () => <BackLigamentRehabPageLazy />;
 const BackDiscRehabPage = () => <BackDiscRehabPageLazy />;
@@ -403,6 +405,7 @@ function Router() {
         <ProtectedRoute path="/rehab/chronic-injuries/quad" component={ChronicQuadRehabPage} />
         <ProtectedRoute path="/rehab/chronic-injuries/calf" component={ChronicCalfRehabPage} />
         <ProtectedRoute path="/rehab/chronic-injuries/groin" component={ChronicGroinRehabPage} />
+        <ProtectedRoute path="/rehab/chronic-injuries/other-tendons" component={ChronicOtherTendonsRehabPage} />
         {/* Back Injuries */}
         <ProtectedRoute path="/rehab/back-injuries/ligament" component={BackLigamentRehabPage} />
         <ProtectedRoute path="/rehab/back-injuries/disc" component={BackDiscRehabPage} />
