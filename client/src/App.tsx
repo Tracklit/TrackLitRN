@@ -94,6 +94,16 @@ const ChronicHamstringRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-i
 const ChronicQuadRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/quad"));
 const ChronicCalfRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/calf"));
 const ChronicGroinRehabPageLazy = lazy(() => import("@/pages/rehab/chronic-injuries/groin"));
+// Back Injuries
+const BackLigamentRehabPageLazy = lazy(() => import("@/pages/rehab/back-injuries/ligament"));
+const BackDiscRehabPageLazy = lazy(() => import("@/pages/rehab/back-injuries/disc"));
+const BackOtherRehabPageLazy = lazy(() => import("@/pages/rehab/back-injuries/other"));
+// Bone Breaks
+const KneeFractureRehabPageLazy = lazy(() => import("@/pages/rehab/bone-breaks/knee"));
+const RibFractureRehabPageLazy = lazy(() => import("@/pages/rehab/bone-breaks/rib"));
+const ShoulderFractureRehabPageLazy = lazy(() => import("@/pages/rehab/bone-breaks/shoulder"));
+const AnkleFractureRehabPageLazy = lazy(() => import("@/pages/rehab/bone-breaks/ankle"));
+const BoneOtherRehabPageLazy = lazy(() => import("@/pages/rehab/bone-breaks/other"));
 
 // AI & Special Features
 const SprinthiaPageLazy = lazy(() => import("@/pages/sprinthia-simple"));
@@ -184,6 +194,16 @@ const ChronicHamstringRehabPage = () => <ChronicHamstringRehabPageLazy />;
 const ChronicQuadRehabPage = () => <ChronicQuadRehabPageLazy />;
 const ChronicCalfRehabPage = () => <ChronicCalfRehabPageLazy />;
 const ChronicGroinRehabPage = () => <ChronicGroinRehabPageLazy />;
+// Back injury pages
+const BackLigamentRehabPage = () => <BackLigamentRehabPageLazy />;
+const BackDiscRehabPage = () => <BackDiscRehabPageLazy />;
+const BackOtherRehabPage = () => <BackOtherRehabPageLazy />;
+// Bone fracture pages
+const KneeFractureRehabPage = () => <KneeFractureRehabPageLazy />;
+const RibFractureRehabPage = () => <RibFractureRehabPageLazy />;
+const ShoulderFractureRehabPage = () => <ShoulderFractureRehabPageLazy />;
+const AnkleFractureRehabPage = () => <AnkleFractureRehabPageLazy />;
+const BoneOtherRehabPage = () => <BoneOtherRehabPageLazy />;
 const SprinthiaPage = () => <SprinthiaPageLazy />;
 const VideoPlayerPage = () => <VideoPlayerPageLazy />;
 const ArcadePage = () => <ArcadePageLazy />;
@@ -383,6 +403,16 @@ function Router() {
         <ProtectedRoute path="/rehab/chronic-injuries/quad" component={ChronicQuadRehabPage} />
         <ProtectedRoute path="/rehab/chronic-injuries/calf" component={ChronicCalfRehabPage} />
         <ProtectedRoute path="/rehab/chronic-injuries/groin" component={ChronicGroinRehabPage} />
+        {/* Back Injuries */}
+        <ProtectedRoute path="/rehab/back-injuries/ligament" component={BackLigamentRehabPage} />
+        <ProtectedRoute path="/rehab/back-injuries/disc" component={BackDiscRehabPage} />
+        <ProtectedRoute path="/rehab/back-injuries/other" component={BackOtherRehabPage} />
+        {/* Bone Breaks */}
+        <ProtectedRoute path="/rehab/bone-breaks/knee" component={KneeFractureRehabPage} />
+        <ProtectedRoute path="/rehab/bone-breaks/rib" component={RibFractureRehabPage} />
+        <ProtectedRoute path="/rehab/bone-breaks/shoulder" component={ShoulderFractureRehabPage} />
+        <ProtectedRoute path="/rehab/bone-breaks/ankle" component={AnkleFractureRehabPage} />
+        <ProtectedRoute path="/rehab/bone-breaks/other" component={BoneOtherRehabPage} />
         
         {/* AI */}
         <ProtectedRoute path="/sprinthia" component={SprinthiaPage} />
