@@ -2491,11 +2491,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserSubscription(userId: number, tier: 'free' | 'pro' | 'star') {
-    // For now, just update isPremium based on tier
+    // Update both isPremium flag and subscriptionTier field
     const isPremium = tier !== 'free';
     await db
       .update(users)
-      .set({ isPremium })
+      .set({ isPremium, subscriptionTier: tier })
       .where(eq(users.id, userId));
   }
 

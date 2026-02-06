@@ -150,7 +150,7 @@ export default function AdminPanelPage() {
 
   const broadcastNotificationMutation = useMutation({
     mutationFn: async ({ title, message }: { title: string; message: string }) => {
-      const response = await apiRequest('POST', '/api/admin/broadcast', { title, message });
+      const response = await apiRequest('POST', '/api/admin/broadcast-notification', { title, message });
       return response.json();
     },
     onSuccess: () => {
