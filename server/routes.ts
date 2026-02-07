@@ -5239,10 +5239,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // 4.2 Update a program session
-  app.put("/api/programs/:programId/sessions/:sessionId(\\d+)", async (req: Request, res: Response) => {
+  app.put("/api/programs/:programId/sessions/:sessionId", async (req: Request, res: Response, next) => {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      // Let the dedicated /sessions/batch route handle this special path.
+      if (req.params.sessionId === "batch") {
+        return next("route");
       }
       
       const programId = parseInt(req.params.programId);
@@ -5284,10 +5289,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // 4.3 Delete a program session
-  app.delete("/api/programs/:programId/sessions/:sessionId(\\d+)", async (req: Request, res: Response) => {
+  app.delete("/api/programs/:programId/sessions/:sessionId", async (req: Request, res: Response, next) => {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      // Skip "batch" so it does not get treated as a numeric session id.
+      if (req.params.sessionId === "batch") {
+        return next("route");
       }
       
       const programId = parseInt(req.params.programId);
@@ -10969,7 +10979,6 @@ Submission Details:
 
   return httpServer;
 }
-
 
 
 
