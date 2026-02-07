@@ -208,6 +208,12 @@ const getCoachesTableSchema = async (): Promise<CoachesTableSchema> => {
   return coachesTableSchemaCache;
 };
 
+const isMissingCoachesUserIdColumnError = (error: any): boolean => {
+  const code = error?.cause?.code ?? error?.code;
+  const message = String(error?.cause?.message || error?.message || "");
+  return code === "42703" && /\buser_id\b/i.test(message);
+};
+
 // Create Redis client for Azure Redis Cache
 const getRedisConfig = () => {
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -928,8 +934,7 @@ export class DatabaseStorage implements IStorage {
     try {
       return await db.select().from(coaches).where(eq(coaches.userId, userId));
     } catch (error: any) {
-      const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
-      if (!missingUserIdColumn) throw error;
+      if (!isMissingCoachesUserIdColumnError(error)) throw error;
 
       const schema = await getCoachesTableSchema();
       const selectNotes = schema.hasNotes ? ", notes" : "";
@@ -961,8 +966,7 @@ export class DatabaseStorage implements IStorage {
           .where(and(eq(coaches.userId, coachId), eq(coaches.status, "accepted")));
         return coachRelations.map((relation) => relation.athleteId);
       } catch (error: any) {
-        const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
-        if (!missingUserIdColumn) throw error;
+        if (!isMissingCoachesUserIdColumnError(error)) throw error;
 
         const schema = await getCoachesTableSchema();
         const whereStatus = schema.hasStatus ? "AND status = 'accepted'" : "";
@@ -1010,8 +1014,7 @@ export class DatabaseStorage implements IStorage {
           .where(and(eq(coaches.userId, coachUserId), eq(coaches.status, "accepted")));
         return coachRelations.map((relation) => relation.athleteId);
       } catch (error: any) {
-        const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
-        if (!missingUserIdColumn) throw error;
+        if (!isMissingCoachesUserIdColumnError(error)) throw error;
 
         const schema = await getCoachesTableSchema();
         const whereStatus = schema.hasStatus ? "AND status = 'accepted'" : "";
@@ -1038,8 +1041,7 @@ export class DatabaseStorage implements IStorage {
           .where(and(eq(coaches.athleteId, athleteId), eq(coaches.status, "accepted")));
         return coachRelations.map((relation) => relation.userId);
       } catch (error: any) {
-        const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
-        if (!missingUserIdColumn) throw error;
+        if (!isMissingCoachesUserIdColumnError(error)) throw error;
 
         const schema = await getCoachesTableSchema();
         const whereStatus = schema.hasStatus ? "AND status = 'accepted'" : "";
@@ -1065,8 +1067,7 @@ export class DatabaseStorage implements IStorage {
         .where(and(eq(coaches.userId, coachUserId), eq(coaches.status, "accepted")));
       return Number(result[0]?.count || 0);
     } catch (error: any) {
-      const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
-      if (!missingUserIdColumn) throw error;
+      if (!isMissingCoachesUserIdColumnError(error)) throw error;
 
       const schema = await getCoachesTableSchema();
       const whereStatus = schema.hasStatus ? "AND status = 'accepted'" : "";
@@ -1100,8 +1101,7 @@ export class DatabaseStorage implements IStorage {
 
       return coachRelation;
     } catch (error: any) {
-      const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
-      if (!missingUserIdColumn) throw error;
+      if (!isMissingCoachesUserIdColumnError(error)) throw error;
 
       const schema = await getCoachesTableSchema();
       const existing = await pool.query(
@@ -1138,8 +1138,7 @@ export class DatabaseStorage implements IStorage {
         .where(and(eq(coaches.userId, coachUserId), eq(coaches.athleteId, athleteId)));
       return !!result;
     } catch (error: any) {
-      const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
-      if (!missingUserIdColumn) throw error;
+      if (!isMissingCoachesUserIdColumnError(error)) throw error;
 
       const schema = await getCoachesTableSchema();
       const result = await pool.query(
@@ -4423,4 +4422,3 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
-
