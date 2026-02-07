@@ -167,6 +167,12 @@ import { RedisStore } from "connect-redis";
 import { createClient } from "redis";
 
 let notificationColumnsCache: Set<string> | null = null;
+type CoachesTableSchema = {
+  coachIdColumn: "user_id" | "coach_id";
+  hasStatus: boolean;
+  hasNotes: boolean;
+};
+let coachesTableSchemaCache: CoachesTableSchema | null = null;
 
 const getNotificationColumns = async (): Promise<Set<string>> => {
   if (notificationColumnsCache) {
@@ -179,6 +185,27 @@ const getNotificationColumns = async (): Promise<Set<string>> => {
   `);
   notificationColumnsCache = new Set(result.rows.map((row: any) => row.column_name));
   return notificationColumnsCache;
+};
+
+const getCoachesTableSchema = async (): Promise<CoachesTableSchema> => {
+  if (coachesTableSchemaCache) {
+    return coachesTableSchemaCache;
+  }
+
+  const result = await db.execute(sql`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = 'coaches'
+  `);
+  const columns = new Set(result.rows.map((row: any) => row.column_name));
+
+  coachesTableSchemaCache = {
+    coachIdColumn: columns.has("user_id") ? "user_id" : "coach_id",
+    hasStatus: columns.has("status"),
+    hasNotes: columns.has("notes"),
+  };
+
+  return coachesTableSchemaCache;
 };
 
 // Create Redis client for Azure Redis Cache
@@ -898,25 +925,60 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCoachesByUserId(userId: number): Promise<Coach[]> {
-    return db.select().from(coaches).where(eq(coaches.userId, userId));
+    try {
+      return await db.select().from(coaches).where(eq(coaches.userId, userId));
+    } catch (error: any) {
+      const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
+      if (!missingUserIdColumn) throw error;
+
+      const schema = await getCoachesTableSchema();
+      const selectNotes = schema.hasNotes ? ", notes" : "";
+      const selectStatus = schema.hasStatus ? "status" : "'accepted'::text AS status";
+      const query = `
+        SELECT id, ${schema.coachIdColumn} AS coach_user_id, athlete_id, ${selectStatus}, created_at${selectNotes}
+        FROM coaches
+        WHERE ${schema.coachIdColumn} = $1
+        ORDER BY id
+      `;
+      const result = await pool.query(query, [userId]);
+      return result.rows.map((row: any) => ({
+        id: Number(row.id),
+        userId: Number(row.coach_user_id),
+        athleteId: Number(row.athlete_id),
+        status: row.status ?? "accepted",
+        notes: row.notes ?? null,
+        createdAt: row.created_at,
+      })) as Coach[];
+    }
   }
 
   async getAthletesByCoachId(coachId: number): Promise<User[]> {
-    const coachRelations = await db
-      .select()
-      .from(coaches)
-      .where(and(eq(coaches.userId, coachId), eq(coaches.status, 'accepted')));
-    
-    const athleteIds = coachRelations.map(relation => relation.athleteId);
-    
+    const athleteIds = await (async () => {
+      try {
+        const coachRelations = await db
+          .select()
+          .from(coaches)
+          .where(and(eq(coaches.userId, coachId), eq(coaches.status, "accepted")));
+        return coachRelations.map((relation) => relation.athleteId);
+      } catch (error: any) {
+        const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
+        if (!missingUserIdColumn) throw error;
+
+        const schema = await getCoachesTableSchema();
+        const whereStatus = schema.hasStatus ? "AND status = 'accepted'" : "";
+        const result = await pool.query(
+          `SELECT athlete_id FROM coaches WHERE ${schema.coachIdColumn} = $1 ${whereStatus}`,
+          [coachId],
+        );
+        return result.rows
+          .map((row: any) => Number(row.athlete_id))
+          .filter((id: number) => Number.isInteger(id));
+      }
+    })();
+
     if (!athleteIds.length) return [];
-    
-    return db
-      .select()
-      .from(users)
-      .where(
-        eq(users.id, athleteIds[0])
-      );
+
+    return db.select().from(users).where(inArray(users.id, athleteIds));
   }
 
   async createCoach(insertCoach: InsertCoach): Promise<Coach> {
@@ -940,82 +1002,152 @@ export class DatabaseStorage implements IStorage {
 
   // Coach-Athlete operations (for connections page)
   async getCoachAthletes(coachUserId: number): Promise<User[]> {
-    const coachRelations = await db
-      .select({
-        athlete: users
-      })
-      .from(coaches)
-      .innerJoin(users, eq(coaches.athleteId, users.id))
-      .where(and(
-        eq(coaches.userId, coachUserId),
-        eq(coaches.status, 'accepted')
-      ));
-    
-    return coachRelations.map(relation => relation.athlete);
+    const athleteIds = await (async () => {
+      try {
+        const coachRelations = await db
+          .select()
+          .from(coaches)
+          .where(and(eq(coaches.userId, coachUserId), eq(coaches.status, "accepted")));
+        return coachRelations.map((relation) => relation.athleteId);
+      } catch (error: any) {
+        const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
+        if (!missingUserIdColumn) throw error;
+
+        const schema = await getCoachesTableSchema();
+        const whereStatus = schema.hasStatus ? "AND status = 'accepted'" : "";
+        const result = await pool.query(
+          `SELECT athlete_id FROM coaches WHERE ${schema.coachIdColumn} = $1 ${whereStatus}`,
+          [coachUserId],
+        );
+        return result.rows
+          .map((row: any) => Number(row.athlete_id))
+          .filter((id: number) => Number.isInteger(id));
+      }
+    })();
+
+    if (!athleteIds.length) return [];
+    return db.select().from(users).where(inArray(users.id, athleteIds));
   }
 
   async getAthleteCoaches(athleteId: number): Promise<User[]> {
-    const coachRelations = await db
-      .select({
-        coach: users
-      })
-      .from(coaches)
-      .innerJoin(users, eq(coaches.userId, users.id))
-      .where(and(
-        eq(coaches.athleteId, athleteId),
-        eq(coaches.status, 'accepted')
-      ));
-    
-    return coachRelations.map(relation => relation.coach);
+    const coachUserIds = await (async () => {
+      try {
+        const coachRelations = await db
+          .select()
+          .from(coaches)
+          .where(and(eq(coaches.athleteId, athleteId), eq(coaches.status, "accepted")));
+        return coachRelations.map((relation) => relation.userId);
+      } catch (error: any) {
+        const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
+        if (!missingUserIdColumn) throw error;
+
+        const schema = await getCoachesTableSchema();
+        const whereStatus = schema.hasStatus ? "AND status = 'accepted'" : "";
+        const result = await pool.query(
+          `SELECT ${schema.coachIdColumn} AS coach_user_id FROM coaches WHERE athlete_id = $1 ${whereStatus}`,
+          [athleteId],
+        );
+        return result.rows
+          .map((row: any) => Number(row.coach_user_id))
+          .filter((id: number) => Number.isInteger(id));
+      }
+    })();
+
+    if (!coachUserIds.length) return [];
+    return db.select().from(users).where(inArray(users.id, coachUserIds));
   }
 
   async getCoachAthleteCount(coachUserId: number): Promise<number> {
-    const result = await db
-      .select({ count: sql`count(*)` })
-      .from(coaches)
-      .where(and(
-        eq(coaches.userId, coachUserId),
-        eq(coaches.status, 'accepted')
-      ));
-    
-    return Number(result[0]?.count || 0);
+    try {
+      const result = await db
+        .select({ count: sql`count(*)` })
+        .from(coaches)
+        .where(and(eq(coaches.userId, coachUserId), eq(coaches.status, "accepted")));
+      return Number(result[0]?.count || 0);
+    } catch (error: any) {
+      const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
+      if (!missingUserIdColumn) throw error;
+
+      const schema = await getCoachesTableSchema();
+      const whereStatus = schema.hasStatus ? "AND status = 'accepted'" : "";
+      const result = await pool.query(
+        `SELECT count(*)::int AS count FROM coaches WHERE ${schema.coachIdColumn} = $1 ${whereStatus}`,
+        [coachUserId],
+      );
+      return Number(result.rows[0]?.count ?? 0);
+    }
   }
 
   async addCoachAthlete(coachUserId: number, athleteId: number): Promise<Coach> {
-    // Check if relationship already exists
-    const existing = await db
-      .select()
-      .from(coaches)
-      .where(and(
-        eq(coaches.userId, coachUserId),
-        eq(coaches.athleteId, athleteId)
-      ));
+    try {
+      const existing = await db
+        .select()
+        .from(coaches)
+        .where(and(eq(coaches.userId, coachUserId), eq(coaches.athleteId, athleteId)));
 
-    if (existing.length > 0) {
-      throw new Error('Coach-athlete relationship already exists');
+      if (existing.length > 0) {
+        throw new Error("Coach-athlete relationship already exists");
+      }
+
+      const [coachRelation] = await db
+        .insert(coaches)
+        .values({
+          userId: coachUserId,
+          athleteId: athleteId,
+          status: "accepted",
+        })
+        .returning();
+
+      return coachRelation;
+    } catch (error: any) {
+      const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
+      if (!missingUserIdColumn) throw error;
+
+      const schema = await getCoachesTableSchema();
+      const existing = await pool.query(
+        `SELECT id FROM coaches WHERE ${schema.coachIdColumn} = $1 AND athlete_id = $2 LIMIT 1`,
+        [coachUserId, athleteId],
+      );
+      if (existing.rowCount && existing.rowCount > 0) {
+        throw new Error("Coach-athlete relationship already exists");
+      }
+
+      const insertStatusColumns = schema.hasStatus ? ", status" : "";
+      const insertStatusValues = schema.hasStatus ? ", 'accepted'" : "";
+      const result = await pool.query(
+        `INSERT INTO coaches (${schema.coachIdColumn}, athlete_id${insertStatusColumns}) VALUES ($1, $2${insertStatusValues}) RETURNING id, ${schema.coachIdColumn} AS coach_user_id, athlete_id, created_at`,
+        [coachUserId, athleteId],
+      );
+
+      const row = result.rows[0];
+      return {
+        id: Number(row.id),
+        userId: Number(row.coach_user_id),
+        athleteId: Number(row.athlete_id),
+        status: "accepted",
+        notes: null,
+        createdAt: row.created_at,
+      } as Coach;
     }
-
-    const [coachRelation] = await db
-      .insert(coaches)
-      .values({
-        userId: coachUserId,
-        athleteId: athleteId,
-        status: 'accepted' // Direct addition from connections
-      })
-      .returning();
-
-    return coachRelation;
   }
 
   async removeCoachAthlete(coachUserId: number, athleteId: number): Promise<boolean> {
-    const result = await db
-      .delete(coaches)
-      .where(and(
-        eq(coaches.userId, coachUserId),
-        eq(coaches.athleteId, athleteId)
-      ));
-    
-    return !!result;
+    try {
+      const result = await db
+        .delete(coaches)
+        .where(and(eq(coaches.userId, coachUserId), eq(coaches.athleteId, athleteId)));
+      return !!result;
+    } catch (error: any) {
+      const missingUserIdColumn = error?.cause?.code === "42703" && String(error?.cause?.message || "").includes("coaches.user_id");
+      if (!missingUserIdColumn) throw error;
+
+      const schema = await getCoachesTableSchema();
+      const result = await pool.query(
+        `DELETE FROM coaches WHERE ${schema.coachIdColumn} = $1 AND athlete_id = $2`,
+        [coachUserId, athleteId],
+      );
+      return (result.rowCount ?? 0) > 0;
+    }
   }
 
   // Athlete Group operations
@@ -4291,6 +4423,4 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
-
-
 
