@@ -209,7 +209,9 @@ export const JournalEntryScreen: React.FC = () => {
         <View style={styles.backButton} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="body" color="muted">
           {date}
         </Text>

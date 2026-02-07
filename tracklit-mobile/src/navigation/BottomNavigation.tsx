@@ -11,6 +11,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { env } from '@/config/env';
 import theme from '@/utils/theme';
 
 type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Sprinthia' | 'Tools' | 'Profile';
@@ -74,6 +75,7 @@ interface NavItemComponentProps {
   onPress: () => void;
   onLongPress: () => void;
   userName?: string;
+  userProfileImageUrl?: string;
 }
 
 const NavItemComponent: React.FC<NavItemComponentProps> = ({
@@ -82,6 +84,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
   onPress,
   onLongPress,
   userName,
+  userProfileImageUrl,
 }) => {
   const contentColor = isActive ? theme.colors.accent : theme.colors.textSecondary;
   const initials = userName ? userName.slice(0, 2).toUpperCase() : undefined;
@@ -96,6 +99,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
       <View style={styles.iconContainer}>
         {item.isProfile ? (
           <Avatar
+            src={userProfileImageUrl}
             size="sm"
             fallback={initials}
             style={[
@@ -128,6 +132,10 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const rawProfileImageUrl = user?.profileImageUrl ?? undefined;
+  const profileImageUrl = rawProfileImageUrl
+    ? (rawProfileImageUrl.startsWith('/') ? `${env.API_BASE_URL}${rawProfileImageUrl}` : rawProfileImageUrl)
+    : undefined;
   const parent = navigation.getParent();
   const parentState = parent?.getState();
   const parentRoute = parentState?.routes[parentState.index ?? 0];
@@ -175,6 +183,7 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
               onPress={handlePress}
               onLongPress={handleLongPress}
               userName={user?.name ?? undefined}
+              userProfileImageUrl={profileImageUrl}
             />
           );
         })}

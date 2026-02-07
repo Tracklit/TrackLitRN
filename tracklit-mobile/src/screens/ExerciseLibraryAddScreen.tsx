@@ -173,7 +173,9 @@ export const ExerciseLibraryAddScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView style={{ paddingTop: insets.top }} contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag" style={{ paddingTop: insets.top }} contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Back">
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />

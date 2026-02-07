@@ -403,6 +403,8 @@ export const ChatConversationScreen: React.FC = () => {
 
         {/* Messages */}
         <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
           ref={scrollViewRef}
           style={styles.messagesContainer}
           contentContainerStyle={styles.messagesContent}
@@ -936,4 +938,3 @@ const styles = StyleSheet.create({
     height: '100%',
   },
 });
-

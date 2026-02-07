@@ -13,6 +13,7 @@ Thumbs.db
 
 # IDE/Editor
 .idea
+.codex/
 .vscode
 *.swp
 *.swo

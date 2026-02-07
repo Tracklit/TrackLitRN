@@ -138,7 +138,7 @@ export const RehabScreen: React.FC = () => {
           </Text>
         </View>
           <WebButton
-          onPress={() => navigation.navigate('Sprinthia')}
+          onPress={() => navigation.navigate('MainTabs', { screen: 'Sprinthia' } as never)}
           style={styles.aiButton}
           >
             <Sparkles size={16} color={theme.colors.primaryForeground} />
@@ -270,5 +270,4 @@ const styles = StyleSheet.create({
   infoCard: { alignItems: 'center' },
   infoHeader: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
 });
-
 

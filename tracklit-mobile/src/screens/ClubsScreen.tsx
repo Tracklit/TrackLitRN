@@ -120,6 +120,8 @@ export const ClubsScreen: React.FC = () => {
   return (
     <LinearGradient colors={theme.gradient.background} locations={theme.gradient.locations} style={styles.container}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]}
         showsVerticalScrollIndicator={false}

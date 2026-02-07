@@ -9,7 +9,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -25,8 +25,8 @@ import { ProgramPickerModal } from '@/components/practice/ProgramPickerModal';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { TargetTimesDrawer } from '@/components/practice/TargetTimesDrawer';
 import type { RootStackParamList } from '@/navigation/types';
+import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
 
-const PROGRAM_SELECTION_KEY = 'tracklit_selectedProgramId';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 interface Program {
@@ -53,6 +53,7 @@ export const PracticeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
   const isGuest = user?.id === 'guest';
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
@@ -80,18 +81,22 @@ export const PracticeScreen: React.FC = () => {
 
   useEffect(() => {
     if (!programs.length) {
-      if (selectedProgram !== null) {
-        setSelectedProgram(null);
-      }
+      setSelectedProgram(null);
       return;
     }
 
+    let isCancelled = false;
     const loadSelection = async () => {
       const savedId = await AsyncStorage.getItem(PROGRAM_SELECTION_KEY);
       const matched = programs.find((assignment) => String(assignment.id) === savedId);
       const nextProgram = matched ?? programs[0];
-      if (!selectedProgram || String(selectedProgram.id) !== String(nextProgram.id)) {
-        setSelectedProgram(nextProgram);
+      if (!isCancelled) {
+        setSelectedProgram((previous) => {
+          if (previous && String(previous.id) === String(nextProgram.id)) {
+            return previous;
+          }
+          return nextProgram;
+        });
       }
       if (!matched) {
         await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(nextProgram.id));
@@ -99,7 +104,10 @@ export const PracticeScreen: React.FC = () => {
     };
 
     loadSelection();
-  }, [programIdsKey, selectedProgram]);
+    return () => {
+      isCancelled = true;
+    };
+  }, [programIdsKey, programs]);
 
   useEffect(() => {
     if (!programSessions || programSessions.length === 0) {
@@ -137,7 +145,13 @@ export const PracticeScreen: React.FC = () => {
 
   const handleSelectProgram = async (assignment: PurchasedProgramItem) => {
     setSelectedProgram(assignment);
+    setDaysToShow(7);
+    setWorkoutCards([]);
+    setIsLoadingCards(true);
     await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(assignment.id));
+    await queryClient.invalidateQueries({
+      queryKey: ['/api/programs', assignment.programId, 'sessions'],
+    });
     setShowProgramPicker(false);
   };
 
@@ -333,10 +347,38 @@ const formatSessionDateKey = (date: Date) => {
   return `${month}-${day}`;
 };
 
+const normalizeSessionDateKey = (rawDate?: string | null) => {
+  if (!rawDate) return null;
+
+  const trimmed = rawDate.trim();
+  if (!trimmed) return null;
+
+  const shortFormatMatch = trimmed.match(/^([A-Za-z]{3})-(\d{1,2})$/);
+  if (shortFormatMatch) {
+    const [, month, day] = shortFormatMatch;
+    const normalizedMonth = month[0].toUpperCase() + month.slice(1).toLowerCase();
+    return `${normalizedMonth}-${parseInt(day, 10)}`;
+  }
+
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    const parsed = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    return formatSessionDateKey(parsed);
+  }
+
+  const parsedDate = new Date(trimmed);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    return formatSessionDateKey(parsedDate);
+  }
+
+  return null;
+};
+
 const findSessionForDate = (sessions: any[], targetDate: Date) => {
   if (!sessions || sessions.length === 0) return null;
   const targetDateString = formatSessionDateKey(targetDate);
-  return sessions.find((session) => session.date === targetDateString) || null;
+  return sessions.find((session) => normalizeSessionDateKey(session?.date) === targetDateString) || null;
 };
 
 const useGymData = (programId: number | string | null, dayNumber?: number, sessionId?: number) => {
@@ -682,4 +724,3 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
 });
-

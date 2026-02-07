@@ -96,6 +96,8 @@ export const SprintTimePredictionScreen: React.FC = () => {
       style={styles.container}
     >
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
         showsVerticalScrollIndicator={false}
@@ -205,7 +207,9 @@ export const SprintTimePredictionScreen: React.FC = () => {
             <Text variant="h3" weight="bold" color="foreground">
               Select Distance
             </Text>
-            <ScrollView>
+            <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag">
               {distances.map((distance) => (
                 <TouchableOpacity
                   key={distance.value}

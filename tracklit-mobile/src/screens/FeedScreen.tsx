@@ -8,6 +8,8 @@ import {
   Modal,
   TextInput,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -282,7 +284,10 @@ export const FeedScreen: React.FC = () => {
         animationType="slide"
         onRequestClose={() => setIsComposerOpen(false)}
       >
-        <View style={styles.modalBackdrop}>
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={styles.modalCard}>
             <Text variant="h4" weight="semiBold" color="foreground" style={styles.modalTitle}>
               Share an update
@@ -313,7 +318,7 @@ export const FeedScreen: React.FC = () => {
               </Button>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </LinearGradient>
   );
@@ -436,4 +441,3 @@ const styles = StyleSheet.create({
     minWidth: 120,
   },
 });
-

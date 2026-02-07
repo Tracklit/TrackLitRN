@@ -10,6 +10,7 @@ import {
   Linking,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -149,6 +150,13 @@ export const ProgramEditorScreen: React.FC = () => {
   }, [duration]);
   const totalWeeks = Math.max(1, Math.ceil(totalDays / 7));
 
+  const invalidateProgramQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['program', programId] });
+    queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
+    queryClient.invalidateQueries({ queryKey: ['user-programs'] });
+    queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+  }, [programId]);
+
   const updateProgramMutation = useMutation({
     mutationFn: async () => {
       if (!programId) return;
@@ -202,21 +210,70 @@ export const ProgramEditorScreen: React.FC = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['program', programId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      invalidateProgramQueries();
     },
   });
 
+  const saveSessionsIndividually = useCallback(
+    async (payloadSessions: ProgramSession[]) => {
+      if (!programId || payloadSessions.length === 0) return;
+
+      await Promise.all(
+        payloadSessions.map((session) => {
+          const { id, ...sessionData } = session;
+          if (typeof id === 'number') {
+            return apiRequest(`/api/programs/${programId}/sessions/${id}`, {
+              method: 'PUT',
+              data: sessionData,
+            });
+          }
+
+          return apiRequest(`/api/programs/${programId}/sessions`, {
+            method: 'POST',
+            data: sessionData,
+          });
+        })
+      );
+    },
+    [programId]
+  );
+
   const handleSaveAll = useCallback(async () => {
     if (!isOwner || isUploadedProgram) return;
-    await updateProgramMutation.mutateAsync();
-    const payloadSessions = buildSessionPayload();
-    if (payloadSessions.length > 0) {
-      await batchSaveMutation.mutateAsync(payloadSessions);
+    try {
+      await updateProgramMutation.mutateAsync();
+      const payloadSessions = buildSessionPayload();
+      if (payloadSessions.length > 0) {
+        try {
+          await batchSaveMutation.mutateAsync(payloadSessions);
+        } catch (error: any) {
+          const status = error?.status;
+          const message = String(error?.message || '');
+          const isKnownBatchRouteIssue =
+            status === 400 && /invalid id parameters/i.test(message);
+
+          if (!isKnownBatchRouteIssue) {
+            throw error;
+          }
+
+          await saveSessionsIndividually(payloadSessions);
+          invalidateProgramQueries();
+        }
+      }
+
+      Alert.alert('Saved', 'Program changes were saved successfully.');
+    } catch (error: any) {
+      Alert.alert('Save failed', error?.message || 'Unable to save program changes.');
     }
-  }, [isOwner, isUploadedProgram, updateProgramMutation, batchSaveMutation, buildSessionPayload]);
+  }, [
+    isOwner,
+    isUploadedProgram,
+    updateProgramMutation,
+    buildSessionPayload,
+    batchSaveMutation,
+    saveSessionsIndividually,
+    invalidateProgramQueries,
+  ]);
 
   const handleOpenDay = (dayNumber: number) => {
     if (!isOwner || isUploadedProgram) return;
@@ -303,7 +360,9 @@ export const ProgramEditorScreen: React.FC = () => {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Card style={styles.metaCard}>
           <CardHeader>
             <CardTitle>Program Details</CardTitle>
@@ -453,94 +512,100 @@ export const ProgramEditorScreen: React.FC = () => {
             <Text variant="h4" weight="semiBold" color="foreground">
               Day {editingDay}
             </Text>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Title</Text>
-              <TextInput
-                style={styles.input}
-                value={draftSession?.title ?? ''}
-                onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), title: value }))}
-                placeholder="Session title"
-                placeholderTextColor={theme.colors.textMuted}
-              />
-            </View>
-            <View style={styles.switchRow}>
-              <Text variant="small" color="foreground">Rest day</Text>
-              <Switch
-                value={!!draftSession?.isRestDay}
-                onValueChange={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), isRestDay: value }))}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Pre-Activation 1</Text>
-              <TextInput
-                style={styles.input}
-                value={draftSession?.preActivation1 ?? ''}
-                onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation1: value }))}
-                placeholder="Drills, activation"
-                placeholderTextColor={theme.colors.textMuted}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Pre-Activation 2</Text>
-              <TextInput
-                style={styles.input}
-                value={draftSession?.preActivation2 ?? ''}
-                onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation2: value }))}
-                placeholder="More activation work"
-                placeholderTextColor={theme.colors.textMuted}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Short Distance</Text>
-              <TextInput
-                style={styles.input}
-                value={draftSession?.shortDistanceWorkout ?? ''}
-                onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), shortDistanceWorkout: value }))}
-                placeholder="60/100m"
-                placeholderTextColor={theme.colors.textMuted}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Medium Distance</Text>
-              <TextInput
-                style={styles.input}
-                value={draftSession?.mediumDistanceWorkout ?? ''}
-                onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), mediumDistanceWorkout: value }))}
-                placeholder="200m"
-                placeholderTextColor={theme.colors.textMuted}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Long Distance</Text>
-              <TextInput
-                style={styles.input}
-                value={draftSession?.longDistanceWorkout ?? ''}
-                onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), longDistanceWorkout: value }))}
-                placeholder="400m"
-                placeholderTextColor={theme.colors.textMuted}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Extra Session</Text>
-              <TextInput
-                style={styles.input}
-                value={draftSession?.extraSession ?? ''}
-                onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), extraSession: value }))}
-                placeholder="Optional extras"
-                placeholderTextColor={theme.colors.textMuted}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Notes</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={draftSession?.notes ?? ''}
-                onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), notes: value }))}
-                placeholder="Session notes"
-                placeholderTextColor={theme.colors.textMuted}
-                multiline
-              />
-            </View>
+            <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag" style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.modalFormContent}>
+                <View style={styles.inputGroup}>
+                  <Text variant="small" color="muted">Title</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={draftSession?.title ?? ''}
+                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), title: value }))}
+                    placeholder="Session title"
+                    placeholderTextColor={theme.colors.textMuted}
+                  />
+                </View>
+                <View style={styles.switchRow}>
+                  <Text variant="small" color="foreground">Rest day</Text>
+                  <Switch
+                    value={!!draftSession?.isRestDay}
+                    onValueChange={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), isRestDay: value }))}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text variant="small" color="muted">Pre-Activation 1</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={draftSession?.preActivation1 ?? ''}
+                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation1: value }))}
+                    placeholder="Drills, activation"
+                    placeholderTextColor={theme.colors.textMuted}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text variant="small" color="muted">Pre-Activation 2</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={draftSession?.preActivation2 ?? ''}
+                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation2: value }))}
+                    placeholder="More activation work"
+                    placeholderTextColor={theme.colors.textMuted}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text variant="small" color="muted">Short Distance</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={draftSession?.shortDistanceWorkout ?? ''}
+                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), shortDistanceWorkout: value }))}
+                    placeholder="60/100m"
+                    placeholderTextColor={theme.colors.textMuted}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text variant="small" color="muted">Medium Distance</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={draftSession?.mediumDistanceWorkout ?? ''}
+                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), mediumDistanceWorkout: value }))}
+                    placeholder="200m"
+                    placeholderTextColor={theme.colors.textMuted}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text variant="small" color="muted">Long Distance</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={draftSession?.longDistanceWorkout ?? ''}
+                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), longDistanceWorkout: value }))}
+                    placeholder="400m"
+                    placeholderTextColor={theme.colors.textMuted}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text variant="small" color="muted">Extra Session</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={draftSession?.extraSession ?? ''}
+                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), extraSession: value }))}
+                    placeholder="Optional extras"
+                    placeholderTextColor={theme.colors.textMuted}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text variant="small" color="muted">Notes</Text>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    value={draftSession?.notes ?? ''}
+                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), notes: value }))}
+                    placeholder="Session notes"
+                    placeholderTextColor={theme.colors.textMuted}
+                    multiline
+                  />
+                </View>
+              </View>
+            </ScrollView>
             <View style={styles.modalActions}>
               <Button variant="outline" size="sm" onPress={() => setEditingDay(null)}>
                 Cancel
@@ -692,6 +757,12 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     gap: theme.spacing.sm,
     maxHeight: '90%',
+  },
+  modalScroll: {
+    flexShrink: 1,
+  },
+  modalFormContent: {
+    gap: theme.spacing.sm,
   },
   switchRow: {
     flexDirection: 'row',

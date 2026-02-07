@@ -197,6 +197,8 @@ export const VideoAnalysisScreen: React.FC = () => {
       style={styles.container}
     >
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.content,
@@ -374,6 +376,8 @@ export const VideoAnalysisScreen: React.FC = () => {
             </Text>
 
             <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
               style={styles.modalScroll}
               contentContainerStyle={{ paddingBottom: theme.spacing.md }}
               showsVerticalScrollIndicator={false}

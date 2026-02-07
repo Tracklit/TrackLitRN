@@ -151,7 +151,9 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
             <FontAwesome5 name="times" size={14} color="white" solid />
           </TouchableOpacity>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
             <Text variant="body" weight="semiBold" color="primary-foreground">
               Track Type
             </Text>
@@ -276,7 +278,9 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                       </View>
                     ))}
                   </View>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false}>
                     <View style={styles.tableScrollable}>
                       {calculateTargetTimes.percentages.map((percentage) => (
                         <View key={`col-${percentage}`} style={styles.tableColumn}>

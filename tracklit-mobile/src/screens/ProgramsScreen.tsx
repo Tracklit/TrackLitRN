@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -24,6 +25,7 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '@/utils/layoutPadding';
+import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
 import theme from '../utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -117,7 +119,12 @@ export const ProgramsScreen: React.FC = () => {
   };
 
   const handleContinueProgram = (program: Program) => {
-    navigation.navigate('ProgramDetail', { id: program.id });
+    navigation.navigate('ProgramEditor', { id: program.id });
+  };
+
+  const handleContinuePurchasedProgram = async (purchase: PurchasedProgramItem) => {
+    await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(purchase.id));
+    navigation.navigate('MainTabs', { screen: 'Practice' } as never);
   };
 
   const handleViewDetails = (program: Program) => {
@@ -174,6 +181,8 @@ export const ProgramsScreen: React.FC = () => {
       style={styles.container}
     >
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentInsetAdjustmentBehavior="never"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[
@@ -317,7 +326,7 @@ export const ProgramsScreen: React.FC = () => {
             isLoading={purchasedProgramsQuery.isLoading}
             isError={purchasedProgramsQuery.isError}
             isGuest={isGuest}
-            onContinue={handleContinueProgram}
+            onContinue={handleContinuePurchasedProgram}
             onViewDetails={handleViewDetails}
             viewMode={viewMode}
           />
@@ -532,8 +541,8 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
         <ProgramListItem
           key={program.id}
           program={program}
-          onContinue={onContinue}
-          onViewDetails={onViewDetails}
+          onContinue={() => onContinue(program)}
+          onViewDetails={() => onViewDetails(program)}
         />
       ))}
     </View>
@@ -544,8 +553,8 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
           key={program.id}
           program={program}
           levelBadge={getLevelColor(program.level || program.difficulty)}
-          onContinue={onContinue}
-          onViewDetails={onViewDetails}
+          onContinue={() => onContinue(program)}
+          onViewDetails={() => onViewDetails(program)}
         />
       ))}
     </View>
@@ -557,7 +566,7 @@ interface PurchasedProgramsTabProps {
   isLoading: boolean;
   isError: boolean;
   isGuest: boolean;
-  onContinue: (program: Program) => void;
+  onContinue: (purchase: PurchasedProgramItem) => void;
   onViewDetails: (program: Program) => void;
   viewMode: 'cards' | 'list';
 }
@@ -630,8 +639,8 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
           badgeLabel={
             purchase.isAssigned ? 'Assigned' : purchase.isCreated ? 'Created' : 'Purchased'
           }
-          onContinue={onContinue}
-          onViewDetails={onViewDetails}
+          onContinue={() => onContinue(purchase)}
+          onViewDetails={() => onViewDetails(purchase.program)}
         />
       ))}
     </View>
@@ -650,8 +659,8 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
               ? `Coach: ${purchase.assignerName}`
               : 'TrackLit'
           }
-          onContinue={onContinue}
-          onViewDetails={onViewDetails}
+          onContinue={() => onContinue(purchase)}
+          onViewDetails={() => onViewDetails(purchase.program)}
           price={purchase.program?.price}
         />
       ))}
@@ -754,8 +763,8 @@ interface ProgramCardItemProps {
   badgeVariant?: 'default' | 'secondary' | 'outline';
   subtitle?: string;
   price?: number;
-  onContinue: (program: Program) => void;
-  onViewDetails: (program: Program) => void;
+  onContinue: () => void;
+  onViewDetails: () => void;
 }
 
 const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
@@ -816,7 +825,7 @@ const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
             variant="default"
             size="sm"
             style={styles.actionButton}
-            onPress={() => onContinue(program)}
+            onPress={onContinue}
             data-testid={`button-continue-program-${program.id}`}
           >
             Continue
@@ -824,7 +833,7 @@ const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onPress={() => onViewDetails(program)}
+            onPress={onViewDetails}
             data-testid={`button-view-program-${program.id}`}
           >
             View Details
@@ -838,8 +847,8 @@ const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
 interface ProgramListItemProps {
   program: Program;
   badgeLabel?: string;
-  onContinue: (program: Program) => void;
-  onViewDetails: (program: Program) => void;
+  onContinue: () => void;
+  onViewDetails: () => void;
 }
 
 const ProgramListItem: React.FC<ProgramListItemProps> = ({
@@ -867,12 +876,12 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
           </Text>
         </View>
         <View style={styles.listActions}>
-          <TouchableOpacity onPress={() => onViewDetails(program)}>
+          <TouchableOpacity onPress={onViewDetails}>
             <Text variant="small" color="muted">
               Details
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => onContinue(program)}>
+          <TouchableOpacity onPress={onContinue}>
             <Text variant="small" color="primary">
               Continue
             </Text>

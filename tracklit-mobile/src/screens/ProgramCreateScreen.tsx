@@ -407,6 +407,8 @@ export const ProgramCreateScreen: React.FC = () => {
       </LinearGradient>
 
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
         showsVerticalScrollIndicator={false}
       >

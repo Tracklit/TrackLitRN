@@ -450,6 +450,8 @@ if (process.env.STRIPE_SECRET_KEY) {
   console.warn('STRIPE_SECRET_KEY not found - payment features will be disabled');
 }
 
+import { cleanAIResponse, buildGenerateSystemPrompt, buildGenerateUserPrompt, buildRegenerateSystemPrompt, buildRegenerateUserPrompt, callAriaApi } from './ai-utils';
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
@@ -5237,7 +5239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // 4.2 Update a program session
-  app.put("/api/programs/:programId/sessions/:sessionId", async (req: Request, res: Response) => {
+  app.put("/api/programs/:programId/sessions/:sessionId(\\d+)", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Not authenticated" });
@@ -5282,7 +5284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // 4.3 Delete a program session
-  app.delete("/api/programs/:programId/sessions/:sessionId", async (req: Request, res: Response) => {
+  app.delete("/api/programs/:programId/sessions/:sessionId(\\d+)", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Not authenticated" });
@@ -7494,67 +7496,6 @@ It supports multilingual interactions, replying in the same language as the athl
       
       // Build comprehensive user context for Aria
       const userContextForAria = `${message}${programContext ? '\n\n' + programContext : ''}`;
-      
-      // Helper function to clean AI response
-      const cleanAIResponse = (response: string, userMessage: string): string => {
-        if (!response) return response;
-        
-        let cleaned = response;
-        
-        // More aggressive JSON removal - handle various JSON wrapper formats
-        // Remove markdown code blocks
-        cleaned = cleaned.replace(/^```(?:json)?\s*/i, '');
-        cleaned = cleaned.replace(/```\s*$/i, '');
-        
-        // Remove JSON object wrapper with any field name
-        cleaned = cleaned.replace(/^\{\s*"[^"]+"\s*:\s*"/i, '');
-        cleaned = cleaned.replace(/"\s*,?\s*"[^"]*"\s*:\s*\[[\s\S]*?\]\s*\}\s*$/i, '');
-        
-        // Remove array brackets
-        cleaned = cleaned.replace(/^\[\s*/, '').replace(/\s*\]\s*$/, '');
-        
-        // Remove any remaining JSON structure at start/end
-        cleaned = cleaned.replace(/^\{\s*/i, '').replace(/\s*\}\s*$/i, '');
-        
-        // Remove escaped quotes
-        cleaned = cleaned.replace(/\\"/g, '"');
-        
-        cleaned = cleaned.trim();
-        
-        // Remove bibliography section unless user explicitly asks for sources/references/bibliography
-        const askingForSources = /\b(source|reference|bibliograph|citation|study|research|paper)\b/i.test(userMessage);
-        if (!askingForSources) {
-          // Remove bibliography with various formats (including quoted versions)
-          cleaned = cleaned.replace(/\*\*[""\u201c\u201d]?bibliography[""\u201c\u201d]?:\*\*[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\*\*[""\u201c\u201d]?references[""\u201c\u201d]?:\*\*[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\*\*[""\u201c\u201d]?sources[""\u201c\u201d]?:\*\*[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\n\n[""\u201c\u201d]?bibliography[""\u201c\u201d]?:[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\n\n[""\u201c\u201d]?references[""\u201c\u201d]?:[\s\S]*$/gi, '');
-          cleaned = cleaned.replace(/\n\n[""\u201c\u201d]?sources[""\u201c\u201d]?:[\s\S]*$/gi, '');
-          // Remove numbered bibliography entries (1. Author, Title...)
-          cleaned = cleaned.replace(/\n\n[\d]+\.\s+[A-Z][\s\S]*$/i, '');
-          // Remove book/study references
-          cleaned = cleaned.replace(/Check out\s+[""\u201c\u201d'][^""\u201c\u201d']*[""\u201c\u201d'][\s\S]*$/i, '');
-          cleaned = cleaned.replace(/Additionally,?\s+(the book|studies|research)[\s\S]*$/i, '');
-          cleaned = cleaned.replace(/For (more information|further reading|insights),?\s+see[\s\S]*$/i, '');
-          // Remove academic citations in parentheses
-          cleaned = cleaned.replace(/\([A-Z][a-z]+,\s+[A-Z]\.[\s\S]*?\d{4}\)[\s\S]*$/i, '');
-        }
-        
-        // Clean up extra whitespace
-        cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-        cleaned = cleaned.trim();
-        
-        // Remove leading/trailing quotes if present
-        if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-          cleaned = cleaned.slice(1, -1);
-        }
-        if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
-          cleaned = cleaned.slice(1, -1);
-        }
-        
-        return cleaned;
-      };
       
       try {
         const requestId = Math.random().toString(36).slice(2, 8);
@@ -10080,11 +10021,9 @@ Keep the response professional, evidence-based, and specific to track and field 
         });
       }
       
-      // Import OpenAI function
-      const { generateTrainingProgram } = await import('./openai');
-      
-      // Generate the program using AI
-      const programContent = await generateTrainingProgram({
+      // Build prompts and call Aria API for program generation
+      const systemPrompt = buildGenerateSystemPrompt();
+      const userPrompt = buildGenerateUserPrompt({
         title: title || 'Custom Training Program',
         description: description || '',
         totalLengthWeeks,
@@ -10092,14 +10031,36 @@ Keep the response professional, evidence-based, and specific to track and field 
         workoutsPerWeek,
         gymWorkoutsPerWeek,
         blockFocus,
-        specificRequirements: aiPrompt
+        aiPrompt
       });
-      
-      // Update user's usage count
-      await dbStorage.updateUserSprinthiaUsage(user.id, { 
-        programsCreated: programsCreated + 1 
+
+      const ariaApiUrl = process.env.ARIA_API_URL || 'https://aria-dev-api.azurewebsites.net';
+
+      console.log('📤 Sprinthia generate-program → Aria API:', {
+        user_id: user.id,
+        user_email: user.email,
+        aria_url: ariaApiUrl,
+        prompt_length: userPrompt.length
       });
-      
+
+      let programContent = await callAriaApi({
+        ariaApiUrl,
+        userId: user.id.toString(),
+        userPrompt,
+        systemPrompt
+      });
+
+      programContent = cleanAIResponse(programContent, userPrompt);
+
+      // Usage accounting should not block successful program generation.
+      try {
+        await dbStorage.updateUserSprinthiaUsage(user.id, {
+          programsCreated: programsCreated + 1
+        });
+      } catch (usageError) {
+        console.error("Failed to update Sprinthia generation usage:", usageError);
+      }
+
       res.json({ content: programContent });
     } catch (error: any) {
       console.error("Error generating Sprinthia program:", error);
@@ -10133,11 +10094,9 @@ Keep the response professional, evidence-based, and specific to track and field 
         });
       }
       
-      // Import OpenAI function
-      const { regenerateTrainingProgram } = await import('./openai');
-      
-      // Regenerate the program using AI
-      const programContent = await regenerateTrainingProgram({
+      // Build prompts and call Aria API for program regeneration
+      const systemPrompt = buildRegenerateSystemPrompt();
+      const userPrompt = buildRegenerateUserPrompt({
         title: title || 'Custom Training Program',
         description: description || '',
         totalLengthWeeks,
@@ -10145,15 +10104,37 @@ Keep the response professional, evidence-based, and specific to track and field 
         workoutsPerWeek,
         gymWorkoutsPerWeek,
         blockFocus,
-        specificRequirements: aiPrompt,
+        aiPrompt,
         previousContent
       });
-      
-      // Update user's regeneration count
-      await dbStorage.updateUserSprinthiaUsage(user.id, { 
-        regenerationsUsed: regenerationsUsed + 1 
+
+      const ariaApiUrl = process.env.ARIA_API_URL || 'https://aria-dev-api.azurewebsites.net';
+
+      console.log('📤 Sprinthia regenerate-program → Aria API:', {
+        user_id: user.id,
+        user_email: user.email,
+        aria_url: ariaApiUrl,
+        prompt_length: userPrompt.length
       });
-      
+
+      let programContent = await callAriaApi({
+        ariaApiUrl,
+        userId: user.id.toString(),
+        userPrompt,
+        systemPrompt
+      });
+
+      programContent = cleanAIResponse(programContent, userPrompt);
+
+      // Usage accounting should not block successful regeneration.
+      try {
+        await dbStorage.updateUserSprinthiaUsage(user.id, {
+          regenerationsUsed: regenerationsUsed + 1
+        });
+      } catch (usageError) {
+        console.error("Failed to update Sprinthia regeneration usage:", usageError);
+      }
+
       res.json({ content: programContent });
     } catch (error: any) {
       console.error("Error regenerating Sprinthia program:", error);
@@ -10988,8 +10969,6 @@ Submission Details:
 
   return httpServer;
 }
-
-
 
 
 

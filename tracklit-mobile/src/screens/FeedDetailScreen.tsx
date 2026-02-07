@@ -129,6 +129,8 @@ export const FeedDetailScreen: React.FC<Props> = ({ route }) => {
         keyboardVerticalOffset={insets.top + 64}
       >
         <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
           style={[styles.flex, { paddingTop: insets.top }]}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}

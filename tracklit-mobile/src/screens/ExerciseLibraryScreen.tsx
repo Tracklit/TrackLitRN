@@ -194,6 +194,8 @@ export const ExerciseLibraryScreen: React.FC = () => {
       style={styles.container}
     >
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.content,

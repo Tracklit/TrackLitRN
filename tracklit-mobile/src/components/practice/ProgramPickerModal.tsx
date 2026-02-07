@@ -147,6 +147,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.webCard,
     padding: theme.spacing.lg,
     maxHeight: '80%',
+    overflow: 'hidden',
   },
   header: {
     marginBottom: theme.spacing.md,
@@ -156,6 +157,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   scroll: {
+    flexShrink: 1,
     marginTop: theme.spacing.sm,
   },
   loadingState: {

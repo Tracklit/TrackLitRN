@@ -6,7 +6,7 @@ interface ProgramSession {
   programId?: number;
   programSessionId?: number;
   dayNumber?: number;
-  date?: string;
+  date?: string | null;
   columnA?: string;
   columnB?: string;
   columnC?: string;
@@ -32,70 +32,63 @@ interface ProgramResponse {
 
 const EMPTY_SESSIONS: ProgramSession[] = [];
 
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const firstNonEmpty = (...values: Array<string | null | undefined>) => {
+  for (const value of values) {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        return trimmed;
+      }
+    }
+  }
+  return undefined;
+};
+
+const normalizeDateKey = (rawDate?: string | null) => {
+  if (!rawDate) return undefined;
+
+  const trimmed = rawDate.trim();
+  if (!trimmed) return undefined;
+
+  const shortDateMatch = trimmed.match(/^([A-Za-z]{3})-(\d{1,2})$/);
+  if (shortDateMatch) {
+    const [, month, day] = shortDateMatch;
+    const normalizedMonth = month[0].toUpperCase() + month.slice(1).toLowerCase();
+    return `${normalizedMonth}-${parseInt(day, 10)}`;
+  }
+
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
+  if (isoMatch) {
+    const [, , month, day] = isoMatch;
+    return `${MONTH_NAMES[parseInt(month, 10) - 1]}-${parseInt(day, 10)}`;
+  }
+
+  const parsedDate = new Date(trimmed);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    return `${MONTH_NAMES[parsedDate.getMonth()]}-${parsedDate.getDate()}`;
+  }
+
+  return trimmed;
+};
+
 const parseSpreadsheetData = (sessions: ProgramSession[]) => {
-  const specialDateHandlers: Record<string, Partial<ProgramSession>> = {
-    'May-29': {
-      dayNumber: 78,
-      date: 'May-29',
-      preActivation1: 'Drills, Super jumps',
-      preActivation2: '',
-      shortDistanceWorkout: 'Hurdle hops, medium, 4x4 over 4 hurdles',
-      mediumDistanceWorkout: '',
-      longDistanceWorkout: '',
-      extraSession: '3-5 flygande 30',
-      title: 'Day 78 Training',
-      description: 'Training Session',
-      notes: null,
-      completed_at: null,
-    },
-  };
-
-  const dateToDay: Record<string, number> = {
-    'May-16': 76,
-    'May-17': 77,
-    'May-28': 77,
-    'May-29': 78,
-    'May-30': 79,
-  };
-
-  const normalizeDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    if (/^[A-Za-z]{3}-\d{1,2}$/.test(dateStr)) {
-      return dateStr;
-    }
-    const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (isoMatch) {
-      const [, , month, day] = isoMatch;
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${monthNames[parseInt(month, 10) - 1]}-${parseInt(day, 10)}`;
-    }
-    return dateStr;
-  };
-
   return sessions.map((session, index) => {
-    const normalizedDate = normalizeDate(session.date || session.columnA || '');
-    if (specialDateHandlers[normalizedDate]) {
-      return {
-        ...session,
-        ...specialDateHandlers[normalizedDate],
-      };
-    }
+    const dateSource = firstNonEmpty(session.date, session.columnA);
+    const normalizedDate = normalizeDateKey(dateSource);
+    const dayNumber = typeof session.dayNumber === 'number' ? session.dayNumber : index + 1;
 
     return {
       ...session,
-      dayNumber: dateToDay[normalizedDate] || session.dayNumber || index + 1,
-      date: normalizedDate || session.date || session.columnA || null,
-      preActivation1: session.columnB || session.preActivation1 || null,
-      preActivation2: session.columnC || session.preActivation2 || null,
-      shortDistanceWorkout: session.columnD || session.shortDistanceWorkout || null,
-      mediumDistanceWorkout: session.columnE || session.mediumDistanceWorkout || null,
-      longDistanceWorkout: session.columnF || session.longDistanceWorkout || null,
-      extraSession:
-        session.columnG && session.columnG.trim() !== ''
-          ? session.columnG
-          : session.extraSession && session.extraSession.trim() !== ''
-          ? session.extraSession
-          : null,
+      dayNumber,
+      date: normalizedDate ?? dateSource ?? undefined,
+      preActivation1: firstNonEmpty(session.preActivation1, session.columnB),
+      preActivation2: firstNonEmpty(session.preActivation2, session.columnC),
+      shortDistanceWorkout: firstNonEmpty(session.shortDistanceWorkout, session.columnD),
+      mediumDistanceWorkout: firstNonEmpty(session.mediumDistanceWorkout, session.columnE),
+      longDistanceWorkout: firstNonEmpty(session.longDistanceWorkout, session.columnF),
+      extraSession: firstNonEmpty(session.columnG, session.extraSession),
       title: session.title || 'Day Training',
       description: session.description || 'Training Session',
       notes: session.notes || null,
@@ -114,9 +107,9 @@ export const useProgramSessions = (programId: number | string | null) => {
     queryKey: ['/api/programs', programId, 'sessions'],
     queryFn: async () => {
       if (!programId) return [];
-      const data = await apiRequest<ProgramResponse>(`/api/programs/${programId}`);
-      if (data.sessions && Array.isArray(data.sessions)) {
-        return parseSpreadsheetData(data.sessions);
+      const programData = await apiRequest<ProgramResponse>(`/api/programs/${programId}`);
+      if (programData.sessions && Array.isArray(programData.sessions)) {
+        return parseSpreadsheetData(programData.sessions);
       }
       return [];
     },
@@ -130,4 +123,3 @@ export const useProgramSessions = (programId: number | string | null) => {
     refetch,
   };
 };
-

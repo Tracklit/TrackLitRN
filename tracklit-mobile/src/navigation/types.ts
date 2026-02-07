@@ -12,7 +12,6 @@ export type TabParamList = {
 
 export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<TabParamList>;
-  Sprinthia: undefined;
   Feed: undefined;
   Marketplace: undefined;
   MarketplaceListingDetail: { id: number };

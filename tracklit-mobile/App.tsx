@@ -1,7 +1,20 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StatusBar, View, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  StatusBar,
+  View,
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+  type NavigationState,
+  type PartialState,
+} from '@react-navigation/native';
 import { createBottomTabNavigator, type BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
@@ -15,6 +28,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { Text } from './src/components/ui/Text';
+import { Avatar } from './src/components/ui/Avatar';
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
@@ -67,12 +81,86 @@ import { VelocityTrackerScreen } from './src/screens/VelocityTrackerScreen';
 import { SprintTimePredictionScreen } from './src/screens/SprintTimePredictionScreen';
 import type { TabParamList, RootStackParamList, AuthStackParamList } from './src/navigation/types';
 import { queryClient } from './src/lib/queryClient';
+import { env } from './src/config/env';
 import theme from './src/utils/theme';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Drawer = createDrawerNavigator();
+const navigationRef = createNavigationContainerRef();
+const TAB_ROUTE_NAMES = new Set(['Home', 'Practice', 'Programs', 'Feed', 'Sprinthia', 'Tools', 'Profile']);
+const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
+  'MarketplaceListingDetail',
+  'MarketplaceCart',
+  'MarketplaceCreateListing',
+  'Settings',
+  'Stopwatch',
+  'StartGun',
+  'PhotoFinish',
+  'PhotoFinishAnalysis',
+  'Journal',
+  'JournalEntry',
+  'IntervalTimer',
+  'VideoAnalysis',
+  'ExerciseLibrary',
+  'ExerciseLibraryAdd',
+  'VelocityTracker',
+  'SprintTimePrediction',
+  'ProgramDetail',
+  'ProgramCreate',
+  'ProgramEditor',
+  'Meets',
+  'CreateMeet',
+  'Results',
+  'Chat',
+  'ChatConversation',
+  'Notifications',
+  'Connections',
+  'Coaches',
+  'Athletes',
+  'Clubs',
+  'ClubDetail',
+  'ClubManagement',
+  'CreateGroup',
+  'Rehab',
+  'RehabHamstringProgram',
+  'RehabFootProgram',
+  'RehabProgramComingSoon',
+  'Spikes',
+  'Subscriptions',
+]);
+
+type AnyNavState = NavigationState | PartialState<NavigationState>;
+
+const getDeepestActiveRouteName = (state?: AnyNavState): string | undefined => {
+  if (!state?.routes?.length) return undefined;
+  let currentState: AnyNavState | undefined = state;
+  let routeName: string | undefined;
+
+  while (currentState?.routes?.length) {
+    const index = currentState.index ?? 0;
+    const route = currentState.routes[index] as any;
+    routeName = route?.name;
+    currentState = route?.state as AnyNavState | undefined;
+  }
+
+  return routeName;
+};
+
+const isDrawerOpen = (state?: AnyNavState): boolean => {
+  if (!state?.routes?.length) return false;
+
+  const typedState = state as any;
+  if (typedState.type === 'drawer') {
+    const drawerHistory = (typedState.history ?? []).find((entry: any) => entry?.type === 'drawer');
+    if (drawerHistory?.status === 'open') {
+      return true;
+    }
+  }
+
+  return state.routes.some((route: any) => isDrawerOpen(route?.state as AnyNavState | undefined));
+};
 
 type HomeTabProps = BottomTabScreenProps<TabParamList, 'Home'>;
 
@@ -119,7 +207,6 @@ const MainTabs: React.FC = () => {
 const RootNavigator: React.FC = () => (
   <RootStack.Navigator screenOptions={{ headerShown: false }}>
     <RootStack.Screen name="MainTabs" component={MainTabs} />
-    <RootStack.Screen name="Sprinthia" component={SprinthiaScreen} />
     <RootStack.Screen name="Marketplace" component={MarketplaceScreen} />
     <RootStack.Screen name="MarketplaceListingDetail" component={MarketplaceListingDetailScreen} />
     <RootStack.Screen name="MarketplaceCart" component={MarketplaceCartScreen} />
@@ -169,6 +256,13 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const isGuest = user?.id === 'guest';
   const isCoach = (user as any)?.isCoach === true;
   const isAdmin = (user as any)?.role === 'admin';
+  const rawProfileImageUrl = (user as any)?.profileImageUrl as string | undefined | null;
+  const profileImageUrl = rawProfileImageUrl
+    ? (rawProfileImageUrl.startsWith('/') ? `${env.API_BASE_URL}${rawProfileImageUrl}` : rawProfileImageUrl)
+    : undefined;
+  const avatarFallback = (user?.name || user?.username || 'TrackLit Athlete')
+    .slice(0, 2)
+    .toUpperCase();
 
   const navigateIntoAppStack = (params: any) => {
     (props.navigation as any).navigate('AppStack', params);
@@ -433,9 +527,12 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
       <View style={styles.drawerIdentity}>
         <View style={styles.drawerIdentityRow}>
-          <View style={styles.drawerAvatar}>
-            <View style={styles.drawerAvatarInner} />
-          </View>
+          <Avatar
+            src={profileImageUrl}
+            fallback={avatarFallback}
+            size="lg"
+            style={styles.drawerAvatar}
+          />
           <View style={styles.drawerIdentityText}>
             <Text variant="body" weight="bold" color="foreground">
               {user?.name || 'TrackLit Athlete'}
@@ -531,6 +628,26 @@ const AuthNavigator: React.FC = () => (
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const insets = useSafeAreaInsets();
+  const [showGlobalBackButton, setShowGlobalBackButton] = React.useState(false);
+
+  const syncBackState = React.useCallback(() => {
+    if (!navigationRef.isReady()) {
+      setShowGlobalBackButton(false);
+      return;
+    }
+
+    const rootState = navigationRef.getRootState();
+    const deepestRouteName = getDeepestActiveRouteName(rootState);
+    const canGoBack = navigationRef.canGoBack();
+    const drawerIsOpen = isDrawerOpen(rootState);
+    const isTabRoute = deepestRouteName ? TAB_ROUTE_NAMES.has(deepestRouteName) : false;
+    const hasLocalBackButton = deepestRouteName
+      ? LOCAL_BACK_ROUTE_NAMES.has(deepestRouteName as keyof RootStackParamList)
+      : false;
+
+    setShowGlobalBackButton(canGoBack && !drawerIsOpen && !isTabRoute && !hasLocalBackButton);
+  }, []);
 
   if (isLoading) {
     return (
@@ -541,9 +658,34 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <NavigationContainer>
-      {isAuthenticated ? <DrawerNavigator /> : <AuthNavigator />}
-    </NavigationContainer>
+    <View style={styles.appContentContainer}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingRoot}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <NavigationContainer
+          ref={navigationRef}
+          onReady={syncBackState}
+          onStateChange={syncBackState}
+        >
+          {isAuthenticated ? <DrawerNavigator /> : <AuthNavigator />}
+        </NavigationContainer>
+      </KeyboardAvoidingView>
+      {isAuthenticated && showGlobalBackButton ? (
+        <TouchableOpacity
+          style={[
+            styles.globalBackButton,
+            { top: insets.top + theme.spacing.sm },
+          ]}
+          onPress={() => navigationRef.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          activeOpacity={0.85}
+        >
+          <FontAwesome5 name="arrow-left" size={14} color={theme.colors.foreground} solid />
+        </TouchableOpacity>
+      ) : null}
+    </View>
   );
 };
 
@@ -572,6 +714,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#010a18',
+  },
+  appContentContainer: {
+    flex: 1,
+  },
+  keyboardAvoidingRoot: {
+    flex: 1,
+  },
+  globalBackButton: {
+    position: 'absolute',
+    left: theme.spacing.lg,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
   },
   mainTabsContainer: {
     flex: 1,
@@ -621,18 +782,6 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   drawerAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.muted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  drawerAvatarInner: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },

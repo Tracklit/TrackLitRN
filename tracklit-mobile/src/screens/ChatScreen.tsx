@@ -188,6 +188,8 @@ export const ChatScreen: React.FC = () => {
       </View>
 
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scrollContent, { paddingBottom: contentBottomPadding }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -453,7 +455,9 @@ export const ChatScreen: React.FC = () => {
             />
           </View>
 
-          <ScrollView style={styles.friendsList} contentContainerStyle={{ paddingBottom: insets.bottom + theme.spacing.lg }}>
+          <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag" style={styles.friendsList} contentContainerStyle={{ paddingBottom: insets.bottom + theme.spacing.lg }}>
             {friendsQuery.isLoading ? (
               <View style={styles.center}>
                 <ActivityIndicator size="large" color={theme.colors.primary} />

@@ -280,6 +280,8 @@ export const ProfileScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.content,
