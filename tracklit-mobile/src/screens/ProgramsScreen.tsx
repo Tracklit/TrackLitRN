@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -81,7 +81,8 @@ export const ProgramsScreen: React.FC = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, refreshUser } = useAuth();
+  const queryClient = useQueryClient();
   const userId = user?.id;
   const isGuest = userId === 'guest';
   const isCoach = user?.isCoach === true;
@@ -109,13 +110,8 @@ export const ProgramsScreen: React.FC = () => {
   });
 
   const handleRefresh = () => {
-    if (activeTab === 'my-programs') {
-      myProgramsQuery.refetch();
-    } else if (activeTab === 'purchased') {
-      purchasedProgramsQuery.refetch();
-    } else {
-      workoutLibraryQuery.refetch();
-    }
+    queryClient.invalidateQueries();
+    refreshUser();
   };
 
   const handleContinueProgram = (program: Program) => {
@@ -184,10 +180,9 @@ export const ProgramsScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentInsetAdjustmentBehavior="never"
-        style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: contentBottomPadding },
+          { paddingTop: insets.top, paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={

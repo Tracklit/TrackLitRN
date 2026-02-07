@@ -21,6 +21,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Text } from '@/components/ui/Text';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { DateField } from '@/components/profile/fields/DateField';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
@@ -41,6 +42,7 @@ export const SettingsScreen: React.FC = () => {
     [insets.bottom],
   );
 
+  const [username, setUsername] = useState(user?.username || '');
   const [country, setCountry] = useState(user?.country || '');
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
   const [countryQuery, setCountryQuery] = useState('');
@@ -52,11 +54,12 @@ export const SettingsScreen: React.FC = () => {
 
   // Keep local state in sync with latest user
   React.useEffect(() => {
+    setUsername(user?.username || '');
     setCountry(user?.country || '');
     setDob(user?.dateOfBirth ? String(user.dateOfBirth).slice(0, 10) : '');
     setClubId(user?.defaultClubId !== null && user?.defaultClubId !== undefined ? String(user.defaultClubId) : '');
     setIsPrivate(!!user?.isPrivate);
-  }, [user?.country, user?.dateOfBirth, user?.defaultClubId, user?.isPrivate]);
+  }, [user?.username, user?.country, user?.dateOfBirth, user?.defaultClubId, user?.isPrivate]);
 
   const filteredCountries = useMemo(() => {
     const q = countryQuery.trim().toLowerCase();
@@ -66,6 +69,7 @@ export const SettingsScreen: React.FC = () => {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (payload: {
+      username?: string;
       country?: string | null;
       dateOfBirth?: string | null;
       defaultClubId?: number | null;
@@ -86,12 +90,6 @@ export const SettingsScreen: React.FC = () => {
       return;
     }
 
-    const dobTrim = dob.trim();
-    if (dobTrim && !/^\d{4}-\d{2}-\d{2}$/.test(dobTrim)) {
-      Alert.alert('Invalid date', 'Please use YYYY-MM-DD.');
-      return;
-    }
-
     const clubIdRaw = clubId.trim();
     let clubIdNum: number | null = null;
     if (clubIdRaw) {
@@ -103,9 +101,16 @@ export const SettingsScreen: React.FC = () => {
       clubIdNum = parsed;
     }
 
+    const usernameTrim = username.trim();
+    if (usernameTrim && !/^[a-zA-Z0-9_]{3,30}$/.test(usernameTrim)) {
+      Alert.alert('Invalid username', 'Username must be 3-30 characters (letters, numbers, underscores).');
+      return;
+    }
+
     updateSettingsMutation.mutate({
+      username: usernameTrim || undefined,
       country: country.trim() || null,
-      dateOfBirth: dobTrim || null,
+      dateOfBirth: dob || null,
       defaultClubId: clubIdNum,
       isPrivate,
     });
@@ -138,6 +143,31 @@ export const SettingsScreen: React.FC = () => {
           </View>
           <View style={styles.backButton} />
         </View>
+
+        {/* Account */}
+        <Card style={styles.card}>
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+          </CardHeader>
+          <CardContent style={styles.cardContent}>
+            <Text variant="body" color="foreground" weight="semiBold">
+              Username
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={username}
+              onChangeText={setUsername}
+              placeholder="your_username"
+              placeholderTextColor={theme.colors.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={30}
+            />
+            <Text variant="small" color="muted" style={styles.helperText}>
+              3-30 characters. Letters, numbers, and underscores only.
+            </Text>
+          </CardContent>
+        </Card>
 
         {/* Privacy */}
         <Card style={styles.card}>
@@ -180,18 +210,11 @@ export const SettingsScreen: React.FC = () => {
               <FontAwesome5 name="chevron-down" size={14} color={theme.colors.textMuted} solid />
             </TouchableOpacity>
 
-            <Text variant="body" color="foreground" weight="semiBold" style={styles.fieldLabel}>
-              Date of birth
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={dob}
-              onChangeText={setDob}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={theme.colors.textMuted}
-              autoCapitalize="none"
-              keyboardType="numbers-and-punctuation"
-              maxLength={10}
+            <DateField
+              label="Date of birth"
+              value={dob || undefined}
+              onChange={(val) => setDob(val || '')}
+              maximumDate={new Date()}
             />
 
             <Text variant="body" color="foreground" weight="semiBold" style={styles.fieldLabel}>

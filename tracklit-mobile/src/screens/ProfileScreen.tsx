@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -14,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { launchImageLibrary, Asset } from 'react-native-image-picker';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
@@ -43,6 +45,7 @@ export const ProfileScreen: React.FC = () => {
   const route = useRoute<RouteProp<TabParamList, 'Profile'>>();
   const { user, logout, refreshUser } = useAuth();
   const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
   const [backgroundColor, setBackgroundColor] = useState('#1e293b');
@@ -53,6 +56,7 @@ export const ProfileScreen: React.FC = () => {
   const [cropVisible, setCropVisible] = useState(false);
 
   const [profileForm, setProfileForm] = useState({
+    username: user?.username || '',
     name: user?.name || '',
     email: user?.email || '',
     country: (user as any)?.country || '',
@@ -275,19 +279,35 @@ export const ProfileScreen: React.FC = () => {
     return age >= 0 ? age.toString() : '';
   };
 
-  const isNarrowHeader = screenWidth < 390;
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries(),
+      refreshUser(),
+    ]);
+    setIsRefreshing(false);
+  };
+
+  // Always use vertical layout on phones; row layout only for tablets (600+)
+  const isNarrowHeader = screenWidth < 600;
 
   return (
     <View style={styles.container}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },
+          { paddingTop: insets.top + theme.spacing.lg, paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            tintColor="#fff"
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+          />
+        }
       >
         <Text variant="h2" weight="bold" color="foreground" style={styles.title}>
           Your Profile
@@ -301,13 +321,18 @@ export const ProfileScreen: React.FC = () => {
           <CardContent style={styles.nonStretchingCardContent}>
             <View style={[styles.headerTop, isNarrowHeader && styles.headerTopNarrow]}>
               <View style={[styles.headerIdentity, isNarrowHeader && styles.headerIdentityNarrow]}>
-                <View style={styles.avatarRing}>
-                  <Avatar
-                    size="lg"
-                    fallback={user?.name?.charAt(0) || 'U'}
-                    src={profileImageUrl || undefined}
-                  />
-                </View>
+                <TouchableOpacity onPress={handleSelectProfileImage} activeOpacity={0.8}>
+                  <View style={styles.avatarRing}>
+                    <Avatar
+                      size="lg"
+                      fallback={user?.name?.charAt(0) || 'U'}
+                      src={profileImageUrl || undefined}
+                    />
+                  </View>
+                  <View style={styles.cameraBadge}>
+                    <FontAwesome5 name="camera" size={10} color="white" solid />
+                  </View>
+                </TouchableOpacity>
                 <View style={[styles.headerTextBlock, isNarrowHeader && styles.headerTextBlockNarrow]}>
                   <Text variant="h3" weight="bold" color="foreground" numberOfLines={1} ellipsizeMode="tail">
                     {user?.name || 'TrackLit Athlete'}
@@ -493,6 +518,26 @@ export const ProfileScreen: React.FC = () => {
         >
           <View style={styles.formGrid}>
             {renderTextInput('Full Name', 'name')}
+            <View style={styles.inputGroup}>
+              <Text variant="body" weight="medium" color="foreground">
+                Username
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={profileForm.username}
+                onChangeText={(text) =>
+                  setProfileForm((prev) => ({ ...prev, username: text }))
+                }
+                placeholder="your_username"
+                placeholderTextColor={theme.colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                maxLength={30}
+              />
+              <Text variant="small" color="muted">
+                3-30 characters. Letters, numbers, and underscores only.
+              </Text>
+            </View>
             {renderTextInput('Email', 'email', 'email-address')}
 
             <SelectField
@@ -717,22 +762,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerIdentityNarrow: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 0,
   },
   headerTextBlock: {
     flexShrink: 1,
   },
   headerTextBlockNarrow: {
-    marginTop: theme.spacing.sm,
-    width: '100%',
+    flexShrink: 1,
   },
   avatarRing: {
     padding: 4,
     borderRadius: 999,
     borderWidth: 2,
     borderColor: '#f5c842',
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#0a1529',
   },
   headerActions: {
     flexDirection: 'row',

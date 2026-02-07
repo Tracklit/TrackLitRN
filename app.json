@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "bundleIdentifier": "com.anonymous.tracklit-api"
+  },
+  "plugins": [
+    "expo-font"
+  ]
+}

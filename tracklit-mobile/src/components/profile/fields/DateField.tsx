@@ -23,7 +23,9 @@ export const DateField: React.FC<DateFieldProps> = ({
   const [showPicker, setShowPicker] = useState(false);
 
   const currentDate = value ? new Date(value) : undefined;
-  const displayValue = value || 'Select date';
+  const displayValue = currentDate
+    ? currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'Select date';
 
   const handleChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
     if (Platform.OS !== 'ios') setShowPicker(false);

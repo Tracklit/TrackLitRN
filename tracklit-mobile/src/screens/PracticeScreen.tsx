@@ -52,7 +52,7 @@ interface PurchasedProgramItem {
 export const PracticeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, refreshUser } = useAuth();
   const queryClient = useQueryClient();
   const isGuest = user?.id === 'guest';
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
@@ -156,7 +156,8 @@ export const PracticeScreen: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    purchasedProgramsQuery.refetch();
+    queryClient.invalidateQueries();
+    refreshUser();
   };
 
   return (
@@ -167,10 +168,9 @@ export const PracticeScreen: React.FC = () => {
     >
       <ScrollView
         contentInsetAdjustmentBehavior="never"
-        style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: contentBottomPadding },
+          { paddingTop: insets.top, paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={

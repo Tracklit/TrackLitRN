@@ -186,7 +186,7 @@ export const StartGunScreen: React.FC = () => {
           disabled={!isRunning}
           activeOpacity={0.8}
         >
-          <FontAwesome5 name="redo" size={24} color="white" solid />
+          <FontAwesome5 name="redo" size={16} color="white" solid />
           <Text variant="small" weight="bold" color="primary-foreground">
             RESET
           </Text>
@@ -335,12 +335,13 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     alignSelf: 'center',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.xs,
+    gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
+    borderRadius: theme.borderRadius.round,
     backgroundColor: theme.colors.darkGray,
   },
   resetButtonDisabled: {

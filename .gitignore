@@ -1,7 +1,7 @@
 # Dependencies
 node_modules
 tracklit-mobile/node_modules
-
+.expo/
 # Build outputs
 dist
 server/public

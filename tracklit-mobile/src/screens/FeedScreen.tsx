@@ -50,7 +50,7 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export const FeedScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const canInteract = !!user && user.id !== 'guest';
   const [filter, setFilter] = useState<FeedFilter>('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -97,7 +97,8 @@ export const FeedScreen: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    feedQuery.refetch();
+    queryClient.invalidateQueries();
+    refreshUser();
   };
 
   const handleCreatePost = () => {

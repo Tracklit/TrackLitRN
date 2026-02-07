@@ -5,10 +5,11 @@ import {
   StyleSheet,
   StatusBar,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import Icon from '@expo/vector-icons/FontAwesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Card } from '../components/ui/Card';
@@ -61,7 +62,9 @@ interface CommunityActivity {
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const insets = useSafeAreaInsets();
   const [greeting, setGreeting] = useState('');
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [tickerCollapsed, setTickerCollapsed] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
@@ -224,6 +227,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     },
   ];
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries(),
+      refreshUser(),
+    ]);
+    setIsRefreshing(false);
+  };
+
   const handleCardPress = (route: string) => {
     if (onNavigate) {
       onNavigate(route);
@@ -245,12 +257,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       />
       
       <ScrollView
-        style={[styles.scrollView, { paddingTop: insets.top }]}
+        style={styles.scrollView}
         contentContainerStyle={[
           styles.contentContainer,
-          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xxxxl }) }
+          { paddingTop: insets.top, paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xxxxl }) }
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            tintColor="#fff"
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+          />
+        }
       >
         <ScreenHeader
           title={`${greeting}${user?.name ? `, ${user.name.split(' ')[0]}` : ''}`}

@@ -2339,7 +2339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Only allow specific fields to be updated
       const allowedUpdates = [
-        "name", "email", "country", "dateOfBirth", "defaultClubId", "isPrivate",
+        "name", "username", "email", "country", "dateOfBirth", "defaultClubId", "isPrivate",
         "gender", "trainingGoal", "injuryStatus", "sleepHours", "sleepQuality",
         "trainingDaysPerWeek", "mood", "coachMode", "specialties"
       ];
@@ -5245,7 +5245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      // Let the dedicated /sessions/batch route handle this special path.
+      // Allow /sessions/batch to be handled by the dedicated batch route below.
       if (req.params.sessionId === "batch") {
         return next("route");
       }
@@ -5295,7 +5295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      // Skip "batch" so it does not get treated as a numeric session id.
+      // Allow /sessions/batch to fall through (no delete batch route => 404).
       if (req.params.sessionId === "batch") {
         return next("route");
       }
@@ -10979,7 +10979,6 @@ Submission Details:
 
   return httpServer;
 }
-
 
 
 

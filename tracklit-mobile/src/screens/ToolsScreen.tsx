@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
+import { useAuth } from '@/contexts/AuthContext';
 import theme from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
@@ -43,6 +45,8 @@ interface Tool {
 export const ToolsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { refreshUser } = useAuth();
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
   const tools: Tool[] = [
@@ -166,12 +170,22 @@ export const ToolsScreen: React.FC = () => {
     >
       <ScrollView
         contentInsetAdjustmentBehavior="never"
-        style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: contentBottomPadding },
+          { paddingTop: insets.top, paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            tintColor="#fff"
+            refreshing={isRefreshing}
+            onRefresh={async () => {
+              setIsRefreshing(true);
+              await refreshUser();
+              setIsRefreshing(false);
+            }}
+          />
+        }
       >
         <LinearGradient
           colors={theme.gradients.webHeader.colors}
