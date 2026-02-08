@@ -12,6 +12,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
 import theme from '@/utils/theme';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 const STORAGE_KEYS = {
   adjustForTrackType: 'tracklit_adjustForTrackType',
@@ -151,9 +152,13 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
             <FontAwesome5 name="times" size={14} color="white" solid />
           </TouchableOpacity>
 
-          <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <KeyboardAwareScreenScrollView
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            extraScrollHeight={80}
+          >
             <Text variant="body" weight="semiBold" color="primary-foreground">
               Track Type
             </Text>
@@ -310,7 +315,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
             <Text variant="small" color="primary-foreground" style={styles.mutedText}>
               Times are estimates based on selected track type and timing method.
             </Text>
-          </ScrollView>
+          </KeyboardAwareScreenScrollView>
         </LinearGradient>
       </View>
     </View>
@@ -459,4 +464,3 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
 });
-

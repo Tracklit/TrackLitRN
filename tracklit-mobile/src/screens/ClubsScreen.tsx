@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Modal,
@@ -28,6 +27,7 @@ import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -119,12 +119,11 @@ export const ClubsScreen: React.FC = () => {
 
   return (
     <LinearGradient colors={theme.gradient.background} locations={theme.gradient.locations} style={styles.container}>
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
+      <KeyboardAwareScreenScrollView
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
         refreshControl={
           <RefreshControl tintColor="#fff" refreshing={refreshing} onRefresh={() => {
             discoverQuery.refetch();
@@ -225,11 +224,16 @@ export const ClubsScreen: React.FC = () => {
             ))}
           </View>
         )}
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
 
       <Modal visible={createOpen} transparent animationType="slide" onRequestClose={() => setCreateOpen(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <KeyboardAwareScreenScrollView
+            style={styles.modalCard}
+            contentContainerStyle={styles.modalCardContent}
+            showsVerticalScrollIndicator={false}
+            extraScrollHeight={80}
+          >
             <View style={styles.modalHeader}>
               <Text variant="h4" weight="semiBold" color="foreground">
                 Create Club
@@ -287,7 +291,7 @@ export const ClubsScreen: React.FC = () => {
                 Create
               </Button>
             </View>
-          </View>
+          </KeyboardAwareScreenScrollView>
         </View>
       </Modal>
     </LinearGradient>
@@ -315,9 +319,12 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
   modalCard: {
     backgroundColor: theme.colors.backgroundSolid,
-    padding: theme.spacing.lg,
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
+    maxHeight: '85%',
+  },
+  modalCardContent: {
+    padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -333,5 +340,3 @@ const styles = StyleSheet.create({
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   modalActions: { flexDirection: 'row', gap: theme.spacing.md },
 });
-
-

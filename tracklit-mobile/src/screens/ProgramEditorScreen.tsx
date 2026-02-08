@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   TextInput,
@@ -31,6 +30,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { env } from '@/config/env';
 import theme from '@/utils/theme';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type ProgramEditorRouteProp = RouteProp<RootStackParamList, 'ProgramEditor'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -360,9 +360,13 @@ export const ProgramEditorScreen: React.FC = () => {
         </View>
       </View>
 
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag" contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
+      >
         <Card style={styles.metaCard}>
           <CardHeader>
             <CardTitle>Program Details</CardTitle>
@@ -492,7 +496,7 @@ export const ProgramEditorScreen: React.FC = () => {
             ))}
           </CardContent>
         </Card>
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
 
       {showDatePicker && (
         <DateTimePicker
@@ -512,9 +516,13 @@ export const ProgramEditorScreen: React.FC = () => {
             <Text variant="h4" weight="semiBold" color="foreground">
               Day {editingDay}
             </Text>
-            <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag" style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+            <KeyboardAwareScreenScrollView
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              style={styles.modalScroll}
+              showsVerticalScrollIndicator={false}
+              extraScrollHeight={80}
+            >
               <View style={styles.modalFormContent}>
                 <View style={styles.inputGroup}>
                   <Text variant="small" color="muted">Title</Text>
@@ -605,7 +613,7 @@ export const ProgramEditorScreen: React.FC = () => {
                   />
                 </View>
               </View>
-            </ScrollView>
+            </KeyboardAwareScreenScrollView>
             <View style={styles.modalActions}>
               <Button variant="outline" size="sm" onPress={() => setEditingDay(null)}>
                 Cancel

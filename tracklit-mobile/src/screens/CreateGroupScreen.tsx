@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   TextInput,
   Alert,
   Switch,
@@ -28,6 +27,7 @@ import { env } from '@/config/env';
 import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 import type { RootStackParamList } from '@/navigation/types';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -127,9 +127,14 @@ export const CreateGroupScreen: React.FC = () => {
 
   return (
     <LinearGradient colors={theme.gradient.background} locations={theme.gradient.locations} style={styles.container}>
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag" style={{ paddingTop: insets.top }} contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]} showsVerticalScrollIndicator={false}>
+        keyboardDismissMode="on-drag"
+        style={{ paddingTop: insets.top }}
+        contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]}
+        showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
+      >
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
@@ -254,7 +259,7 @@ export const CreateGroupScreen: React.FC = () => {
             Create
           </Text>
         </Button>
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
     </LinearGradient>
   );
 };
@@ -287,5 +292,4 @@ const styles = StyleSheet.create({
   },
   preview: { width: '100%', height: '100%' },
 });
-
 

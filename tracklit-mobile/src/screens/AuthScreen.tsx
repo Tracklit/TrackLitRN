@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
-  KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
   Alert,
@@ -25,6 +23,8 @@ import { ResetPasswordForm } from './auth/ResetPasswordForm';
 import { env } from '@/config/env';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
+import { googleSignInStatusCodes, nativeGoogleSignIn } from '@/lib/googleSignIn';
 
 export const AuthScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -34,6 +34,7 @@ export const AuthScreen: React.FC = () => {
   const [isVerifyingToken, setIsVerifyingToken] = useState(false);
   const [isAppleAvailable, setIsAppleAvailable] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const insets = useSafeAreaInsets();
   const { loginWithToken } = useAuth();
 
@@ -149,21 +150,70 @@ export const AuthScreen: React.FC = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    if (isGoogleLoading) return;
+
+    try {
+      setIsGoogleLoading(true);
+
+      const { idToken } = await nativeGoogleSignIn();
+
+      const response = await apiRequest<{ token?: string; user?: { token?: string } }>(
+        '/api/auth/google/mobile',
+        {
+          method: 'POST',
+          data: { idToken },
+          skipAuth: true,
+        },
+      );
+
+      const token = response?.token || response?.user?.token;
+      if (!token) {
+        Alert.alert('Google Sign In Failed', 'Unable to start your session.');
+        return;
+      }
+
+      const success = await loginWithToken(token);
+      if (!success) {
+        Alert.alert('Google Sign In Failed', 'Unable to start your session.');
+      }
+    } catch (error: any) {
+      if (error?.code === googleSignInStatusCodes.SIGN_IN_CANCELLED) {
+        return;
+      }
+
+      Alert.alert(
+        'Google Sign In Failed',
+        error?.message || 'Something went wrong. Please try again.',
+        [
+          {
+            text: 'Try Browser Sign-In',
+            onPress: () => {
+              Linking.openURL(`${env.API_BASE_URL}/api/auth/google/mobile`).catch(() => {
+                Alert.alert('Unable to open browser', 'Please try again.');
+              });
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ],
+      );
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
   return (
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+      <KeyboardAwareScreenScrollView
+        style={{ paddingTop: insets.top }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
       >
-        <ScrollView
-          style={{ paddingTop: insets.top }}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
           {/* Header */}
           <View style={styles.header}>
             <Text variant="h2" weight="bold" color="primary">
@@ -260,13 +310,8 @@ export const AuthScreen: React.FC = () => {
                 <Button
                   variant="outline"
                   size="lg"
-                  onPress={async () => {
-                    try {
-                      await Linking.openURL(`${env.API_BASE_URL}/api/auth/google/mobile`);
-                    } catch (e) {
-                      Alert.alert('Unable to open browser', 'Please try again.');
-                    }
-                  }}
+                  onPress={handleGoogleSignIn}
+                  loading={isGoogleLoading}
                   style={styles.googleButton}
                 >
                   <FontAwesome5 name="google" size={16} color={theme.colors.primary} />
@@ -320,8 +365,7 @@ export const AuthScreen: React.FC = () => {
               />
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScreenScrollView>
     </LinearGradient>
   );
 };

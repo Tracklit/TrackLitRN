@@ -125,6 +125,8 @@ const MinimalTestLazy = lazy(() => import("@/pages/minimal-test"));
 const DebugSimpleLazy = lazy(() => import("@/pages/debug-simple"));
 const EmergencyDebugLazy = lazy(() => import("@/pages/emergency-debug"));
 const ReactNativePreviewLazy = lazy(() => import("@/pages/react-native-preview").then(m => ({ default: m.ReactNativePreview })));
+const PrivacyPolicyPageLazy = lazy(() => import("@/pages/privacy-policy-page"));
+const TermsOfServicePageLazy = lazy(() => import("@/pages/terms-of-service-page"));
 
 // Legacy
 const ConversationDetailPageLazy = lazy(() => import("@/pages/conversation-detail-page"));
@@ -135,6 +137,8 @@ const HomePage = () => <HomePageLazy />;
 const AuthPage = () => <AuthPageLazy />;
 const ChatPage = () => <ChatPageLazy />;
 const NotFound = () => <NotFoundLazy />;
+const PrivacyPolicyPage = () => <PrivacyPolicyPageLazy />;
+const TermsOfServicePage = () => <TermsOfServicePageLazy />;
 const StopwatchPage = () => <StopwatchPageLazy />;
 const StartGunPage = () => <StartGunPageLazy />;
 const JournalPage = () => <JournalPageLazy />;
@@ -447,6 +451,9 @@ function Router() {
         {/* Auth */}
         <Route path="/auth" component={AuthPage} />
         <Route path="/reset-password" component={AuthPage} />
+        {/* Legal */}
+        <Route path="/privacy" component={PrivacyPolicyPage} />
+        <Route path="/terms" component={TermsOfServicePage} />
         <Route path="/affiliate" component={AmbassadorLandingPage} />
         <Route path="/test" component={TestPage} />
         <Route path="/test-minimal" component={MinimalTest} />
@@ -504,7 +511,7 @@ function MainApp() {
   
   // Enhanced authentication redirect with fallback
   useEffect(() => {
-    const unprotectedPaths = ['/auth', '/affiliate', '/emergency', '/debug'];
+    const unprotectedPaths = ['/auth', '/affiliate', '/emergency', '/debug', '/privacy', '/terms'];
     const isUnprotectedPath = unprotectedPaths.some(path => 
       location === path || location.startsWith('/onboarding')
     );

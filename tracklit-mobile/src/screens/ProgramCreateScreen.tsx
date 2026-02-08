@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   TextInput,
   Alert,
   Modal,
@@ -20,6 +19,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { uploadProgramFile } from '@/lib/upload';
@@ -406,11 +406,10 @@ export const ProgramCreateScreen: React.FC = () => {
         <View style={styles.headerSpacer} />
       </LinearGradient>
 
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
+      <KeyboardAwareScreenScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={120}
       >
         <View style={styles.pageHeader}>
           <Text variant="h3" weight="bold" color="foreground">
@@ -1027,103 +1026,114 @@ export const ProgramCreateScreen: React.FC = () => {
           </Card>
         )}
 
-        <Modal visible={showImportModal} transparent animationType="fade" onRequestClose={() => setShowImportModal(false)}>
+        <Modal
+          visible={showImportModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowImportModal(false)}
+        >
           <Pressable style={styles.modalOverlay} onPress={() => setShowImportModal(false)}>
             <Pressable style={styles.importModal} onPress={() => undefined}>
-              <Text variant="h4" weight="bold" color="foreground" style={styles.importTitle}>
-                Import Program from Google Sheet
-              </Text>
-              <Text variant="small" color="muted">
-                Provide a public Google Sheet URL and program details.
-              </Text>
-              <View style={styles.importFields}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Program title"
-                  placeholderTextColor={theme.colors.textMuted}
-                  value={importTitle}
-                  onChangeText={setImportTitle}
-                />
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Description"
-                  placeholderTextColor={theme.colors.textMuted}
-                  value={importDescription}
-                  onChangeText={setImportDescription}
-                  multiline
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Google Sheet URL"
-                  placeholderTextColor={theme.colors.textMuted}
-                  value={importSheetUrl}
-                  onChangeText={setImportSheetUrl}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Category (sprint, distance, jumps...)"
-                  placeholderTextColor={theme.colors.textMuted}
-                  value={importCategory}
-                  onChangeText={setImportCategory}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Level (beginner, intermediate, advanced)"
-                  placeholderTextColor={theme.colors.textMuted}
-                  value={importLevel}
-                  onChangeText={setImportLevel}
-                />
-                <Text variant="body" weight="semiBold" color="foreground">
-                  Visibility
+              <KeyboardAwareScreenScrollView
+                showsVerticalScrollIndicator={false}
+                extraScrollHeight={80}
+                contentContainerStyle={{ gap: theme.spacing.md }}
+              >
+                <Text variant="h4" weight="bold" color="foreground" style={styles.importTitle}>
+                  Import Program from Google Sheet
                 </Text>
-                <View style={styles.pillRow}>
-                  {(['public', 'private', 'premium'] as const).map((v) => (
-                    <TouchableOpacity
-                      key={v}
-                      style={pill(importVisibility === v)}
-                      onPress={() => setImportVisibility(v)}
-                    >
-                      <Text
-                        variant="small"
-                        weight="medium"
-                        color={importVisibility === v ? 'foreground' : 'muted'}
-                        style={importVisibility === v ? styles.pillTextActive : undefined}
+                <Text variant="small" color="muted">
+                  Provide a public Google Sheet URL and program details.
+                </Text>
+                <View style={styles.importFields}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Program title"
+                    placeholderTextColor={theme.colors.textMuted}
+                    value={importTitle}
+                    onChangeText={setImportTitle}
+                  />
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder="Description"
+                    placeholderTextColor={theme.colors.textMuted}
+                    value={importDescription}
+                    onChangeText={setImportDescription}
+                    multiline
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Google Sheet URL"
+                    placeholderTextColor={theme.colors.textMuted}
+                    value={importSheetUrl}
+                    onChangeText={setImportSheetUrl}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Category (sprint, distance, jumps...)"
+                    placeholderTextColor={theme.colors.textMuted}
+                    value={importCategory}
+                    onChangeText={setImportCategory}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Level (beginner, intermediate, advanced)"
+                    placeholderTextColor={theme.colors.textMuted}
+                    value={importLevel}
+                    onChangeText={setImportLevel}
+                  />
+                  <Text variant="body" weight="semiBold" color="foreground">
+                    Visibility
+                  </Text>
+                  <View style={styles.pillRow}>
+                    {(['public', 'private', 'premium'] as const).map((v) => (
+                      <TouchableOpacity
+                        key={v}
+                        style={pill(importVisibility === v)}
+                        onPress={() => setImportVisibility(v)}
                       >
-                        {v}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                        <Text
+                          variant="small"
+                          weight="medium"
+                          color={importVisibility === v ? 'foreground' : 'muted'}
+                          style={importVisibility === v ? styles.pillTextActive : undefined}
+                        >
+                          {v}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Duration (days)"
+                    placeholderTextColor={theme.colors.textMuted}
+                    value={importDuration}
+                    onChangeText={setImportDuration}
+                    keyboardType="number-pad"
+                  />
                 </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Duration (days)"
-                  placeholderTextColor={theme.colors.textMuted}
-                  value={importDuration}
-                  onChangeText={setImportDuration}
-                  keyboardType="number-pad"
-                />
-              </View>
-              <View style={styles.importActions}>
-                <Button variant="outline" size="md" onPress={() => setShowImportModal(false)}>
-                  <Text variant="small" weight="medium" color="primary-foreground">
-                    Cancel
-                  </Text>
-                </Button>
-                <Button
-                  variant="default"
-                  size="md"
-                  onPress={() => importSheetMutation.mutate()}
-                  loading={importSheetMutation.isPending}
-                >
-                  <Text variant="small" weight="bold" color="primary-foreground">
-                    Import Program
-                  </Text>
-                </Button>
-              </View>
+                <View style={styles.importActions}>
+                  <Button variant="outline" size="md" onPress={() => setShowImportModal(false)}>
+                    <Text variant="small" weight="medium" color="primary-foreground">
+                      Cancel
+                    </Text>
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="md"
+                    onPress={() => importSheetMutation.mutate()}
+                    loading={importSheetMutation.isPending}
+                  >
+                    <Text variant="small" weight="bold" color="primary-foreground">
+                      Import Program
+                    </Text>
+                  </Button>
+                </View>
+              </KeyboardAwareScreenScrollView>
             </Pressable>
           </Pressable>
         </Modal>
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
     </LinearGradient>
   );
 };
@@ -1296,6 +1306,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.webBorderLight,
     gap: theme.spacing.md,
+    maxHeight: '85%',
   },
   importTitle: {
     marginBottom: theme.spacing.xs,

@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Modal,
@@ -18,6 +17,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type TabKey = 'live' | 'manual' | 'calculator';
 
@@ -151,12 +151,13 @@ export const VelocityTrackerScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
       >
         <View style={styles.header}>
           <TouchableOpacity
@@ -388,7 +389,7 @@ export const VelocityTrackerScreen: React.FC = () => {
             ))}
           </View>
         )}
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
 
       <Modal
         visible={splitModalOpen}
@@ -397,7 +398,15 @@ export const VelocityTrackerScreen: React.FC = () => {
         onRequestClose={() => setSplitModalOpen(false)}
       >
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
+          <KeyboardAwareScreenScrollView
+            style={styles.modalCard}
+            contentContainerStyle={[
+              styles.modalCardContent,
+              { paddingBottom: insets.bottom + theme.spacing.lg },
+            ]}
+            showsVerticalScrollIndicator={false}
+            extraScrollHeight={80}
+          >
             <Text variant="h4" weight="semiBold" color="foreground" style={styles.modalTitle}>
               Add split
             </Text>
@@ -417,7 +426,7 @@ export const VelocityTrackerScreen: React.FC = () => {
                 Add
               </Button>
             </View>
-          </View>
+          </KeyboardAwareScreenScrollView>
         </View>
       </Modal>
     </LinearGradient>
@@ -520,9 +529,12 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: theme.colors.backgroundSolid,
-    padding: theme.spacing.lg,
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
+    maxHeight: '85%',
+  },
+  modalCardContent: {
+    padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
   modalTitle: { textAlign: 'center' },

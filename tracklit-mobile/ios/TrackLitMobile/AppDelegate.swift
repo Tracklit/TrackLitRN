@@ -1,6 +1,7 @@
 import Expo
 import React
 import ReactAppDependencyProvider
+import GoogleSignIn
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
@@ -38,6 +39,10 @@ public class AppDelegate: ExpoAppDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
+    // Allow Google Sign-In to complete before passing the URL to other handlers.
+    if GIDSignIn.sharedInstance.handle(url) {
+      return true
+    }
     return super.application(app, open: url, options: options) || RCTLinkingManager.application(app, open: url, options: options)
   }
 

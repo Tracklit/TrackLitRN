@@ -5,9 +5,6 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   Modal,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
@@ -26,6 +23,7 @@ import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 interface JournalEntry {
   id: number;
@@ -252,20 +250,15 @@ export const JournalScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={insets.top}
+      <KeyboardAwareScreenScrollView
+        style={[styles.flex, { paddingTop: insets.top }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + theme.spacing.xl },
+        ]}
+        showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
       >
-        <ScrollView
-          style={[styles.flex, { paddingTop: insets.top }]}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: insets.bottom + theme.spacing.xl },
-          ]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
@@ -394,12 +387,16 @@ export const JournalScreen: React.FC = () => {
               ))}
             </View>
           )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScreenScrollView>
 
       <Modal visible={isCreateOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <KeyboardAwareScreenScrollView
+            style={styles.modalCard}
+            contentContainerStyle={styles.modalCardContent}
+            showsVerticalScrollIndicator={false}
+            extraScrollHeight={80}
+          >
             <Text variant="h3" weight="bold" color="foreground">
               New Entry
             </Text>
@@ -448,13 +445,18 @@ export const JournalScreen: React.FC = () => {
                 Save Entry
               </Button>
             </View>
-          </View>
+          </KeyboardAwareScreenScrollView>
         </View>
       </Modal>
 
       <Modal visible={isEditOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <KeyboardAwareScreenScrollView
+            style={styles.modalCard}
+            contentContainerStyle={styles.modalCardContent}
+            showsVerticalScrollIndicator={false}
+            extraScrollHeight={80}
+          >
             <Text variant="h3" weight="bold" color="foreground">
               Edit Entry
             </Text>
@@ -503,7 +505,7 @@ export const JournalScreen: React.FC = () => {
                 Save Changes
               </Button>
             </View>
-          </View>
+          </KeyboardAwareScreenScrollView>
         </View>
       </Modal>
     </LinearGradient>
@@ -637,6 +639,9 @@ const styles = StyleSheet.create({
   modalCard: {
     backgroundColor: theme.colors.cardSolid,
     borderRadius: theme.borderRadius.xl,
+    maxHeight: '85%',
+  },
+  modalCardContent: {
     padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
@@ -661,4 +666,3 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
 });
-

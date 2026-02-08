@@ -8,8 +8,6 @@ import {
   Modal,
   TextInput,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +26,7 @@ import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type FeedFilter = 'all' | 'connections';
 
@@ -285,11 +284,16 @@ export const FeedScreen: React.FC = () => {
         animationType="slide"
         onRequestClose={() => setIsComposerOpen(false)}
       >
-        <KeyboardAvoidingView
-          style={styles.modalBackdrop}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={styles.modalCard}>
+        <View style={styles.modalBackdrop}>
+          <KeyboardAwareScreenScrollView
+            style={styles.modalCard}
+            contentContainerStyle={[
+              styles.modalCardContent,
+              { paddingBottom: insets.bottom + theme.spacing.lg },
+            ]}
+            showsVerticalScrollIndicator={false}
+            extraScrollHeight={80}
+          >
             <Text variant="h4" weight="semiBold" color="foreground" style={styles.modalTitle}>
               Share an update
             </Text>
@@ -318,8 +322,8 @@ export const FeedScreen: React.FC = () => {
                 Post
               </Button>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </KeyboardAwareScreenScrollView>
+        </View>
       </Modal>
     </LinearGradient>
   );
@@ -416,9 +420,12 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: theme.colors.background,
-    padding: theme.spacing.lg,
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
+    maxHeight: '85%',
+  },
+  modalCardContent: {
+    padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
   modalTitle: {

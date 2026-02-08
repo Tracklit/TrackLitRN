@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Modal,
   TextInput,
@@ -27,6 +26,7 @@ import { env } from '@/config/env';
 import { queryClient } from '@/lib/queryClient';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type PromptId =
   | 'sprint-form'
@@ -196,7 +196,7 @@ export const VideoAnalysisScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
@@ -205,6 +205,7 @@ export const VideoAnalysisScreen: React.FC = () => {
           { paddingBottom: insets.bottom + theme.spacing.xl },
         ]}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
       >
         <View style={styles.header}>
           <TouchableOpacity
@@ -299,7 +300,7 @@ export const VideoAnalysisScreen: React.FC = () => {
             ))}
           </View>
         )}
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
 
       {/* Upload modal */}
       <Modal
@@ -309,7 +310,15 @@ export const VideoAnalysisScreen: React.FC = () => {
         onRequestClose={() => setUploadModalOpen(false)}
       >
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
+          <KeyboardAwareScreenScrollView
+            style={styles.modalCard}
+            contentContainerStyle={[
+              styles.modalCardContent,
+              { paddingBottom: insets.bottom + theme.spacing.lg },
+            ]}
+            showsVerticalScrollIndicator={false}
+            extraScrollHeight={80}
+          >
             <Text variant="h4" weight="semiBold" color="foreground" style={styles.modalTitle}>
               Upload video
             </Text>
@@ -348,7 +357,7 @@ export const VideoAnalysisScreen: React.FC = () => {
                 Upload
               </Button>
             </View>
-          </View>
+          </KeyboardAwareScreenScrollView>
         </View>
       </Modal>
 
@@ -375,9 +384,9 @@ export const VideoAnalysisScreen: React.FC = () => {
               {selectedVideo?.name}
             </Text>
 
-            <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
+            <KeyboardAwareScreenScrollView
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               style={styles.modalScroll}
               contentContainerStyle={{ paddingBottom: theme.spacing.md }}
               showsVerticalScrollIndicator={false}
@@ -434,7 +443,7 @@ export const VideoAnalysisScreen: React.FC = () => {
                   </Text>
                 </View>
               )}
-            </ScrollView>
+            </KeyboardAwareScreenScrollView>
           </View>
         </View>
       </Modal>
@@ -516,9 +525,12 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: theme.colors.backgroundSolid,
-    padding: theme.spacing.lg,
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
+    maxHeight: '85%',
+  },
+  modalCardContent: {
+    padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
   modalTitle: {

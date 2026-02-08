@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   TextInput,
@@ -23,6 +22,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type ListingType = 'program' | 'consulting';
 
@@ -100,11 +100,12 @@ export const MarketplaceScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: contentBottomPadding }]}
+        extraScrollHeight={80}
         refreshControl={
           <RefreshControl
             tintColor="#fff"
@@ -260,7 +261,7 @@ export const MarketplaceScreen: React.FC = () => {
             )}
           </>
         )}
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
     </LinearGradient>
   );
 };

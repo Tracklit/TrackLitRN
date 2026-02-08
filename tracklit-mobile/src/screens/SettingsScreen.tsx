@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   TextInput,
   TouchableOpacity,
   Alert,
@@ -28,6 +27,7 @@ import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { countries as countryList } from '@/lib/countries';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -122,10 +122,11 @@ export const SettingsScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
       >
         <View style={styles.headerRow}>
           <TouchableOpacity
@@ -311,7 +312,7 @@ export const SettingsScreen: React.FC = () => {
             Sign Out
           </Text>
         </Button>
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
 
       <Modal
         visible={countryPickerOpen}
@@ -472,5 +473,4 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 });
-
 

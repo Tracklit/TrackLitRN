@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -28,6 +27,7 @@ import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -173,9 +173,14 @@ export const ExerciseLibraryAddScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag" style={{ paddingTop: insets.top }} contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]} showsVerticalScrollIndicator={false}>
+        keyboardDismissMode="on-drag"
+        style={{ paddingTop: insets.top }}
+        contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]}
+        showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
+      >
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Back">
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
@@ -346,7 +351,7 @@ export const ExerciseLibraryAddScreen: React.FC = () => {
             </Button>
           </CardContent>
         </Card>
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
     </LinearGradient>
   );
 };
@@ -421,5 +426,4 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
 });
-
 

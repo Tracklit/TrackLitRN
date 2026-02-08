@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -35,6 +34,7 @@ import { countries } from '@/lib/countries';
 import theme from '@/utils/theme';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import type { RootStackParamList, TabParamList } from '@/navigation/types';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type BackgroundType = 'color' | 'image';
 
@@ -293,7 +293,7 @@ export const ProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={[
@@ -301,6 +301,7 @@ export const ProfileScreen: React.FC = () => {
           { paddingTop: insets.top + theme.spacing.lg, paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },
         ]}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
         refreshControl={
           <RefreshControl
             tintColor="#fff"
@@ -629,7 +630,7 @@ export const ProfileScreen: React.FC = () => {
         >
           Sign Out
         </Button>
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
 
       <ProfileImageCropModal
         visible={cropVisible}

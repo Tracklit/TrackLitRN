@@ -46,6 +46,33 @@ jest.mock('react-native-reanimated', () => {
   return Reanimated;
 });
 
+// ──────────────────────── Keyboard Aware Scroll ────────────────────────
+jest.mock('react-native-keyboard-aware-scroll-view', () => {
+  const React = require('react');
+  const { ScrollView, FlatList, SectionList } = require('react-native');
+
+  const KeyboardAwareScrollView = React.forwardRef((props, ref) => (
+    <ScrollView ref={ref} {...props} />
+  ));
+  KeyboardAwareScrollView.displayName = 'KeyboardAwareScrollView';
+
+  const KeyboardAwareFlatList = React.forwardRef((props, ref) => (
+    <FlatList ref={ref} {...props} />
+  ));
+  KeyboardAwareFlatList.displayName = 'KeyboardAwareFlatList';
+
+  const KeyboardAwareSectionList = React.forwardRef((props, ref) => (
+    <SectionList ref={ref} {...props} />
+  ));
+  KeyboardAwareSectionList.displayName = 'KeyboardAwareSectionList';
+
+  return {
+    KeyboardAwareScrollView,
+    KeyboardAwareFlatList,
+    KeyboardAwareSectionList,
+  };
+});
+
 // ──────────────────────── AsyncStorage ────────────────────────
 const mockAsyncStorage = (() => {
   let store = {};

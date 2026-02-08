@@ -6,8 +6,6 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import {
   NavigationContainer,
@@ -659,18 +657,13 @@ const AppContent: React.FC = () => {
 
   return (
     <View style={styles.appContentContainer}>
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingRoot}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={syncBackState}
+        onStateChange={syncBackState}
       >
-        <NavigationContainer
-          ref={navigationRef}
-          onReady={syncBackState}
-          onStateChange={syncBackState}
-        >
-          {isAuthenticated ? <DrawerNavigator /> : <AuthNavigator />}
-        </NavigationContainer>
-      </KeyboardAvoidingView>
+        {isAuthenticated ? <DrawerNavigator /> : <AuthNavigator />}
+      </NavigationContainer>
       {isAuthenticated && showGlobalBackButton ? (
         <TouchableOpacity
           style={[
@@ -716,9 +709,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#010a18',
   },
   appContentContainer: {
-    flex: 1,
-  },
-  keyboardAvoidingRoot: {
     flex: 1,
   },
   globalBackButton: {

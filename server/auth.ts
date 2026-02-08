@@ -9,6 +9,7 @@ import { promisify } from "util";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { OAuth2Client } from "google-auth-library";
 import { storage } from "./storage";
 import { User, User as SelectUser, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
@@ -394,6 +395,93 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Native Google Sign-In (mobile) - exchange Google ID token for TrackLit JWT.
+  app.post("/api/auth/google/mobile", async (req, res) => {
+    try {
+      const { idToken } = req.body ?? {};
+
+      if (!idToken) {
+        return res.status(400).json({ error: "Google ID token is required" });
+      }
+
+      // Accept tokens minted for any of our registered OAuth clients.
+      const audiences = [
+        process.env.GOOGLE_CLIENT_ID, // Web client id (also used by server-side OAuth flow)
+        process.env.GOOGLE_IOS_CLIENT_ID,
+        process.env.GOOGLE_ANDROID_CLIENT_ID,
+      ].filter((value): value is string => Boolean(value));
+
+      if (audiences.length === 0) {
+        console.error("[GOOGLE-AUTH] Mobile auth misconfigured: no client IDs configured");
+        return res.status(500).json({ error: "Google sign-in is not configured" });
+      }
+
+      let payload: any;
+      try {
+        const client = new OAuth2Client();
+        const ticket = await client.verifyIdToken({
+          idToken,
+          audience: audiences,
+        });
+        payload = ticket.getPayload();
+      } catch (error) {
+        const errorInfo = {
+          message: error instanceof Error ? error.message : String(error),
+          audiences,
+          token_length: typeof idToken === "string" ? idToken.length : undefined,
+        };
+        console.error("[GOOGLE-AUTH] Mobile ID token invalid:", errorInfo);
+        return res.status(401).json({
+          error: "Google ID token invalid",
+          ...(isProduction ? {} : { details: errorInfo }),
+        });
+      }
+
+      if (!payload) {
+        return res.status(401).json({ error: "Google ID token invalid" });
+      }
+
+      const email = typeof payload.email === "string" ? payload.email : undefined;
+      const name = typeof payload.name === "string" ? payload.name : undefined;
+
+      // Optional hard check: if Google says email isn't verified, treat as invalid.
+      if (payload.email_verified === false) {
+        return res.status(401).json({ error: "Google email is not verified" });
+      }
+
+      if (!email) {
+        return res.status(400).json({ error: "Email is required from Google" });
+      }
+
+      let user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        const base = email.split("@")[0] || `google_${randomBytes(4).toString("hex")}`;
+        const username = await buildUniqueUsername(base);
+        const password = await hashPassword(randomBytes(32).toString("hex"));
+        user = await storage.createUser({
+          username,
+          email,
+          name: name || base,
+          password,
+        });
+      }
+
+      const token = generateToken(user);
+      const { password: _password, ...safeUser } = user as any;
+      return res.status(200).json({ user: safeUser, token });
+    } catch (error) {
+      const errorInfo = {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        claim: (error as any)?.claim,
+        reason: (error as any)?.reason,
+      };
+      console.error("[GOOGLE-AUTH] Mobile auth error:", errorInfo);
+      return res.status(500).json({ error: "Google sign in failed" });
+    }
+  });
+
   app.post("/api/auth/apple/mobile", async (req, res) => {
     try {
       const { identityToken, fullName, email } = req.body;
@@ -769,5 +857,4 @@ export function setupAuth(app: Express) {
     });
   });
 }
-
 

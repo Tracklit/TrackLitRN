@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Modal,
@@ -17,6 +16,7 @@ import { Text } from '@/components/ui/Text';
 import { Card, CardContent } from '@/components/ui/Card';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 const distances = [
   { value: '30', label: '30m' },
@@ -95,12 +95,13 @@ export const SprintTimePredictionScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
       >
         <View style={styles.header}>
           <TouchableOpacity
@@ -199,7 +200,7 @@ export const SprintTimePredictionScreen: React.FC = () => {
             </CardContent>
           </Card>
         )}
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
 
       <Modal visible={showDistancePicker} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -207,9 +208,7 @@ export const SprintTimePredictionScreen: React.FC = () => {
             <Text variant="h3" weight="bold" color="foreground">
               Select Distance
             </Text>
-            <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag">
+            <KeyboardAwareScreenScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
               {distances.map((distance) => (
                 <TouchableOpacity
                   key={distance.value}
@@ -224,7 +223,7 @@ export const SprintTimePredictionScreen: React.FC = () => {
                   </Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </KeyboardAwareScreenScrollView>
             <TouchableOpacity style={styles.modalClose} onPress={() => setShowDistancePicker(false)}>
               <Text variant="body" weight="semiBold" color="primary">
                 Close
@@ -334,4 +333,3 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
 });
-

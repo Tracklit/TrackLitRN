@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -16,6 +16,7 @@ import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -69,9 +70,14 @@ export const CreateMeetScreen: React.FC = () => {
 
   return (
     <LinearGradient colors={theme.gradient.background} locations={theme.gradient.locations} style={styles.container}>
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag" style={{ paddingTop: insets.top }} contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]} showsVerticalScrollIndicator={false}>
+        keyboardDismissMode="on-drag"
+        style={{ paddingTop: insets.top }}
+        contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]}
+        showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
+      >
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
@@ -171,7 +177,7 @@ export const CreateMeetScreen: React.FC = () => {
             </Button>
           </CardContent>
         </Card>
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
     </LinearGradient>
   );
 };
@@ -200,5 +206,4 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
 });
-
 

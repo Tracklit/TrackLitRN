@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
@@ -27,6 +26,7 @@ import type { RootStackParamList } from '@/navigation/types';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
 import theme from '../utils/theme';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -176,7 +176,7 @@ export const ProgramsScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentInsetAdjustmentBehavior="never"
@@ -185,6 +185,7 @@ export const ProgramsScreen: React.FC = () => {
           { paddingTop: insets.top, paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
         refreshControl={
           <RefreshControl
             tintColor="#fff"
@@ -334,7 +335,7 @@ export const ProgramsScreen: React.FC = () => {
             filteredWorkouts={filteredWorkouts}
           />
         )}
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
 
       <Modal
         visible={showFilterModal}

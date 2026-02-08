@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Modal,
   TextInput,
@@ -28,6 +27,7 @@ import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import type { RootStackParamList } from '@/navigation/types';
 import theme from '@/utils/theme';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 interface ExerciseItem {
   id: number;
@@ -193,7 +193,7 @@ export const ExerciseLibraryScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
@@ -202,6 +202,7 @@ export const ExerciseLibraryScreen: React.FC = () => {
           { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }) },
         ]}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
       >
         <View style={styles.header}>
           <TouchableOpacity
@@ -343,7 +344,7 @@ export const ExerciseLibraryScreen: React.FC = () => {
             ))}
           </View>
         )}
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
 
       <Modal
         visible={uploadModalOpen}
@@ -352,7 +353,15 @@ export const ExerciseLibraryScreen: React.FC = () => {
         onRequestClose={() => setUploadModalOpen(false)}
       >
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
+          <KeyboardAwareScreenScrollView
+            style={styles.modalCard}
+            contentContainerStyle={[
+              styles.modalCardContent,
+              { paddingBottom: insets.bottom + theme.spacing.lg },
+            ]}
+            showsVerticalScrollIndicator={false}
+            extraScrollHeight={80}
+          >
             <Text variant="h4" weight="semiBold" color="foreground" style={styles.modalTitle}>
               Add to library
             </Text>
@@ -388,7 +397,7 @@ export const ExerciseLibraryScreen: React.FC = () => {
                 Upload
               </Button>
             </View>
-          </View>
+          </KeyboardAwareScreenScrollView>
         </View>
       </Modal>
     </LinearGradient>
@@ -508,9 +517,12 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: theme.colors.backgroundSolid,
-    padding: theme.spacing.lg,
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
+    maxHeight: '85%',
+  },
+  modalCardContent: {
+    padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
   modalTitle: { textAlign: 'center' },

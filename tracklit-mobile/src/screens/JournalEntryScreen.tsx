@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   TextInput,
@@ -25,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { env } from '@/config/env';
 import theme from '@/utils/theme';
+import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type JournalEntryRouteProp = RouteProp<RootStackParamList, 'JournalEntry'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -209,9 +209,13 @@ export const JournalEntryScreen: React.FC = () => {
         <View style={styles.backButton} />
       </View>
 
-      <ScrollView
+      <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag" contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        extraScrollHeight={80}
+      >
         <Text variant="body" color="muted">
           {date}
         </Text>
@@ -323,7 +327,7 @@ export const JournalEntryScreen: React.FC = () => {
             Save Entry
           </Text>
         </Button>
-      </ScrollView>
+      </KeyboardAwareScreenScrollView>
     </LinearGradient>
   );
 };
@@ -381,4 +385,3 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 });
-
