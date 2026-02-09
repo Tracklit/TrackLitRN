@@ -22,6 +22,8 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import type { RootStackParamList } from '@/navigation/types';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
@@ -109,10 +111,9 @@ export const ProgramsScreen: React.FC = () => {
     enabled: isAuthenticated && !isGuest,
   });
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries();
-    refreshUser();
-  };
+  const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
+    await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
+  });
 
   const handleContinueProgram = (program: Program) => {
     navigation.navigate('ProgramEditor', { id: program.id });
@@ -134,9 +135,6 @@ export const ProgramsScreen: React.FC = () => {
     }
     setShowCreateMenu(true);
   };
-
-  const isRefreshing =
-    myProgramsQuery.isFetching || purchasedProgramsQuery.isFetching || workoutLibraryQuery.isFetching;
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const matchesQuery = (value?: string | null) =>
@@ -190,10 +188,11 @@ export const ProgramsScreen: React.FC = () => {
           <RefreshControl
             tintColor="#fff"
             refreshing={isRefreshing}
-            onRefresh={handleRefresh}
+            onRefresh={onRefresh}
           />
         }
       >
+        <InlineRefreshHeader visible={isRefreshing} />
         {/* Header */}
         <LinearGradient
           colors={theme.gradients.webHeader.colors}

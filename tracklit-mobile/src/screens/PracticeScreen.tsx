@@ -19,6 +19,8 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import { ProgramPickerModal } from '@/components/practice/ProgramPickerModal';
@@ -155,10 +157,9 @@ export const PracticeScreen: React.FC = () => {
     setShowProgramPicker(false);
   };
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries();
-    refreshUser();
-  };
+  const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
+    await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
+  });
 
   return (
     <LinearGradient
@@ -176,11 +177,12 @@ export const PracticeScreen: React.FC = () => {
         refreshControl={
           <RefreshControl
             tintColor="#fff"
-            refreshing={purchasedProgramsQuery.isFetching}
-            onRefresh={handleRefresh}
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
           />
         }
       >
+        <InlineRefreshHeader visible={isRefreshing} />
         <LinearGradient
           colors={theme.gradients.webHeader.colors}
           start={theme.gradients.webHeader.start}

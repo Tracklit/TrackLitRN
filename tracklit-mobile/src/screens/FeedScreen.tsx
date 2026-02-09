@@ -20,9 +20,11 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
@@ -95,10 +97,12 @@ export const FeedScreen: React.FC = () => {
     likeMutation.mutate(postId);
   };
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries();
-    refreshUser();
-  };
+  const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['feed'] }),
+      refreshUser(),
+    ]);
+  });
 
   const handleCreatePost = () => {
     if (!canInteract) {
@@ -176,6 +180,7 @@ export const FeedScreen: React.FC = () => {
       style={styles.container}
     >
       <View style={[styles.header, { paddingTop: insets.top }]}>
+        <InlineRefreshHeader visible={isRefreshing} />
         <Text variant="h2" weight="bold" color="foreground">
           Feed
         </Text>
@@ -229,8 +234,8 @@ export const FeedScreen: React.FC = () => {
         refreshControl={
           <RefreshControl
             tintColor="#fff"
-            refreshing={feedQuery.isFetching}
-            onRefresh={handleRefresh}
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
           />
         }
         ListEmptyComponent={

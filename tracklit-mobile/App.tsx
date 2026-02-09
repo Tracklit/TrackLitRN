@@ -25,6 +25,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { OnboardingProvider, useOnboarding } from './src/contexts/OnboardingContext';
 import { Text } from './src/components/ui/Text';
 import { Avatar } from './src/components/ui/Avatar';
 
@@ -81,6 +82,7 @@ import type { TabParamList, RootStackParamList, AuthStackParamList } from './src
 import { queryClient } from './src/lib/queryClient';
 import { env } from './src/config/env';
 import theme from './src/utils/theme';
+import { OnboardingOverlay } from './src/onboarding/OnboardingOverlay';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -626,6 +628,7 @@ const AuthNavigator: React.FC = () => (
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const { isActive: onboardingActive } = useOnboarding();
   const insets = useSafeAreaInsets();
   const [showGlobalBackButton, setShowGlobalBackButton] = React.useState(false);
 
@@ -664,7 +667,8 @@ const AppContent: React.FC = () => {
       >
         {isAuthenticated ? <DrawerNavigator /> : <AuthNavigator />}
       </NavigationContainer>
-      {isAuthenticated && showGlobalBackButton ? (
+      {isAuthenticated ? <OnboardingOverlay navigationRef={navigationRef} /> : null}
+      {isAuthenticated && showGlobalBackButton && !onboardingActive ? (
         <TouchableOpacity
           style={[
             styles.globalBackButton,
@@ -687,12 +691,14 @@ const App: React.FC = () => {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <StatusBar
-            barStyle="light-content"
-            backgroundColor="transparent"
-            translucent
-          />
-          <AppContent />
+          <OnboardingProvider>
+            <StatusBar
+              barStyle="light-content"
+              backgroundColor="transparent"
+              translucent
+            />
+            <AppContent />
+          </OnboardingProvider>
         </AuthProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

@@ -16,6 +16,8 @@ import { Card } from '../components/ui/Card';
 import { Text } from '../components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { apiRequest } from '@/lib/api';
 import theme from '../utils/theme';
@@ -64,7 +66,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [greeting, setGreeting] = useState('');
   const { user, refreshUser } = useAuth();
   const queryClient = useQueryClient();
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [tickerCollapsed, setTickerCollapsed] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
@@ -227,14 +228,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     },
   ];
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await Promise.all([
-      queryClient.invalidateQueries(),
-      refreshUser(),
-    ]);
-    setIsRefreshing(false);
-  };
+  const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
+    await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
+  });
 
   const handleCardPress = (route: string) => {
     if (onNavigate) {
@@ -267,10 +263,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           <RefreshControl
             tintColor="#fff"
             refreshing={isRefreshing}
-            onRefresh={handleRefresh}
+            onRefresh={onRefresh}
           />
         }
       >
+        <InlineRefreshHeader visible={isRefreshing} />
         <ScreenHeader
           title={`${greeting}${user?.name ? `, ${user.name.split(' ')[0]}` : ''}`}
           subtitle="Ready to train today?"

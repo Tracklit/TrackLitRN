@@ -16,6 +16,7 @@ import {
   getStoredUser,
   setStoredUser,
   debugAuthStorage,
+  clearStoredUser,
 } from '@/lib/tokenStorage';
 
 const DEBUG_AUTH = __DEV__;
@@ -69,6 +70,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   continueAsGuest: () => void;
   refreshUser: () => Promise<void>;
+  setUserAndPersist: (user: User | null) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,6 +79,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasValidToken, setHasValidToken] = useState(false);
+
+  const setUserAndPersist = useCallback(async (nextUser: User | null) => {
+    setUser(nextUser);
+    if (nextUser) {
+      await setStoredUser(nextUser);
+    } else {
+      await clearStoredUser();
+    }
+  }, []);
 
   // Fetch user from API (validates token)
   const fetchUser = useCallback(async () => {
@@ -128,7 +139,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('[AUTH] Validating token with /api/user...');
       }
       
-      const response = await apiRequest<User>('/api/user');
+      // Cache-bust to avoid any intermediary caching of identity responses.
+      const response = await apiRequest<User>(`/api/user?_=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-store',
+          Pragma: 'no-cache',
+        },
+      });
       
       if (DEBUG_AUTH) {
         console.log('[AUTH] Token valid, user:', response.id, response.username);
@@ -341,6 +358,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         logout,
         continueAsGuest,
         refreshUser: fetchUser,
+        setUserAndPersist,
       }}
     >
       {children}

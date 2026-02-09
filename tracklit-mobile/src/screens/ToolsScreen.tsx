@@ -16,6 +16,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
 import { useAuth } from '@/contexts/AuthContext';
+import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import theme from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
@@ -46,8 +48,8 @@ export const ToolsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { refreshUser } = useAuth();
-  const [isRefreshing, setIsRefreshing] = React.useState(false);
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
+  const { isRefreshing, onRefresh } = usePullToRefresh(async () => refreshUser());
 
   const tools: Tool[] = [
     {
@@ -179,14 +181,11 @@ export const ToolsScreen: React.FC = () => {
           <RefreshControl
             tintColor="#fff"
             refreshing={isRefreshing}
-            onRefresh={async () => {
-              setIsRefreshing(true);
-              await refreshUser();
-              setIsRefreshing(false);
-            }}
+            onRefresh={onRefresh}
           />
         }
       >
+        <InlineRefreshHeader visible={isRefreshing} />
         <LinearGradient
           colors={theme.gradients.webHeader.colors}
           start={theme.gradients.webHeader.start}

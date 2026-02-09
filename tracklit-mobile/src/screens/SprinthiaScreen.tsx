@@ -4,6 +4,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  RefreshControl,
   TextInput,
   Alert,
   KeyboardAvoidingView,
@@ -36,9 +37,11 @@ import * as Speech from 'expo-speech';
 import * as Clipboard from 'expo-clipboard';
 
 import { Text } from '../components/ui/Text';
+import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/queryClient';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import theme from '../utils/theme';
 import { FormattedSprinthiaText } from '../utils/sprinthiaFormat';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '../utils/layoutPadding';
@@ -495,6 +498,13 @@ export const SprinthiaScreen: React.FC = () => {
 
   const showGreeting = messages.length === 0 && !isThinking;
 
+  const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['sprinthia-conversations'] }),
+      refreshUser(),
+    ]);
+  });
+
   return (
     <LinearGradient
       colors={theme.gradient.background}
@@ -690,7 +700,15 @@ export const SprinthiaScreen: React.FC = () => {
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              tintColor="#fff"
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+            />
+          }
         >
+          <InlineRefreshHeader visible={isRefreshing} />
           {showGreeting && (
             <View style={styles.greetingCard}>
               <Text weight="semiBold" color="foreground" style={styles.greetingTitle}>
@@ -1253,4 +1271,3 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 });
-

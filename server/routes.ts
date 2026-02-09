@@ -26,6 +26,7 @@ import chatRoutes from "./chat-routes-simple";
 import feedRoutes from "./routes/feed";
 import { getBaseUrl } from "./utils/url-helper";
 import { initializeBlobStorage, uploadToBlob, isBlobStorageAvailable, BlobContainer } from "./azure-storage";
+import { patchUserHandler } from "./handlers/patchUser";
 
 // Coach-athlete relationship API functions will be moved inside registerRoutes
 // Age calculation utility
@@ -2331,68 +2332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User routes (excluding auth routes which are in auth.ts)
-  app.patch("/api/user", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const userId = req.user!.id;
-      
-      // Only allow specific fields to be updated
-      const allowedUpdates = [
-        "name", "username", "email", "country", "dateOfBirth", "defaultClubId", "isPrivate",
-        "gender", "trainingGoal", "injuryStatus", "sleepHours", "sleepQuality",
-        "trainingDaysPerWeek", "mood", "coachMode", "specialties"
-      ];
-
-      const updates: Record<string, any> = {};
-
-      for (const field of allowedUpdates) {
-        if (req.body[field] !== undefined) {
-          updates[field] = req.body[field];
-        }
-      }
-      // Convert dateOfBirth string to Date object if present, handle empty strings
-      if (updates.dateOfBirth !== undefined) {
-        if (updates.dateOfBirth === '' || updates.dateOfBirth === null) {
-          // Convert empty string or null to null for database
-          updates.dateOfBirth = null;
-          updates.age = null;
-        } else if (typeof updates.dateOfBirth === 'string') {
-          const parsedDate = new Date(updates.dateOfBirth);
-          // Only set if valid date, otherwise set to null
-          updates.dateOfBirth = isNaN(parsedDate.getTime()) ? null : parsedDate;
-          // Auto-calculate age from dateOfBirth
-          updates.age = calculateAge(updates.dateOfBirth);
-        }
-      }
-      // Normalize isPrivate if sent as string (common from form submissions)
-      if (updates.isPrivate !== undefined && typeof updates.isPrivate === 'string') {
-        updates.isPrivate = updates.isPrivate === 'true';
-      }
-      // If a default club ID is provided, verify the user is a member of that club
-      if (updates.defaultClubId !== undefined && updates.defaultClubId !== null) {
-        const clubMember = await dbStorage.getClubMemberByUserAndClub(userId, updates.defaultClubId);
-        if (!clubMember) {
-          return res.status(400).send("User is not a member of the specified club");
-        }
-      }
-      
-      const updatedUser = await dbStorage.updateUser(userId, updates);
-      
-      // Update the session user object
-      if (updatedUser) {
-        req.login(updatedUser, (err) => {
-          if (err) return res.status(500).send("Error updating session");
-          res.json(updatedUser);
-        });
-      } else {
-        res.status(404).send("User not found");
-      }
-    } catch (error: any) {
-      console.error("Error updating user:", error);
-      res.status(500).send("Error updating user: " + (error?.message || "Unknown error"));
-    }
-  });
+  app.patch("/api/user", patchUserHandler);
   
   // Get user by ID - for getting admin usernames for clubs
 
@@ -10979,6 +10919,5 @@ Submission Details:
 
   return httpServer;
 }
-
 
 

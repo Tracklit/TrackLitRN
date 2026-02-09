@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/Button';
 import { DateField } from '@/components/profile/fields/DateField';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
+import { setToken } from '@/lib/tokenStorage';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
@@ -34,7 +35,7 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export const SettingsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout, refreshUser, setUserAndPersist } = useAuth();
   const isGuest = user?.id === 'guest';
 
   const contentBottomPadding = useMemo(
@@ -75,7 +76,16 @@ export const SettingsScreen: React.FC = () => {
       defaultClubId?: number | null;
       isPrivate?: boolean;
     }) => apiRequest('/api/user', { method: 'PATCH', data: payload }),
-    onSuccess: async () => {
+    onSuccess: async (data: any) => {
+      if (data?.token) {
+        await setToken(String(data.token));
+      }
+      // Keep UI state canonical without waiting for a refetch.
+      if (data && typeof data === 'object') {
+        const nextUser = { ...(data as any) };
+        delete nextUser.token;
+        await setUserAndPersist(nextUser);
+      }
       await refreshUser();
       Alert.alert('Saved', 'Settings updated.');
     },
@@ -473,4 +483,3 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 });
-

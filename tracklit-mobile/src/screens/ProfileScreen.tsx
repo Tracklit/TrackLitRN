@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   RefreshControl,
@@ -26,15 +26,18 @@ import { ProfileImageCropModal } from '@/components/profile/ProfileImageCropModa
 import { SelectField } from '@/components/profile/fields/SelectField';
 import { DateField } from '@/components/profile/fields/DateField';
 import { ReadOnlyField } from '@/components/profile/fields/ReadOnlyField';
+import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { apiRequest } from '@/lib/api';
-import { getToken } from '@/lib/tokenStorage';
+import { getToken, setToken } from '@/lib/tokenStorage';
 import { env } from '@/config/env';
 import { countries } from '@/lib/countries';
 import theme from '@/utils/theme';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import type { RootStackParamList, TabParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 type BackgroundType = 'color' | 'image';
 
@@ -43,9 +46,9 @@ export const ProfileScreen: React.FC = () => {
   const { width: screenWidth } = useWindowDimensions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<TabParamList, 'Profile'>>();
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout, refreshUser, setUserAndPersist } = useAuth();
+  const { resetAndStart: replayOnboarding } = useOnboarding();
   const queryClient = useQueryClient();
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
   const [backgroundColor, setBackgroundColor] = useState('#1e293b');
@@ -71,7 +74,41 @@ export const ProfileScreen: React.FC = () => {
     coachMode: (user as any)?.coachMode || '',
   });
 
+  // Keep local form state in sync with canonical user state.
+  useEffect(() => {
+    setProfileForm({
+      username: user?.username || '',
+      name: user?.name || '',
+      email: user?.email || '',
+      country: (user as any)?.country || '',
+      dateOfBirth: (user as any)?.dateOfBirth || '',
+      gender: (user as any)?.gender || '',
+      trainingGoal: (user as any)?.trainingGoal || '',
+      injuryStatus: (user as any)?.injuryStatus || '',
+      trainingDaysPerWeek: (user as any)?.trainingDaysPerWeek?.toString?.() || '',
+      sleepHours: (user as any)?.sleepHours?.toString?.() || '',
+      sleepQuality: (user as any)?.sleepQuality || '',
+      mood: (user as any)?.mood || '',
+      coachMode: (user as any)?.coachMode || '',
+    });
+  }, [
+    user?.username,
+    user?.name,
+    user?.email,
+    (user as any)?.country,
+    (user as any)?.dateOfBirth,
+    (user as any)?.gender,
+    (user as any)?.trainingGoal,
+    (user as any)?.injuryStatus,
+    (user as any)?.trainingDaysPerWeek,
+    (user as any)?.sleepHours,
+    (user as any)?.sleepQuality,
+    (user as any)?.mood,
+    (user as any)?.coachMode,
+  ]);
+
   const isCoach = user?.isCoach === true;
+  const isGuest = user?.id === 'guest';
   const focusCoachToggle = route.params?.focusCoachToggle === true;
   const memberSinceYear = useMemo(() => {
     const createdAt = (user as any)?.createdAt;
@@ -120,19 +157,22 @@ export const ProfileScreen: React.FC = () => {
   });
 
   const saveProfileMutation = useMutation({
-    mutationFn: async () => {
-      const payload: any = {
-        ...profileForm,
-        trainingDaysPerWeek: profileForm.trainingDaysPerWeek
-          ? parseInt(profileForm.trainingDaysPerWeek, 10)
-          : undefined,
-        sleepHours: profileForm.sleepHours ? parseFloat(profileForm.sleepHours) : undefined,
-      };
-      return apiRequest('/api/user', { method: 'PATCH', data: payload });
+    mutationFn: async (payload: any) => {
+      return apiRequest<any>('/api/user', { method: 'PATCH', data: payload });
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      if (data?.token) {
+        await setToken(String(data.token));
+      }
+      // Update canonical user immediately from the PATCH response so headers/UI
+      // reflect the new username without depending on a subsequent fetch.
+      if (data && typeof data === 'object') {
+        const nextUser = { ...(data as any) };
+        delete nextUser.token;
+        await setUserAndPersist(nextUser);
+      }
       Alert.alert('Profile updated', 'Your changes have been saved.');
-      refreshUser();
+      await refreshUser();
     },
     onError: (error: Error) => {
       Alert.alert('Error', error.message || 'Failed to update profile.');
@@ -279,13 +319,35 @@ export const ProfileScreen: React.FC = () => {
     return age >= 0 ? age.toString() : '';
   };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await Promise.all([
-      queryClient.invalidateQueries(),
-      refreshUser(),
-    ]);
-    setIsRefreshing(false);
+  const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
+    await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
+  });
+
+  const handleSaveSettings = () => {
+    if (isGuest) {
+      Alert.alert('Login Required', 'Please sign in to update your profile.');
+      return;
+    }
+
+    const usernameTrim = profileForm.username.trim();
+    if (!/^[a-zA-Z0-9_]{3,30}$/.test(usernameTrim)) {
+      Alert.alert(
+        'Invalid username',
+        'Username must be 3-30 characters (letters, numbers, underscores).',
+      );
+      return;
+    }
+
+    const payload: any = {
+      ...profileForm,
+      username: usernameTrim,
+      trainingDaysPerWeek: profileForm.trainingDaysPerWeek
+        ? parseInt(profileForm.trainingDaysPerWeek, 10)
+        : undefined,
+      sleepHours: profileForm.sleepHours ? parseFloat(profileForm.sleepHours) : undefined,
+    };
+
+    saveProfileMutation.mutate(payload);
   };
 
   // Always use vertical layout on phones; row layout only for tablets (600+)
@@ -306,10 +368,11 @@ export const ProfileScreen: React.FC = () => {
           <RefreshControl
             tintColor="#fff"
             refreshing={isRefreshing}
-            onRefresh={handleRefresh}
+            onRefresh={onRefresh}
           />
         }
       >
+        <InlineRefreshHeader visible={isRefreshing} />
         <Text variant="h2" weight="bold" color="foreground" style={styles.title}>
           Your Profile
         </Text>
@@ -361,6 +424,30 @@ export const ProfileScreen: React.FC = () => {
                   Sign Out
                 </Button>
               </View>
+            </View>
+          </CardContent>
+        </Card>
+
+        {/* App Tour */}
+        <Card style={styles.cardVariant} contentStyle={styles.nonStretchingCard}>
+          <CardContent style={styles.nonStretchingCardContent}>
+            <View style={styles.rowBetween}>
+              <View style={{ flex: 1 }}>
+                <Text variant="body" weight="semiBold" color="foreground">
+                  App Tour
+                </Text>
+                <Text variant="caption" color="muted" style={{ marginTop: theme.spacing.xs }}>
+                  Replay the onboarding flow to refresh what each tab does.
+                </Text>
+              </View>
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => replayOnboarding()}
+                disabled={isGuest}
+              >
+                Replay App Tour
+              </Button>
             </View>
           </CardContent>
         </Card>
@@ -614,7 +701,7 @@ export const ProfileScreen: React.FC = () => {
           </View>
           <Button
             variant="default"
-            onPress={() => saveProfileMutation.mutate()}
+            onPress={handleSaveSettings}
             loading={saveProfileMutation.isPending}
             style={styles.saveButton}
           >

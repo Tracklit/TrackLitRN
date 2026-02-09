@@ -803,6 +803,8 @@ export function setupAuth(app: Express) {
       }
       // Never expose password hashes to clients (web or mobile)
       const { password: _password, ...safeUser } = freshUser as any;
+      // Avoid intermediary caching of identity.
+      res.setHeader('Cache-Control', 'no-store');
       res.json(safeUser);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -857,4 +859,3 @@ export function setupAuth(app: Express) {
     });
   });
 }
-
