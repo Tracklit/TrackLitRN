@@ -22,7 +22,11 @@ import {
   Zap,
   Crown,
   Copy,
-  Calendar
+  Calendar,
+  Grid3X3,
+  FileText,
+  Sparkles,
+  Download
 } from "lucide-react";
 import { 
   Select, 
@@ -451,148 +455,224 @@ function ProgramCreatePage() {
 
       <div className="mt-8">
         {!selectedMethod ? (
-          <div className="grid grid-cols-2 gap-4 mx-auto" style={{ width: "90vw", maxWidth: "540px", margin: "0 auto" }}>
-            <Card 
-              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
-              style={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
-                borderRadius: '6px',
-                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
-              }}
-              onClick={() => setSelectedMethod('upload')}
-            >
-              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
-                <div className="flex flex-col items-center text-center gap-3">
-                  <div className="flex justify-center">
-                    <FileUp className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold mb-1 text-white">Upload Document</h2>
-                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Share existing training documents in PDF, DOC, or DOCX format</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card 
-              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
-              style={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
-                borderRadius: '6px',
-                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
-              }}
-              onClick={() => setSelectedMethod('builder')}
-            >
-              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
-                <div className="flex flex-col items-center text-center gap-3">
-                  <div className="flex justify-center">
-                    <BookOpen className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold mb-1 text-white">Program Builder</h2>
-                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Create a structured training program with custom sessions and exercises</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card 
-              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
-              style={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
-                borderRadius: '6px',
-                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
-              }}
-              onClick={() => setSelectedMethod('text')}
-            >
-              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
-                <div className="flex flex-col items-center text-center gap-3">
-                  <div className="flex justify-center">
-                    <BookOpen className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold mb-1 text-white">Text Based</h2>
-                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Create a simple text-based program that displays as a scrollable list</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card 
-              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
-              style={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
-                borderRadius: '6px',
-                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
-              }}
-              onClick={() => setSelectedMethod('sprinthia')}
-            >
-              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
-                <div className="flex flex-col items-center text-center">
-                  <div>
-                    <h2 className="text-base font-bold mb-1 text-white">Build With Sprinthia</h2>
-                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Build a text based program powered by AI. Once generated, you will be able to manually edit before saving.</p>
-                    {user?.subscriptionTier === 'free' && (
-                      <div className="mt-3">
-                        <div className="inline-flex items-center p-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                          <Crown className="h-3 w-3" />
-                        </div>
+          <div className="max-w-3xl mx-auto space-y-8">
+            {/* BUILD FROM SCRATCH Section */}
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">Build from Scratch</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Program Builder - Popular */}
+                <Card 
+                  className="cursor-pointer overflow-hidden relative group hover:border-primary/50 transition-all duration-200 bg-card"
+                  onClick={() => setSelectedMethod('builder')}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 rounded-lg bg-blue-500/10">
+                        <Grid3X3 className="h-6 w-6 text-blue-500" />
                       </div>
-                    )}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h2 className="text-base font-semibold">Program Builder</h2>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-medium">POPULAR</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Drag-and-drop sessions, exercises, and weekly structure with full control over every detail.</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Build with Sprinthia AI Coach - powered by Aria */}
+                <Card 
+                  className="cursor-pointer overflow-hidden relative group hover:border-purple-500/50 transition-all duration-200 bg-card"
+                  onClick={() => setSelectedMethod('sprinthia')}
+                >
+                  {/* Powered by Aria badge in top right corner */}
+                  <div className="absolute top-2 right-2 z-10">
+                    <img 
+                      src="/images/powered-by-aria.png" 
+                      alt="Powered by Aria" 
+                      className="h-5 opacity-80"
+                    />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card 
-              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
-              style={{ 
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
-                borderRadius: '6px',
-                boxShadow: '0 0 10px 4px rgba(16, 185, 129, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
-              }}
-              onClick={() => setSelectedMethod('template')}
-            >
-              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
-                <div className="flex flex-col items-center text-center gap-3">
-                  <div className="flex justify-center">
-                    <Copy className="h-8 w-8 text-white" />
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 rounded-lg bg-purple-500/10">
+                        <Sparkles className="h-6 w-6 text-purple-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h2 className="text-base font-semibold">Build with Sprinthia AI Coach</h2>
+                          {user?.subscriptionTier === 'free' && (
+                            <Crown className="h-4 w-4 text-amber-500" />
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Describe your goals and let AI generate a full program you can review and customize.</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Text Based */}
+                <Card 
+                  className="cursor-pointer overflow-hidden relative group hover:border-primary/50 transition-all duration-200 bg-card"
+                  onClick={() => setSelectedMethod('text')}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 rounded-lg bg-slate-500/10">
+                        <FileText className="h-6 w-6 text-slate-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-base font-semibold mb-1">Text Based</h2>
+                        <p className="text-sm text-muted-foreground">Quick and simple — paste or type your program as a scrollable text list.</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* From Template */}
+                <Card 
+                  className="cursor-pointer overflow-hidden relative group hover:border-amber-500/50 transition-all duration-200 bg-card"
+                  onClick={() => setSelectedMethod('template')}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 rounded-lg bg-amber-500/10">
+                        <Copy className="h-6 w-6 text-amber-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-base font-semibold mb-1">From Template</h2>
+                        <p className="text-sm text-muted-foreground">Start from one of your saved templates or community-shared program blueprints.</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* IMPORT AN EXISTING PROGRAM Section */}
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">Import an Existing Program</h3>
+              
+              {/* Unified Upload Zone */}
+              <Card 
+                className="cursor-pointer overflow-hidden relative group hover:border-primary/50 transition-all duration-200 bg-card border-dashed border-2"
+                onClick={() => setSelectedMethod('upload')}
+              >
+                <CardContent className="p-8 flex flex-col items-center text-center">
+                  <div className="p-3 rounded-full bg-muted mb-4">
+                    <Upload className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <div>
-                    <h2 className="text-base font-bold mb-1 text-white">From Template</h2>
-                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Create a program from one of your saved templates</p>
+                  <h2 className="text-lg font-semibold mb-2">Upload or Import a File</h2>
+                  <p className="text-sm text-muted-foreground mb-4">Drag & drop your training document or spreadsheet, or click to browse</p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <span className="text-xs px-3 py-1 rounded-full bg-muted text-muted-foreground border">PDF</span>
+                    <span className="text-xs px-3 py-1 rounded-full bg-muted text-muted-foreground border">DOCX</span>
+                    <span className="text-xs px-3 py-1 rounded-full bg-muted text-muted-foreground border">XLSX</span>
+                    <span className="text-xs px-3 py-1 rounded-full bg-muted text-muted-foreground border">CSV</span>
+                    <span 
+                      className="text-xs px-3 py-1 rounded-full bg-muted text-muted-foreground border cursor-pointer hover:bg-primary/10 hover:text-primary hover:border-primary/50"
+                      onClick={(e) => { e.stopPropagation(); setIsImportDrawerOpen(true); }}
+                    >
+                      Google Sheets
+                    </span>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card 
-              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
-              style={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
-                borderRadius: '6px',
-                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
-              }}
-              onClick={() => setIsImportDrawerOpen(true)}
-            >
-              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
-                <div className="flex flex-col items-center text-center gap-3">
-                  <div className="flex justify-center">
-                    <Upload className="h-8 w-8 text-white" />
+                </CardContent>
+              </Card>
+
+              {/* CSV Template Download Banner */}
+              <Card className="mt-4 bg-muted/30 border">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-500/10">
+                      <FileUp className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium">Need a starting format?</h3>
+                      <p className="text-xs text-muted-foreground">Download our CSV template with pre-built columns for dates, event groups, sessions, and exercises — fill it in and re-upload.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-base font-bold mb-1 text-white">Import from Sheets</h2>
-                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Connect your Google Sheets for automatic synchronization</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="shrink-0 border-green-500/50 text-green-500 hover:bg-green-500/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Download CSV template
+                      const csvContent = `TrackLit Training Program Template,,,,,,
+Instructions: Fill in each row with one day's training. Use separate rows for each event group if workouts differ.,,,,,,
+Delete these instruction rows and example data before uploading.,,,,,,
+,,,,,,
+Date,Session Type,Event Group,Exercise / Workout,Sets x Reps / Distance,Intensity (%),Rest / Notes
+3/3/2025,Sprint,100m,Sprintprep 1 (warmup + accelerations),See notes,,Jump rope / med ball tosses / rollups / multibounds / progressive sprints 20-80m
+3/3/2025,Supplementary,Elite,Core / upper body circuit,,,
+3/4/2025,Tempo,100m,Tempo Runs,5 x 200m,65-70%,4 min rest between reps
+3/5/2025,Gym,100m,Deep Squats,5 x 8,,Progressive loading
+3/5/2025,Gym,100m,Deadlift,5 x 6,,
+3/5/2025,Gym,100m,Backstep Lunges,4 x 8 (4 per leg),,
+3/5/2025,Gym,100m,Calf Raises,4 x 12,,Weight optional
+3/5/2025,Gym,100m,Back Extension,4 x 25,,
+3/5/2025,Gym,100m,Conc. Hamstring Curl,4 x 8,,
+3/6/2025,Recovery,100m,Core,,,
+3/6/2025,Supplementary,Elite,Core / upper body circuit,,,
+3/7/2025,Speed,100m,Phosphate System,2 x 3 x 60m,90-92%,Walk back rest / 4 min between sets
+3/8/2025,Gym,100m,Gym Session 0.5,,,See gym reference sheet
+3/9/2025,Rest,100m,Rest Day,,,
+3/10/2025,Speed,100m,F4s Sprint Sets,1x4x60 + 1x5x60 + 1x3x60m,90%,Walk rest / 2 min alt / 4 min between sets
+3/10/2025,Supplementary,Elite,Core / upper body circuit,,,
+,,,,,,
+=== WEEK 2 (Microdose Week) ===,,,,,,
+3/11/2025,Gym (Micro),100m,Box Jumps,3 x 4,,
+3/11/2025,Gym (Micro),100m,Deep Squats,4 x 4,,
+3/11/2025,Gym (Micro),100m,Lunges,3 x 3 per leg,,
+3/11/2025,Gym (Micro),100m,ISO Mid-thigh Pull,3 x 3 (4s hold),,
+3/11/2025,Gym (Micro),100m,Eccentric Hamstring,3 x 4,,
+3/11/2025,Gym (Micro),100m,Ankle Hops,4 x 6,,
+3/12/2025,Gym (Micro),100m,Box Jumps Frog,2 x 3,,Reduced volume
+3/12/2025,Gym (Micro),100m,Deep Squats,3 x 3,,
+3/12/2025,Gym (Micro),100m,Lunges,2 x 3 per leg,,
+3/12/2025,Gym (Micro),100m,Eccentric Hamstring,2 x 4,,
+3/13/2025,Recovery,100m,Core,,,
+,,,,,,
+=== REFERENCE: SESSION TYPES ===,,,,,,
+Sprint - Sprint prep / acceleration / block work,,,,,,
+Tempo - Sub-maximal aerobic capacity runs (60-80%),,,,,,
+Speed - Maximal or near-maximal sprint work (90-100%),,,,,,
+Gym - Strength / weightroom sessions,,,,,,
+Gym (Micro) - Microdose / reduced-volume strength,,,,,,
+Recovery - Core / mobility / active recovery,,,,,,
+Supplementary - Extra sessions (elite athletes),,,,,,
+Rest - Full rest day,,,,,,
+Competition - Meet / race day,,,,,,
+,,,,,,
+=== REFERENCE: EVENT GROUPS ===,,,,,,
+100m | 200m | 400m | Hurdles | All | Elite,,,,,,
+,,,,,,
+=== REFERENCE: INTENSITY GUIDE ===,,,,,,
+80% - Easy / warmup pace,,,,,,
+85% - Moderate / controlled,,,,,,
+90% - Fast / quality reps,,,,,,
+92% - High quality,,,,,,
+92-95% - Near max,,,,,,
+95-100% - Max effort / competition,,,,,,`;
+                      
+                      const blob = new Blob([csvContent], { type: 'text/csv' });
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'TrackLit_Program_Template.csv';
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      window.URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download CSV
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         ) : (
           <div className="max-w-2xl mx-auto">
@@ -735,10 +815,10 @@ function ProgramCreatePage() {
                 <CardHeader className="bg-muted/30">
                   <CardTitle className="flex items-center">
                     <FileUp className="h-5 w-5 mr-2 text-primary" />
-                    Upload Program Document
+                    Upload or Import Program
                   </CardTitle>
                   <CardDescription>
-                    Share existing training documents in PDF, DOC, or DOCX format
+                    Import training documents in PDF, Word, Excel, or CSV format
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
@@ -772,13 +852,21 @@ function ProgramCreatePage() {
                       <Input
                         id="file-upload"
                         type="file"
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv"
                         onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
                         required
                       />
                       <p className="text-sm text-muted-foreground mt-1">
-                        Supported formats: PDF, DOC, DOCX (Max 10MB)
+                        Supported formats: PDF, DOC, DOCX, XLS, XLSX, CSV (Max 15MB)
                       </p>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="text-primary p-0 h-auto mt-1"
+                        onClick={() => setIsImportDrawerOpen(true)}
+                      >
+                        Or import from Google Sheets
+                      </Button>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">

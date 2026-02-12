@@ -77,12 +77,14 @@ function EditableCell({
   content, 
   isRestDay, 
   onSave,
+  onPendingChange,
   isWeekend = false,
   date
 }: { 
   content: string; 
   isRestDay: boolean; 
   onSave: (value: string, isRest: boolean) => void;
+  onPendingChange?: (hasPending: boolean, value: string, isRest: boolean) => void;
   isWeekend?: boolean;
   date?: string;
 }) {
@@ -91,6 +93,7 @@ function EditableCell({
   // Very important: Initialize with content or empty string
   const [value, setValue] = useState(content || "");
   const [isRest, setIsRest] = useState(isRestDay);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   
   // Keep value in sync with external content
@@ -115,7 +118,36 @@ function EditableCell({
 
   const handleSave = () => {
     onSave(value, isRest);
+    setHasUnsavedChanges(false);
+    onPendingChange?.(false, value, isRest);
     setIsEditing(false);
+  };
+
+  // Handle value changes - track as pending
+  const handleValueChange = (newValue: string) => {
+    setValue(newValue);
+    const changed = newValue !== (content || "");
+    setHasUnsavedChanges(changed);
+    onPendingChange?.(changed, newValue, isRest);
+  };
+
+  // Auto-save on blur (when clicking outside the cell)
+  const handleBlur = (e: React.FocusEvent) => {
+    // Check if the new focus target is still within the cell
+    const cellElement = e.currentTarget.closest('td');
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    
+    // If clicking on a button inside the cell, don't auto-save yet
+    if (cellElement?.contains(relatedTarget)) {
+      return;
+    }
+    
+    // Auto-save if there are changes
+    if (hasUnsavedChanges && value !== (content || "")) {
+      handleSave();
+    } else {
+      setIsEditing(false);
+    }
   };
 
   const formatDate = (dateString?: string) => {
@@ -129,7 +161,7 @@ function EditableCell({
 
   return (
     <TableCell 
-      className={`border p-0 relative min-h-[80px] ${(value || content) ? 'bg-gray-950' : 'bg-gray-700'}`}
+      className={`border p-0 relative min-h-[80px] ${(value || content) ? 'bg-gray-950' : 'bg-gray-700'} ${hasUnsavedChanges ? 'ring-2 ring-yellow-500/50' : ''}`}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -142,7 +174,8 @@ function EditableCell({
           <Textarea
             ref={inputRef}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => handleValueChange(e.target.value)}
+            onBlur={handleBlur}
             placeholder="Enter workout details..."
             className="min-h-[64px] font-sans text-sm p-2 border-0 focus:ring-0"
           />
@@ -170,6 +203,10 @@ function EditableCell({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                // Revert to original content on cancel
+                setValue(content || "");
+                setHasUnsavedChanges(false);
+                onPendingChange?.(false, content || "", isRest);
                 setIsEditing(false);
               }}
             >
@@ -245,6 +282,10 @@ function ProgramEditorPage() {
   const [translateX, setTranslateX] = useState(0);
   const [translateY, setTranslateY] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Track pending cell changes for the top save button
+  // Key format: "weekNumber-dayNumber", value: { content, isRest }
+  const [pendingCellChanges, setPendingCellChanges] = useState<Record<string, { content: string; isRest: boolean }>>({});
 
   // Program details form
   const form = useForm<z.infer<typeof programEditorSchema>>({
@@ -1045,10 +1086,55 @@ function ProgramEditorPage() {
     return addDays(week.startDate, dayNumber);
   };
 
-  // Form submission handler
-  const onSubmit = (data: z.infer<typeof programEditorSchema>) => {
+  // Save all pending cell changes
+  const saveAllPendingChanges = async () => {
+    const pendingKeys = Object.keys(pendingCellChanges);
+    if (pendingKeys.length === 0) return;
+
+    console.log("Saving all pending cell changes:", pendingKeys.length);
+    
+    for (const cellKey of pendingKeys) {
+      const [weekStr, dayStr] = cellKey.split('-');
+      const weekNumber = parseInt(weekStr);
+      const dayNumber = parseInt(dayStr);
+      const { content, isRest } = pendingCellChanges[cellKey];
+      
+      // Call the same handler used for individual cell saves
+      handleCellUpdate(weekNumber, dayNumber, content, isRest);
+    }
+    
+    // Clear pending changes after saving
+    setPendingCellChanges({});
+  };
+
+  // Form submission handler - now saves all pending cell changes first
+  const onSubmit = async (data: z.infer<typeof programEditorSchema>) => {
+    // First, save all pending cell changes
+    await saveAllPendingChanges();
+    
+    // Then update the program details
     updateProgram.mutate(data);
   };
+
+  // Handler for tracking pending changes from cells
+  const handlePendingCellChange = (weekNumber: number, dayNumber: number, hasPending: boolean, content: string, isRest: boolean) => {
+    const cellKey = `${weekNumber}-${dayNumber}`;
+    
+    if (hasPending) {
+      setPendingCellChanges(prev => ({
+        ...prev,
+        [cellKey]: { content, isRest }
+      }));
+    } else {
+      setPendingCellChanges(prev => {
+        const updated = { ...prev };
+        delete updated[cellKey];
+        return updated;
+      });
+    }
+  };
+
+  const hasPendingChanges = Object.keys(pendingCellChanges).length > 0;
 
   const isLoading = programLoading || sessionsLoading;
   const isSubmitting = updateProgram.isPending;
@@ -1750,6 +1836,8 @@ function ProgramEditorPage() {
             form="program-editor-form"
             disabled={isSubmitting}
             size="icon"
+            className={hasPendingChanges ? "ring-2 ring-yellow-500" : ""}
+            title={hasPendingChanges ? `Save all changes (${Object.keys(pendingCellChanges).length} unsaved)` : "Save program"}
           >
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -2000,6 +2088,9 @@ function ProgramEditorPage() {
                                 isWeekend={isWeekendDay(dayNumber)}
                                 onSave={(content, isRest) => 
                                   handleCellUpdate(week.weekNumber, dayNumber, content, isRest)
+                                }
+                                onPendingChange={(hasPending, content, isRest) =>
+                                  handlePendingCellChange(week.weekNumber, dayNumber, hasPending, content, isRest)
                                 }
                               />
                             );

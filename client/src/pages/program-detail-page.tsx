@@ -246,6 +246,16 @@ function ProgramCalendar({ sessions }: { sessions: any[] }) {
           </DrawerHeader>
           
           <div className="px-4 pb-4 space-y-4 overflow-y-auto">
+            {/* Show description if available (from CSV imports) */}
+            {selectedSession?.description && (
+              <div>
+                <h4 className="font-medium text-sm text-primary mb-1">Workout Details</h4>
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <p className="text-sm whitespace-pre-line">{selectedSession.description}</p>
+                </div>
+              </div>
+            )}
+            
             {selectedSession?.shortDistanceWorkout && (
               <div>
                 <h4 className="font-medium text-sm text-primary mb-1">Short Distance</h4>

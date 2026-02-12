@@ -601,12 +601,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/csv',
+        'application/csv',
+        'text/plain' // Some systems send CSV as text/plain
       ];
       if (allowedMimeTypes.includes(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('Only PDF, Word, and Excel documents are allowed'));
+        cb(new Error('Only PDF, Word, Excel, and CSV documents are allowed'));
       }
     }
   });
@@ -617,20 +620,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 15 * 1024 * 1024, // 15MB limit
     },
     fileFilter: (req, file, cb) => {
-      // For program files, accept PDF, Word, and Excel documents
+      // For program files, accept PDF, Word, Excel, and CSV documents
       if (req.path === '/api/programs/upload') {
         const allowedMimeTypes = [
           'application/pdf',
           'application/msword',
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'application/vnd.ms-excel',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'text/csv',
+          'application/csv',
+          'text/plain' // Some systems send CSV as text/plain
         ];
         
         if (allowedMimeTypes.includes(file.mimetype)) {
           cb(null, true);
         } else {
-          cb(new Error('Only PDF, Word, and Excel documents are allowed for programs'));
+          cb(new Error('Only PDF, Word, Excel, and CSV documents are allowed for programs'));
         }
       } 
       // For practice media, accept only images and videos
@@ -4878,8 +4884,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const file = req.file;
       const fileType = file.mimetype;
       const userId = req.user!.id;
+      
+      // Check if this is a CSV file that should be parsed
+      const isCSV = fileType === 'text/csv' || fileType === 'application/csv' || 
+                    fileType === 'text/plain' || file.originalname.toLowerCase().endsWith('.csv');
+      
+      if (isCSV) {
+        // Parse CSV and create program with sessions
+        try {
+          const csvContent = file.buffer.toString('utf-8');
+          const lines = csvContent.split('\n').map(line => line.trim()).filter(line => line);
+          
+          // Find the header row (contains Date, Session Type, etc.)
+          let headerIndex = -1;
+          let headers: string[] = [];
+          
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].toLowerCase();
+            if (line.includes('date') && (line.includes('session') || line.includes('exercise') || line.includes('workout'))) {
+              headerIndex = i;
+              headers = lines[i].split(',').map(h => h.trim().toLowerCase());
+              break;
+            }
+          }
+          
+          if (headerIndex === -1) {
+            return res.status(400).json({ error: "CSV must have headers including 'Date' and 'Session Type' or 'Exercise'" });
+          }
+          
+          // Find column indices
+          const dateIdx = headers.findIndex(h => h.includes('date'));
+          const sessionTypeIdx = headers.findIndex(h => h.includes('session type') || h.includes('session'));
+          const eventGroupIdx = headers.findIndex(h => h.includes('event') || h.includes('group'));
+          const exerciseIdx = headers.findIndex(h => h.includes('exercise') || h.includes('workout'));
+          const setsIdx = headers.findIndex(h => h.includes('sets') || h.includes('reps') || h.includes('distance'));
+          const intensityIdx = headers.findIndex(h => h.includes('intensity') || h.includes('%'));
+          const notesIdx = headers.findIndex(h => h.includes('notes') || h.includes('rest'));
+          
+          // Parse data rows (skip header, instruction rows, and reference sections)
+          const dataRows: Array<{
+            date: string;
+            sessionType: string;
+            eventGroup: string;
+            exercise: string;
+            setsReps: string;
+            intensity: string;
+            notes: string;
+          }> = [];
+          
+          for (let i = headerIndex + 1; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // Skip empty lines, reference sections, and instruction rows
+            if (!line || line.startsWith('===') || line.startsWith('---') || 
+                line.toLowerCase().includes('reference') || line.toLowerCase().includes('instruction')) {
+              continue;
+            }
+            
+            const values = line.split(',').map(v => v.trim());
+            const dateValue = dateIdx >= 0 ? values[dateIdx] : '';
+            
+            // Skip rows without valid dates (reference rows, etc.)
+            if (!dateValue || !dateValue.match(/\d{1,4}[-\/]\d{1,2}[-\/]\d{1,4}|\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}/)) {
+              continue;
+            }
+            
+            dataRows.push({
+              date: dateValue,
+              sessionType: sessionTypeIdx >= 0 ? values[sessionTypeIdx] || '' : '',
+              eventGroup: eventGroupIdx >= 0 ? values[eventGroupIdx] || '' : '',
+              exercise: exerciseIdx >= 0 ? values[exerciseIdx] || '' : '',
+              setsReps: setsIdx >= 0 ? values[setsIdx] || '' : '',
+              intensity: intensityIdx >= 0 ? values[intensityIdx] || '' : '',
+              notes: notesIdx >= 0 ? values[notesIdx] || '' : ''
+            });
+          }
+          
+          if (dataRows.length === 0) {
+            return res.status(400).json({ error: "No valid training data found in CSV" });
+          }
+          
+          // Group sessions by date
+          const sessionsByDate = new Map<string, typeof dataRows>();
+          for (const row of dataRows) {
+            const existing = sessionsByDate.get(row.date) || [];
+            existing.push(row);
+            sessionsByDate.set(row.date, existing);
+          }
+          
+          // Calculate duration in days
+          const dates = Array.from(sessionsByDate.keys()).sort();
+          const firstDate = new Date(dates[0]);
+          const lastDate = new Date(dates[dates.length - 1]);
+          const durationDays = Math.ceil((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          
+          // Create the program
+          const programData = {
+            userId,
+            title: req.body.title,
+            description: req.body.description || `Imported from CSV with ${dataRows.length} exercises over ${sessionsByDate.size} training days`,
+            category: req.body.category || 'general',
+            level: req.body.level || 'intermediate',
+            duration: Math.max(durationDays, parseInt(req.body.duration) || 7),
+            visibility: req.body.visibility || 'private',
+            price: req.body.price ? parseFloat(req.body.price) : 0,
+            isUploadedProgram: false, // Not just a document upload
+            startDate: firstDate
+          };
+          
+          const program = await dbStorage.createProgram(programData);
+          
+          // Create sessions for each date
+          let dayNumber = 1;
+          for (const date of dates) {
+            const exercises = sessionsByDate.get(date) || [];
+            
+            // Build workout description from all exercises on this day
+            const workoutLines = exercises.map(ex => {
+              let line = '';
+              if (ex.exercise) line += ex.exercise;
+              if (ex.setsReps) line += ` - ${ex.setsReps}`;
+              if (ex.intensity) line += ` @ ${ex.intensity}`;
+              if (ex.notes) line += ` (${ex.notes})`;
+              return line;
+            }).filter(l => l);
+            
+            // Determine session type and if it's a rest day
+            const sessionTypes = [...new Set(exercises.map(e => e.sessionType).filter(s => s))];
+            const isRestDay = sessionTypes.some(s => s.toLowerCase().includes('rest') || s.toLowerCase() === 'off');
+            
+            // Group exercises by type for structured storage
+            const gymExercises = exercises.filter(e => 
+              e.sessionType.toLowerCase().includes('gym') || 
+              e.sessionType.toLowerCase().includes('strength')
+            );
+            
+            // Create session
+            await dbStorage.createProgramSession({
+              programId: program.id,
+              title: sessionTypes.join(' / ') || `Day ${dayNumber}`,
+              description: workoutLines.join('\n'),
+              dayNumber: dayNumber,
+              orderInDay: 1,
+              date: date,
+              isRestDay: isRestDay,
+              gymData: gymExercises.length > 0 ? gymExercises.map(g => 
+                `${g.exercise}${g.setsReps ? ' - ' + g.setsReps : ''}${g.intensity ? ' @ ' + g.intensity : ''}`
+              ) : undefined,
+              notes: exercises.map(e => e.notes).filter(n => n).join('; ') || undefined
+            });
+            
+            dayNumber++;
+          }
+          
+          // Update total sessions count
+          await dbStorage.updateProgram(program.id, { totalSessions: sessionsByDate.size });
+          
+          console.log(`✅ CSV program created: ${program.id} with ${sessionsByDate.size} sessions`);
+          res.status(201).json(program);
+          return;
+          
+        } catch (csvError: any) {
+          console.error('Error parsing CSV:', csvError);
+          return res.status(400).json({ error: `Failed to parse CSV: ${csvError.message}` });
+        }
+      }
 
-      // Upload to Azure Blob Storage with user-specific path
+      // For non-CSV files, upload to Azure Blob Storage
       let fileUrl: string;
       try {
         if (isBlobStorageAvailable()) {
@@ -4909,7 +5080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: req.body.description || '',
         category: req.body.category || 'general',
         level: req.body.level || 'intermediate',
-        duration: parseInt(req.body.duration),
+        duration: parseInt(req.body.duration) || 7,
         visibility: req.body.visibility,
         price: req.body.price ? parseFloat(req.body.price) : 0,
         isUploadedProgram: true,
