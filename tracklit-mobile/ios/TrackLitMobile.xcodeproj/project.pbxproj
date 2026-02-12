@@ -419,7 +419,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tracklit.app;
-				PRODUCT_NAME = TrackLitMobile;
+				PRODUCT_NAME = "TrackLitMobile";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "TrackLitMobile/TrackLitMobile-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -455,7 +455,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tracklit.app;
-				PRODUCT_NAME = TrackLitMobile;
+				PRODUCT_NAME = "TrackLitMobile";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "TrackLitMobile/TrackLitMobile-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

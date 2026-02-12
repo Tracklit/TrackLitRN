@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,16 +9,25 @@ const mockedUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
+const mockPromptAsync = jest.fn();
+let mockResponse: any = null;
+
 jest.mock('@/lib/googleSignIn', () => ({
-  nativeGoogleSignIn: jest.fn(),
+  useGoogleAuthRequest: () => ({
+    request: {},
+    response: mockResponse,
+    promptAsync: mockPromptAsync,
+  }),
+  handleGoogleResponse: jest.fn(),
   googleSignInStatusCodes: { SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED' },
 }));
 
-const { nativeGoogleSignIn } = require('@/lib/googleSignIn');
+const { handleGoogleResponse } = require('@/lib/googleSignIn');
 
-describe('AuthScreen (Google native sign-in)', () => {
+describe('AuthScreen (Google Expo auth-session sign-in)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockResponse = null;
     mockedUseAuth.mockReturnValue({
       user: null as any,
       isAuthenticated: false,
@@ -33,30 +42,34 @@ describe('AuthScreen (Google native sign-in)', () => {
     });
   });
 
-  it('exchanges native Google idToken for a JWT and logs in', async () => {
-    nativeGoogleSignIn.mockResolvedValue({ idToken: 'google-id-token' });
-    mockedApiRequest.mockResolvedValue({ token: 'jwt-token' } as any);
-
+  it('calls promptAsync when Continue with Google is pressed', async () => {
     const Screen = require('../AuthScreen').AuthScreen;
     const { getByText } = render(<Screen />);
 
     fireEvent.press(getByText('Continue with Google'));
 
     await waitFor(() => {
-      expect(mockedApiRequest).toHaveBeenCalledWith(
-        '/api/auth/google/mobile',
-        expect.objectContaining({
-          method: 'POST',
-          data: { idToken: 'google-id-token' },
-          skipAuth: true,
-        }),
-      );
-    });
-
-    const auth = mockedUseAuth.mock.results[0].value;
-    await waitFor(() => {
-      expect(auth.loginWithToken).toHaveBeenCalledWith('jwt-token');
+      expect(mockPromptAsync).toHaveBeenCalled();
     });
   });
-});
 
+  it('does not crash when Google button is pressed with no request', async () => {
+    jest.resetModules();
+    jest.doMock('@/lib/googleSignIn', () => ({
+      useGoogleAuthRequest: () => ({
+        request: null,
+        response: null,
+        promptAsync: mockPromptAsync,
+      }),
+      handleGoogleResponse: jest.fn(),
+      googleSignInStatusCodes: { SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED' },
+    }));
+
+    const Screen = require('../AuthScreen').AuthScreen;
+    const { getByText } = render(<Screen />);
+
+    fireEvent.press(getByText('Continue with Google'));
+
+    expect(mockPromptAsync).not.toHaveBeenCalled();
+  });
+});

@@ -24,7 +24,7 @@ import { env } from '@/config/env';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
-import { googleSignInStatusCodes, nativeGoogleSignIn } from '@/lib/googleSignIn';
+import { googleSignInStatusCodes, useGoogleAuthRequest, handleGoogleResponse } from '@/lib/googleSignIn';
 
 export const AuthScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -37,6 +37,7 @@ export const AuthScreen: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const insets = useSafeAreaInsets();
   const { loginWithToken } = useAuth();
+  const { request: googleRequest, response: googleResponse, promptAsync: googlePromptAsync } = useGoogleAuthRequest();
 
   // Handle deep links for reset password (tracklitmobile://auth?resetToken=...)
   useEffect(() => {
@@ -80,6 +81,47 @@ export const AuthScreen: React.FC = () => {
     };
     verify();
   }, [resetToken]);
+
+  useEffect(() => {
+    if (!googleResponse) return;
+    (async () => {
+      try {
+        setIsGoogleLoading(true);
+        const result = await handleGoogleResponse(googleResponse);
+        if (!result) return;
+
+        const response = await apiRequest<{ token?: string; user?: { token?: string } }>(
+          '/api/auth/google/mobile',
+          {
+            method: 'POST',
+            data: { idToken: result.idToken },
+            skipAuth: true,
+          },
+        );
+
+        const token = response?.token || response?.user?.token;
+        if (!token) {
+          Alert.alert('Google Sign In Failed', 'Unable to start your session.');
+          return;
+        }
+
+        const success = await loginWithToken(token);
+        if (!success) {
+          Alert.alert('Google Sign In Failed', 'Unable to start your session.');
+        }
+      } catch (error: any) {
+        if (error?.code === googleSignInStatusCodes.SIGN_IN_CANCELLED) {
+          return;
+        }
+        Alert.alert(
+          'Google Sign In Failed',
+          error?.message || 'Something went wrong. Please try again.',
+        );
+      } finally {
+        setIsGoogleLoading(false);
+      }
+    })();
+  }, [googleResponse]);
 
   useEffect(() => {
     if (Platform.OS !== 'ios') {
@@ -151,55 +193,8 @@ export const AuthScreen: React.FC = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    if (isGoogleLoading) return;
-
-    try {
-      setIsGoogleLoading(true);
-
-      const { idToken } = await nativeGoogleSignIn();
-
-      const response = await apiRequest<{ token?: string; user?: { token?: string } }>(
-        '/api/auth/google/mobile',
-        {
-          method: 'POST',
-          data: { idToken },
-          skipAuth: true,
-        },
-      );
-
-      const token = response?.token || response?.user?.token;
-      if (!token) {
-        Alert.alert('Google Sign In Failed', 'Unable to start your session.');
-        return;
-      }
-
-      const success = await loginWithToken(token);
-      if (!success) {
-        Alert.alert('Google Sign In Failed', 'Unable to start your session.');
-      }
-    } catch (error: any) {
-      if (error?.code === googleSignInStatusCodes.SIGN_IN_CANCELLED) {
-        return;
-      }
-
-      Alert.alert(
-        'Google Sign In Failed',
-        error?.message || 'Something went wrong. Please try again.',
-        [
-          {
-            text: 'Try Browser Sign-In',
-            onPress: () => {
-              Linking.openURL(`${env.API_BASE_URL}/api/auth/google/mobile`).catch(() => {
-                Alert.alert('Unable to open browser', 'Please try again.');
-              });
-            },
-          },
-          { text: 'Cancel', style: 'cancel' },
-        ],
-      );
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    if (isGoogleLoading || !googleRequest) return;
+    await googlePromptAsync();
   };
 
   return (
@@ -312,6 +307,7 @@ export const AuthScreen: React.FC = () => {
                   size="lg"
                   onPress={handleGoogleSignIn}
                   loading={isGoogleLoading}
+                  disabled={!googleRequest}
                   style={styles.googleButton}
                 >
                   <FontAwesome5 name="google" size={16} color={theme.colors.primary} />
