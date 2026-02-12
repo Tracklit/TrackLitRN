@@ -1,7 +1,11 @@
 const PRODUCTION_API_BASE_URL =
   "https://app-tracklit-prod-tnrusd.azurewebsites.net";
 
-const ALLOWED_API_HOSTS = new Set(["app-tracklit-prod-tnrusd.azurewebsites.net"]);
+const ALLOWED_API_HOSTS = new Set([
+  "app-tracklit-prod-tnrusd.azurewebsites.net",
+]);
+const EXPO_PUBLIC_API_BASE_URL =
+  "https://app-tracklit-prod-tnrusd.azurewebsites.net";
 
 // In some production Hermes builds `process` may be undefined. Guard access so
 // env resolution never crashes during module initialization.
@@ -30,4 +34,3 @@ const API_BASE_URL = resolveApiBaseUrl(
 export const env = {
   API_BASE_URL: API_BASE_URL.replace(/\/$/, ""),
 };
-
