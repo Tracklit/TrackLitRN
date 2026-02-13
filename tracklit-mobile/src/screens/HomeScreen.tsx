@@ -7,7 +7,23 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import Icon from '@expo/vector-icons/FontAwesome5';
+import {
+  Bell,
+  PaperPlaneTilt,
+  CaretDown,
+  Play,
+  Pause,
+  X,
+  CaretRight,
+  Star,
+  Book,
+  Users,
+  CalendarBlank,
+  Medal,
+  Trophy,
+  BookOpen,
+  User,
+} from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -177,24 +193,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     return `${Math.floor(diff / 86400)}d ago`;
   };
 
-  const getActivityIconName = (activityType: ActivityType) => {
+  const getActivityIconComponent = (activityType: ActivityType) => {
     switch (activityType) {
       case 'workout':
       case 'journal_entry':
-        return 'book';
+        return Book;
       case 'user_joined':
       case 'group_joined':
-        return 'users';
+        return Users;
       case 'meet_created':
-        return 'calendar';
+        return CalendarBlank;
       case 'meet_results':
-        return 'medal';
+        return Medal;
       case 'coach_status':
-        return 'trophy';
+        return Trophy;
       case 'program_assigned':
-        return 'book-open';
+        return BookOpen;
       default:
-        return 'user';
+        return User;
     }
   };
 
@@ -218,13 +234,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       route: 'Sprinthia',
       disabled: false,
       showStar: true,
-    },
-    {
-      title: 'Race',
-      description: 'Coming Soon',
-      iconName: 'trophy',
-      route: 'Meets',
-      disabled: true,
     },
   ];
 
@@ -263,7 +272,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
               >
-              <Icon name="bell" size={18} color="#94a3b8" solid />
+              <Bell size={18} color="#94a3b8" weight="fill" />
               {unreadNotifications > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -278,7 +287,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Messages"
               >
-              <Icon name="paper-plane" size={16} color="#94a3b8" solid />
+              <PaperPlaneTilt size={16} color="#94a3b8" weight="fill" />
               {unreadMessages > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -334,7 +343,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               <Text variant="body" weight="medium" color="foreground">
                 Feed
               </Text>
-              <Icon name="chevron-down" size={12} color="#cbd5e1" solid />
+              <CaretDown size={12} color="#cbd5e1" weight="fill" />
             </TouchableOpacity>
           ) : (
             <View
@@ -345,24 +354,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                   style={styles.tickerIconButton}
                   onPress={() => setIsPaused((prev) => !prev)}
                 >
-                  <Icon name={isPaused ? 'play' : 'pause'} size={10} color="#ffffff" solid />
+                  {isPaused ? <Play size={10} color="#ffffff" weight="fill" /> : <Pause size={10} color="#ffffff" weight="fill" />}
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.tickerIconButton}
                   onPress={() => setTickerCollapsed(true)}
                 >
-                  <Icon name="times" size={10} color="#ffffff" solid />
+                  <X size={10} color="#ffffff" weight="bold" />
                 </TouchableOpacity>
               </View>
               <View style={styles.tickerContent}>
                 <View style={styles.tickerHeaderRow}>
                   <View style={styles.tickerAvatar}>
-                    <Icon
-                      name={getActivityIconName(currentActivity?.activityType ?? 'user')}
-                      size={12}
-                      color="#e2e8f0"
-                      solid
-                    />
+                    {(() => {
+                      const ActivityIcon = getActivityIconComponent(currentActivity?.activityType ?? 'user');
+                      return <ActivityIcon size={12} color="#e2e8f0" weight="fill" />;
+                    })()}
                   </View>
                   <View style={styles.tickerTitleBlock}>
                     <Text variant="caption" color="accent" numberOfLines={1}>
@@ -421,10 +428,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               >
                 <View style={styles.categoryInner}>
                   <View style={styles.categoryText}>
-                    <Text variant="h4" weight="bold" color={disabled ? 'muted' : 'foreground'}>
+                    <Text variant="body" weight="bold" color={disabled ? 'muted' : 'foreground'}>
                       {card.title}{' '}
                       {card.showStar ? (
-                        <Icon name="star" size={12} color="#facc15" solid />
+                        <Star size={12} color="#facc15" weight="fill" />
                       ) : null}
                     </Text>
                     <View style={styles.categorySubRow}>
@@ -441,10 +448,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                         activeOpacity={0.7}
                         onPress={() => !disabled && handleCardPress(card.route)}
                       >
-                        <Icon name="eye" size={14} color="#60a5fa" solid />
+                        <CaretRight size={14} color="#60a5fa" weight="fill" />
                       </TouchableOpacity>
                     )}
-                    <Icon name="chevron-right" size={12} color={disabled ? '#94a3b8' : '#cbd5e1'} solid />
+                    <CaretRight size={12} color={disabled ? '#94a3b8' : '#cbd5e1'} weight="fill" />
                   </View>
                 </View>
               </Card>
@@ -522,6 +529,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   tickerContainer: {
+    marginTop: theme.spacing.md,
     marginBottom: theme.spacing.xl,
   },
   tickerCollapsed: {
@@ -666,6 +674,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: theme.spacing.lg,
     paddingBottom: theme.spacing.xl,
+    height: 120,
   },
   practiceTopRow: {
     flexDirection: 'row',

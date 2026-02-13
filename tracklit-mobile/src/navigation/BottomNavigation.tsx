@@ -6,61 +6,65 @@ import {
   Text,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from '@expo/vector-icons/FontAwesome5';
+import {
+  House,
+  CalendarBlank,
+  BookOpen,
+  Newspaper,
+  Wrench,
+  UserCircle,
+} from 'phosphor-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { env } from '@/config/env';
 import theme from '@/utils/theme';
 
-type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Sprinthia' | 'Tools' | 'Profile';
+type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Tools' | 'Profile';
 
 interface NavItem {
   title: string;
   routeName: TabRoute;
-  iconName?: string;
   key: string;
-  isProfile?: boolean;
+  IconComponent: React.ComponentType<{ size?: number; color?: string; weight?: string }>;
 }
 
 const navItems: NavItem[] = [
   {
     title: 'Home',
     routeName: 'Home',
-    iconName: 'home',
-    key: 'dashboard'
+    key: 'dashboard',
+    IconComponent: House,
   },
   {
     title: 'Practice',
     routeName: 'Practice',
-    iconName: 'calendar',
-    key: 'practice'
+    key: 'practice',
+    IconComponent: CalendarBlank,
   },
   {
     title: 'Programs',
     routeName: 'Programs',
-    iconName: 'book-open',
-    key: 'programs'
+    key: 'programs',
+    IconComponent: BookOpen,
   },
   {
     title: 'Feed',
     routeName: 'Feed',
-    iconName: 'newspaper',
-    key: 'feed'
+    key: 'feed',
+    IconComponent: Newspaper,
   },
   {
     title: 'Tools',
     routeName: 'Tools',
-    iconName: 'tools',
-    key: 'tools'
+    key: 'tools',
+    IconComponent: Wrench,
   },
   {
-    title: 'Sprinthia',
-    routeName: 'Sprinthia',
-    iconName: 'comments',
-    key: 'sprinthia'
-  }
+    title: 'Profile',
+    routeName: 'Profile',
+    key: 'profile',
+    IconComponent: UserCircle,
+  },
 ];
 
 interface NavItemComponentProps {
@@ -68,8 +72,6 @@ interface NavItemComponentProps {
   isActive: boolean;
   onPress: () => void;
   onLongPress: () => void;
-  userName?: string;
-  userProfileImageUrl?: string;
 }
 
 const NavItemComponent: React.FC<NavItemComponentProps> = ({
@@ -77,11 +79,9 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
   isActive,
   onPress,
   onLongPress,
-  userName,
-  userProfileImageUrl,
 }) => {
   const contentColor = isActive ? theme.colors.accent : theme.colors.textSecondary;
-  const initials = userName ? userName.slice(0, 2).toUpperCase() : undefined;
+  const IconComp = item.IconComponent;
 
   return (
     <TouchableOpacity
@@ -91,24 +91,11 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        {item.isProfile ? (
-          <Avatar
-            src={userProfileImageUrl}
-            size="sm"
-            fallback={initials}
-            style={[
-              styles.profileAvatar,
-              isActive ? styles.profileAvatarActive : undefined,
-            ]}
-          />
-        ) : (
-          <Icon
-            name={item.iconName as string}
-            size={theme.iconSizes.md}
-            color={contentColor}
-            solid
-          />
-        )}
+        <IconComp
+          size={20}
+          color={contentColor}
+          weight="fill"
+        />
       </View>
       <Text style={[
         styles.navLabel,
@@ -125,11 +112,6 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
   navigation,
 }) => {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-  const rawProfileImageUrl = user?.profileImageUrl ?? undefined;
-  const profileImageUrl = rawProfileImageUrl
-    ? (rawProfileImageUrl.startsWith('/') ? `${env.API_BASE_URL}${rawProfileImageUrl}` : rawProfileImageUrl)
-    : undefined;
   const parent = navigation.getParent();
   const parentState = parent?.getState();
   const parentRoute = parentState?.routes[parentState.index ?? 0];
@@ -141,7 +123,7 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
   return (
     <View style={[
       styles.container,
-      { paddingBottom: Math.max(insets.bottom, theme.spacing.md) }
+      { paddingBottom: Math.max(insets.bottom, theme.spacing.sm) }
     ]}>
       <View style={styles.navBar}>
         {navItems.map((item) => {
@@ -176,8 +158,6 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
               isActive={isActive}
               onPress={handlePress}
               onLongPress={handleLongPress}
-              userName={user?.name ?? undefined}
-              userProfileImageUrl={profileImageUrl}
             />
           );
         })}
@@ -198,16 +178,16 @@ const styles = StyleSheet.create({
   },
   navBar: {
     flexDirection: 'row',
-    height: 44,
+    height: 48,
     paddingHorizontal: theme.spacing.sm,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   navItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: theme.spacing.xs,
+    height: '100%',
   },
   iconContainer: {
     alignItems: 'center',
@@ -219,12 +199,5 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.medium,
     textAlign: 'center',
     lineHeight: 10,
-  },
-  profileAvatar: {
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  profileAvatarActive: {
-    borderColor: theme.colors.accent,
   },
 });

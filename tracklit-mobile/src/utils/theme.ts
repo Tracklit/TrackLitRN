@@ -41,7 +41,7 @@ export const colors = {
   popoverForeground: '#F2F2F2', // hsl(0, 0%, 95%)
   
   // Sidebar colors
-  sidebar: 'rgba(21, 26, 35, 0.9)', // hsl(220, 30%, 8%) with 90% opacity
+  sidebar: '#151a23', // hsl(220, 30%, 8%) solid
   sidebarForeground: '#F2F2F2', // hsl(0, 0%, 95%)
   sidebarPrimary: '#5b21b6',
   sidebarPrimaryForeground: '#FFFFFF', // hsl(0, 0%, 100%)

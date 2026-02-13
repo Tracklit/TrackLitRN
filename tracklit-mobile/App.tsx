@@ -20,7 +20,27 @@ import {
   DrawerContentScrollView,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import {
+  House,
+  Barbell,
+  Book,
+  Clock,
+  Heart,
+  ChatCircleDots,
+  Trophy,
+  ChartLineUp,
+  ShoppingCart,
+  UserCheck,
+  Newspaper,
+  Target,
+  Users,
+  Medal,
+  ShieldCheck,
+  CurrencyCircleDollar,
+  Gear,
+  SignOut,
+  ArrowLeft,
+} from 'phosphor-react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -89,7 +109,7 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Drawer = createDrawerNavigator();
 const navigationRef = createNavigationContainerRef();
-const TAB_ROUTE_NAMES = new Set(['Home', 'Practice', 'Programs', 'Feed', 'Sprinthia', 'Tools', 'Profile']);
+const TAB_ROUTE_NAMES = new Set(['Home', 'Practice', 'Programs', 'Feed', 'Tools', 'Profile']);
 const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'MarketplaceListingDetail',
   'MarketplaceCart',
@@ -180,6 +200,10 @@ const HomeTabScreen: React.FC<HomeTabProps> = ({ navigation }) => (
         (navigation.getParent() as any)?.navigate?.('Notifications');
         return;
       }
+      if (routeName === 'Sprinthia') {
+        (navigation.getParent() as any)?.navigate?.('Sprinthia');
+        return;
+      }
       navigation.navigate(routeName as keyof TabParamList);
     }}
   />
@@ -196,7 +220,6 @@ const MainTabs: React.FC = () => {
         <Tab.Screen name="Practice" component={PracticeScreen} />
         <Tab.Screen name="Programs" component={ProgramsScreen} />
         <Tab.Screen name="Feed" component={FeedScreen} />
-        <Tab.Screen name="Sprinthia" component={SprinthiaScreen} />
         <Tab.Screen name="Tools" component={ToolsScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
@@ -241,6 +264,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="ClubDetail" component={ClubDetailScreen} />
     <RootStack.Screen name="ClubManagement" component={ClubManagementScreen} />
     <RootStack.Screen name="CreateGroup" component={CreateGroupScreen} />
+    <RootStack.Screen name="Sprinthia" component={SprinthiaScreen} />
     <RootStack.Screen name="Rehab" component={RehabScreen} />
     <RootStack.Screen name="RehabHamstringProgram" component={HamstringRehabProgramScreen} />
     <RootStack.Screen name="RehabFootProgram" component={FootRehabProgramScreen} />
@@ -271,7 +295,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
   type MenuItem = {
     label: string;
-    icon: React.ComponentProps<typeof FontAwesome5>['name'];
+    IconComponent: React.ComponentType<{ size?: number; color?: string; weight?: string }>;
     onPress?: () => void;
     disabled?: boolean;
     comingSoon?: boolean;
@@ -281,7 +305,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
   const MenuRow: React.FC<MenuItem> = ({
     label,
-    icon,
+    IconComponent,
     onPress,
     disabled,
     comingSoon,
@@ -294,13 +318,13 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         ]}
       >
         <View style={styles.menuRowLeft}>
-          <FontAwesome5
-            name={icon}
-            size={14}
-            color={disabled ? theme.colors.muted : theme.colors.sidebarForeground}
-            solid
-            style={styles.menuRowIcon}
-          />
+          <View style={styles.menuRowIcon}>
+            <IconComponent
+              size={14}
+              color={disabled ? theme.colors.muted : theme.colors.sidebarForeground}
+              weight="fill"
+            />
+          </View>
           <Text
             variant="small"
             weight="medium"
@@ -340,7 +364,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       items: [
         {
           label: 'Dashboard',
-          icon: 'home',
+          IconComponent: House,
           onPress: () =>
             navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Home' } }),
         },
@@ -351,33 +375,33 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       items: [
         {
           label: 'Practice',
-          icon: 'dumbbell',
+          IconComponent: Barbell,
           onPress: () =>
             navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Practice' } }),
         },
         {
           label: 'Programs',
-          icon: 'book',
+          IconComponent: Book,
           onPress: () =>
             navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Programs' } }),
         },
         {
           label: 'Training Tools',
-          icon: 'clock',
+          IconComponent: Clock,
           onPress: () =>
             navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Tools' } }),
         },
         {
           label: 'Rehabilitation',
-          icon: 'heart',
+          IconComponent: Heart,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Rehab' }),
         },
         {
           label: 'Sprinthia',
-          icon: 'comments',
+          IconComponent: ChatCircleDots,
           onPress: () =>
-            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Sprinthia' } }),
+            navigateIntoAppStack({ screen: 'Sprinthia' }),
         },
       ],
     },
@@ -386,13 +410,13 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       items: [
         {
           label: 'Meets',
-          icon: 'trophy',
+          IconComponent: Trophy,
           disabled: true,
           comingSoon: true,
         },
         {
           label: 'Results',
-          icon: 'chart-line',
+          IconComponent: ChartLineUp,
           disabled: true,
           comingSoon: true,
         },
@@ -403,7 +427,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       items: [
         {
           label: 'Marketplace',
-          icon: 'shopping-cart',
+          IconComponent: ShoppingCart,
           disabled: true,
           comingSoon: true,
         },
@@ -414,51 +438,51 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       items: [
         {
           label: 'Connections',
-          icon: 'user-check',
+          IconComponent: UserCheck,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Connections' }),
         },
         {
           label: 'Feed',
-          icon: 'newspaper',
+          IconComponent: Newspaper,
           onPress: () =>
             navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Feed' } }),
         },
         {
           label: 'Group Chat',
-          icon: 'comments',
+          IconComponent: ChatCircleDots,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Chat' }),
         },
         {
           label: 'My Athletes',
-          icon: 'bullseye',
+          IconComponent: Target,
           requiresCoach: true,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Athletes' }),
         },
         {
           label: 'Roster Stats',
-          icon: 'chart-line',
+          IconComponent: ChartLineUp,
           requiresCoach: true,
           disabled: true,
           comingSoon: true,
         },
         {
           label: 'Athletes',
-          icon: 'users',
+          IconComponent: Users,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Athletes' }),
         },
         {
           label: 'Coaches',
-          icon: 'award',
+          IconComponent: Medal,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Coaches' }),
         },
         {
           label: 'Groups',
-          icon: 'users',
+          IconComponent: Users,
           disabled: true,
           comingSoon: true,
         },
@@ -469,7 +493,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       items: [
         {
           label: 'Admin Panel',
-          icon: 'shield-alt',
+          IconComponent: ShieldCheck,
           requiresAdmin: true,
           onPress: () =>
             navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Settings' } }),
@@ -481,19 +505,19 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       items: [
         {
           label: 'Spikes',
-          icon: 'coins',
+          IconComponent: CurrencyCircleDollar,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Spikes' }),
         },
         {
           label: 'Profile Settings',
-          icon: 'cog',
+          IconComponent: Gear,
           onPress: () =>
             navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Profile' } }),
         },
         {
           label: 'My Subscriptions',
-          icon: 'heart',
+          IconComponent: Heart,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Subscriptions' }),
         },
@@ -560,13 +584,13 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         >
           <View style={styles.menuRow}>
             <View style={styles.menuRowLeft}>
-              <FontAwesome5
-                name="sign-out-alt"
-                size={14}
-                color={theme.colors.destructive}
-                solid
-                style={styles.menuRowIcon}
-              />
+              <View style={styles.menuRowIcon}>
+                <SignOut
+                  size={14}
+                  color={theme.colors.destructive}
+                  weight="fill"
+                />
+              </View>
               <Text
                 variant="small"
                 weight="medium"
@@ -667,7 +691,7 @@ const AppContent: React.FC = () => {
           accessibilityLabel="Go back"
           activeOpacity={0.85}
         >
-          <FontAwesome5 name="arrow-left" size={14} color={theme.colors.foreground} solid />
+          <ArrowLeft size={14} color={theme.colors.foreground} weight="bold" />
         </TouchableOpacity>
       ) : null}
     </View>

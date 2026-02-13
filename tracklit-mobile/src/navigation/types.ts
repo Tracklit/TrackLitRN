@@ -5,7 +5,6 @@ export type TabParamList = {
   Practice: undefined;
   Programs: undefined;
   Feed: undefined;
-  Sprinthia: undefined;
   Tools: undefined;
   Profile: { focusCoachToggle?: boolean } | undefined;
 };
@@ -46,6 +45,7 @@ export type RootStackParamList = {
   Connections: undefined;
   Coaches: undefined;
   Athletes: undefined;
+  Sprinthia: undefined;
   Rehab: undefined;
   RehabHamstringProgram: undefined;
   RehabFootProgram: undefined;

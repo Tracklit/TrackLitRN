@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { List } from 'phosphor-react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 
 import { Text } from '@/components/ui/Text';
@@ -13,12 +13,6 @@ type Props = {
   containerStyle?: ViewStyle;
 };
 
-/**
- * Simple, consistent top header for tab screens:
- * - Left: drawer hamburger (opens drawer)
- * - Center: title/subtitle
- * - Right: optional action slot (keeps spacing consistent)
- */
 export const ScreenHeader: React.FC<Props> = ({ title, subtitle, right, containerStyle }) => {
   const navigation = useNavigation();
 
@@ -31,7 +25,7 @@ export const ScreenHeader: React.FC<Props> = ({ title, subtitle, right, containe
         accessibilityLabel="Open menu"
         activeOpacity={0.8}
       >
-        <FontAwesome5 name="bars" size={18} color={theme.colors.foreground} solid />
+        <List size={20} color={theme.colors.foreground} weight="bold" />
       </TouchableOpacity>
 
       <View style={styles.center} />
@@ -77,5 +71,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-
