@@ -60,12 +60,6 @@ const navItems: NavItem[] = [
     routeName: 'Sprinthia',
     iconName: 'comments',
     key: 'sprinthia'
-  },
-  {
-    title: 'Profile',
-    routeName: 'Profile',
-    key: 'profile',
-    isProfile: true
   }
 ];
 

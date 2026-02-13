@@ -14,12 +14,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from '@/components/LinearGradient';
 import { Card } from '../components/ui/Card';
 import { Text } from '../components/ui/Text';
+import { Avatar } from '../components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { apiRequest } from '@/lib/api';
+import { env } from '@/config/env';
 import theme from '../utils/theme';
 
 interface HomeScreenProps {
@@ -70,6 +72,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
   const userId = user?.id;
+  const rawProfileImageUrl = user?.profileImageUrl ?? undefined;
+  const profileImageUrl = rawProfileImageUrl
+    ? (rawProfileImageUrl.startsWith('/') ? `${env.API_BASE_URL}${rawProfileImageUrl}` : rawProfileImageUrl)
+    : undefined;
+  const avatarInitials = user?.name ? user.name.slice(0, 2).toUpperCase() : undefined;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -194,7 +201,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const categoryCards: CategoryCard[] = [
     {
       title: 'Practice',
-      description: 'Your daily workout',
+      description: `${greeting}${user?.name ? `, ${user.name.split(' ')[0]}` : ''} — Your daily workout`,
       iconName: 'calendar-alt',
       route: 'Practice',
       isSpecial: true,
@@ -269,7 +276,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       >
         <InlineRefreshHeader visible={isRefreshing} />
         <ScreenHeader
-          title={`${greeting}${user?.name ? `, ${user.name.split(' ')[0]}` : ''}`}
+          title="Dashboard"
           subtitle="Ready to train today?"
           right={
             <>
@@ -302,6 +309,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                   </Text>
                 </View>
               )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerActionButton}
+                onPress={() => onNavigate?.('Profile')}
+                accessibilityRole="button"
+                accessibilityLabel="Profile"
+              >
+                <Avatar
+                  src={profileImageUrl}
+                  size="sm"
+                  fallback={avatarInitials}
+                  style={styles.profileAvatarHeader}
+                />
               </TouchableOpacity>
             </>
           }
@@ -363,7 +383,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     )}
                   </View>
                 </View>
-                <Text variant="body" weight="medium" color="foreground" numberOfLines={3}>
+                <Text variant="caption" weight="medium" color="foreground" numberOfLines={1}>
                   {currentActivity?.description ??
                     'Athletes are crushing their sessions today. Tap Feed to see more.'}
                 </Text>
@@ -496,10 +516,10 @@ const styles = StyleSheet.create({
   },
   tickerCard: {
     borderRadius: 12,
-    paddingVertical: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
-    minHeight: 100,
+    height: 80,
     borderWidth: 0.5,
     borderColor: 'rgba(148, 163, 184, 0.25)',
     shadowColor: '#000',
@@ -508,6 +528,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     width: '100%',
     alignSelf: 'stretch',
+    overflow: 'hidden',
   },
   tickerControls: {
     position: 'absolute',
@@ -605,5 +626,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.xs,
+  },
+  profileAvatarHeader: {
+    borderWidth: 1.5,
+    borderColor: theme.colors.accent,
   },
 });

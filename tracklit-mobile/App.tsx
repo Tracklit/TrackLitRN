@@ -513,18 +513,6 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       ]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.drawerHeader}>
-        <View style={styles.drawerTitleRow}>
-          <View style={styles.drawerLogoDot} />
-          <Text variant="h3" weight="bold" color="foreground">
-            TrackLit
-          </Text>
-        </View>
-        <Text variant="small" color="muted" style={{ marginTop: theme.spacing.sm }}>
-          Quick access to everything in the app
-        </Text>
-      </View>
-
       <View style={styles.drawerIdentity}>
         <View style={styles.drawerIdentityRow}>
           <Avatar
