@@ -6,10 +6,6 @@ const ALLOWED_API_HOSTS = new Set([
   "workspace-lionmartinez.replit.app",
 ]);
 
-const processEnv: Record<string, string | undefined> =
-  ((globalThis as any)?.process?.env as Record<string, string | undefined>) ??
-  {};
-
 const resolveApiBaseUrl = (candidate?: string) => {
   if (!candidate) return PRODUCTION_API_BASE_URL;
 
@@ -25,7 +21,7 @@ const resolveApiBaseUrl = (candidate?: string) => {
 };
 
 const API_BASE_URL = resolveApiBaseUrl(
-  processEnv.EXPO_PUBLIC_API_BASE_URL || processEnv.API_BASE_URL,
+  process.env.EXPO_PUBLIC_API_BASE_URL,
 );
 
 export const env = {
