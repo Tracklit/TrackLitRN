@@ -220,6 +220,9 @@ export const AuthScreen: React.FC = () => {
             <Text variant="h2" weight="bold" color="primary">
               Welcome to TrackLit
             </Text>
+            <Text variant="body" color="muted" style={{ marginTop: 8, textAlign: 'center' }}>
+              Log in or Register to get started
+            </Text>
           </View>
 
           {/* Auth Card */}
