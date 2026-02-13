@@ -274,59 +274,53 @@ const getRedisConfig = () => {
   }
 };
 
-const redisClient = createClient(getRedisConfig());
-
-// Handle Redis client events
-redisClient.on('error', (err) => {
-  console.error('Redis Client Error:', err);
-});
-
-redisClient.on('connect', () => {
-  console.log('Redis Client: Connected to Redis server');
-});
-
-redisClient.on('ready', () => {
-  console.log('Redis Client: Ready to accept commands');
-});
-
-redisClient.on('reconnecting', () => {
-  console.log('Redis Client: Reconnecting...');
-});
-
-redisClient.on('end', () => {
-  console.log('Redis Client: Connection ended, attempting to reconnect...');
-  isConnected = false;
-  setTimeout(() => connectRedis(), 1000);
-});
-
-// Connect to Redis with retry logic - BLOCKING for server startup
+let redisClient: ReturnType<typeof createClient> | null = null;
 let isConnected = false;
 
-const connectRedis = async (retryCount = 0): Promise<boolean> => {
+if (process.env.REDIS_URL) {
+  redisClient = createClient(getRedisConfig());
+
+  redisClient.on('error', (err) => {
+    console.error('Redis Client Error:', err);
+  });
+
+  redisClient.on('connect', () => {
+    console.log('Redis Client: Connected to Redis server');
+  });
+
+  redisClient.on('ready', () => {
+    console.log('Redis Client: Ready to accept commands');
+  });
+
+  redisClient.on('reconnecting', () => {
+    console.log('Redis Client: Reconnecting...');
+  });
+
+  redisClient.on('end', () => {
+    console.log('Redis Client: Connection ended');
+    isConnected = false;
+  });
+} else {
+  console.log('No REDIS_URL set, skipping Redis. Using memory sessions.');
+}
+
+const connectRedis = async (): Promise<boolean> => {
   if (isConnected) return true;
+  if (!redisClient) return false;
 
   try {
-    console.log(`Attempting Redis connection (attempt ${retryCount + 1})...`);
+    console.log('Attempting Redis connection...');
     await redisClient.connect();
     isConnected = true;
-    console.log('✅ Redis connected successfully');
+    console.log('Redis connected successfully');
     return true;
   } catch (err) {
-    console.error(`Failed to connect to Redis (attempt ${retryCount + 1}):`, err);
-    
-    if (retryCount < 3) {
-      const delay = Math.min((retryCount + 1) * 2000, 5000);
-      console.log(`Retrying Redis connection in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return connectRedis(retryCount + 1);
-    } else {
-      console.error('❌ Redis connection failed after 3 attempts. Using memory sessions (not recommended for production).');
-      return false;
-    }
+    console.error('Failed to connect to Redis:', err);
+    console.error('Redis connection failed. Using memory sessions.');
+    return false;
   }
 };
 
-// Connect immediately and export the promise
 export const redisReady = connectRedis().catch((err) => {
   console.error('Redis connection initialization failed:', err);
   return false;
@@ -626,21 +620,21 @@ export class DatabaseStorage implements IStorage {
       console.warn('⚠️  Falling back to memory session store');
     });
 
-    // Handle Redis errors by falling back to memory store
-    redisClient.on('error', (err) => {
-      if (this.redisStore && this.sessionStore === this.redisStore) {
-        console.error('❌ Redis error detected, falling back to MemoryStore for sessions');
-        this.sessionStore = this.memoryStore;
-      }
-    });
+    if (redisClient) {
+      redisClient.on('error', (err) => {
+        if (this.redisStore && this.sessionStore === this.redisStore) {
+          console.error('Redis error detected, falling back to MemoryStore for sessions');
+          this.sessionStore = this.memoryStore;
+        }
+      });
 
-    // Switch back to Redis when it's ready again
-    redisClient.on('ready', () => {
-      if (this.redisStore && isConnected && this.sessionStore !== this.redisStore) {
-        console.log('✅ Redis ready again, switching back to RedisStore for sessions');
-        this.sessionStore = this.redisStore;
-      }
-    });
+      redisClient.on('ready', () => {
+        if (this.redisStore && isConnected && this.sessionStore !== this.redisStore) {
+          console.log('Redis ready again, switching back to RedisStore for sessions');
+          this.sessionStore = this.redisStore;
+        }
+      });
+    }
   }
   // User operations
   async getUser(id: number): Promise<User | undefined> {
