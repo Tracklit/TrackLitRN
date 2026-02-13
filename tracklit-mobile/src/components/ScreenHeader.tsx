@@ -34,16 +34,7 @@ export const ScreenHeader: React.FC<Props> = ({ title, subtitle, right, containe
         <FontAwesome5 name="bars" size={18} color={theme.colors.foreground} solid />
       </TouchableOpacity>
 
-      <View style={styles.center}>
-        <Text variant="h3" weight="bold" color="foreground" numberOfLines={1} style={styles.title}>
-          {title}
-        </Text>
-        {!!subtitle && (
-          <Text variant="body" color="muted" numberOfLines={1} style={styles.subtitle}>
-            {subtitle}
-          </Text>
-        )}
-      </View>
+      <View style={styles.center} />
 
       <View style={styles.rightContainer}>
         {right ?? null}

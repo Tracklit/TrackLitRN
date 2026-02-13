@@ -269,8 +269,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       >
         <InlineRefreshHeader visible={isRefreshing} />
         <ScreenHeader
-          title="Dashboard"
-          subtitle="Ready to train today?"
+          title=""
           right={
             <>
               <TouchableOpacity
@@ -335,10 +334,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               <Icon name="chevron-down" size={12} color="#cbd5e1" solid />
             </TouchableOpacity>
           ) : (
-            <LinearGradient
-              colors={['#5b21b6', '#7c3aed']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+            <View
               style={styles.tickerCard}
             >
               <View style={styles.tickerControls}>
@@ -381,8 +377,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     'Athletes are crushing their sessions today. Tap Feed to see more.'}
                 </Text>
               </View>
-            </LinearGradient>
+            </View>
           )}
+          <View style={styles.tickerDivider} />
         </View>
 
         {/* Practice Card */}
@@ -429,8 +426,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               <View style={[styles.practiceProgressFill, { width: '0%' }]} />
             </View>
 
-            <Text style={styles.practiceGreeting}>
-              {greeting}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+            <Text style={styles.practiceNoSession}>
+              No Session Scheduled — add a Program to get started
             </Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -512,7 +509,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.container,
   },
   header: {
-    paddingVertical: theme.spacing.xxl,
+    paddingVertical: theme.spacing.md,
   },
   profileButton: {
     padding: theme.spacing.sm,
@@ -544,7 +541,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   tickerContainer: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
   },
   tickerCollapsed: {
     height: 40,
@@ -564,14 +561,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     height: 80,
     borderWidth: 0.5,
-    borderColor: 'rgba(148, 163, 184, 0.25)',
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+    borderColor: 'rgba(100, 116, 139, 0.25)',
+    backgroundColor: 'rgba(147, 51, 234, 0.08)',
     width: '100%',
     alignSelf: 'stretch',
     overflow: 'hidden',
+  },
+  tickerDivider: {
+    height: 1,
+    backgroundColor: 'rgba(148, 163, 184, 0.15)',
+    marginTop: theme.spacing.lg,
   },
   tickerControls: {
     position: 'absolute',
@@ -675,7 +674,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.accent,
   },
   practiceCardWrapper: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xxxl,
   },
   practiceCard: {
     borderRadius: 16,
@@ -741,9 +740,10 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     minWidth: 6,
   },
-  practiceGreeting: {
+  practiceNoSession: {
     color: 'rgba(255,255,255,0.55)',
     fontSize: 12,
     fontWeight: '500' as const,
+    fontStyle: 'italic' as const,
   },
 });
