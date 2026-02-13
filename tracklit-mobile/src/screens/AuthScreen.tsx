@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
+  Image,
   StyleSheet,
   Platform,
   TouchableOpacity,
@@ -211,34 +212,14 @@ export const AuthScreen: React.FC = () => {
       >
           {/* Header */}
           <View style={styles.header}>
+            <Image
+              source={require('../../assets/tracklit-logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text variant="h2" weight="bold" color="primary">
-              TrackLit
+              Welcome to TrackLit
             </Text>
-            <Text variant="body" color="muted" style={styles.subtitle}>
-              Join the Future of Athletics
-            </Text>
-          </View>
-
-          {/* Features Section */}
-          <View style={styles.featuresSection}>
-            <View style={styles.featuresList}>
-              <FeatureItem
-                title="Own Your Progress"
-                description="Track every rep, jump, and race with powerful analytics and PR tracking."
-              />
-              <FeatureItem
-                title="Stay Meet-Ready"
-                description="Plan competitions with integrated calendars, weather insights, and prep tools."
-              />
-              <FeatureItem
-                title="Never Miss a Beat"
-                description="Get smart reminders for workouts, recovery, and meet prep."
-              />
-              <FeatureItem
-                title="Train Smarter, Compete Stronger"
-                description="Let Sprinthia, your AI coach, build personalized workouts tailored to your goals."
-              />
-            </View>
           </View>
 
           {/* Auth Card */}
@@ -362,22 +343,6 @@ export const AuthScreen: React.FC = () => {
   );
 };
 
-interface FeatureItemProps {
-  title: string;
-  description: string;
-}
-
-const FeatureItem: React.FC<FeatureItemProps> = ({ title, description }) => (
-  <View style={styles.featureItem}>
-    <Text variant="body" weight="semiBold" color="primary" style={styles.featureTitle}>
-      {title}
-    </Text>
-    <Text variant="small" color="muted" style={styles.featureDescription}>
-      {description}
-    </Text>
-  </View>
-);
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -394,9 +359,11 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xl * 2,
     marginBottom: theme.spacing.xl,
   },
-  subtitle: {
-    marginTop: theme.spacing.sm,
-    textAlign: 'center',
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: theme.spacing.lg,
+    borderRadius: 24,
   },
   authCard: {
     marginBottom: theme.spacing.xl,
@@ -460,23 +427,5 @@ const styles = StyleSheet.create({
   },
   appleLoadingText: {
     marginTop: theme.spacing.xs,
-  },
-  featuresSection: {
-    marginTop: theme.spacing.xl,
-  },
-  featuresList: {
-    gap: theme.spacing.lg,
-  },
-  featureItem: {
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-  },
-  featureTitle: {
-    textAlign: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  featureDescription: {
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });
