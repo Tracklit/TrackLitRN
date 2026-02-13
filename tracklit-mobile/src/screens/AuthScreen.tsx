@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginTop: theme.spacing.xl * 2,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.xl * 2,
   },
   logo: {
     width: 120,
