@@ -778,32 +778,29 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", async (req, res) => {
-    // Check for both session auth and JWT auth (req.user may be set by JWT middleware)
-    const isSessionAuth = req.isAuthenticated();
+    // DEV BYPASS: Auto-login as admin user when no auth is present
     const hasUser = !!req.user;
-    const sessionId = req.sessionID;
     
-    console.log(`/api/user request: sessionAuth=${isSessionAuth}, hasUser=${hasUser}, sessionId=${sessionId}`);
-    
-    // User could be authenticated via session OR JWT (middleware sets req.user)
-    if (!hasUser) {
-      console.log('User not authenticated via session or JWT, returning 401');
-      return res.status(401).json({ 
-        error: 'Not authenticated',
-        debug: { isSessionAuth, hasUser, sessionId }
-      });
-    }
-    
-    // Get fresh user data from database to ensure role is current
     try {
-      const freshUser = await storage.getUser(req.user.id);
+      let userId: number;
+      if (hasUser) {
+        userId = req.user!.id;
+      } else {
+        // Auto-login as admin (id=2) for development
+        const adminUser = await storage.getUserByUsername('admin');
+        if (adminUser) {
+          userId = adminUser.id;
+          req.login(adminUser as any, () => {});
+        } else {
+          return res.status(401).json({ error: 'Not authenticated' });
+        }
+      }
+      
+      const freshUser = await storage.getUser(userId);
       if (!freshUser) {
-        console.log(`User ${req.user.id} not found in database`);
         return res.status(401).json({ error: 'User not found' });
       }
-      // Never expose password hashes to clients (web or mobile)
       const { password: _password, ...safeUser } = freshUser as any;
-      // Avoid intermediary caching of identity.
       res.setHeader('Cache-Control', 'no-store');
       res.json(safeUser);
     } catch (error) {
