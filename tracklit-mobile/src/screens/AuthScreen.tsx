@@ -219,6 +219,28 @@ export const AuthScreen: React.FC = () => {
             </Text>
           </View>
 
+          {/* Features Section */}
+          <View style={styles.featuresSection}>
+            <View style={styles.featuresList}>
+              <FeatureItem
+                title="Own Your Progress"
+                description="Track every rep, jump, and race with powerful analytics and PR tracking."
+              />
+              <FeatureItem
+                title="Stay Meet-Ready"
+                description="Plan competitions with integrated calendars, weather insights, and prep tools."
+              />
+              <FeatureItem
+                title="Never Miss a Beat"
+                description="Get smart reminders for workouts, recovery, and meet prep."
+              />
+              <FeatureItem
+                title="Train Smarter, Compete Stronger"
+                description="Let Sprinthia, your AI coach, build personalized workouts tailored to your goals."
+              />
+            </View>
+          </View>
+
           {/* Auth Card */}
           <Card style={styles.authCard}>
             {/* Tabs (only for login/register) */}
@@ -335,32 +357,6 @@ export const AuthScreen: React.FC = () => {
               </>
             )}
           </Card>
-
-          {/* Features Section */}
-          <View style={styles.featuresSection}>
-            <Text variant="h3" weight="bold" color="foreground" style={styles.featuresTitle}>
-              Why Choose TrackLit?
-            </Text>
-            
-            <View style={styles.featuresList}>
-              <FeatureItem
-                title="Own Your Progress"
-                description="Track every rep, jump, and race with powerful analytics and PR tracking."
-              />
-              <FeatureItem
-                title="Stay Meet-Ready"
-                description="Plan competitions with integrated calendars, weather insights, and prep tools."
-              />
-              <FeatureItem
-                title="Never Miss a Beat"
-                description="Get smart reminders for workouts, recovery, and meet prep."
-              />
-              <FeatureItem
-                title="Train Smarter, Compete Stronger"
-                description="Let Sprinthia, your AI coach, build personalized workouts tailored to your goals."
-              />
-            </View>
-          </View>
       </KeyboardAwareScreenScrollView>
     </LinearGradient>
   );
@@ -467,10 +463,6 @@ const styles = StyleSheet.create({
   },
   featuresSection: {
     marginTop: theme.spacing.xl,
-  },
-  featuresTitle: {
-    textAlign: 'center',
-    marginBottom: theme.spacing.lg,
   },
   featuresList: {
     gap: theme.spacing.lg,
