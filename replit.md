@@ -51,13 +51,16 @@ ios/             - iOS/React Native app (not runnable here)
 ## Mobile App (tracklit-mobile/)
 - React Native app using Expo SDK 54, runs via Expo Go
 - Scheme: `tracklitmobile`
-- API base URL configured in `tracklit-mobile/src/config/env.ts` (points to Replit backend)
+- API base URL configured in `tracklit-mobile/src/config/env.ts`
+  - Defaults to Azure production server
+  - Overridden by `EXPO_PUBLIC_API_BASE_URL` env var (set on Replit to point to Replit backend)
+  - Safe to sync to GitHub — production builds use Azure, Replit dev uses Replit backend
 - Auth uses JWT tokens via `/api/mobile/login` endpoint
 - Start Expo: `cd tracklit-mobile && npx expo start --tunnel --port 8081 -c`
 - Admin test account: username `admin`, password `password`
 
 ## Recent Changes
-- 2026-02-13: Fixed mobile app API URL - was pointing to Azure production, now points to Replit backend
+- 2026-02-13: Made mobile API URL env-var driven — defaults to Azure prod, overridable via EXPO_PUBLIC_API_BASE_URL for Replit dev
 - 2026-02-13: Auth bypass added to `/api/user` for dev convenience (auto-login as admin)
 - 2026-02-13: Fixed Redis connection blocking by only connecting when REDIS_URL is set
 - 2026-02-12: Imported to Replit, configured PostgreSQL database, pushed schema, set up workflows and deployment

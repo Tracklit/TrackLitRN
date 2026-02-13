@@ -37,3 +37,8 @@ externalPort = 80
 deploymentTarget = "autoscale"
 run = ["npm", "run", "start"]
 build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.development]
+EXPO_PUBLIC_API_BASE_URL = "https://workspace-lionmartinez.replit.app"

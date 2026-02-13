@@ -1,13 +1,10 @@
-const REPLIT_API_BASE_URL =
-  "https://workspace-lionmartinez.replit.app";
-
-const PRODUCTION_API_BASE_URL = REPLIT_API_BASE_URL;
+const PRODUCTION_API_BASE_URL =
+  "https://app-tracklit-prod-tnrusd.azurewebsites.net";
 
 const ALLOWED_API_HOSTS = new Set([
-  "workspace-lionmartinez.replit.app",
   "app-tracklit-prod-tnrusd.azurewebsites.net",
+  "workspace-lionmartinez.replit.app",
 ]);
-const EXPO_PUBLIC_API_BASE_URL = REPLIT_API_BASE_URL;
 
 const processEnv: Record<string, string | undefined> =
   ((globalThis as any)?.process?.env as Record<string, string | undefined>) ??
