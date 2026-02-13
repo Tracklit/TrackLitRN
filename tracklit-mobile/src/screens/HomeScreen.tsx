@@ -200,13 +200,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const categoryCards: CategoryCard[] = [
     {
-      title: 'Practice',
-      description: `${greeting}${user?.name ? `, ${user.name.split(' ')[0]}` : ''} — Your daily workout`,
-      iconName: 'calendar-alt',
-      route: 'Practice',
-      isSpecial: true,
-    },
-    {
       title: 'Programs',
       description: 'Training plans and schedules',
       iconName: 'book',
@@ -391,6 +384,56 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             </LinearGradient>
           )}
         </View>
+
+        {/* Practice Card */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => handleCardPress('Practice')}
+          style={styles.practiceCardWrapper}
+        >
+          <LinearGradient
+            colors={['#7c3aed', '#a855f7']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.practiceCard}
+          >
+            <View style={styles.practiceTopRow}>
+              <View style={styles.practiceLabelPill}>
+                <Text style={styles.practiceLabelText}>THIS WEEK</Text>
+              </View>
+              <Text style={styles.practiceFireIcon}>🔥</Text>
+            </View>
+
+            <View style={styles.practiceStatsRow}>
+              <View style={styles.practiceStat}>
+                <Text style={styles.practiceStatValue}>
+                  0<Text style={styles.practiceStatUnit}>/7</Text>
+                </Text>
+                <Text style={styles.practiceStatLabel}>Workouts</Text>
+              </View>
+              <View style={styles.practiceStat}>
+                <Text style={styles.practiceStatValue}>
+                  0<Text style={styles.practiceStatUnit}>km</Text>
+                </Text>
+                <Text style={styles.practiceStatLabel}>Distance</Text>
+              </View>
+              <View style={styles.practiceStat}>
+                <Text style={styles.practiceStatValue}>
+                  --<Text style={styles.practiceStatUnit}>s</Text>
+                </Text>
+                <Text style={styles.practiceStatLabel}>100m PR</Text>
+              </View>
+            </View>
+
+            <View style={styles.practiceProgressTrack}>
+              <View style={[styles.practiceProgressFill, { width: '0%' }]} />
+            </View>
+
+            <Text style={styles.practiceGreeting}>
+              {greeting}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* Category Cards */}
         <View style={styles.cardsContainer}>
@@ -630,5 +673,77 @@ const styles = StyleSheet.create({
   profileAvatarHeader: {
     borderWidth: 1.5,
     borderColor: theme.colors.accent,
+  },
+  practiceCardWrapper: {
+    marginBottom: theme.spacing.lg,
+  },
+  practiceCard: {
+    borderRadius: 16,
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+  },
+  practiceTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.lg,
+  },
+  practiceLabelPill: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  practiceLabelText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700' as const,
+    letterSpacing: 1,
+  },
+  practiceFireIcon: {
+    fontSize: 22,
+  },
+  practiceStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.lg,
+  },
+  practiceStat: {
+    flex: 1,
+    alignItems: 'flex-start' as const,
+  },
+  practiceStatValue: {
+    color: '#ffffff',
+    fontSize: 28,
+    fontWeight: '800' as const,
+  },
+  practiceStatUnit: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  practiceStatLabel: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 11,
+    fontWeight: '500' as const,
+    marginTop: 2,
+  },
+  practiceProgressTrack: {
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 3,
+    overflow: 'hidden' as const,
+    marginBottom: theme.spacing.md,
+  },
+  practiceProgressFill: {
+    height: '100%' as any,
+    backgroundColor: '#f97316',
+    borderRadius: 3,
+    minWidth: 6,
+  },
+  practiceGreeting: {
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 12,
+    fontWeight: '500' as const,
   },
 });
