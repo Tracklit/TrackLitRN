@@ -251,23 +251,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         backgroundColor="transparent"
         translucent
       />
-      
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.contentContainer,
-          { paddingTop: insets.top, paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xxxxl }) }
-        ]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            tintColor="#fff"
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-          />
-        }
-      >
-        <InlineRefreshHeader visible={isRefreshing} />
+
+      <View style={[styles.fixedHeader, { paddingTop: insets.top }]}>
         <ScreenHeader
           title=""
           right={
@@ -319,6 +304,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           }
           containerStyle={styles.header}
         />
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xxxxl }) }
+        ]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            tintColor="#fff"
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+          />
+        }
+      >
+        <InlineRefreshHeader visible={isRefreshing} />
 
         {/* Feed ticker */}
         <View style={styles.tickerContainer}>
@@ -396,34 +399,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           >
             <View style={styles.practiceTopRow}>
               <View style={styles.practiceLabelPill}>
-                <Text style={styles.practiceLabelText}>THIS WEEK</Text>
+                <Text style={styles.practiceLabelText}>TODAY'S SESSION</Text>
               </View>
-              <Text style={styles.practiceFireIcon}>🔥</Text>
-            </View>
-
-            <View style={styles.practiceStatsRow}>
-              <View style={styles.practiceStat}>
-                <Text style={styles.practiceStatValue}>
-                  0<Text style={styles.practiceStatUnit}>/7</Text>
-                </Text>
-                <Text style={styles.practiceStatLabel}>Workouts</Text>
-              </View>
-              <View style={styles.practiceStat}>
-                <Text style={styles.practiceStatValue}>
-                  0<Text style={styles.practiceStatUnit}>km</Text>
-                </Text>
-                <Text style={styles.practiceStatLabel}>Distance</Text>
-              </View>
-              <View style={styles.practiceStat}>
-                <Text style={styles.practiceStatValue}>
-                  --<Text style={styles.practiceStatUnit}>s</Text>
-                </Text>
-                <Text style={styles.practiceStatLabel}>100m PR</Text>
-              </View>
-            </View>
-
-            <View style={styles.practiceProgressTrack}>
-              <View style={[styles.practiceProgressFill, { width: '0%' }]} />
             </View>
 
             <Text style={styles.practiceNoSession}>
@@ -508,8 +485,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: theme.spacing.container,
   },
+  fixedHeader: {
+    zIndex: 10,
+    paddingHorizontal: theme.spacing.container,
+  },
   header: {
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
   },
   profileButton: {
     padding: theme.spacing.sm,
@@ -530,7 +511,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardsContainer: {
-    gap: theme.spacing.lg,
+    gap: theme.spacing.sm,
   },
   headerActionButton: {
     width: 36,
@@ -545,7 +526,7 @@ const styles = StyleSheet.create({
   },
   tickerCollapsed: {
     height: 40,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: theme.spacing.lg,
     backgroundColor: 'rgba(15, 23, 42, 0.9)',
     borderWidth: 1,
@@ -555,7 +536,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   tickerCard: {
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: theme.spacing.md,
     paddingBottom: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
@@ -616,10 +597,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(147, 51, 234, 0.08)',
     borderColor: 'rgba(100, 116, 139, 0.25)',
     borderWidth: 0.5,
-    borderRadius: 6,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   categoryCardSpacer: {
-    marginTop: theme.spacing.lg,
+    marginTop: theme.spacing.sm,
   },
   categoryInner: {
     flex: 1,
