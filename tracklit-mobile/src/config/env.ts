@@ -1,14 +1,14 @@
-const PRODUCTION_API_BASE_URL =
-  "https://app-tracklit-prod-tnrusd.azurewebsites.net";
+const REPLIT_API_BASE_URL =
+  "https://workspace-lionmartinez.replit.app";
+
+const PRODUCTION_API_BASE_URL = REPLIT_API_BASE_URL;
 
 const ALLOWED_API_HOSTS = new Set([
+  "workspace-lionmartinez.replit.app",
   "app-tracklit-prod-tnrusd.azurewebsites.net",
 ]);
-const EXPO_PUBLIC_API_BASE_URL =
-  "https://app-tracklit-prod-tnrusd.azurewebsites.net";
+const EXPO_PUBLIC_API_BASE_URL = REPLIT_API_BASE_URL;
 
-// In some production Hermes builds `process` may be undefined. Guard access so
-// env resolution never crashes during module initialization.
 const processEnv: Record<string, string | undefined> =
   ((globalThis as any)?.process?.env as Record<string, string | undefined>) ??
   {};

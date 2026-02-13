@@ -48,5 +48,16 @@ ios/             - iOS/React Native app (not runnable here)
 - Session secret falls back to defaults if SESSION_SECRET not set
 - Redis is optional; falls back to memory-based sessions
 
+## Mobile App (tracklit-mobile/)
+- React Native app using Expo SDK 54, runs via Expo Go
+- Scheme: `tracklitmobile`
+- API base URL configured in `tracklit-mobile/src/config/env.ts` (points to Replit backend)
+- Auth uses JWT tokens via `/api/mobile/login` endpoint
+- Start Expo: `cd tracklit-mobile && npx expo start --tunnel --port 8081 -c`
+- Admin test account: username `admin`, password `password`
+
 ## Recent Changes
+- 2026-02-13: Fixed mobile app API URL - was pointing to Azure production, now points to Replit backend
+- 2026-02-13: Auth bypass added to `/api/user` for dev convenience (auto-login as admin)
+- 2026-02-13: Fixed Redis connection blocking by only connecting when REDIS_URL is set
 - 2026-02-12: Imported to Replit, configured PostgreSQL database, pushed schema, set up workflows and deployment
