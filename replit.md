@@ -1,66 +1,58 @@
-# Tracklit API
+# Tracklit Mobile
 
 ## Overview
-Tracklit is a full-stack track and field athletics management platform with a React frontend and Express backend. It supports athlete tracking, coaching tools, clubs, chat, video analysis, training programs, and more. The app also has an iOS/React Native mobile companion (not runnable in Replit).
+Tracklit is a track and field athletics management platform. This Replit workspace is used exclusively for developing the React Native mobile app. The web frontend and Express backend code exist in the repo but are **not run here** — the mobile app connects directly to the Azure production API.
 
-## Tech Stack
-- **Frontend**: React 19 + TypeScript, Vite, TailwindCSS, Radix UI, shadcn/ui components
-- **Backend**: Express 5 (TypeScript), running via tsx
-- **Database**: PostgreSQL (Drizzle ORM)
-- **Auth**: Passport.js (local, Google OAuth, Apple Sign-In), JWT tokens
-- **Session Storage**: Redis (optional, falls back to memory sessions)
-- **External Services** (optional): Stripe payments, SendGrid email, OpenAI, Azure Blob Storage, Google Cloud Storage
+## Tech Stack (Mobile)
+- **Mobile**: React Native (Expo SDK 54), TypeScript
+- **Icons**: Phosphor Icons (filled weight)
+- **Navigation**: React Navigation (drawer + bottom tabs + stack)
+- **API**: Connects to Azure production server (`app-tracklit-prod-tnrusd.azurewebsites.net`)
+- **Auth**: JWT tokens via `/api/mobile/login` endpoint
 
 ## Project Structure
 ```
-client/          - React frontend (Vite)
+tracklit-mobile/     - React Native mobile app (PRIMARY workspace)
   src/
-    components/  - UI components
-    pages/       - Page-level components
-    contexts/    - React contexts
-    hooks/       - Custom hooks
-    lib/         - Utility functions
-    styles/      - CSS styles
-    types/       - TypeScript types
-server/          - Express backend
-  routes.ts      - API route definitions
-  auth.ts        - Authentication setup
-  storage.ts     - Database storage layer
-  db.ts          - Database connection
-  vite.ts        - Vite dev server integration
-shared/          - Shared types and schemas
-  schema.ts      - Drizzle database schema
-  journal-schema.ts - Journal feature schema
-migrations/      - Database migrations
-ios/             - iOS/React Native app (not runnable here)
+    screens/         - Screen components
+    navigation/      - Navigation setup (BottomNavigation, types)
+    components/      - Reusable components (ScreenHeader, etc.)
+    contexts/        - React contexts (AuthContext)
+    lib/             - API client, utilities
+    config/          - Environment config (API URL)
+    utils/           - Theme, helpers
+  App.tsx            - Root app component with drawer navigation
+client/              - React web frontend (NOT run here, synced via GitHub)
+server/              - Express backend (NOT run here, synced via GitHub)
+shared/              - Shared types and schemas
+migrations/          - Database migrations
 ```
 
 ## Development
-- **Workflow**: `npm run dev` (starts Express + Vite dev server on port 5000)
-- **Build**: `npm run build` (builds Vite client to dist/public)
-- **Production**: `npm run start` (serves built client from dist/public)
-- **Database**: Uses Replit's built-in PostgreSQL via DATABASE_URL
+- **Workflow**: `cd tracklit-mobile && npx expo start --tunnel --port 8081 -c`
+- **API**: Mobile app defaults to Azure production server (no local backend needed)
+- **To use local backend**: Set `EXPO_PUBLIC_API_BASE_URL` env var to the Replit URL, and install main `node_modules` + run `npm run dev`
+- **Admin test account**: username `admin`, password `password`
 
 ## Key Configuration
-- Server binds to `0.0.0.0:5000`
-- Vite dev server has `allowedHosts: true` for Replit proxy compatibility
-- CORS is enabled for all origins (mobile app support)
-- Session secret falls back to defaults if SESSION_SECRET not set
-- Redis is optional; falls back to memory-based sessions
-
-## Mobile App (tracklit-mobile/)
-- React Native app using Expo SDK 54, runs via Expo Go
-- Scheme: `tracklitmobile`
 - API base URL configured in `tracklit-mobile/src/config/env.ts`
-  - Defaults to Azure production server
-  - Overridden by `EXPO_PUBLIC_API_BASE_URL` env var (set on Replit to point to Replit backend)
-  - Safe to sync to GitHub — production builds use Azure, Replit dev uses Replit backend
-- Auth uses JWT tokens via `/api/mobile/login` endpoint
-- Start Expo: `cd tracklit-mobile && npx expo start --tunnel --port 8081 -c`
-- Admin test account: username `admin`, password `password`
+  - Defaults to Azure production server when no env var is set
+  - Can be overridden via `EXPO_PUBLIC_API_BASE_URL` for local dev
+- Expo scheme: `tracklitmobile`
+- Main `node_modules/` is intentionally NOT installed (saves ~855MB) since the backend runs on Azure
+- The `tracklit-mobile/.env` file should NOT exist (was removed to prevent stale API URLs)
+
+## Design Decisions
+- All icons use Phosphor with "fill" weight for visual consistency
+- Bottom nav has 6 tabs: Home, Practice, Programs, Feed, Tools, Profile
+- Sprinthia (AI assistant) is a RootStack screen, accessible from HomeScreen cards and drawer menu
+- Bottom nav height is 48px with icons properly centered
+- Sidebar drawer uses solid background (#151a23)
 
 ## Recent Changes
-- 2026-02-13: Made mobile API URL env-var driven — defaults to Azure prod, overridable via EXPO_PUBLIC_API_BASE_URL for Replit dev
-- 2026-02-13: Auth bypass added to `/api/user` for dev convenience (auto-login as admin)
-- 2026-02-13: Fixed Redis connection blocking by only connecting when REDIS_URL is set
-- 2026-02-12: Imported to Replit, configured PostgreSQL database, pushed schema, set up workflows and deployment
+- 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
+- 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
+- 2026-02-13: Switched all icons from FontAwesome5 to Phosphor (filled weight)
+- 2026-02-13: Restructured bottom nav: removed Sprinthia tab, added Profile tab (6 tabs total)
+- 2026-02-13: Made mobile API URL env-var driven — defaults to Azure prod
+- 2026-02-12: Imported to Replit, configured PostgreSQL database, pushed schema

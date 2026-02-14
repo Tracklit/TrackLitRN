@@ -70,22 +70,24 @@ export async function apiRequest<T = any>(
 
     const text = await response.text();
     let payload = null;
-    
+
+    const isHtml = text.trimStart().startsWith('<!DOCTYPE') || text.trimStart().startsWith('<html');
+
     try {
-      payload = text ? JSON.parse(text) : null;
+      payload = text && !isHtml ? JSON.parse(text) : null;
     } catch (parseError) {
       if (DEBUG_API) {
         console.log(`[API] Failed to parse response:`, text.substring(0, 200));
       }
     }
 
-    if (!response.ok) {
-      const errorMessage =
-        payload?.error ||
-        payload?.message ||
-        text ||
-        response.statusText ||
-        'Request failed';
+    if (isHtml || !response.ok) {
+      const errorMessage = isHtml
+        ? 'Server is currently unavailable. Please try again in a moment.'
+        : payload?.error ||
+          payload?.message ||
+          response.statusText ||
+          'Request failed';
 
       if (DEBUG_API) {
         console.log(`[API] Error ${response.status}:`, errorMessage);
@@ -94,9 +96,11 @@ export async function apiRequest<T = any>(
       const error = new Error(errorMessage) as Error & {
         status?: number;
         payload?: unknown;
+        isServerDown?: boolean;
       };
-      error.status = response.status;
+      error.status = isHtml ? 503 : response.status;
       error.payload = payload ?? text;
+      error.isServerDown = isHtml;
       throw error;
     }
 
