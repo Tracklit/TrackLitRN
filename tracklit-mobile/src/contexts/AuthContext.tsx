@@ -303,7 +303,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('[AUTH] Registration failed:', error);
       setHasValidToken(false);
-      return false;
+      throw error;
     }
   }, []);
 

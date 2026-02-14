@@ -83,26 +83,17 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
     setLoading(true);
     try {
-      const success = await register({
+      await register({
         name: formData.name,
         email: formData.email,
         username: formData.username,
         password: formData.password,
       });
-      
-      if (!success) {
-        Alert.alert(
-          'Registration Failed',
-          'Unable to create account. Please try again.',
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      Alert.alert(
-        'Registration Failed',
-        'An error occurred. Please try again.',
-        [{ text: 'OK' }]
-      );
+    } catch (error: any) {
+      const message =
+        error?.message ||
+        'Unable to create account. Please try again.';
+      Alert.alert('Registration Failed', message, [{ text: 'OK' }]);
     } finally {
       setLoading(false);
     }
