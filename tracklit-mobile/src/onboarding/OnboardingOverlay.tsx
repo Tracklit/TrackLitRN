@@ -1,16 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated,
   Dimensions,
-  Modal,
-  PanResponder,
+  FlatList,
   StyleSheet,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from '@tanstack/react-query';
-import { CheckCircle2, Gift, Coins, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import { CheckCircle, Gift, CurrencyDollar, ArrowRight, ArrowLeft } from 'phosphor-react-native';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Button } from '@/components/ui/Button';
@@ -21,6 +20,7 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import theme from '@/utils/theme';
+import type { OnboardingStep } from '@/onboarding/steps';
 
 type Props = {
   navigationRef: any;
@@ -38,16 +38,28 @@ const isAlreadyClaimedError = (err: any) => {
   return msg.includes('already claimed') || msg.includes('welcome spikes already claimed');
 };
 
-const StepDots: React.FC<{ total: number; current: number }> = ({ total, current }) => (
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+const StepDots: React.FC<{ total: number; current: number; onDotPress: (index: number) => void }> = ({
+  total,
+  current,
+  onDotPress,
+}) => (
   <View style={styles.dotsRow}>
     {Array.from({ length: total }).map((_, index) => (
-      <View
+      <TouchableOpacity
         key={index}
-        style={[
-          styles.dot,
-          index === current ? styles.dotActive : styles.dotInactive,
-        ]}
-      />
+        onPress={() => onDotPress(index)}
+        hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+        activeOpacity={0.6}
+      >
+        <View
+          style={[
+            styles.dot,
+            index === current ? styles.dotActive : styles.dotInactive,
+          ]}
+        />
+      </TouchableOpacity>
     ))}
   </View>
 );
@@ -64,9 +76,10 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     back,
     skip,
     complete,
+    goToStep,
   } = useOnboarding();
 
-  const step = steps[currentStepIndex];
+  const flatListRef = useRef<FlatList>(null);
   const totalSteps = steps.length;
 
   const [claimedSpikes, setClaimedSpikes] = useState(false);
@@ -82,10 +95,13 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
   }, [isActive]);
 
   useEffect(() => {
-    if (!isActive || !step?.onEnter) return;
-    if (step.mode !== 'tour') return;
-    step.onEnter(navigationRef);
-  }, [isActive, step, navigationRef]);
+    if (isActive && flatListRef.current) {
+      flatListRef.current.scrollToIndex({
+        index: currentStepIndex,
+        animated: true,
+      });
+    }
+  }, [currentStepIndex, isActive]);
 
   const claimMutation = useMutation({
     mutationFn: () =>
@@ -115,67 +131,36 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     await refreshUser();
   };
 
+  const handleDotPress = useCallback((index: number) => {
+    goToStep(index);
+  }, [goToStep]);
+
+  const handleMomentumEnd = useCallback((e: any) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const newIndex = Math.round(offsetX / SCREEN_WIDTH);
+    if (newIndex !== currentStepIndex && newIndex >= 0 && newIndex < totalSteps) {
+      goToStep(newIndex);
+    }
+  }, [currentStepIndex, totalSteps, goToStep]);
+
   const canGoBack = currentStepIndex > 0;
   const isLastStep = currentStepIndex === totalSteps - 1;
-
-  const SCREEN_WIDTH = Dimensions.get('window').width;
-  const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.2;
-  const translateX = useRef(new Animated.Value(0)).current;
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dy) < Math.abs(gestureState.dx),
-      onPanResponderMove: (_, gestureState) => {
-        translateX.setValue(gestureState.dx);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx < -SWIPE_THRESHOLD) {
-          Animated.timing(translateX, {
-            toValue: -SCREEN_WIDTH,
-            duration: 200,
-            useNativeDriver: true,
-          }).start(() => {
-            translateX.setValue(0);
-            if (isLastStep) {
-              complete();
-            } else {
-              next();
-            }
-          });
-        } else if (gestureState.dx > SWIPE_THRESHOLD && canGoBack) {
-          Animated.timing(translateX, {
-            toValue: SCREEN_WIDTH,
-            duration: 200,
-            useNativeDriver: true,
-          }).start(() => {
-            translateX.setValue(0);
-            back();
-          });
-        } else {
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-    })
-  ).current;
+  const step = steps[currentStepIndex];
 
   const primaryLabel = useMemo(() => {
     if (isLastStep) return step?.primaryCtaLabel ?? 'Finish';
     return step?.primaryCtaLabel ?? 'Next';
   }, [isLastStep, step?.primaryCtaLabel]);
 
-  if (!isReady || !step) return null;
+  if (!isReady || !isActive || !step) return null;
 
-  const renderClaimBlock = () => {
-    if (!step.showClaimSpikes) return null;
+  const renderClaimBlock = (s: OnboardingStep) => {
+    if (!s.showClaimSpikes) return null;
 
     if (claimedSpikes) {
       return (
         <View style={styles.claimedRow} testID="onboarding-claimed">
-          <CheckCircle2 size={18} color={theme.colors.success} />
+          <CheckCircle size={18} color={theme.colors.success} weight="fill" />
           <Text variant="caption" color="success" weight="medium">
             Welcome bonus claimed{claimedBonus ? ` (+${claimedBonus})` : ''}.
           </Text>
@@ -186,7 +171,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     return (
       <View style={styles.claimBlock}>
         <View style={styles.claimHeader}>
-          <Gift size={18} color={theme.colors.success} />
+          <Gift size={18} color={theme.colors.success} weight="fill" />
           <View style={{ flex: 1 }}>
             <Text variant="caption" color="foreground" weight="semiBold">
               Welcome Bonus Available
@@ -195,7 +180,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
               Claim your first 100 Spikes.
             </Text>
           </View>
-          <Coins size={18} color="#f59e0b" />
+          <CurrencyDollar size={18} color="#f59e0b" weight="fill" />
         </View>
 
         {claimError ? (
@@ -216,154 +201,134 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     );
   };
 
-  const FooterButtons = () => (
-    <View style={styles.footerButtons}>
-      {canGoBack ? (
-        <Button
-          testID="onboarding-back"
-          variant="ghost"
-          size="sm"
-          onPress={back}
-          style={styles.footerButton}
-        >
-          <View style={styles.inlineIconRow}>
-            <ArrowLeft size={14} color={theme.colors.primary} />
-            <Text variant="caption" color="accent" weight="medium">
-              Back
-            </Text>
-          </View>
-        </Button>
-      ) : (
-        <View style={{ flex: 1 }} />
-      )}
-
-      <Button
-        testID="onboarding-skip"
-        variant="ghost"
-        size="sm"
-        onPress={skip}
-        style={styles.footerButton}
-      >
-        <Text variant="caption" color="accent" weight="medium">
-          Skip
-        </Text>
-      </Button>
-
-      <Button
-        testID="onboarding-next"
-        size="sm"
-        onPress={isLastStep ? complete : next}
-        disabled={claimMutation.isPending}
-        style={styles.footerButtonPrimary}
-      >
-        <View style={styles.inlineIconRow}>
-          <Text variant="caption" color="primary-foreground" weight="medium">
-            {primaryLabel}
+  const renderPage = ({ item, index }: { item: OnboardingStep; index: number }) => (
+    <View style={[styles.pageContainer, { width: SCREEN_WIDTH }]}>
+      <View style={styles.pageContent}>
+        <Card style={styles.introCard} contentStyle={styles.cardContentNoFlex}>
+          <View style={styles.iconWrap}>{item.icon}</View>
+          <Text variant="h3" weight="bold" color="foreground" center>
+            {item.title}
           </Text>
-          {!isLastStep ? (
-            <ArrowRight size={14} color={theme.colors.primaryForeground} />
-          ) : null}
-        </View>
-      </Button>
+          <View style={styles.bodyWrap}>{item.body}</View>
+          {renderClaimBlock(item)}
+        </Card>
+      </View>
     </View>
   );
 
-  if (step.mode === 'intro') {
-    return (
-      <Modal
-        visible={isActive}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={skip}
-      >
-        <LinearGradient
-          colors={theme.gradient.background}
-          locations={theme.gradient.locations}
-          style={[
-            styles.introContainer,
-            { paddingTop: insets.top + theme.spacing.lg, paddingBottom: insets.bottom + theme.spacing.lg },
-          ]}
-        >
-          <Animated.View
-            {...panResponder.panHandlers}
-            style={{ transform: [{ translateX }] }}
-          >
-            <Card style={styles.introCard} contentStyle={styles.cardContentNoFlex}>
-              <View style={styles.iconWrap}>{step.icon}</View>
-              <Text variant="h3" weight="bold" color="foreground" center>
-                {step.title}
-              </Text>
-
-              <View style={styles.bodyWrap}>{step.body}</View>
-
-              {renderClaimBlock()}
-
-              <View style={styles.footerWrap}>
-                <Text variant="small" color="muted" center>
-                  Step {currentStepIndex + 1} of {totalSteps}
-                </Text>
-                <StepDots total={totalSteps} current={currentStepIndex} />
-                <FooterButtons />
-              </View>
-            </Card>
-          </Animated.View>
-
-          {claimMutation.isPending ? (
-            <View style={styles.loadingOverlay} pointerEvents="none">
-              <ActivityIndicator size="large" color={theme.colors.foreground} />
-            </View>
-          ) : null}
-        </LinearGradient>
-      </Modal>
-    );
-  }
-
   return (
-    <Modal
-      visible={isActive}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={skip}
+    <LinearGradient
+      colors={theme.gradient.background}
+      locations={theme.gradient.locations}
+      style={[
+        styles.fullScreen,
+        { paddingTop: insets.top + theme.spacing.lg, paddingBottom: insets.bottom + theme.spacing.lg },
+      ]}
     >
-      <View
-        style={[
-          styles.tourContainer,
-          { paddingTop: insets.top + theme.spacing.lg, paddingBottom: insets.bottom + theme.spacing.lg },
-        ]}
-      >
-        <View style={styles.tourSheet}>
-          <Card style={styles.tourCard} contentStyle={styles.cardContentNoFlex}>
-            <View style={styles.tourHeader}>
-              <View style={styles.tourIcon}>{step.icon}</View>
-              <View style={{ flex: 1 }}>
-                <Text variant="h4" weight="bold" color="foreground">
-                  {step.title}
-                </Text>
-                <Text variant="small" color="muted">
-                  Step {currentStepIndex + 1} of {totalSteps}
+      <FlatList
+        ref={flatListRef}
+        data={steps}
+        renderItem={renderPage}
+        keyExtractor={(item) => item.id}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleMomentumEnd}
+        getItemLayout={(_, index) => ({
+          length: SCREEN_WIDTH,
+          offset: SCREEN_WIDTH * index,
+          index,
+        })}
+        initialScrollIndex={currentStepIndex}
+        onScrollToIndexFailed={(info) => {
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+          }, 100);
+        }}
+        style={styles.flatList}
+      />
+
+      <View style={styles.footerArea}>
+        <Text variant="small" color="muted" center>
+          Step {currentStepIndex + 1} of {totalSteps}
+        </Text>
+        <StepDots total={totalSteps} current={currentStepIndex} onDotPress={handleDotPress} />
+
+        <View style={styles.footerButtons}>
+          {canGoBack ? (
+            <Button
+              testID="onboarding-back"
+              variant="ghost"
+              size="sm"
+              onPress={back}
+              style={styles.footerButton}
+            >
+              <View style={styles.inlineIconRow}>
+                <ArrowLeft size={14} color={theme.colors.primary} weight="fill" />
+                <Text variant="caption" color="accent" weight="medium">
+                  Back
                 </Text>
               </View>
+            </Button>
+          ) : (
+            <View style={{ flex: 1 }} />
+          )}
+
+          <Button
+            testID="onboarding-skip"
+            variant="ghost"
+            size="sm"
+            onPress={skip}
+            style={styles.footerButton}
+          >
+            <Text variant="caption" color="accent" weight="medium">
+              Skip
+            </Text>
+          </Button>
+
+          <Button
+            testID="onboarding-next"
+            size="sm"
+            onPress={isLastStep ? complete : next}
+            disabled={claimMutation.isPending}
+            style={styles.footerButtonPrimary}
+          >
+            <View style={styles.inlineIconRow}>
+              <Text variant="caption" color="primary-foreground" weight="medium">
+                {primaryLabel}
+              </Text>
+              {!isLastStep ? (
+                <ArrowRight size={14} color={theme.colors.primaryForeground} weight="fill" />
+              ) : null}
             </View>
-
-            <View style={styles.bodyWrap}>{step.body}</View>
-
-            <StepDots total={totalSteps} current={currentStepIndex} />
-            <FooterButtons />
-          </Card>
+          </Button>
         </View>
       </View>
-    </Modal>
+
+      {claimMutation.isPending ? (
+        <View style={styles.loadingOverlay} pointerEvents="none">
+          <ActivityIndicator size="large" color={theme.colors.foreground} />
+        </View>
+      ) : null}
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  introContainer: {
+  fullScreen: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 100,
+  },
+  flatList: {
     flex: 1,
-    alignItems: 'center',
+  },
+  pageContainer: {
+    flex: 1,
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.lg,
+  },
+  pageContent: {
+    alignItems: 'center',
   },
   introCard: {
     width: '100%',
@@ -372,40 +337,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(10, 21, 41, 0.92)',
     borderColor: 'rgba(30, 58, 138, 0.2)',
     borderWidth: 1,
-  },
-  tourContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(1, 10, 24, 0.55)',
-    justifyContent: 'flex-end',
-    paddingHorizontal: theme.spacing.lg,
-  },
-  tourSheet: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  tourCard: {
-    width: '100%',
-    maxWidth: 520,
-    marginBottom: 0,
-    backgroundColor: 'rgba(10, 21, 41, 0.92)',
-    borderColor: 'rgba(30, 58, 138, 0.2)',
-    borderWidth: 1,
-  },
-  tourHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-  },
-  tourIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   iconWrap: {
     width: 56,
@@ -423,8 +354,8 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
     gap: theme.spacing.md,
   },
-  footerWrap: {
-    marginTop: theme.spacing.lg,
+  footerArea: {
+    paddingHorizontal: theme.spacing.xl,
     gap: theme.spacing.sm,
   },
   footerButtons: {
@@ -444,13 +375,13 @@ const styles = StyleSheet.create({
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
     marginTop: theme.spacing.xs,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   dotActive: {
     backgroundColor: theme.colors.primary,

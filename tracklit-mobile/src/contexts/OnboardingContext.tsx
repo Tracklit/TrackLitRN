@@ -26,6 +26,7 @@ type OnboardingContextType = {
   back: () => Promise<void>;
   complete: () => Promise<void>;
   resetAndStart: () => Promise<void>;
+  goToStep: (index: number) => Promise<void>;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -153,6 +154,13 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     await persist(activeUserId, { completed: false, stepIndex });
   }, [activeUserId, persist]);
 
+  const goToStep = useCallback(async (index: number) => {
+    if (!activeUserId) return;
+    const stepIndex = clamp(index, 0, steps.length - 1);
+    setCurrentStepIndex(stepIndex);
+    await persist(activeUserId, { completed: false, stepIndex });
+  }, [activeUserId, persist, steps.length]);
+
   const value = useMemo<OnboardingContextType>(
     () => ({
       isReady,
@@ -165,6 +173,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       back,
       complete,
       resetAndStart,
+      goToStep,
     }),
     [
       isReady,
@@ -177,6 +186,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       back,
       complete,
       resetAndStart,
+      goToStep,
     ],
   );
 

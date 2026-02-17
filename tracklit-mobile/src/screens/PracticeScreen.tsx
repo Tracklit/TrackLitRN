@@ -160,6 +160,9 @@ export const PracticeScreen: React.FC = () => {
     await queryClient.invalidateQueries({
       queryKey: ['/api/programs', assignment.programId, 'sessions'],
     });
+    if (assignment.program?.isUploadedProgram && assignment.program?.programFileUrl) {
+      WebBrowser.openBrowserAsync(assignment.program.programFileUrl);
+    }
   };
 
   const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
