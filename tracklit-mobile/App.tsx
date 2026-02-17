@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import {
   NavigationContainer,
@@ -17,7 +18,6 @@ import { createBottomTabNavigator, type BottomTabScreenProps } from '@react-navi
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   createDrawerNavigator,
-  DrawerContentScrollView,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import {
@@ -40,6 +40,7 @@ import {
   Gear,
   SignOut,
   ArrowLeft,
+  X,
 } from 'phosphor-react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -518,17 +519,27 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   ];
 
   return (
-    <DrawerContentScrollView
-      {...props}
-      contentContainerStyle={[
-        styles.drawerScroll,
-        {
-          paddingTop: insets.top + theme.spacing.lg,
-          paddingBottom: Math.max(insets.bottom, theme.spacing.lg),
-        },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={styles.drawerContainer} onStartShouldSetResponder={() => true}>
+      <View style={[styles.drawerCloseRow, { paddingTop: insets.top + theme.spacing.md }]}>
+        <TouchableOpacity
+          onPress={() => props.navigation.closeDrawer()}
+          activeOpacity={0.7}
+          style={styles.drawerCloseButton}
+          accessibilityRole="button"
+          accessibilityLabel="Close menu"
+        >
+          <X size={18} color={theme.colors.muted} weight="bold" />
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        contentContainerStyle={[
+          styles.drawerScroll,
+          {
+            paddingBottom: Math.max(insets.bottom, theme.spacing.lg),
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
 
       {sections.map((section) => {
         const filteredItems = section.items.filter((item) => {
@@ -581,7 +592,8 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           </Text>
         )}
       </View>
-    </DrawerContentScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -593,8 +605,8 @@ const DrawerNavigator: React.FC = () => (
       overlayColor: 'rgba(0,0,0,0.6)',
       sceneContainerStyle: { backgroundColor: 'transparent' },
       drawerStyle: {
-        backgroundColor: theme.colors.sidebar,
-        borderRightColor: theme.colors.sidebarBorder,
+        backgroundColor: '#1a1a1a',
+        borderRightColor: 'rgba(255,255,255,0.08)',
         borderRightWidth: 1,
       },
     }}
@@ -719,9 +731,26 @@ const styles = StyleSheet.create({
   mainTabsContainer: {
     flex: 1,
   },
+  drawerContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+  },
+  drawerCloseRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.sm,
+  },
+  drawerCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   drawerScroll: {
     flexGrow: 1,
-    paddingTop: theme.spacing.lg,
   },
   drawerHeader: {
     paddingHorizontal: theme.spacing.lg,

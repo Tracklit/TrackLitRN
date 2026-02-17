@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -7,6 +7,14 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
 import {
   Bell,
   PaperPlaneTilt,
@@ -86,7 +94,59 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [tickerCollapsed, setTickerCollapsed] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
+  const [nextActivityIndex, setNextActivityIndex] = useState<number | null>(null);
+  const isAnimatingRef = useRef(false);
   const userId = user?.id;
+
+  const currentOpacity = useSharedValue(1);
+  const currentTranslateX = useSharedValue(0);
+  const nextOpacity = useSharedValue(0);
+  const nextTranslateX = useSharedValue(12);
+  const nextScale = useSharedValue(0.98);
+
+  const ANIM_DURATION = 280;
+  const easeOutCubic = Easing.bezier(0.33, 1, 0.68, 1);
+
+  const currentAnimStyle = useAnimatedStyle(() => ({
+    opacity: currentOpacity.value,
+    transform: [{ translateX: currentTranslateX.value }],
+  }));
+
+  const nextAnimStyle = useAnimatedStyle(() => ({
+    opacity: nextOpacity.value,
+    transform: [{ translateX: nextTranslateX.value }, { scale: nextScale.value }],
+  }));
+
+  const promoteNext = useCallback((idx: number) => {
+    setCurrentActivityIndex(idx);
+    setNextActivityIndex(null);
+    isAnimatingRef.current = false;
+    currentOpacity.value = 1;
+    currentTranslateX.value = 0;
+    nextOpacity.value = 0;
+    nextTranslateX.value = 12;
+    nextScale.value = 0.98;
+  }, []);
+
+  const triggerTransition = useCallback((nextIdx: number) => {
+    if (isAnimatingRef.current) return;
+    isAnimatingRef.current = true;
+    setNextActivityIndex(nextIdx);
+
+    const timingConfig = { duration: ANIM_DURATION, easing: easeOutCubic };
+
+    currentOpacity.value = withTiming(0, timingConfig);
+    currentTranslateX.value = withTiming(-12, timingConfig);
+
+    nextOpacity.value = withDelay(50, withTiming(1, timingConfig));
+    nextTranslateX.value = withDelay(50, withTiming(0, timingConfig));
+    nextScale.value = withDelay(50, withTiming(1, timingConfig, (finished) => {
+      'worklet';
+      if (finished) {
+        runOnJS(promoteNext)(nextIdx);
+      }
+    }));
+  }, [promoteNext]);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -135,6 +195,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const activities = activitiesQuery.data ?? [];
   const currentActivity =
     activities.length > 0 ? activities[currentActivityIndex % activities.length] : undefined;
+  const nextActivity =
+    nextActivityIndex !== null && activities.length > 0
+      ? activities[nextActivityIndex % activities.length]
+      : undefined;
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications-home'],
@@ -170,13 +234,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         ).length
       : 0;
 
+  const currentIndexRef = useRef(0);
+  currentIndexRef.current = currentActivityIndex;
+
+  useEffect(() => {
+    if (tickerCollapsed || isPaused) {
+      isAnimatingRef.current = false;
+      setNextActivityIndex(null);
+      currentOpacity.value = 1;
+      currentTranslateX.value = 0;
+      nextOpacity.value = 0;
+      nextTranslateX.value = 12;
+      nextScale.value = 0.98;
+    }
+  }, [tickerCollapsed, isPaused]);
+
   useEffect(() => {
     if (!activities.length || isPaused || tickerCollapsed) return;
     const id = setInterval(() => {
-      setCurrentActivityIndex((prev) => (prev + 1) % activities.length);
+      const nextIdx = (currentIndexRef.current + 1) % activities.length;
+      triggerTransition(nextIdx);
     }, 7000);
     return () => clearInterval(id);
-  }, [activities.length, isPaused, tickerCollapsed]);
+  }, [activities.length, isPaused, tickerCollapsed, triggerTransition]);
 
   const formatTimeAgo = (dateString: string) => {
     const now = Date.now();
@@ -345,28 +425,57 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 </TouchableOpacity>
               </View>
               <View style={styles.tickerContent}>
-                <View style={styles.tickerHeaderRow}>
-                  <View style={styles.tickerAvatar}>
-                    {(() => {
-                      const ActivityIcon = getActivityIconComponent(currentActivity?.activityType ?? 'user');
-                      return <ActivityIcon size={12} color="#e2e8f0" weight="fill" />;
-                    })()}
-                  </View>
-                  <View style={styles.tickerTitleBlock}>
-                    <Text variant="caption" color="accent" numberOfLines={1}>
-                      {currentActivity?.title ?? 'Community updates'}
-                    </Text>
-                    {!!currentActivity?.user?.username && (
-                      <Text variant="caption" color="secondary" numberOfLines={1}>
-                        {currentActivity.user.username} · {formatTimeAgo(currentActivity.createdAt)}
+                <Animated.View style={[styles.tickerMessageLayer, currentAnimStyle]}>
+                  <View style={styles.tickerHeaderRow}>
+                    <View style={styles.tickerAvatar}>
+                      {(() => {
+                        const ActivityIcon = getActivityIconComponent(currentActivity?.activityType ?? 'user');
+                        return <ActivityIcon size={12} color="#e2e8f0" weight="fill" />;
+                      })()}
+                    </View>
+                    <View style={styles.tickerTitleBlock}>
+                      <Text variant="caption" color="accent" numberOfLines={1}>
+                        {currentActivity?.title ?? 'Community updates'}
                       </Text>
-                    )}
+                      {!!currentActivity?.user?.username && (
+                        <Text variant="caption" color="secondary" numberOfLines={1}>
+                          {currentActivity.user.username} · {formatTimeAgo(currentActivity.createdAt)}
+                        </Text>
+                      )}
+                    </View>
                   </View>
-                </View>
-                <Text variant="caption" weight="medium" color="foreground" numberOfLines={1}>
-                  {currentActivity?.description ??
-                    'Athletes are crushing their sessions today. Tap Feed to see more.'}
-                </Text>
+                  <Text variant="caption" weight="medium" color="foreground" numberOfLines={1}>
+                    {currentActivity?.description ??
+                      'Athletes are crushing their sessions today. Tap Feed to see more.'}
+                  </Text>
+                </Animated.View>
+
+                {nextActivity && (
+                  <Animated.View style={[styles.tickerMessageLayer, nextAnimStyle]}>
+                    <View style={styles.tickerHeaderRow}>
+                      <View style={styles.tickerAvatar}>
+                        {(() => {
+                          const ActivityIcon = getActivityIconComponent(nextActivity.activityType ?? 'user');
+                          return <ActivityIcon size={12} color="#e2e8f0" weight="fill" />;
+                        })()}
+                      </View>
+                      <View style={styles.tickerTitleBlock}>
+                        <Text variant="caption" color="accent" numberOfLines={1}>
+                          {nextActivity.title ?? 'Community updates'}
+                        </Text>
+                        {!!nextActivity.user?.username && (
+                          <Text variant="caption" color="secondary" numberOfLines={1}>
+                            {nextActivity.user.username} · {formatTimeAgo(nextActivity.createdAt)}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                    <Text variant="caption" weight="medium" color="foreground" numberOfLines={1}>
+                      {nextActivity.description ??
+                        'Athletes are crushing their sessions today. Tap Feed to see more.'}
+                    </Text>
+                  </Animated.View>
+                )}
               </View>
             </View>
           )}
@@ -559,6 +668,14 @@ const styles = StyleSheet.create({
   },
   tickerContent: {
     paddingRight: 48,
+    position: 'relative',
+    minHeight: 44,
+  },
+  tickerMessageLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     gap: theme.spacing.xs,
   },
   tickerHeaderRow: {
