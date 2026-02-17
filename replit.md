@@ -47,9 +47,11 @@ migrations/          - Database migrations
 - Bottom nav has 6 tabs: Home, Practice, Programs, Feed, Tools, Profile
 - Sprinthia (AI assistant) is a RootStack screen, accessible from HomeScreen cards and drawer menu
 - Bottom nav height is 48px with icons properly centered
-- Sidebar drawer uses solid background (#151a23)
+- Sidebar drawer uses very dark gray background (#1a1a1a) with X close button, blocks touch pass-through
 
 ## Recent Changes
+- 2026-02-17: Drawer: blocks touch pass-through, X close button, very dark gray background (#1a1a1a)
+- 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
 - 2026-02-13: Switched all icons from FontAwesome5 to Phosphor (filled weight)
