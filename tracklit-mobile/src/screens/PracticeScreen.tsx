@@ -226,32 +226,40 @@ export const PracticeScreen: React.FC = () => {
                 </CardContent>
               </Card>
             ) : selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl ? (
-              <Card style={styles.textProgramCard}>
-                <CardContent>
-                  <View style={styles.programHeaderRow}>
-                    <Upload size={16} color={theme.colors.primary} weight="fill" />
-                    <Text variant="small" weight="semiBold" color="foreground">
-                      Program Document
-                    </Text>
-                  </View>
-                  <View style={styles.programNote}>
-                    <Text variant="small" color="muted">
-                      Tap below to open your uploaded program document.
-                    </Text>
-                  </View>
-                  <Button
-                    variant="default"
-                    size="md"
-                    onPress={() => setDocViewerUrl(selectedProgram.program.programFileUrl!)}
-                    style={styles.openDocButton}
-                  >
-                    <Upload size={14} color="white" weight="fill" />
-                    <Text variant="small" weight="bold" color="primary-foreground" style={{ marginLeft: 6 }}>
-                      Open Document
-                    </Text>
-                  </Button>
-                </CardContent>
-              </Card>
+              docViewerUrl ? (
+                <DocumentViewer
+                  url={docViewerUrl}
+                  title={selectedProgram.program?.title || 'Program Document'}
+                  onClose={() => setDocViewerUrl(null)}
+                />
+              ) : (
+                <Card style={styles.textProgramCard}>
+                  <CardContent>
+                    <View style={styles.programHeaderRow}>
+                      <Upload size={16} color={theme.colors.primary} weight="fill" />
+                      <Text variant="small" weight="semiBold" color="foreground">
+                        Program Document
+                      </Text>
+                    </View>
+                    <View style={styles.programNote}>
+                      <Text variant="small" color="muted">
+                        Tap below to open your uploaded program document.
+                      </Text>
+                    </View>
+                    <Button
+                      variant="default"
+                      size="md"
+                      onPress={() => setDocViewerUrl(selectedProgram.program.programFileUrl!)}
+                      style={styles.openDocButton}
+                    >
+                      <Upload size={14} color="white" weight="fill" />
+                      <Text variant="small" weight="bold" color="primary-foreground" style={{ marginLeft: 6 }}>
+                        Open Document
+                      </Text>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
             ) : (
               <View style={styles.cardsList}>
                 {isLoadingCards || isLoadingProgramSessions ? (
@@ -337,12 +345,6 @@ export const PracticeScreen: React.FC = () => {
 
       <TargetTimesDrawer visible={showTargetTimes} onClose={() => setShowTargetTimes(false)} />
 
-      <DocumentViewer
-        visible={!!docViewerUrl}
-        url={docViewerUrl || ''}
-        title={selectedProgram?.program?.title || 'Program Document'}
-        onClose={() => setDocViewerUrl(null)}
-      />
     </LinearGradient>
   );
 };
