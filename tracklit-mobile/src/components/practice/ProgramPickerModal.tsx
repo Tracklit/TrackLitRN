@@ -1,16 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   View,
-  Modal,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Animated,
 } from 'react-native';
-import { ClipboardText, CheckCircle } from 'phosphor-react-native';
+import { ClipboardText, CheckCircle, CaretDown } from 'phosphor-react-native';
 
-import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
-import { Button } from '@/components/ui/Button';
 import theme from '@/utils/theme';
 
 interface Program {
@@ -28,23 +26,22 @@ interface PurchasedProgramItem {
   assignerName?: string;
 }
 
-interface ProgramPickerModalProps {
-  visible: boolean;
-  onClose: () => void;
+interface ProgramPickerDropdownProps {
   programs: PurchasedProgramItem[];
   selectedProgramId?: number | string | null;
   onSelect: (program: PurchasedProgramItem) => void;
   isLoading?: boolean;
 }
 
-export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
-  visible,
-  onClose,
+export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   programs,
   selectedProgramId,
   onSelect,
   isLoading,
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const animValue = useRef(new Animated.Value(0)).current;
+
   const sortedPrograms = useMemo(() => {
     return [...programs].sort((a, b) => {
       const titleA = (a.program?.title || '').toLowerCase();
@@ -53,175 +50,170 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
     });
   }, [programs]);
 
+  useEffect(() => {
+    Animated.timing(animValue, {
+      toValue: isOpen ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [isOpen]);
+
+  const maxHeight = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 280],
+  });
+
+  const handleSelect = (assignment: PurchasedProgramItem) => {
+    onSelect(assignment);
+    setIsOpen(false);
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <TouchableOpacity style={styles.backdrop} onPress={onClose} />
-        <LinearGradient
-          colors={['#1e40af', '#c084fc']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.modalCard}
+    <View style={styles.wrapper}>
+      <View style={styles.row}>
+        <TouchableOpacity
+          style={styles.dropdownButton}
+          onPress={() => setIsOpen(!isOpen)}
+          activeOpacity={0.7}
         >
-          <View style={styles.header}>
-            <Text variant="h4" weight="bold" color="primary-foreground">
-              Your Programs
-            </Text>
-            <Text variant="small" color="primary-foreground" style={styles.subtitle}>
-              Select a training program to view or switch between your assigned programs.
-            </Text>
-          </View>
-
-          <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-            {isLoading ? (
-              <View style={styles.loadingState}>
-                <Text variant="body" color="primary-foreground">
-                  Loading programs...
-                </Text>
-              </View>
-            ) : sortedPrograms.length > 0 ? (
-              <View style={styles.programList}>
-                {sortedPrograms.map((assignment) => {
-                  const isSelected = selectedProgramId === assignment.id;
-                  return (
-                    <TouchableOpacity
-                      key={assignment.id}
-                      style={[styles.programRow, isSelected && styles.programRowSelected]}
-                      onPress={() => onSelect(assignment)}
-                    >
-                      <View style={[styles.programIcon, isSelected && styles.programIconSelected]}>
-                        <ClipboardText
-                          size={16}
-                          color={isSelected ? 'white' : 'rgba(255,255,255,0.8)'}
-                          weight="fill"
-                        />
-                      </View>
-                      <View style={styles.programInfo}>
-                        <Text
-                          variant="body"
-                          weight="medium"
-                          color="primary-foreground"
-                          numberOfLines={1}
-                        >
-                          {assignment.program?.title || 'Unnamed Program'}
-                        </Text>
-                        <Text variant="small" color="primary-foreground" style={styles.programMeta}>
-                          {assignment.program?.category || 'Training Program'}
-                          {assignment.program?.duration ? ` • ${assignment.program.duration}` : ''}
-                        </Text>
-                      </View>
-                      {isSelected && <CheckCircle size={20} color="#60a5fa" weight="fill" />}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ) : (
-              <View style={styles.emptyState}>
-                <ClipboardText size={36} color="rgba(255,255,255,0.6)" weight="fill" />
-                <Text variant="body" color="primary-foreground" style={styles.emptyTitle}>
-                  No programs assigned yet
-                </Text>
-                <Text variant="small" color="primary-foreground" style={styles.emptySubtitle}>
-                  Your coach will assign training programs to your account.
-                </Text>
-              </View>
-            )}
-          </ScrollView>
-
-          <View style={styles.footer}>
-            <View style={styles.footerSpacer} />
-            <Button variant="outline" size="md" onPress={onClose} title="Close" />
-          </View>
-        </LinearGradient>
+          <ClipboardText size={14} color={theme.colors.primaryForeground} weight="fill" />
+          <Text variant="small" weight="medium" color="primary-foreground" numberOfLines={1} style={styles.buttonLabel}>
+            Assign Program
+          </Text>
+          <CaretDown
+            size={12}
+            color={theme.colors.primaryForeground}
+            weight="fill"
+            style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
+          />
+        </TouchableOpacity>
       </View>
-    </Modal>
+
+      <Animated.View style={[styles.dropdownContainer, { maxHeight }]}>
+        <ScrollView
+          style={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled
+        >
+          {isLoading ? (
+            <View style={styles.loadingState}>
+              <Text variant="small" color="muted">Loading programs...</Text>
+            </View>
+          ) : sortedPrograms.length > 0 ? (
+            <View style={styles.programList}>
+              {sortedPrograms.map((assignment) => {
+                const isSelected = selectedProgramId === assignment.id;
+                return (
+                  <TouchableOpacity
+                    key={assignment.id}
+                    style={[styles.programRow, isSelected && styles.programRowSelected]}
+                    onPress={() => handleSelect(assignment)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.programIcon, isSelected && styles.programIconSelected]}>
+                      <ClipboardText
+                        size={14}
+                        color={isSelected ? 'white' : 'rgba(255,255,255,0.7)'}
+                        weight="fill"
+                      />
+                    </View>
+                    <View style={styles.programInfo}>
+                      <Text
+                        variant="small"
+                        weight={isSelected ? 'semiBold' : 'medium'}
+                        color="foreground"
+                        numberOfLines={1}
+                      >
+                        {assignment.program?.title || 'Unnamed Program'}
+                      </Text>
+                      <Text variant="caption" color="muted" numberOfLines={1}>
+                        {assignment.program?.category || 'Training Program'}
+                        {assignment.program?.duration ? ` • ${assignment.program.duration}` : ''}
+                      </Text>
+                    </View>
+                    {isSelected && <CheckCircle size={18} color={theme.colors.primary} weight="fill" />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text variant="small" color="muted">No programs assigned yet</Text>
+            </View>
+          )}
+        </ScrollView>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
+  wrapper: {
+    zIndex: 10,
   },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
-  modalCard: {
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     borderRadius: 12,
-    padding: theme.spacing.lg,
-    maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  buttonLabel: {
+    maxWidth: 180,
+  },
+  dropdownContainer: {
     overflow: 'hidden',
-  },
-  header: {
-    marginBottom: theme.spacing.md,
-  },
-  subtitle: {
-    marginTop: theme.spacing.xs,
-    opacity: 0.8,
+    marginTop: theme.spacing.sm,
+    borderRadius: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   scroll: {
-    flexShrink: 1,
-    marginTop: theme.spacing.sm,
+    maxHeight: 280,
   },
   loadingState: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
   },
   programList: {
-    gap: theme.spacing.sm,
+    padding: theme.spacing.xs,
   },
   programRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
-    padding: theme.spacing.md,
-    borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    gap: theme.spacing.sm,
+    padding: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: 8,
   },
   programRowSelected: {
-    borderColor: '#60a5fa',
-    backgroundColor: 'rgba(37, 99, 235, 0.85)',
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
   },
   programIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   programIconSelected: {
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(59, 130, 246, 0.25)',
   },
   programInfo: {
     flex: 1,
   },
-  programMeta: {
-    opacity: 0.7,
-    marginTop: theme.spacing.xs,
-  },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
-  },
-  emptyTitle: {
-    marginTop: theme.spacing.md,
-  },
-  emptySubtitle: {
-    marginTop: theme.spacing.xs,
-    opacity: 0.7,
-    textAlign: 'center',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: theme.spacing.md,
-  },
-  footerSpacer: {
-    flex: 1,
+    paddingVertical: theme.spacing.lg,
   },
 });

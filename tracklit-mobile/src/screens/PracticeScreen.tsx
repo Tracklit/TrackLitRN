@@ -5,8 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  Linking,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -30,7 +30,7 @@ import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
-import { ProgramPickerModal } from '@/components/practice/ProgramPickerModal';
+import { ProgramPickerDropdown } from '@/components/practice/ProgramPickerModal';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { TargetTimesDrawer } from '@/components/practice/TargetTimesDrawer';
 import type { RootStackParamList } from '@/navigation/types';
@@ -66,7 +66,6 @@ export const PracticeScreen: React.FC = () => {
   const isGuest = user?.id === 'guest';
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
-  const [showProgramPicker, setShowProgramPicker] = useState(false);
   const [showTargetTimes, setShowTargetTimes] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<PurchasedProgramItem | null>(null);
   const [daysToShow, setDaysToShow] = useState(7);
@@ -161,7 +160,6 @@ export const PracticeScreen: React.FC = () => {
     await queryClient.invalidateQueries({
       queryKey: ['/api/programs', assignment.programId, 'sessions'],
     });
-    setShowProgramPicker(false);
   };
 
   const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
@@ -192,18 +190,12 @@ export const PracticeScreen: React.FC = () => {
         <InlineRefreshHeader visible={isRefreshing} />
 
         <View style={styles.programsRow}>
-          <Button
-            variant="outline"
-            onPress={() => setShowProgramPicker(true)}
-            style={styles.programsButton}
-          >
-            <View style={styles.programsButtonContent}>
-              <ClipboardText size={14} color={theme.colors.primaryForeground} weight="fill" />
-              <Text variant="small" weight="medium" color="primary-foreground">
-                Your Programs
-              </Text>
-            </View>
-          </Button>
+          <ProgramPickerDropdown
+            programs={purchasedProgramsQuery.data ?? []}
+            selectedProgramId={selectedProgram?.id ?? null}
+            onSelect={handleSelectProgram}
+            isLoading={purchasedProgramsQuery.isLoading}
+          />
         </View>
 
         {selectedProgram ? (
@@ -246,7 +238,7 @@ export const PracticeScreen: React.FC = () => {
                   <Button
                     variant="default"
                     size="md"
-                    onPress={() => Linking.openURL(selectedProgram.program.programFileUrl!)}
+                    onPress={() => WebBrowser.openBrowserAsync(selectedProgram.program.programFileUrl!)}
                     style={styles.openDocButton}
                   >
                     <Upload size={14} color="white" weight="fill" />
@@ -313,7 +305,7 @@ export const PracticeScreen: React.FC = () => {
             <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
               Contact your coach to get a program assigned to your account.
             </Text>
-            <Button variant="outline" onPress={() => setShowProgramPicker(true)} style={styles.emptyButton}>
+            <Button variant="outline" onPress={() => navigation.navigate('Programs' as any)} style={styles.emptyButton}>
               <Text variant="small" weight="medium" color="primary-foreground">
                 View Available Programs
               </Text>
@@ -321,15 +313,6 @@ export const PracticeScreen: React.FC = () => {
           </LinearGradient>
         )}
       </ScrollView>
-
-      <ProgramPickerModal
-        visible={showProgramPicker}
-        onClose={() => setShowProgramPicker(false)}
-        programs={purchasedProgramsQuery.data ?? []}
-        selectedProgramId={selectedProgram?.id ?? null}
-        onSelect={handleSelectProgram}
-        isLoading={purchasedProgramsQuery.isLoading}
-      />
 
       <TouchableOpacity
         style={[styles.targetTimesButton, { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg }]}
@@ -559,16 +542,7 @@ const styles = StyleSheet.create({
   programsRow: {
     marginTop: theme.spacing.xl,
     marginBottom: theme.spacing.lg,
-  },
-  programsButton: {
-    alignSelf: 'flex-start',
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  programsButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
+    zIndex: 10,
   },
   contentContainer: {
     marginTop: theme.spacing.md,
