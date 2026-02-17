@@ -72,6 +72,7 @@ export const PracticeScreen: React.FC = () => {
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [workoutCards, setWorkoutCards] = useState<any[]>([]);
   const [docViewerUrl, setDocViewerUrl] = useState<string | null>(null);
+  const [docAutoOpened, setDocAutoOpened] = useState(false);
 
   const purchasedProgramsQuery = useQuery({
     queryKey: ['purchased-programs'],
@@ -166,6 +167,17 @@ export const PracticeScreen: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (
+      selectedProgram?.program?.isUploadedProgram &&
+      selectedProgram?.program?.programFileUrl &&
+      !docAutoOpened
+    ) {
+      setDocViewerUrl(selectedProgram.program.programFileUrl);
+      setDocAutoOpened(true);
+    }
+  }, [selectedProgram, docAutoOpened]);
+
   const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
     await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
   });
@@ -233,28 +245,22 @@ export const PracticeScreen: React.FC = () => {
                   onClose={() => setDocViewerUrl(null)}
                 />
               ) : (
-                <Card style={styles.textProgramCard}>
-                  <CardContent>
-                    <View style={styles.programHeaderRow}>
+                <Card style={styles.collapsedDocCard}>
+                  <CardContent style={styles.collapsedDocContent}>
+                    <View style={styles.collapsedDocLeft}>
                       <Upload size={16} color={theme.colors.primary} weight="fill" />
                       <Text variant="small" weight="semiBold" color="foreground">
-                        Program Document
-                      </Text>
-                    </View>
-                    <View style={styles.programNote}>
-                      <Text variant="small" color="muted">
-                        Tap below to open your uploaded program document.
+                        Assigned Program
                       </Text>
                     </View>
                     <Button
                       variant="default"
-                      size="md"
+                      size="sm"
                       onPress={() => setDocViewerUrl(selectedProgram.program.programFileUrl!)}
-                      style={styles.openDocButton}
+                      style={styles.collapsedDocOpenBtn}
                     >
-                      <Upload size={14} color="white" weight="fill" />
-                      <Text variant="small" weight="bold" color="primary-foreground" style={{ marginLeft: 6 }}>
-                        Open Document
+                      <Text variant="small" weight="bold" color="primary-foreground">
+                        Open
                       </Text>
                     </Button>
                   </CardContent>
@@ -698,6 +704,24 @@ const styles = StyleSheet.create({
   openDocButton: {
     marginTop: theme.spacing.md,
     alignSelf: 'flex-start',
+  },
+  collapsedDocCard: {
+    borderRadius: theme.borderRadius.lg,
+  },
+  collapsedDocContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.sm,
+  },
+  collapsedDocLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    flex: 1,
+  },
+  collapsedDocOpenBtn: {
+    paddingHorizontal: theme.spacing.lg,
   },
   targetTimesButton: {
     position: 'absolute',
