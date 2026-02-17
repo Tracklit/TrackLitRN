@@ -54,8 +54,8 @@ migrations/          - Database migrations
 
 ## Recent Changes
 - 2026-02-17: ProgramCreateScreen: replaced FontAwesome5 with Phosphor, removed header gradient, xl padding, 12px border radius
-- 2026-02-17: ProgramPickerModal: alphabetical sorting, Phosphor icons, right-aligned Close button, 12px border radius
-- 2026-02-17: PracticeScreen: uploaded program documents now open in device browser via Linking.openURL
+- 2026-02-17: ProgramPickerDropdown: converted from modal to inline scrollable dropdown, alphabetical sorting, "Assign Program" label, right-aligned button
+- 2026-02-17: PracticeScreen: uploaded program documents now open in-app via expo-web-browser
 - 2026-02-17: ProgramsScreen: removed difficulty/level badge from program cards, uniform 40px search bar height
 - 2026-02-17: Bottom nav: icons sized up 15% (20px→23px), container moved down 15px
 - 2026-02-17: Programs/Tools: removed header gradient, replaced FontAwesome5 with Phosphor, matched Practice styling
