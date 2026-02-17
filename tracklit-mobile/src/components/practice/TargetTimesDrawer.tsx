@@ -8,6 +8,7 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -48,6 +49,7 @@ interface TargetTimesDrawerProps {
 }
 
 export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, onClose }) => {
+  const insets = useSafeAreaInsets();
   const [adjustForTrackType, setAdjustForTrackType] = useState(false);
   const [currentTrackType, setCurrentTrackType] = useState<TrackType>('outdoor');
   const [timingMethod, setTimingMethod] = useState<TimingMethod>('firstFoot');
@@ -190,9 +192,9 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
           colors={theme.gradients.webPurpleDeep.colors}
           start={theme.gradients.webPurpleDeep.start}
           end={theme.gradients.webPurpleDeep.end}
-          style={styles.drawerContent}
+          style={[styles.drawerContent, { paddingTop: insets.top + theme.spacing.md }]}
         >
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TouchableOpacity style={[styles.closeButton, { top: insets.top + theme.spacing.md }]} onPress={onClose}>
             <X size={16} color="rgba(255,255,255,0.85)" weight="bold" />
           </TouchableOpacity>
 

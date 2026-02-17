@@ -48,8 +48,14 @@ migrations/          - Database migrations
 - Sprinthia (AI assistant) is a RootStack screen, accessible from HomeScreen cards and drawer menu
 - Bottom nav height is 48px with icons properly centered
 - Sidebar drawer uses very dark gray background (#1a1a1a) with X close button, blocks touch pass-through
+- Practice, Programs, and Tools screens share same styling: no header gradient title, xl horizontal padding, 12px border radius cards, lg gap between cards
+- TargetTimesDrawer uses safe area insets for device-safe top padding
+- Programs FAB is 64px (15% larger than standard 56), with extra right margin
 
 ## Recent Changes
+- 2026-02-17: Programs/Tools: removed header gradient, replaced FontAwesome5 with Phosphor, matched Practice styling
+- 2026-02-17: Programs FAB: 15% larger (64px), more right spacing, improved menu UI with icon wrappers, removed Find a Program and Switch to Coach items
+- 2026-02-17: TargetTimesDrawer: added safe area insets for device top spacing
 - 2026-02-17: Drawer: blocks touch pass-through, X close button, very dark gray background (#1a1a1a)
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts

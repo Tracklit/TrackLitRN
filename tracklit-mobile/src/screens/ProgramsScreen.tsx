@@ -11,7 +11,21 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import {
+  MagnifyingGlass,
+  Funnel,
+  CaretDown,
+  SquaresFour,
+  List,
+  Check,
+  Plus,
+  User,
+  LockSimple,
+  WarningCircle,
+  ClipboardText,
+  ShoppingBag,
+  Barbell,
+} from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -193,66 +207,53 @@ export const ProgramsScreen: React.FC = () => {
         }
       >
         <InlineRefreshHeader visible={isRefreshing} />
-        {/* Header */}
-        <LinearGradient
-          colors={theme.gradients.webHeader.colors}
-          start={theme.gradients.webHeader.start}
-          end={theme.gradients.webHeader.end}
-          style={styles.header}
-        >
-          <Text variant="h2" weight="bold" color="primary-foreground">
-            Programs
-          </Text>
 
-          <View style={styles.searchRow}>
-            <View style={styles.searchInputWrapper}>
-              <FontAwesome5 name="search" size={14} color="rgba(255,255,255,0.6)" solid />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search programs..."
-                placeholderTextColor="rgba(255,255,255,0.6)"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={styles.filterButton}
-              onPress={() => setShowFilterModal(true)}
-            >
-              <FontAwesome5 name="filter" size={14} color="white" solid />
-              <Text variant="caption" weight="medium" color="primary-foreground" style={styles.filterText}>
-                Filter
-              </Text>
-              <FontAwesome5 name="chevron-down" size={10} color="white" solid />
-            </TouchableOpacity>
-
-            <View style={styles.viewToggle}>
-              <TouchableOpacity
-                style={[styles.viewToggleButton, viewMode === 'cards' && styles.viewToggleActive]}
-                onPress={() => setViewMode('cards')}
-              >
-                <FontAwesome5
-                  name="th"
-                  size={14}
-                  color={viewMode === 'cards' ? theme.colors.webPurpleStart : 'rgba(255,255,255,0.6)'}
-                  solid
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.viewToggleButton, viewMode === 'list' && styles.viewToggleActive]}
-                onPress={() => setViewMode('list')}
-              >
-                <FontAwesome5
-                  name="list"
-                  size={14}
-                  color={viewMode === 'list' ? theme.colors.webPurpleStart : 'rgba(255,255,255,0.6)'}
-                  solid
-                />
-              </TouchableOpacity>
-            </View>
+        <View style={styles.searchRow}>
+          <View style={styles.searchInputWrapper}>
+            <MagnifyingGlass size={14} color="rgba(255,255,255,0.6)" weight="fill" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search programs..."
+              placeholderTextColor="rgba(255,255,255,0.6)"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
           </View>
-        </LinearGradient>
+
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => setShowFilterModal(true)}
+          >
+            <Funnel size={14} color="white" weight="fill" />
+            <Text variant="caption" weight="medium" color="primary-foreground" style={styles.filterText}>
+              Filter
+            </Text>
+            <CaretDown size={10} color="white" weight="fill" />
+          </TouchableOpacity>
+
+          <View style={styles.viewToggle}>
+            <TouchableOpacity
+              style={[styles.viewToggleButton, viewMode === 'cards' && styles.viewToggleActive]}
+              onPress={() => setViewMode('cards')}
+            >
+              <SquaresFour
+                size={14}
+                color={viewMode === 'cards' ? theme.colors.webPurpleStart : 'rgba(255,255,255,0.6)'}
+                weight="fill"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.viewToggleButton, viewMode === 'list' && styles.viewToggleActive]}
+              onPress={() => setViewMode('list')}
+            >
+              <List
+                size={14}
+                color={viewMode === 'list' ? theme.colors.webPurpleStart : 'rgba(255,255,255,0.6)'}
+                weight="fill"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Tabs */}
         <LinearGradient
@@ -363,7 +364,7 @@ export const ProgramsScreen: React.FC = () => {
                     : `${category.charAt(0).toUpperCase()}${category.slice(1)} Programs`}
                 </Text>
                 {filterCategory === category && (
-                  <FontAwesome5 name="check" size={12} color={theme.colors.primary} solid />
+                  <Check size={12} color={theme.colors.primary} weight="bold" />
                 )}
               </TouchableOpacity>
             ))}
@@ -384,7 +385,7 @@ export const ProgramsScreen: React.FC = () => {
             end={theme.gradients.webPurple.end}
             style={styles.fabGradient}
           >
-            <FontAwesome5 name="plus" size={18} color="white" solid />
+            <Plus size={22} color="white" weight="bold" />
           </LinearGradient>
         </TouchableOpacity>
       )}
@@ -395,7 +396,7 @@ export const ProgramsScreen: React.FC = () => {
         animationType="fade"
         onRequestClose={() => setShowCreateMenu(false)}
       >
-        <TouchableOpacity style={styles.menuOverlay} onPress={() => setShowCreateMenu(false)}>
+        <TouchableOpacity style={styles.menuOverlay} onPress={() => setShowCreateMenu(false)} activeOpacity={1}>
           <View style={styles.createMenu}>
             <TouchableOpacity
               style={styles.menuItem}
@@ -403,46 +404,29 @@ export const ProgramsScreen: React.FC = () => {
                 setShowCreateMenu(false);
                 navigation.navigate('ProgramCreate');
               }}
+              activeOpacity={0.7}
             >
-              <FontAwesome5 name="plus" size={14} color="white" solid />
+              <View style={styles.menuIconWrapper}>
+                <Plus size={16} color="white" weight="bold" />
+              </View>
               <Text variant="small" weight="medium" color="primary-foreground">
                 Create a Program
               </Text>
             </TouchableOpacity>
+            <View style={styles.menuDivider} />
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
                 setShowCreateMenu(false);
                 navigation.navigate('Coaches');
               }}
+              activeOpacity={0.7}
             >
-              <FontAwesome5 name="user" size={14} color="white" solid />
+              <View style={styles.menuIconWrapper}>
+                <User size={16} color="white" weight="fill" />
+              </View>
               <Text variant="small" weight="medium" color="primary-foreground">
                 Find a Coach
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                setShowCreateMenu(false);
-                navigation.navigate('Marketplace');
-              }}
-            >
-              <FontAwesome5 name="search" size={14} color="white" solid />
-              <Text variant="small" weight="medium" color="primary-foreground">
-                Find a Program
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                setShowCreateMenu(false);
-                navigation.navigate('MainTabs', { screen: 'Profile', params: { focusCoachToggle: true } } as any);
-              }}
-            >
-              <FontAwesome5 name="user-plus" size={14} color="white" solid />
-              <Text variant="small" weight="medium" color="primary-foreground">
-                Switch to Coach account
               </Text>
             </TouchableOpacity>
           </View>
@@ -483,7 +467,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   if (isGuest) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="user-lock" size={48} color={theme.colors.textMuted} solid />
+        <LockSimple size={48} color={theme.colors.textMuted} weight="fill" />
         <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
           Sign In Required
         </Text>
@@ -508,7 +492,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   if (isError) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="exclamation-circle" size={48} color={theme.colors.textMuted} solid />
+        <WarningCircle size={48} color={theme.colors.textMuted} weight="fill" />
         <Text variant="body" color="muted" style={styles.emptyDescription}>
           Unable to load programs. Pull to refresh.
         </Text>
@@ -519,7 +503,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   if (programs.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="clipboard-list" size={48} color={theme.colors.textMuted} solid />
+        <ClipboardText size={48} color={theme.colors.textMuted} weight="fill" />
         <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
           No Programs Yet
         </Text>
@@ -578,7 +562,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   if (isGuest) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="user-lock" size={48} color={theme.colors.textMuted} solid />
+        <LockSimple size={48} color={theme.colors.textMuted} weight="fill" />
         <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
           Sign In Required
         </Text>
@@ -603,7 +587,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   if (isError) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="exclamation-circle" size={48} color={theme.colors.textMuted} solid />
+        <WarningCircle size={48} color={theme.colors.textMuted} weight="fill" />
         <Text variant="body" color="muted" style={styles.emptyDescription}>
           Unable to load purchased programs. Pull to refresh.
         </Text>
@@ -614,7 +598,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   if (purchases.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="shopping-bag" size={48} color={theme.colors.textMuted} solid />
+        <ShoppingBag size={48} color={theme.colors.textMuted} weight="fill" />
         <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
           No Purchased Programs
         </Text>
@@ -675,7 +659,7 @@ const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoadin
   if (isGuest) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="user-lock" size={48} color={theme.colors.textMuted} solid />
+        <LockSimple size={48} color={theme.colors.textMuted} weight="fill" />
         <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
           Sign In Required
         </Text>
@@ -700,7 +684,7 @@ const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoadin
   if (isError) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="exclamation-circle" size={48} color={theme.colors.textMuted} solid />
+        <WarningCircle size={48} color={theme.colors.textMuted} weight="fill" />
         <Text variant="body" color="muted" style={styles.emptyDescription}>
           Unable to load workout library. Pull to refresh.
         </Text>
@@ -712,7 +696,7 @@ const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoadin
   if (workouts.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="dumbbell" size={48} color={theme.colors.textMuted} solid />
+        <Barbell size={48} color={theme.colors.textMuted} weight="fill" />
         <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
           No workouts saved
         </Text>
@@ -893,24 +877,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.sm,
-  },
-  header: {
-    borderRadius: theme.borderRadius.webCard,
-    paddingHorizontal: theme.spacing.sm,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
-    minHeight: theme.layout.headerHeight + theme.spacing.massive,
-    justifyContent: 'center',
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
     flexWrap: 'wrap',
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   searchInputWrapper: {
     flex: 1,
@@ -985,16 +960,16 @@ const styles = StyleSheet.create({
     color: theme.colors.webPurpleStart,
   },
   programsContainer: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
   listContainer: {
     gap: theme.spacing.sm,
   },
   programCard: {
-    borderRadius: theme.borderRadius.webCard,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.webCardBorder,
-    marginBottom: theme.spacing.md,
+    marginBottom: 0,
   },
   programHeader: {
     paddingBottom: theme.spacing.sm,
@@ -1070,10 +1045,10 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    right: theme.spacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    right: theme.spacing.xl + theme.spacing.sm,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     overflow: 'hidden',
     ...theme.shadows.lg,
   },
@@ -1098,26 +1073,41 @@ const styles = StyleSheet.create({
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
-    padding: theme.spacing.lg,
+    paddingRight: theme.spacing.xl + theme.spacing.sm,
+    paddingBottom: theme.spacing.lg,
   },
   createMenu: {
-    width: 240,
-    backgroundColor: '#111827',
-    borderRadius: theme.borderRadius.md,
+    width: 220,
+    backgroundColor: '#1a1a2e',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: theme.colors.webBorderLight,
-    paddingVertical: theme.spacing.sm,
-    gap: theme.spacing.xs,
+    borderColor: 'rgba(124, 58, 237, 0.35)',
+    paddingVertical: theme.spacing.md,
+    marginBottom: 72,
+    ...theme.shadows.lg,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+  },
+  menuIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(124, 58, 237, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginHorizontal: theme.spacing.lg,
   },
   filterOption: {
     flexDirection: 'row',

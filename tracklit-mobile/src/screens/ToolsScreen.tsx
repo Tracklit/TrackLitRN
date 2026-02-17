@@ -9,7 +9,16 @@ import {
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import {
+  PlayCircle,
+  FlagCheckered,
+  SpeakerHigh,
+  Timer,
+  BookOpen,
+  VideoCamera,
+  Gauge,
+  Lock,
+} from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -39,7 +48,7 @@ interface Tool {
   id: string;
   title: string;
   description: string;
-  icon: string;
+  icon: React.ReactNode;
   comingSoon?: boolean;
   screen?: ToolScreen;
 }
@@ -56,56 +65,56 @@ export const ToolsScreen: React.FC = () => {
       id: 'video-analysis',
       title: 'Video Analysis',
       description: 'AI-powered race video analysis with Sprinthia',
-      icon: 'play-circle',
+      icon: <PlayCircle size={20} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'VideoAnalysis',
     },
     {
       id: 'photo-finish',
       title: 'Photo Finish',
       description: 'Analyze race videos with timing overlays',
-      icon: 'flag-checkered',
+      icon: <FlagCheckered size={20} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'PhotoFinish',
     },
     {
       id: 'start-gun',
       title: 'Start Gun',
       description: 'Simulate a race start signal',
-      icon: 'volume-up',
+      icon: <SpeakerHigh size={20} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'StartGun',
     },
     {
       id: 'stopwatch',
       title: 'Stopwatch',
       description: 'Track your time with precision',
-      icon: 'stopwatch',
+      icon: <Timer size={20} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'Stopwatch',
     },
     {
       id: 'journal',
       title: 'Journal',
       description: 'View and search your workout notes',
-      icon: 'book',
+      icon: <BookOpen size={20} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'Journal',
     },
     {
       id: 'exercise-library',
       title: 'Exercise Library',
       description: 'Store and organize your training videos',
-      icon: 'video',
+      icon: <VideoCamera size={20} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'ExerciseLibrary',
     },
     {
       id: 'velocity-tracker',
       title: 'Velocity Tracker',
       description: 'Track speed and acceleration metrics',
-      icon: 'tachometer-alt',
+      icon: <Gauge size={20} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'VelocityTracker',
     },
     {
       id: 'sprint-time-prediction',
       title: 'Sprint Time Prediction',
       description: 'Calculate predicted times across sprint distances',
-      icon: 'tachometer-alt',
+      icon: <Gauge size={20} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'SprintTimePrediction',
     },
   ];
@@ -125,30 +134,29 @@ export const ToolsScreen: React.FC = () => {
       return;
     }
 
-    // Handle specific tools
     switch (tool.id) {
-      case '1': // Stopwatch
+      case '1':
         Alert.alert(
           'Stopwatch',
           'Precision stopwatch functionality coming in the next update!',
           [{ text: 'OK' }]
         );
         break;
-      case '4': // Wind Meter
+      case '4':
         Alert.alert(
           'Wind Meter',
           'Current wind conditions: 2.1 m/s headwind\n(Demo)',
           [{ text: 'OK' }]
         );
         break;
-      case '5': // Split Calculator
+      case '5':
         Alert.alert(
           'Split Calculator',
           'Calculate your race splits and pacing strategy here!',
           [{ text: 'OK' }]
         );
         break;
-      case '8': // Conversion Tables
+      case '8':
         Alert.alert(
           'Conversion Tables',
           'Time and distance conversion tools coming soon!',
@@ -186,16 +194,6 @@ export const ToolsScreen: React.FC = () => {
         }
       >
         <InlineRefreshHeader visible={isRefreshing} />
-        <LinearGradient
-          colors={theme.gradients.webHeader.colors}
-          start={theme.gradients.webHeader.start}
-          end={theme.gradients.webHeader.end}
-          style={styles.header}
-        >
-          <Text variant="h2" weight="bold" color="primary-foreground">
-            Tools
-          </Text>
-        </LinearGradient>
         <View style={styles.toolsGrid}>
           {tools.map((tool) => (
             <TouchableOpacity
@@ -213,7 +211,7 @@ export const ToolsScreen: React.FC = () => {
                         <Text variant="body" weight="bold" color="muted">
                           {tool.title}
                         </Text>
-                        <FontAwesome5 name="lock" size={10} color={theme.colors.textMuted} solid />
+                        <Lock size={10} color={theme.colors.textMuted} weight="fill" />
                       </View>
                       <Text variant="small" color="muted" style={styles.toolDescription}>
                         {tool.description}
@@ -257,31 +255,21 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.sm,
-  },
-  header: {
-    borderRadius: theme.borderRadius.webCard,
-    paddingHorizontal: theme.spacing.sm,
-    paddingLeft: theme.spacing.md,
-    paddingVertical: 0,
-    minHeight: theme.layout.headerHeight + theme.spacing.lg,
-    justifyContent: 'center',
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
   },
   toolsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
     justifyContent: 'space-between',
+    marginTop: theme.spacing.xl,
   },
   toolButton: {
     width: '48%',
-    marginBottom: theme.spacing.md,
   },
   toolCard: {
-    height: 112,
-    borderRadius: theme.borderRadius.webCard,
+    height: 100,
+    borderRadius: 12,
     overflow: 'hidden',
     padding: 0,
     marginBottom: 0,
