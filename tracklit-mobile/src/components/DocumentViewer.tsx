@@ -65,7 +65,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.08)',
     backgroundColor: 'rgba(10, 21, 41, 0.6)',
     overflow: 'hidden',
-    height: 420,
+    height: 559,
+    marginTop: 50,
   },
   header: {
     flexDirection: 'row',
