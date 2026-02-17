@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
+import { DocumentViewer } from '@/components/DocumentViewer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -71,6 +71,7 @@ export const PracticeScreen: React.FC = () => {
   const [daysToShow, setDaysToShow] = useState(7);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [workoutCards, setWorkoutCards] = useState<any[]>([]);
+  const [docViewerUrl, setDocViewerUrl] = useState<string | null>(null);
 
   const purchasedProgramsQuery = useQuery({
     queryKey: ['purchased-programs'],
@@ -161,7 +162,7 @@ export const PracticeScreen: React.FC = () => {
       queryKey: ['/api/programs', assignment.programId, 'sessions'],
     });
     if (assignment.program?.isUploadedProgram && assignment.program?.programFileUrl) {
-      WebBrowser.openBrowserAsync(assignment.program.programFileUrl);
+      setDocViewerUrl(assignment.program.programFileUrl);
     }
   };
 
@@ -241,7 +242,7 @@ export const PracticeScreen: React.FC = () => {
                   <Button
                     variant="default"
                     size="md"
-                    onPress={() => WebBrowser.openBrowserAsync(selectedProgram.program.programFileUrl!)}
+                    onPress={() => setDocViewerUrl(selectedProgram.program.programFileUrl!)}
                     style={styles.openDocButton}
                   >
                     <Upload size={14} color="white" weight="fill" />
@@ -335,6 +336,13 @@ export const PracticeScreen: React.FC = () => {
       </TouchableOpacity>
 
       <TargetTimesDrawer visible={showTargetTimes} onClose={() => setShowTargetTimes(false)} />
+
+      <DocumentViewer
+        visible={!!docViewerUrl}
+        url={docViewerUrl || ''}
+        title={selectedProgram?.program?.title || 'Program Document'}
+        onClose={() => setDocViewerUrl(null)}
+      />
     </LinearGradient>
   );
 };
