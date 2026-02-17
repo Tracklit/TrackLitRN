@@ -47,7 +47,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { OnboardingProvider, useOnboarding } from './src/contexts/OnboardingContext';
 import { Text } from './src/components/ui/Text';
-import { Avatar } from './src/components/ui/Avatar';
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
@@ -100,7 +99,7 @@ import { VelocityTrackerScreen } from './src/screens/VelocityTrackerScreen';
 import { SprintTimePredictionScreen } from './src/screens/SprintTimePredictionScreen';
 import type { TabParamList, RootStackParamList, AuthStackParamList } from './src/navigation/types';
 import { queryClient } from './src/lib/queryClient';
-import { env } from './src/config/env';
+
 import theme from './src/utils/theme';
 import { OnboardingOverlay } from './src/onboarding/OnboardingOverlay';
 
@@ -280,13 +279,6 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const isGuest = user?.id === 'guest';
   const isCoach = (user as any)?.isCoach === true;
   const isAdmin = (user as any)?.role === 'admin';
-  const rawProfileImageUrl = (user as any)?.profileImageUrl as string | undefined | null;
-  const profileImageUrl = rawProfileImageUrl
-    ? (rawProfileImageUrl.startsWith('/') ? `${env.API_BASE_URL}${rawProfileImageUrl}` : rawProfileImageUrl)
-    : undefined;
-  const avatarFallback = (user?.name || user?.username || 'TrackLit Athlete')
-    .slice(0, 2)
-    .toUpperCase();
 
   const navigateIntoAppStack = (params: any) => {
     (props.navigation as any).navigate('AppStack', params);
@@ -537,24 +529,6 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       ]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.drawerIdentity}>
-        <View style={styles.drawerIdentityRow}>
-          <Avatar
-            src={profileImageUrl}
-            fallback={avatarFallback}
-            size="lg"
-            style={styles.drawerAvatar}
-          />
-          <View style={styles.drawerIdentityText}>
-            <Text variant="body" weight="bold" color="foreground">
-              {user?.name || 'TrackLit Athlete'}
-            </Text>
-            <Text variant="small" color="muted">
-              @{user?.username || 'guest'}
-            </Text>
-          </View>
-        </View>
-      </View>
 
       {sections.map((section) => {
         const filteredItems = section.items.filter((item) => {
@@ -777,24 +751,6 @@ const styles = StyleSheet.create({
   drawerHeaderCopyInner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  drawerIdentity: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.sidebarBorder,
-  },
-  drawerIdentityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  drawerAvatar: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  drawerIdentityText: {
-    flex: 1,
   },
   drawerSection: {
     paddingTop: theme.spacing.md,

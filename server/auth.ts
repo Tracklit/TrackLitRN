@@ -643,14 +643,20 @@ export function setupAuth(app: Express) {
   // Dedicated mobile login endpoint with explicit token generation
   app.post("/api/mobile/login", async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { username, email, password } = req.body;
+      const identifier = username || email;
       
-      if (!username || !password) {
+      if (!identifier || !password) {
         return res.status(400).json({ error: "Username and password are required" });
       }
 
-      // Find user by username
-      const user = await storage.getUserByUsername(username);
+      let user = null;
+      if (email || (identifier && identifier.includes('@'))) {
+        user = await storage.getUserByEmail(identifier);
+      }
+      if (!user) {
+        user = await storage.getUserByUsername(identifier);
+      }
       if (!user) {
         return res.status(401).json({ error: "Invalid username or password" });
       }

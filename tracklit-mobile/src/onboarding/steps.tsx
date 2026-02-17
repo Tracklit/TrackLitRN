@@ -1,17 +1,9 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { DrawerActions } from '@react-navigation/native';
 import {
   Sparkles,
   Info,
   Coins,
-  Home,
-  Calendar,
-  BookOpen,
-  Newspaper,
-  Wrench,
-  MessageSquare,
-  User,
 } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -93,19 +85,6 @@ const InfoBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </View>
 );
 
-const navigateToTab = (navRef: any, tabName: string) => {
-  if (!navRef?.isReady?.()) return;
-
-  try {
-    navRef.dispatch?.(DrawerActions.closeDrawer());
-  } catch {
-    // ignore
-  }
-
-  // Root navigator is a Drawer with a single screen "AppStack" which hosts the native stack.
-  // Tabs live at AppStack -> MainTabs -> <TabName>.
-  navRef.navigate?.('AppStack', { screen: 'MainTabs', params: { screen: tabName } });
-};
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
@@ -156,6 +135,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     title: 'Meet Spikes',
     icon: <Coins size={34} color="#f59e0b" />,
     showClaimSpikes: true,
+    primaryCtaLabel: 'Finish',
     body: (
       <View style={{ gap: theme.spacing.md }}>
         <Text variant="body" color="muted" center>
@@ -185,127 +165,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
             <BulletRow>Priority support</BulletRow>
           </View>
         </View>
-      </View>
-    ),
-  },
-  {
-    id: 'tour-home',
-    mode: 'tour',
-    title: 'Home',
-    icon: <Home size={26} color={theme.colors.foreground} />,
-    onEnter: (navRef) => navigateToTab(navRef, 'Home'),
-    body: (
-      <View style={{ gap: theme.spacing.sm }}>
-        <Text variant="body" color="muted">
-          Your dashboard. See what is happening, pick where to go next, and get back into training
-          quickly.
-        </Text>
-        <Text variant="caption" color="muted">
-          Tip: Use the Home cards as shortcuts into Practice, Programs, and Tools.
-        </Text>
-      </View>
-    ),
-  },
-  {
-    id: 'tour-practice',
-    mode: 'tour',
-    title: 'Practice',
-    icon: <Calendar size={26} color={theme.colors.foreground} />,
-    onEnter: (navRef) => navigateToTab(navRef, 'Practice'),
-    body: (
-      <View style={{ gap: theme.spacing.sm }}>
-        <Text variant="body" color="muted">
-          Your daily workout hub. Log sessions, follow your plan, and build consistency.
-        </Text>
-        <Text variant="caption" color="muted">
-          Tip: Start here on training days to keep everything in one place.
-        </Text>
-      </View>
-    ),
-  },
-  {
-    id: 'tour-programs',
-    mode: 'tour',
-    title: 'Programs',
-    icon: <BookOpen size={26} color={theme.colors.foreground} />,
-    onEnter: (navRef) => navigateToTab(navRef, 'Programs'),
-    body: (
-      <View style={{ gap: theme.spacing.sm }}>
-        <Text variant="body" color="muted">
-          Explore training plans, open the sample program, and build or edit your own programs.
-        </Text>
-        <Text variant="caption" color="muted">
-          Tip: Programs are the best way to stay structured week to week.
-        </Text>
-      </View>
-    ),
-  },
-  {
-    id: 'tour-feed',
-    mode: 'tour',
-    title: 'Feed',
-    icon: <Newspaper size={26} color={theme.colors.foreground} />,
-    onEnter: (navRef) => navigateToTab(navRef, 'Feed'),
-    body: (
-      <View style={{ gap: theme.spacing.sm }}>
-        <Text variant="body" color="muted">
-          Follow the community. Share updates, see what others are doing, and stay motivated.
-        </Text>
-        <Text variant="caption" color="muted">
-          Tip: Engaging with the community helps you earn Spikes over time.
-        </Text>
-      </View>
-    ),
-  },
-  {
-    id: 'tour-tools',
-    mode: 'tour',
-    title: 'Tools',
-    icon: <Wrench size={26} color={theme.colors.foreground} />,
-    onEnter: (navRef) => navigateToTab(navRef, 'Tools'),
-    body: (
-      <View style={{ gap: theme.spacing.sm }}>
-        <Text variant="body" color="muted">
-          Training and performance tools like stopwatch, start gun, video analysis, and more.
-        </Text>
-        <Text variant="caption" color="muted">
-          Tip: Use Tools on the track to capture reps and stay focused.
-        </Text>
-      </View>
-    ),
-  },
-  {
-    id: 'tour-sprinthia',
-    mode: 'tour',
-    title: 'Sprinthia',
-    icon: <MessageSquare size={26} color={theme.colors.foreground} />,
-    onEnter: (navRef) => navigateToTab(navRef, 'Sprinthia'),
-    body: (
-      <View style={{ gap: theme.spacing.sm }}>
-        <Text variant="body" color="muted">
-          Your AI coach. Ask questions, get guidance, and generate training ideas.
-        </Text>
-        <Text variant="caption" color="muted">
-          Tip: If you are unsure what to do next, start by asking Sprinthia.
-        </Text>
-      </View>
-    ),
-  },
-  {
-    id: 'tour-profile',
-    mode: 'tour',
-    title: 'Profile',
-    icon: <User size={26} color={theme.colors.foreground} />,
-    onEnter: (navRef) => navigateToTab(navRef, 'Profile'),
-    primaryCtaLabel: 'Finish',
-    body: (
-      <View style={{ gap: theme.spacing.sm }}>
-        <Text variant="body" color="muted">
-          Customize your profile, update preferences, and manage your account.
-        </Text>
-        <Text variant="caption" color="muted">
-          You can replay this tour any time from your Profile.
-        </Text>
       </View>
     ),
   },

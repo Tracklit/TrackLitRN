@@ -211,17 +211,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => sub.remove();
   }, [loginWithToken]);
 
-  const login = useCallback(async (username: string, password: string) => {
+  const login = useCallback(async (usernameOrEmail: string, password: string) => {
     if (DEBUG_AUTH) {
-      console.log('[AUTH] Attempting login for:', username);
+      console.log('[AUTH] Attempting login for:', usernameOrEmail);
     }
     
     try {
-      // Use dedicated mobile login endpoint for reliable token generation
+      const isEmail = usernameOrEmail.includes('@');
       const response = await apiRequest<LoginResponse>('/api/mobile/login', {
         method: 'POST',
-        data: { username, password },
-        skipAuth: true, // Don't add auth header for login
+        data: isEmail
+          ? { email: usernameOrEmail, password }
+          : { username: usernameOrEmail, password },
+        skipAuth: true,
       });
 
       if (DEBUG_AUTH) {

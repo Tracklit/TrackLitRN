@@ -1,7 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Dimensions,
   Modal,
+  PanResponder,
   StyleSheet,
   View,
 } from 'react-native';
@@ -114,6 +117,50 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
 
   const canGoBack = currentStepIndex > 0;
   const isLastStep = currentStepIndex === totalSteps - 1;
+
+  const SCREEN_WIDTH = Dimensions.get('window').width;
+  const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.2;
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) =>
+        Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dy) < Math.abs(gestureState.dx),
+      onPanResponderMove: (_, gestureState) => {
+        translateX.setValue(gestureState.dx);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -SWIPE_THRESHOLD) {
+          Animated.timing(translateX, {
+            toValue: -SCREEN_WIDTH,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            translateX.setValue(0);
+            if (isLastStep) {
+              complete();
+            } else {
+              next();
+            }
+          });
+        } else if (gestureState.dx > SWIPE_THRESHOLD && canGoBack) {
+          Animated.timing(translateX, {
+            toValue: SCREEN_WIDTH,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            translateX.setValue(0);
+            back();
+          });
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   const primaryLabel = useMemo(() => {
     if (isLastStep) return step?.primaryCtaLabel ?? 'Finish';
@@ -238,24 +285,29 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
             { paddingTop: insets.top + theme.spacing.lg, paddingBottom: insets.bottom + theme.spacing.lg },
           ]}
         >
-          <Card style={styles.introCard} contentStyle={styles.cardContentNoFlex}>
-            <View style={styles.iconWrap}>{step.icon}</View>
-            <Text variant="h3" weight="bold" color="foreground" center>
-              {step.title}
-            </Text>
-
-            <View style={styles.bodyWrap}>{step.body}</View>
-
-            {renderClaimBlock()}
-
-            <View style={styles.footerWrap}>
-              <Text variant="small" color="muted" center>
-                Step {currentStepIndex + 1} of {totalSteps}
+          <Animated.View
+            {...panResponder.panHandlers}
+            style={{ transform: [{ translateX }] }}
+          >
+            <Card style={styles.introCard} contentStyle={styles.cardContentNoFlex}>
+              <View style={styles.iconWrap}>{step.icon}</View>
+              <Text variant="h3" weight="bold" color="foreground" center>
+                {step.title}
               </Text>
-              <StepDots total={totalSteps} current={currentStepIndex} />
-              <FooterButtons />
-            </View>
-          </Card>
+
+              <View style={styles.bodyWrap}>{step.body}</View>
+
+              {renderClaimBlock()}
+
+              <View style={styles.footerWrap}>
+                <Text variant="small" color="muted" center>
+                  Step {currentStepIndex + 1} of {totalSteps}
+                </Text>
+                <StepDots total={totalSteps} current={currentStepIndex} />
+                <FooterButtons />
+              </View>
+            </Card>
+          </Animated.View>
 
           {claimMutation.isPending ? (
             <View style={styles.loadingOverlay} pointerEvents="none">

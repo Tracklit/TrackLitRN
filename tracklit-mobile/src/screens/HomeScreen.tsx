@@ -30,14 +30,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from '@/components/LinearGradient';
 import { Card } from '../components/ui/Card';
 import { Text } from '../components/ui/Text';
-import { Avatar } from '../components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { apiRequest } from '@/lib/api';
-import { env } from '@/config/env';
+
 import theme from '../utils/theme';
 
 interface HomeScreenProps {
@@ -88,11 +87,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
   const userId = user?.id;
-  const rawProfileImageUrl = user?.profileImageUrl ?? undefined;
-  const profileImageUrl = rawProfileImageUrl
-    ? (rawProfileImageUrl.startsWith('/') ? `${env.API_BASE_URL}${rawProfileImageUrl}` : rawProfileImageUrl)
-    : undefined;
-  const avatarInitials = user?.name ? user.name.slice(0, 2).toUpperCase() : undefined;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -295,19 +289,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                   </Text>
                 </View>
               )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.headerActionButton}
-                onPress={() => onNavigate?.('Profile')}
-                accessibilityRole="button"
-                accessibilityLabel="Profile"
-              >
-                <Avatar
-                  src={profileImageUrl}
-                  size="sm"
-                  fallback={avatarInitials}
-                  style={styles.profileAvatarHeader}
-                />
               </TouchableOpacity>
             </>
           }
@@ -663,10 +644,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.xs,
   },
-  profileAvatarHeader: {
-    borderWidth: 1.5,
-    borderColor: theme.colors.accent,
-  },
   practiceCardWrapper: {
     marginBottom: theme.spacing.xxxl,
   },
@@ -674,7 +651,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: theme.spacing.lg,
     paddingBottom: theme.spacing.xl,
-    height: 120,
+    height: 240,
   },
   practiceTopRow: {
     flexDirection: 'row',

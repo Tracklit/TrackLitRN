@@ -12,7 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import theme from '../../utils/theme';
 
 interface LoginFormData {
-  username: string;
+  usernameOrEmail: string;
   password: string;
 }
 
@@ -24,7 +24,7 @@ interface LoginFormProps {
 export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForgotPassword }) => {
   const { login } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
-    username: '',
+    usernameOrEmail: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
@@ -41,8 +41,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
   const validateForm = (): boolean => {
     const newErrors: Partial<LoginFormData> = {};
     
-    if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
+    if (!formData.usernameOrEmail.trim()) {
+      newErrors.usernameOrEmail = 'Username or email is required';
     }
     
     if (!formData.password.trim()) {
@@ -58,15 +58,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
 
     setLoading(true);
     try {
-      const success = await login(formData.username, formData.password);
-      
-      if (!success) {
-        Alert.alert(
-          'Login Failed',
-          'Invalid username or password. Please try again.',
-          [{ text: 'OK' }]
-        );
-      }
+      await login(formData.usernameOrEmail, formData.password);
     } catch (error) {
       const message =
         error instanceof Error && error.message
@@ -82,13 +74,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
     <View style={styles.container}>
       <View style={styles.form}>
         <Input
-          label="Username"
-          value={formData.username}
-          onChangeText={(value) => handleInputChange('username', value)}
-          placeholder="Enter your username"
-          error={errors.username}
+          label="Username or Email"
+          value={formData.usernameOrEmail}
+          onChangeText={(value) => handleInputChange('usernameOrEmail', value)}
+          placeholder="Enter your username or email"
+          error={errors.usernameOrEmail}
           autoCapitalize="none"
           autoCorrect={false}
+          keyboardType="email-address"
           data-testid="input-username"
         />
 
