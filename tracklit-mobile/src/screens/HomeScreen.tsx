@@ -312,7 +312,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     },
     {
       title: 'Sprinthia',
-      description: 'Your AI coach is ready',
+      description: 'Your AI Track Companion',
       iconName: 'comments',
       route: 'Sprinthia',
       disabled: false,
@@ -498,7 +498,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           style={styles.practiceCardWrapper}
         >
           <LinearGradient
-            colors={['#7c3aed', '#a855f7']}
+            colors={['#6d28d9', '#c084fc']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.practiceCard}
