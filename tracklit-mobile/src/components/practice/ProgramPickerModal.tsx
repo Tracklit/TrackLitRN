@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Modal,
@@ -6,12 +6,11 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { ClipboardText, CheckCircle } from 'phosphor-react-native';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
 import theme from '@/utils/theme';
 
 interface Program {
@@ -46,6 +45,14 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
   onSelect,
   isLoading,
 }) => {
+  const sortedPrograms = useMemo(() => {
+    return [...programs].sort((a, b) => {
+      const titleA = (a.program?.title || '').toLowerCase();
+      const titleB = (b.program?.title || '').toLowerCase();
+      return titleA.localeCompare(titleB);
+    });
+  }, [programs]);
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -72,9 +79,9 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
                   Loading programs...
                 </Text>
               </View>
-            ) : programs.length > 0 ? (
+            ) : sortedPrograms.length > 0 ? (
               <View style={styles.programList}>
-                {programs.map((assignment) => {
+                {sortedPrograms.map((assignment) => {
                   const isSelected = selectedProgramId === assignment.id;
                   return (
                     <TouchableOpacity
@@ -83,11 +90,10 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
                       onPress={() => onSelect(assignment)}
                     >
                       <View style={[styles.programIcon, isSelected && styles.programIconSelected]}>
-                        <FontAwesome5
-                          name="clipboard-list"
+                        <ClipboardText
                           size={16}
                           color={isSelected ? 'white' : 'rgba(255,255,255,0.8)'}
-                          solid
+                          weight="fill"
                         />
                       </View>
                       <View style={styles.programInfo}>
@@ -104,14 +110,14 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
                           {assignment.program?.duration ? ` • ${assignment.program.duration}` : ''}
                         </Text>
                       </View>
-                      {isSelected && <View style={styles.selectedDot} />}
+                      {isSelected && <CheckCircle size={20} color="#60a5fa" weight="fill" />}
                     </TouchableOpacity>
                   );
                 })}
               </View>
             ) : (
               <View style={styles.emptyState}>
-                <FontAwesome5 name="clipboard-list" size={36} color="rgba(255,255,255,0.6)" solid />
+                <ClipboardText size={36} color="rgba(255,255,255,0.6)" weight="fill" />
                 <Text variant="body" color="primary-foreground" style={styles.emptyTitle}>
                   No programs assigned yet
                 </Text>
@@ -122,11 +128,10 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
             )}
           </ScrollView>
 
-          <Card style={styles.footerCard}>
-            <CardContent style={styles.closeContent}>
-              <Button variant="outline" size="md" onPress={onClose} title="Close" />
-            </CardContent>
-          </Card>
+          <View style={styles.footer}>
+            <View style={styles.footerSpacer} />
+            <Button variant="outline" size="md" onPress={onClose} title="Close" />
+          </View>
         </LinearGradient>
       </View>
     </Modal>
@@ -144,7 +149,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalCard: {
-    borderRadius: theme.borderRadius.webCard,
+    borderRadius: 12,
     padding: theme.spacing.lg,
     maxHeight: '80%',
     overflow: 'hidden',
@@ -172,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.md,
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.webCard,
+    borderRadius: 12,
     backgroundColor: 'rgba(15, 23, 42, 0.6)',
     borderWidth: 2,
     borderColor: 'transparent',
@@ -199,12 +204,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     marginTop: theme.spacing.xs,
   },
-  selectedDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(96, 165, 250, 1)',
-  },
   emptyState: {
     alignItems: 'center',
     paddingVertical: theme.spacing.xl,
@@ -217,13 +216,12 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     textAlign: 'center',
   },
-  footerCard: {
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
     marginTop: theme.spacing.md,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    borderWidth: 0,
   },
-  closeContent: {
-    alignItems: 'center',
+  footerSpacer: {
+    flex: 1,
   },
 });
-

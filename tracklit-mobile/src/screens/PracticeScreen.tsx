@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -239,9 +240,20 @@ export const PracticeScreen: React.FC = () => {
                   </View>
                   <View style={styles.programNote}>
                     <Text variant="small" color="muted">
-                      Open the document on web to view the full program.
+                      Tap below to open your uploaded program document.
                     </Text>
                   </View>
+                  <Button
+                    variant="default"
+                    size="md"
+                    onPress={() => Linking.openURL(selectedProgram.program.programFileUrl!)}
+                    style={styles.openDocButton}
+                  >
+                    <Upload size={14} color="white" weight="fill" />
+                    <Text variant="small" weight="bold" color="primary-foreground" style={{ marginLeft: 6 }}>
+                      Open Document
+                    </Text>
+                  </Button>
                 </CardContent>
               </Card>
             ) : (
@@ -695,6 +707,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: theme.spacing.sm,
     opacity: 0.8,
+  },
+  openDocButton: {
+    marginTop: theme.spacing.md,
+    alignSelf: 'flex-start',
   },
   targetTimesButton: {
     position: 'absolute',

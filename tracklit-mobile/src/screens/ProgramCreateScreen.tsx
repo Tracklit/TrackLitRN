@@ -10,7 +10,20 @@ import {
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import {
+  ArrowLeft,
+  FileArrowUp,
+  ClipboardText,
+  Keyboard,
+  Robot,
+  Upload,
+  BookOpen,
+  Check,
+  Paperclip,
+  PencilSimple,
+  CloudArrowUp,
+  MagicWand,
+} from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
@@ -296,31 +309,31 @@ export const ProgramCreateScreen: React.FC = () => {
       id: 'upload' as const,
       title: 'Upload Document',
       description: 'Share existing training documents in PDF or DOCX format.',
-      icon: 'file-upload',
+      Icon: FileArrowUp,
     },
     {
       id: 'builder' as const,
       title: 'Program Builder',
       description: 'Create a structured program with sessions and exercises.',
-      icon: 'clipboard-list',
+      Icon: ClipboardText,
     },
     {
       id: 'text' as const,
       title: 'Text Based',
       description: 'Create a simple text-based program for Practice view.',
-      icon: 'keyboard',
+      Icon: Keyboard,
     },
     {
       id: 'sprinthia' as const,
       title: 'Build With Sprinthia',
       description: 'Generate a text program with AI assistance.',
-      icon: 'robot',
+      Icon: Robot,
     },
     {
       id: 'import' as const,
       title: 'Import from Sheets',
       description: 'Connect Google Sheets for auto-sync.',
-      icon: 'upload',
+      Icon: Upload,
     },
   ];
 
@@ -391,20 +404,15 @@ export const ProgramCreateScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <LinearGradient
-        colors={theme.gradients.webHeader.colors}
-        start={theme.gradients.webHeader.start}
-        end={theme.gradients.webHeader.end}
-        style={[styles.header, { paddingTop: insets.top }]}
-      >
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <FontAwesome5 name="arrow-left" size={18} color="white" solid />
+          <ArrowLeft size={18} color="white" weight="fill" />
         </TouchableOpacity>
         <Text variant="h3" weight="bold" color="primary-foreground">
           Create Program
         </Text>
         <View style={styles.headerSpacer} />
-      </LinearGradient>
+      </View>
 
       <KeyboardAwareScreenScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
@@ -442,7 +450,7 @@ export const ProgramCreateScreen: React.FC = () => {
                   style={styles.methodCardContent}
                 >
                   <View style={styles.methodIcon}>
-                    <FontAwesome5 name={item.icon as any} size={20} color="white" solid />
+                    <item.Icon size={20} color="white" weight="fill" />
                   </View>
                   <Text variant="body" weight="bold" color="primary-foreground" style={styles.methodTitle}>
                     {item.title}
@@ -460,7 +468,7 @@ export const ProgramCreateScreen: React.FC = () => {
             onPress={() => setSelectedMethod(null)}
             style={styles.chooseMethodButton}
           >
-            <FontAwesome5 name="arrow-left" size={14} color={theme.colors.primaryForeground} solid />
+            <ArrowLeft size={14} color={theme.colors.primaryForeground} weight="fill" />
             <Text variant="small" weight="medium" color="primary-foreground" style={styles.chooseMethodText}>
               Choose Different Method
             </Text>
@@ -471,7 +479,7 @@ export const ProgramCreateScreen: React.FC = () => {
           <Card style={styles.card}>
             <CardHeader style={styles.cardHeader}>
               <View style={styles.cardHeaderRow}>
-                <FontAwesome5 name="book-open" size={16} color={theme.colors.primary} solid />
+                <BookOpen size={16} color={theme.colors.primary} weight="fill" />
                 <CardTitle>Build Custom Program</CardTitle>
               </View>
               <Text variant="small" color="muted">
@@ -575,7 +583,7 @@ export const ProgramCreateScreen: React.FC = () => {
                 loading={createProgramMutation.isPending}
                 disabled={!isAuthenticated || isGuest}
               >
-                <FontAwesome5 name="check" size={16} color="white" solid />
+                <Check size={16} color="white" weight="fill" />
                 <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
                   Create Program
                 </Text>
@@ -594,7 +602,7 @@ export const ProgramCreateScreen: React.FC = () => {
           <Card style={styles.card}>
             <CardHeader style={styles.cardHeader}>
               <View style={styles.cardHeaderRow}>
-                <FontAwesome5 name="file-upload" size={16} color={theme.colors.primary} solid />
+                <FileArrowUp size={16} color={theme.colors.primary} weight="fill" />
                 <CardTitle>Upload Program Document</CardTitle>
               </View>
               <Text variant="small" color="muted">
@@ -619,7 +627,7 @@ export const ProgramCreateScreen: React.FC = () => {
               />
 
               <TouchableOpacity style={styles.uploadPicker} onPress={pickUploadFile}>
-                <FontAwesome5 name="paperclip" size={16} color="white" solid />
+                <Paperclip size={16} color="white" weight="fill" />
                 <Text variant="small" weight="medium" color="primary-foreground">
                   {uploadFile?.name ?? 'Choose file'}
                 </Text>
@@ -690,7 +698,7 @@ export const ProgramCreateScreen: React.FC = () => {
                 loading={uploadProgramMutation.isPending}
                 disabled={!isAuthenticated || isGuest}
               >
-                <FontAwesome5 name="cloud-upload-alt" size={16} color="white" solid />
+                <CloudArrowUp size={16} color="white" weight="fill" />
                 <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
                   Upload Program
                 </Text>
@@ -703,7 +711,7 @@ export const ProgramCreateScreen: React.FC = () => {
           <Card style={styles.card}>
             <CardHeader style={styles.cardHeader}>
               <View style={styles.cardHeaderRow}>
-                <FontAwesome5 name="keyboard" size={16} color={theme.colors.primary} solid />
+                <Keyboard size={16} color={theme.colors.primary} weight="fill" />
                 <CardTitle>Text Based Program</CardTitle>
               </View>
               <Text variant="small" color="muted">
@@ -797,7 +805,7 @@ export const ProgramCreateScreen: React.FC = () => {
                 loading={createProgramMutation.isPending}
                 disabled={!isAuthenticated || isGuest}
               >
-                <FontAwesome5 name="check" size={16} color="white" solid />
+                <Check size={16} color="white" weight="fill" />
                 <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
                   Create Text Program
                 </Text>
@@ -810,7 +818,7 @@ export const ProgramCreateScreen: React.FC = () => {
           <Card style={[styles.card, styles.sprinthiaCard]}>
             <CardHeader style={styles.cardHeader}>
               <View style={styles.cardHeaderRow}>
-                <FontAwesome5 name="robot" size={16} color="#f59e0b" solid />
+                <Robot size={16} color="#f59e0b" weight="fill" />
                 <CardTitle>Build With Sprinthia AI</CardTitle>
               </View>
               <Text variant="small" color="muted">
@@ -986,7 +994,7 @@ export const ProgramCreateScreen: React.FC = () => {
                     loading={generateSprinthiaMutation.isPending}
                     disabled={!isAuthenticated || isGuest}
                   >
-                    <FontAwesome5 name="magic" size={16} color="white" solid />
+                    <MagicWand size={16} color="white" weight="fill" />
                     <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
                       Generate Training Program
                     </Text>
@@ -1004,7 +1012,7 @@ export const ProgramCreateScreen: React.FC = () => {
                   </View>
                   <View style={styles.generatedActions}>
                     <Button variant="default" size="md" onPress={continueToEditSprinthia}>
-                      <FontAwesome5 name="edit" size={14} color="white" solid />
+                      <PencilSimple size={14} color="white" weight="fill" />
                       <Text variant="small" weight="bold" color="primary-foreground" style={styles.buttonText}>
                         Continue to Edit
                       </Text>
@@ -1143,10 +1151,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.webBorderLight,
   },
   backButton: {
     width: 40,
@@ -1159,7 +1165,7 @@ const styles = StyleSheet.create({
   },
   headerSpacer: { flex: 1 },
   content: {
-    padding: theme.spacing.lg,
+    padding: theme.spacing.xl,
     gap: theme.spacing.lg,
   },
   pageHeader: {
@@ -1173,7 +1179,7 @@ const styles = StyleSheet.create({
   },
   methodCard: {
     width: '48%',
-    borderRadius: theme.borderRadius.webCard,
+    borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: theme.colors.webBorderLight,
@@ -1205,7 +1211,7 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 0,
-    borderRadius: theme.borderRadius.webCard,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.webCardBorder,
   },

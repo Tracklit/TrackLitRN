@@ -92,7 +92,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
     >
       <View style={styles.iconContainer}>
         <IconComp
-          size={20}
+          size={23}
           color={contentColor}
           weight="fill"
         />
@@ -169,12 +169,13 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -15,
     left: 0,
     right: 0,
     backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingTop: 15,
   },
   navBar: {
     flexDirection: 'row',

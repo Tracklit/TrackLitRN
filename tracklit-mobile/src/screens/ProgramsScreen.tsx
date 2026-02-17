@@ -761,13 +761,9 @@ const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
       <CardHeader style={styles.programHeader}>
         <View style={styles.programTitleRow}>
           <CardTitle style={styles.programTitle}>{program.title}</CardTitle>
-          {badgeLabel ? (
+          {badgeLabel && (
             <Badge variant={badgeVariant} size="sm">
               {badgeLabel}
-            </Badge>
-          ) : (
-            <Badge variant={levelBadge ?? 'default'} size="sm">
-              {program.level || program.difficulty || 'All Levels'}
             </Badge>
           )}
         </View>
@@ -890,6 +886,7 @@ const styles = StyleSheet.create({
   searchInputWrapper: {
     flex: 1,
     minWidth: 160,
+    height: 40,
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
@@ -898,7 +895,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
   },
   searchInput: {
     flex: 1,
@@ -908,12 +904,12 @@ const styles = StyleSheet.create({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 40,
     gap: theme.spacing.xs,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
   },
   filterText: {
@@ -922,6 +918,7 @@ const styles = StyleSheet.create({
   viewToggle: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 40,
     borderRadius: theme.borderRadius.sm,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -929,7 +926,8 @@ const styles = StyleSheet.create({
   },
   viewToggleButton: {
     paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
+    height: '100%',
+    justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   viewToggleActive: {
