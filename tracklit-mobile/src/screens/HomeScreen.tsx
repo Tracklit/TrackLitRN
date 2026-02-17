@@ -12,6 +12,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  cancelAnimation,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
@@ -118,14 +119,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   }));
 
   const promoteNext = useCallback((idx: number) => {
-    setCurrentActivityIndex(idx);
-    setNextActivityIndex(null);
-    isAnimatingRef.current = false;
-    currentOpacity.value = 1;
-    currentTranslateX.value = 0;
+    cancelAnimation(currentOpacity);
+    cancelAnimation(currentTranslateX);
+    cancelAnimation(nextOpacity);
+    cancelAnimation(nextTranslateX);
+    cancelAnimation(nextScale);
+
     nextOpacity.value = 0;
     nextTranslateX.value = 12;
     nextScale.value = 0.98;
+
+    setNextActivityIndex(null);
+    setCurrentActivityIndex(idx);
+
+    currentOpacity.value = 1;
+    currentTranslateX.value = 0;
+    isAnimatingRef.current = false;
   }, []);
 
   const triggerTransition = useCallback((nextIdx: number) => {

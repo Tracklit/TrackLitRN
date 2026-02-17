@@ -528,7 +528,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           accessibilityRole="button"
           accessibilityLabel="Close menu"
         >
-          <X size={18} color={theme.colors.muted} weight="bold" />
+          <X size={18} color="rgba(255,255,255,0.85)" weight="bold" />
         </TouchableOpacity>
       </View>
       <ScrollView

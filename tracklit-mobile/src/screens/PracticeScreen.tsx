@@ -8,7 +8,13 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import {
+  ClipboardText,
+  Upload,
+  CircleIcon as Circle,
+  CheckCircle,
+  Timer,
+} from 'phosphor-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -183,29 +189,21 @@ export const PracticeScreen: React.FC = () => {
         }
       >
         <InlineRefreshHeader visible={isRefreshing} />
-        <LinearGradient
-          colors={theme.gradients.webHeader.colors}
-          start={theme.gradients.webHeader.start}
-          end={theme.gradients.webHeader.end}
-          style={styles.header}
-        >
-          <Text variant="h2" weight="bold" color="primary-foreground">
-            Practice
-          </Text>
-        </LinearGradient>
 
-        <Button
-          variant="outline"
-          onPress={() => setShowProgramPicker(true)}
-          style={styles.programsButton}
-        >
-          <View style={styles.programsButtonContent}>
-            <FontAwesome5 name="clipboard-list" size={14} color={theme.colors.primaryForeground} solid />
-            <Text variant="small" weight="medium" color="primary-foreground">
-              Your Programs
-            </Text>
-          </View>
-        </Button>
+        <View style={styles.programsRow}>
+          <Button
+            variant="outline"
+            onPress={() => setShowProgramPicker(true)}
+            style={styles.programsButton}
+          >
+            <View style={styles.programsButtonContent}>
+              <ClipboardText size={14} color={theme.colors.primaryForeground} weight="fill" />
+              <Text variant="small" weight="medium" color="primary-foreground">
+                Your Programs
+              </Text>
+            </View>
+          </Button>
+        </View>
 
         {selectedProgram ? (
           <View style={styles.contentContainer}>
@@ -213,8 +211,8 @@ export const PracticeScreen: React.FC = () => {
               <Card style={styles.textProgramCard}>
                 <CardContent>
                   <View style={styles.programHeaderRow}>
-                    <FontAwesome5 name="clipboard-list" size={16} color={theme.colors.primary} solid />
-                    <Text variant="body" weight="semiBold" color="foreground">
+                    <ClipboardText size={16} color={theme.colors.primary} weight="fill" />
+                    <Text variant="small" weight="semiBold" color="foreground">
                       Program Content
                     </Text>
                   </View>
@@ -234,8 +232,8 @@ export const PracticeScreen: React.FC = () => {
               <Card style={styles.textProgramCard}>
                 <CardContent>
                   <View style={styles.programHeaderRow}>
-                    <FontAwesome5 name="upload" size={16} color={theme.colors.primary} solid />
-                    <Text variant="body" weight="semiBold" color="foreground">
+                    <Upload size={16} color={theme.colors.primary} weight="fill" />
+                    <Text variant="small" weight="semiBold" color="foreground">
                       Program Document
                     </Text>
                   </View>
@@ -279,10 +277,10 @@ export const PracticeScreen: React.FC = () => {
                     end={{ x: 1, y: 1 }}
                     style={styles.emptyGradientCard}
                   >
-                    <Text variant="body" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
+                    <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
                       No workout sessions available
                     </Text>
-                    <Text variant="small" color="primary-foreground" style={styles.emptyText}>
+                    <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
                       Check back later or contact your coach for program updates.
                     </Text>
                   </LinearGradient>
@@ -297,14 +295,14 @@ export const PracticeScreen: React.FC = () => {
             end={{ x: 1, y: 1 }}
             style={styles.emptyGradientCard}
           >
-            <Text variant="h4" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
+            <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
               No training program assigned
             </Text>
-            <Text variant="body" color="primary-foreground" style={styles.emptyText}>
+            <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
               Contact your coach to get a program assigned to your account.
             </Text>
             <Button variant="outline" onPress={() => setShowProgramPicker(true)} style={styles.emptyButton}>
-              <Text variant="body" weight="medium" color="primary-foreground">
+              <Text variant="small" weight="medium" color="primary-foreground">
                 View Available Programs
               </Text>
             </Button>
@@ -331,7 +329,7 @@ export const PracticeScreen: React.FC = () => {
           end={theme.gradients.webPurple.end}
           style={styles.targetTimesButtonInner}
         >
-          <FontAwesome5 name="stopwatch" size={20} color="white" solid />
+          <Timer size={20} color="white" weight="fill" />
           <Text variant="small" weight="bold" color="primary-foreground">
             %
           </Text>
@@ -423,7 +421,7 @@ const WorkoutCard = ({
     >
       <View style={styles.cardHeaderRow}>
         <View style={styles.cardHeaderLeft}>
-          <Text variant="body" weight="medium" color="primary-foreground">
+          <Text variant="small" weight="medium" color="primary-foreground">
             {card.dayOfWeek}
           </Text>
           {card.isToday && (
@@ -455,10 +453,10 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
   if (!sessionData) {
     return (
       <View style={styles.restDay}>
-        <Text variant="body" weight="medium" color="primary-foreground">
+        <Text variant="small" weight="medium" color="primary-foreground">
           Rest Day
         </Text>
-        <Text variant="small" color="primary-foreground" style={styles.restDayText}>
+        <Text variant="caption" color="primary-foreground" style={styles.restDayText}>
           Take time to recover and prepare for your next training session.
         </Text>
       </View>
@@ -502,7 +500,7 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
         <View style={styles.cardSection}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIcon}>
-              <FontAwesome5 name="circle" size={10} color="white" solid />
+              <Circle size={10} color="white" weight="fill" />
             </View>
             <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.sectionTitle}>
               {gymNumber ? `Gym ${gymNumber}` : 'Gym Exercises'}
@@ -520,12 +518,10 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
           <View key={section.label} style={styles.cardSection}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionIcon}>
-                <FontAwesome5
-                  name={section.label === 'Pre-Activation' ? 'check-circle' : 'circle'}
-                  size={10}
-                  color="white"
-                  solid
-                />
+                {section.label === 'Pre-Activation'
+                ? <CheckCircle size={10} color="white" weight="fill" />
+                : <Circle size={10} color="white" weight="fill" />
+              }
               </View>
               <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.sectionTitle}>
                 {section.label}
@@ -546,24 +542,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xl,
   },
-  header: {
-    borderRadius: theme.borderRadius.webCard,
-    paddingHorizontal: theme.spacing.sm,
-    paddingLeft: theme.spacing.md,
-    paddingVertical: 0,
-    minHeight: theme.layout.headerHeight + theme.spacing.lg,
-    justifyContent: 'center',
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.md,
+  programsRow: {
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   programsButton: {
-    alignSelf: 'center',
-    marginBottom: theme.spacing.md,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignSelf: 'flex-start',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   programsButtonContent: {
     flexDirection: 'row',
@@ -571,7 +559,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   contentContainer: {
-    marginTop: theme.spacing.lg,
+    marginTop: theme.spacing.md,
   },
   textProgramCard: {
     borderRadius: theme.borderRadius.webCard,
@@ -602,7 +590,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Courier',
   },
   cardsList: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
   loadingState: {
     alignItems: 'center',
@@ -614,9 +602,9 @@ const styles = StyleSheet.create({
   },
   emptyGradientCard: {
     marginTop: theme.spacing.xl,
-    borderRadius: theme.borderRadius.webCard,
-    padding: theme.spacing.md,
-    minHeight: theme.layout.headerHeight + theme.spacing.massive * 2,
+    borderRadius: 12,
+    padding: theme.spacing.xl,
+    minHeight: 120,
     gap: theme.spacing.md,
     overflow: 'hidden',
     ...theme.shadows.md,
@@ -633,8 +621,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   workoutCard: {
-    padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.webCard,
+    padding: theme.spacing.xl,
+    borderRadius: 12,
     ...theme.shadows.md,
   },
   workoutCardToday: {

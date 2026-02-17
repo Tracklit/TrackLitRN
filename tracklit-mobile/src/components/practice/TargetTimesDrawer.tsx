@@ -5,14 +5,28 @@ import {
   StyleSheet,
   TextInput,
   ScrollView,
+  Dimensions,
+  TouchableWithoutFeedback,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { X } from 'phosphor-react-native';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
 import theme from '@/utils/theme';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const DRAWER_WIDTH = Math.min(SCREEN_WIDTH * 0.85, 420);
+const ANIM_DURATION = 280;
+const easeOut = Easing.bezier(0.33, 1, 0.68, 1);
 
 const STORAGE_KEYS = {
   adjustForTrackType: 'tracklit_adjustForTrackType',
@@ -42,6 +56,26 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
   const [goal400m, setGoal400m] = useState('50.0');
   const [goalHurdles100, setGoalHurdles100] = useState('13.5');
   const [goalHurdles400, setGoalHurdles400] = useState('54.0');
+  const [isRendered, setIsRendered] = useState(false);
+
+  const translateX = useSharedValue(DRAWER_WIDTH);
+  const backdropOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (visible) {
+      setIsRendered(true);
+      translateX.value = withTiming(0, { duration: ANIM_DURATION, easing: easeOut });
+      backdropOpacity.value = withTiming(1, { duration: ANIM_DURATION, easing: easeOut });
+    } else if (isRendered) {
+      translateX.value = withTiming(DRAWER_WIDTH, { duration: ANIM_DURATION, easing: easeOut });
+      backdropOpacity.value = withTiming(0, { duration: ANIM_DURATION, easing: easeOut }, (finished) => {
+        'worklet';
+        if (finished) {
+          runOnJS(setIsRendered)(false);
+        }
+      });
+    }
+  }, [visible]);
 
   useEffect(() => {
     const load = async () => {
@@ -136,12 +170,22 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
     };
   }, [goal100m, goal200m, goal400m, timingMethod, adjustForTrackType, currentTrackType]);
 
-  if (!visible) return null;
+  const drawerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  if (!isRendered) return null;
 
   return (
     <View style={styles.overlay}>
-      <TouchableOpacity style={styles.backdrop} onPress={onClose} />
-      <View style={styles.drawer}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <Animated.View style={[styles.backdrop, backdropStyle]} />
+      </TouchableWithoutFeedback>
+      <Animated.View style={[styles.drawer, drawerStyle]}>
         <LinearGradient
           colors={theme.gradients.webPurpleDeep.colors}
           start={theme.gradients.webPurpleDeep.start}
@@ -149,7 +193,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
           style={styles.drawerContent}
         >
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <FontAwesome5 name="times" size={14} color="white" solid />
+            <X size={16} color="rgba(255,255,255,0.85)" weight="bold" />
           </TouchableOpacity>
 
           <KeyboardAwareScreenScrollView
@@ -159,7 +203,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
             contentContainerStyle={styles.scrollContent}
             extraScrollHeight={80}
           >
-            <Text variant="body" weight="semiBold" color="primary-foreground">
+            <Text variant="small" weight="semiBold" color="primary-foreground">
               Track Type
             </Text>
             <View style={styles.toggleRow}>
@@ -173,7 +217,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                   }}
                 >
                   <Text
-                    variant="small"
+                    variant="caption"
                     weight="medium"
                     color={currentTrackType === type ? 'primary-foreground' : 'primary-foreground'}
                   >
@@ -185,10 +229,10 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
 
             <View style={styles.inlineRow}>
               <View>
-                <Text variant="body" weight="semiBold" color="primary-foreground">
+                <Text variant="small" weight="semiBold" color="primary-foreground">
                   Adjust for Track Type
                 </Text>
-                <Text variant="small" color="primary-foreground" style={styles.mutedText}>
+                <Text variant="caption" color="primary-foreground" style={styles.mutedText}>
                   Apply track-specific timing adjustments
                 </Text>
               </View>
@@ -204,7 +248,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
               </TouchableOpacity>
             </View>
 
-            <Text variant="body" weight="semiBold" color="primary-foreground">
+            <Text variant="small" weight="semiBold" color="primary-foreground">
               Timing Method
             </Text>
             <View style={styles.toggleRow}>
@@ -217,14 +261,14 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                     saveString(STORAGE_KEYS.timingMethod, method);
                   }}
                 >
-                  <Text variant="small" weight="medium" color="primary-foreground">
+                  <Text variant="caption" weight="medium" color="primary-foreground">
                     {method === 'reaction' ? 'Reaction' : method === 'firstFoot' ? 'First Foot' : 'On Movement'}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text variant="body" weight="semiBold" color="primary-foreground">
+            <Text variant="small" weight="semiBold" color="primary-foreground">
               Goal Times
             </Text>
             <View style={styles.inputGroup}>
@@ -236,7 +280,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                 { label: '400H', value: goalHurdles400, setter: setGoalHurdles400, key: STORAGE_KEYS.goalHurdles400 },
               ].map((item) => (
                 <View key={item.label} style={styles.inputRow}>
-                  <Text variant="small" color="primary-foreground" style={styles.inputLabel}>
+                  <Text variant="caption" color="primary-foreground" style={styles.inputLabel}>
                     {item.label}
                   </Text>
                   <TextInput
@@ -249,26 +293,26 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                       saveString(item.key, normalized);
                     }}
                   />
-                  <Text variant="small" color="primary-foreground" style={styles.inputUnit}>
+                  <Text variant="caption" color="primary-foreground" style={styles.inputUnit}>
                     sec
                   </Text>
                 </View>
               ))}
             </View>
 
-            <Text variant="body" weight="semiBold" color="primary-foreground">
+            <Text variant="small" weight="semiBold" color="primary-foreground">
               Target Times
             </Text>
             <View style={styles.tableContainer}>
               {calculateTargetTimes.distances.length === 0 ? (
-                <Text variant="small" color="primary-foreground">
+                <Text variant="caption" color="primary-foreground">
                   No goal times set in your profile.
                 </Text>
               ) : (
                 <View style={styles.tableWrapper}>
                   <View style={styles.tableFrozenColumn}>
                     <View style={styles.tableHeaderCell}>
-                      <Text variant="small" weight="bold" color="primary-foreground">
+                      <Text variant="caption" weight="bold" color="primary-foreground">
                         Dist
                       </Text>
                     </View>
@@ -277,7 +321,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                         key={`dist-${distance}`}
                         style={[styles.tableCell, index % 2 === 0 ? styles.tableRowDark : styles.tableRowLight]}
                       >
-                        <Text variant="small" weight="semiBold" color="primary-foreground">
+                        <Text variant="caption" weight="semiBold" color="primary-foreground">
                           {distance}
                         </Text>
                       </View>
@@ -290,7 +334,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                       {calculateTargetTimes.percentages.map((percentage) => (
                         <View key={`col-${percentage}`} style={styles.tableColumn}>
                           <View style={styles.tableHeaderCell}>
-                            <Text variant="small" weight="bold" color="primary-foreground">
+                            <Text variant="caption" weight="bold" color="primary-foreground">
                               {percentage}%
                             </Text>
                           </View>
@@ -299,7 +343,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                               key={`${distance}-${percentage}`}
                               style={[styles.tableCell, index % 2 === 0 ? styles.tableRowDark : styles.tableRowLight]}
                             >
-                              <Text variant="small" color="primary-foreground">
+                              <Text variant="caption" color="primary-foreground">
                                 {calculateTargetTimes.getTime(distance, percentage)}
                               </Text>
                             </View>
@@ -312,12 +356,12 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
               )}
             </View>
 
-            <Text variant="small" color="primary-foreground" style={styles.mutedText}>
+            <Text variant="caption" color="primary-foreground" style={styles.mutedText}>
               Times are estimates based on selected track type and timing method.
             </Text>
           </KeyboardAwareScreenScrollView>
         </LinearGradient>
-      </View>
+      </Animated.View>
     </View>
   );
 };
@@ -333,26 +377,34 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   drawer: {
-    width: '85%',
-    maxWidth: 420,
+    width: DRAWER_WIDTH,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
     borderLeftWidth: 1,
     borderLeftColor: 'rgba(168, 85, 247, 0.3)',
   },
   drawerContent: {
     flex: 1,
-    padding: theme.spacing.lg,
+    padding: theme.spacing.xl,
   },
   closeButton: {
     position: 'absolute',
-    top: theme.spacing.md,
-    right: theme.spacing.md,
+    top: theme.spacing.lg,
+    right: theme.spacing.lg,
     zIndex: 2,
-    padding: theme.spacing.sm,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing.xxxl,
     paddingBottom: theme.spacing.xxl,
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
   toggleRow: {
     flexDirection: 'row',
@@ -360,7 +412,7 @@ const styles = StyleSheet.create({
   },
   toggleButton: {
     flex: 1,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
     alignItems: 'center',
     borderRadius: theme.borderRadius.md,
     backgroundColor: 'rgba(255,255,255,0.1)',
@@ -399,10 +451,10 @@ const styles = StyleSheet.create({
   inputGroup: {
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   inputRow: {
     flexDirection: 'row',
@@ -410,15 +462,15 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   inputLabel: {
-    width: 70,
+    width: 56,
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.25)',
     borderRadius: theme.borderRadius.sm,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     color: 'white',
     fontSize: theme.typography.sizes.sm,
   },
@@ -427,7 +479,7 @@ const styles = StyleSheet.create({
   },
   tableContainer: {
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.15)',
     borderRadius: theme.borderRadius.md,
     overflow: 'hidden',
   },
@@ -435,15 +487,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   tableFrozenColumn: {
-    width: 64,
+    width: 56,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(255,255,255,0.2)',
+    borderRightColor: 'rgba(255,255,255,0.15)',
   },
   tableScrollable: {
     flexDirection: 'row',
   },
   tableColumn: {
-    width: 56,
+    width: 52,
   },
   tableHeaderCell: {
     paddingVertical: theme.spacing.sm,
