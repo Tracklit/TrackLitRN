@@ -170,7 +170,7 @@ export const ToolsScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + 12, paddingBottom: contentBottomPadding },
+          { paddingTop: insets.top + 28, paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     padding: 0,
     marginBottom: 0,
     borderWidth: 1,
-    borderColor: 'rgba(191, 54, 12, 0.3)',
+    borderColor: 'rgba(148, 163, 184, 0.25)',
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
     ...theme.shadows.md,
   },
