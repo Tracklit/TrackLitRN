@@ -1,10 +1,10 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
-  Sparkles,
+  Sparkle,
   Info,
-  Coins,
-} from 'lucide-react-native';
+  CurrencyDollar,
+} from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import theme from '@/utils/theme';
@@ -34,30 +34,16 @@ const styles = StyleSheet.create({
   bulletText: {
     flex: 1,
   },
-  infoBox: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: 'rgba(91, 33, 182, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(124, 58, 237, 0.25)',
-  },
-  infoBoxIcon: {
-    width: 18,
-    alignItems: 'center',
-    marginTop: 1,
-  },
   panel: {
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: 'rgba(47, 57, 77, 0.35)',
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   panelAmber: {
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-    borderColor: 'rgba(245, 158, 11, 0.18)',
+    backgroundColor: 'rgba(245, 158, 11, 0.06)',
+    borderColor: 'rgba(245, 158, 11, 0.12)',
   },
 });
 
@@ -72,26 +58,13 @@ const BulletRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </View>
 );
 
-const InfoBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <View style={styles.infoBox}>
-    <View style={styles.infoBoxIcon}>
-      <Info size={16} color={theme.colors.primary} />
-    </View>
-    <View style={{ flex: 1 }}>
-      <Text variant="caption" color="muted">
-        {children}
-      </Text>
-    </View>
-  </View>
-);
-
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'welcome',
     mode: 'intro',
     title: 'Welcome to TrackLit',
-    icon: <Sparkles size={34} color={theme.colors.primary} />,
+    icon: <Sparkle size={28} color={theme.colors.primary} weight="fill" />,
     body: (
       <View style={{ gap: theme.spacing.md }}>
         <Text variant="body" color="muted" center>
@@ -101,7 +74,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
           TrackLit helps you track workouts, manage programs, and analyze performance to reach your
           athletic potential.
         </Text>
-        <InfoBox>We have created a sample training program so you can explore right away.</InfoBox>
       </View>
     ),
   },
@@ -109,7 +81,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'alpha-info',
     mode: 'intro',
     title: 'Alpha Testing Information',
-    icon: <Info size={34} color={theme.colors.primary} />,
+    icon: <Info size={28} color={theme.colors.primary} weight="fill" />,
     body: (
       <View style={{ gap: theme.spacing.md }}>
         <Text variant="body" color="muted" center>
@@ -133,7 +105,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'spikes',
     mode: 'intro',
     title: 'Meet Spikes',
-    icon: <Coins size={34} color="#f59e0b" />,
+    icon: <CurrencyDollar size={28} color="#f59e0b" weight="fill" />,
     showClaimSpikes: true,
     primaryCtaLabel: 'Finish',
     body: (

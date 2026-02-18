@@ -62,6 +62,9 @@ migrations/          - Database migrations
 - 2026-02-17: Programs FAB: 15% larger (64px), more right spacing, improved menu UI with icon wrappers, removed Find a Program and Switch to Coach items
 - 2026-02-17: TargetTimesDrawer: added safe area insets for device top spacing
 - 2026-02-17: Drawer: blocks touch pass-through, X close button, very dark gray background (#1a1a1a)
+- 2026-02-18: Onboarding: removed sample program text, switched Lucide to Phosphor icons, restyled cards (16px border-radius, subtle rgba backgrounds)
+- 2026-02-18: HomeScreen: added 500ms fade-in animation on mount using Reanimated
+- 2026-02-18: ToolsScreen: converted to 1-column layout with icon circles, taller cards, increased top spacing, gradient styling
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message

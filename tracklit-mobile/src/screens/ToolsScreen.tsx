@@ -200,13 +200,15 @@ export const ToolsScreen: React.FC = () => {
               key={tool.id}
               onPress={() => handleToolPress(tool)}
               data-testid={`tool-${tool.id}`}
-              style={styles.toolButton}
               activeOpacity={0.8}
             >
               <Card style={[styles.toolCard, tool.comingSoon && styles.toolCardDisabled]}>
                 {tool.comingSoon ? (
                   <CardContent style={styles.toolContent}>
-                    <View style={styles.toolTextCenter}>
+                    <View style={styles.iconCircle}>
+                      {tool.icon}
+                    </View>
+                    <View style={styles.toolTextArea}>
                       <View style={styles.toolTitleRow}>
                         <Text variant="body" weight="bold" color="muted">
                           {tool.title}
@@ -229,7 +231,10 @@ export const ToolsScreen: React.FC = () => {
                     style={styles.toolGradient}
                   >
                     <CardContent style={styles.toolContent}>
-                      <View style={styles.toolTextCenter}>
+                      <View style={styles.iconCircle}>
+                        {tool.icon}
+                      </View>
+                      <View style={styles.toolTextArea}>
                         <Text variant="body" weight="bold" color="primary-foreground">
                           {tool.title}
                         </Text>
@@ -258,17 +263,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
   },
   toolsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: theme.spacing.lg,
-    justifyContent: 'space-between',
-    marginTop: theme.spacing.xl,
-  },
-  toolButton: {
-    width: '48%',
+    marginTop: theme.spacing.xxxl,
   },
   toolCard: {
-    height: 100,
+    minHeight: 80,
     borderRadius: 12,
     overflow: 'hidden',
     padding: 0,
@@ -276,7 +275,6 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(148, 163, 184, 0.25)',
     backgroundColor: 'transparent',
-    ...theme.shadows.webCard,
   },
   toolCardDisabled: {
     backgroundColor: 'rgba(15, 23, 42, 0.3)',
@@ -287,13 +285,22 @@ const styles = StyleSheet.create({
   },
   toolContent: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.md,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  toolTextCenter: {
-    alignItems: 'center',
-    textAlign: 'center',
+  toolTextArea: {
+    flex: 1,
   },
   toolTitleRow: {
     flexDirection: 'row',
@@ -301,8 +308,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   toolDescription: {
-    marginTop: theme.spacing.xs,
-    textAlign: 'center',
+    marginTop: 2,
     lineHeight: 16,
   },
   comingSoonText: {

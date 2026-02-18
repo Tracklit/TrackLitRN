@@ -99,6 +99,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const isAnimatingRef = useRef(false);
   const userId = user?.id;
 
+  const screenOpacity = useSharedValue(0);
+  useEffect(() => {
+    screenOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.ease) });
+  }, []);
+  const screenFadeStyle = useAnimatedStyle(() => ({
+    opacity: screenOpacity.value,
+  }));
+
   const currentOpacity = useSharedValue(1);
   const currentTranslateX = useSharedValue(0);
   const nextOpacity = useSharedValue(0);
@@ -344,6 +352,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         translucent
       />
 
+      <Animated.View style={[{ flex: 1 }, screenFadeStyle]}>
       <View style={[styles.fixedHeader, { paddingTop: insets.top }]}>
         <ScreenHeader
           title=""
@@ -576,6 +585,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           })}
         </View>
       </ScrollView>
+      </Animated.View>
     </LinearGradient>
   );
 };
