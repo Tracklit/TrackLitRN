@@ -16,6 +16,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ArrowLeft,
@@ -25,12 +26,15 @@ import {
   X,
   Trash,
   VideoCamera,
+  Person,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Card, CardContent } from '@/components/ui/Card';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { MediaPipeBridge, type MediaPipeBridgeRef, type PoseLandmark } from '@/components/MediaPipeBridge';
+import { PoseOverlay } from '@/components/PoseOverlay';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCRUB_HEIGHT = 56;
@@ -71,6 +75,12 @@ export const PhotoFinishScreen: React.FC = () => {
 
   const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
   const [showLibrary, setShowLibrary] = useState(false);
+
+  const mediaPipeRef = useRef<MediaPipeBridgeRef>(null);
+  const [poseEnabled, setPoseEnabled] = useState(false);
+  const [poseLandmarks, setPoseLandmarks] = useState<PoseLandmark[] | null>(null);
+  const [poseProcessing, setPoseProcessing] = useState(false);
+  const [videoLayout, setVideoLayout] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     loadLibrary();
@@ -179,6 +189,40 @@ export const PhotoFinishScreen: React.FC = () => {
       },
     })
   ).current;
+
+  const runPoseDetection = useCallback(async () => {
+    if (!videoUri || !mediaPipeRef.current || poseProcessing) return;
+    setPoseProcessing(true);
+    try {
+      const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
+        time: currentPosition,
+        quality: 0.8,
+      });
+
+      const base64 = await fetch(uri)
+        .then(r => r.blob())
+        .then(blob => new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            resolve(result.split(',')[1]);
+          };
+          reader.readAsDataURL(blob);
+        }));
+
+      const landmarks = await mediaPipeRef.current.detectPose(base64);
+      setPoseLandmarks(landmarks);
+    } catch {
+      setPoseLandmarks(null);
+    }
+    setPoseProcessing(false);
+  }, [videoUri, currentPosition, poseProcessing]);
+
+  useEffect(() => {
+    if (poseEnabled && isLoaded && !isPlaying) {
+      runPoseDetection();
+    }
+  }, [poseEnabled, currentPosition, isLoaded, isPlaying]);
 
   const handleVideoTap = useCallback((evt: GestureResponderEvent) => {
     if (clockMode) {
@@ -341,15 +385,30 @@ export const PhotoFinishScreen: React.FC = () => {
         onPress={handleVideoTap}
         style={styles.videoTouchArea}
       >
-        <Video
-          ref={videoRef}
-          source={{ uri: videoUri }}
-          style={styles.video}
-          resizeMode={ResizeMode.CONTAIN}
-          shouldPlay={false}
-          isLooping={false}
-          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-        />
+        <View
+          style={styles.videoWrapper}
+          onLayout={(e) => {
+            const { width, height } = e.nativeEvent.layout;
+            setVideoLayout({ width, height });
+          }}
+        >
+          <Video
+            ref={videoRef}
+            source={{ uri: videoUri }}
+            style={styles.video}
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay={false}
+            isLooping={false}
+            onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+          />
+          {poseEnabled && poseLandmarks && (
+            <PoseOverlay
+              landmarks={poseLandmarks}
+              width={videoLayout.width}
+              height={videoLayout.height}
+            />
+          )}
+        </View>
 
         {clockOverlays.map((overlay) => (
           <TouchableOpacity
@@ -380,6 +439,8 @@ export const PhotoFinishScreen: React.FC = () => {
             setVideoUri(null);
             setIsLoaded(false);
             setClockOverlays([]);
+            setPoseEnabled(false);
+            setPoseLandmarks(null);
           }}
           style={styles.topBtn}
         >
@@ -392,6 +453,16 @@ export const PhotoFinishScreen: React.FC = () => {
             style={styles.fpsBtn}
           >
             <Text style={styles.fpsBtnText}>{frameRate}fps</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setPoseEnabled(!poseEnabled);
+              if (!poseEnabled) setPoseLandmarks(null);
+            }}
+            style={[styles.topBtn, poseEnabled && styles.topBtnPose]}
+          >
+            <Person size={20} color={poseEnabled ? '#00FF88' : '#fff'} weight="fill" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -435,6 +506,16 @@ export const PhotoFinishScreen: React.FC = () => {
           <View style={[styles.scrubThumb, { left: `${progress * 100}%` }]} />
         </View>
       </View>
+
+      {poseEnabled && poseProcessing && (
+        <View style={styles.poseLoadingIndicator}>
+          <Text variant="small" weight="bold" style={{ color: '#00FF88' }}>
+            Detecting pose...
+          </Text>
+        </View>
+      )}
+
+      <MediaPipeBridge ref={mediaPipeRef} />
     </View>
   );
 };
@@ -656,5 +737,22 @@ const styles = StyleSheet.create({
   fpsOptionTextActive: {
     color: '#FF9800',
     fontWeight: '700',
+  },
+  videoWrapper: {
+    flex: 1,
+  },
+  topBtnPose: {
+    backgroundColor: 'rgba(0,255,136,0.2)',
+    borderWidth: 1,
+    borderColor: '#00FF88',
+  },
+  poseLoadingIndicator: {
+    position: 'absolute',
+    bottom: 120,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
 });
