@@ -152,7 +152,7 @@ export const ToolsScreen: React.FC = () => {
           </CardContent>
         ) : (
           <LinearGradient
-            colors={['#e65100', '#bf360c', '#7b1fa2', '#5b21b6']}
+            colors={['#5b21b6', '#7b1fa2', '#7b1fa2', '#bf360c']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.toolGradient}
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   cardTouchable: {
     flex: 1,
-    aspectRatio: 0.9,
+    aspectRatio: 1.05,
   },
   toolCard: {
     flex: 1,
