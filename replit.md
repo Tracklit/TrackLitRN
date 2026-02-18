@@ -64,7 +64,8 @@ migrations/          - Database migrations
 - 2026-02-17: Drawer: blocks touch pass-through, X close button, very dark gray background (#1a1a1a)
 - 2026-02-18: Onboarding: removed sample program text, switched Lucide to Phosphor icons, restyled cards (16px border-radius, subtle rgba backgrounds)
 - 2026-02-18: HomeScreen: added 500ms fade-in animation on mount using Reanimated
-- 2026-02-18: ToolsScreen: 2-column grid layout with orange-to-purple gradient (fiery orange from logo), centered icon/text cards
+- 2026-02-18: ToolsScreen: 2-column grid layout with light gray border, orange dividers, centered icon/text cards
+- 2026-02-18: PhotoFinishScreen: full rewrite — upload via expo-image-picker, edge-to-edge inline video, scrub bar, digital clock overlays (tap to place, long-press to remove, syncs with framerate), FPS selector (24/25/30/60/120/240), Save to Library (device + AsyncStorage), saved videos list
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
