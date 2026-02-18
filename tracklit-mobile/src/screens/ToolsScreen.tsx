@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   Alert,
-  RefreshControl,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedRef,
+} from 'react-native-reanimated';
 import {
   PlayCircle,
   FlagCheckered,
@@ -24,9 +27,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
-import { useAuth } from '@/contexts/AuthContext';
-import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import theme from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
@@ -54,13 +54,15 @@ interface Tool {
 }
 
 const CARD_HEIGHT = 160;
+const CARD_GAP = 20;
+const STEP = CARD_HEIGHT + CARD_GAP;
 
 export const ToolsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { refreshUser } = useAuth();
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
-  const { isRefreshing, onRefresh } = usePullToRefresh(async () => refreshUser());
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const isAdjustingRef = useRef(false);
 
   const tools: Tool[] = [
     {
@@ -121,6 +123,27 @@ export const ToolsScreen: React.FC = () => {
     },
   ];
 
+  const count = tools.length;
+  const oneSetHeight = count * STEP;
+  const loopedTools = [...tools, ...tools, ...tools];
+
+  const handleScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (isAdjustingRef.current) return;
+    const y = e.nativeEvent.contentOffset.y;
+
+    if (y < oneSetHeight * 0.25 || y > oneSetHeight * 1.75) {
+      isAdjustingRef.current = true;
+      const offset = y % oneSetHeight;
+      const newY = oneSetHeight + offset;
+      (scrollRef.current as any)?.scrollTo({ y: newY, animated: false });
+      setTimeout(() => { isAdjustingRef.current = false; }, 50);
+    }
+  }, [oneSetHeight]);
+
+  const handleContentSizeChange = useCallback(() => {
+    (scrollRef.current as any)?.scrollTo({ y: oneSetHeight, animated: false });
+  }, [oneSetHeight]);
+
   const handleToolPress = (tool: Tool) => {
     if (tool.comingSoon) {
       Alert.alert(
@@ -135,70 +158,70 @@ export const ToolsScreen: React.FC = () => {
     }
   };
 
+  const renderCard = (tool: Tool, idx: number) => (
+    <TouchableOpacity
+      key={`${tool.id}-${idx}`}
+      onPress={() => handleToolPress(tool)}
+      activeOpacity={0.85}
+      style={styles.cardTouchable}
+    >
+      <Card style={[styles.toolCard, tool.comingSoon && styles.toolCardDisabled]}>
+        {tool.comingSoon ? (
+          <CardContent style={styles.toolContent}>
+            <View style={styles.iconCircle}>{tool.icon}</View>
+            <View style={styles.toolTextArea}>
+              <View style={styles.toolTitleRow}>
+                <Text variant="body" weight="bold" color="muted">{tool.title}</Text>
+                <Lock size={10} color={theme.colors.textMuted} weight="fill" />
+              </View>
+              <Text variant="small" color="muted" style={styles.toolDescription}>{tool.description}</Text>
+              <Text variant="small" color="muted" style={styles.comingSoonText}>Coming soon</Text>
+            </View>
+          </CardContent>
+        ) : (
+          <LinearGradient
+            colors={theme.gradients.webPurple.colors}
+            start={theme.gradients.webPurple.start}
+            end={theme.gradients.webPurple.end}
+            style={styles.toolGradient}
+          >
+            <CardContent style={styles.toolContent}>
+              <View style={styles.iconCircle}>{tool.icon}</View>
+              <View style={styles.toolTextArea}>
+                <Text variant="h3" weight="bold" color="primary-foreground">{tool.title}</Text>
+                <Text variant="body" color="primary-foreground" style={styles.toolDescription}>{tool.description}</Text>
+              </View>
+            </CardContent>
+          </LinearGradient>
+        )}
+      </Card>
+    </TouchableOpacity>
+  );
+
   return (
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <ScrollView
+      <Animated.ScrollView
+        ref={scrollRef}
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + 12, paddingBottom: contentBottomPadding },
+          { paddingTop: 12, paddingBottom: 12 },
         ]}
+        style={{ marginTop: insets.top, marginBottom: contentBottomPadding }}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            tintColor="#fff"
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-          />
-        }
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
+        onContentSizeChange={handleContentSizeChange}
+        scrollEventThrottle={16}
       >
-        <InlineRefreshHeader visible={isRefreshing} />
         <View style={styles.cardsList}>
-          {tools.map((tool) => (
-            <TouchableOpacity
-              key={tool.id}
-              onPress={() => handleToolPress(tool)}
-              activeOpacity={0.85}
-              style={styles.cardTouchable}
-            >
-              <Card style={[styles.toolCard, tool.comingSoon && styles.toolCardDisabled]}>
-                {tool.comingSoon ? (
-                  <CardContent style={styles.toolContent}>
-                    <View style={styles.iconCircle}>{tool.icon}</View>
-                    <View style={styles.toolTextArea}>
-                      <View style={styles.toolTitleRow}>
-                        <Text variant="body" weight="bold" color="muted">{tool.title}</Text>
-                        <Lock size={10} color={theme.colors.textMuted} weight="fill" />
-                      </View>
-                      <Text variant="small" color="muted" style={styles.toolDescription}>{tool.description}</Text>
-                      <Text variant="small" color="muted" style={styles.comingSoonText}>Coming soon</Text>
-                    </View>
-                  </CardContent>
-                ) : (
-                  <LinearGradient
-                    colors={theme.gradients.webPurple.colors}
-                    start={theme.gradients.webPurple.start}
-                    end={theme.gradients.webPurple.end}
-                    style={styles.toolGradient}
-                  >
-                    <CardContent style={styles.toolContent}>
-                      <View style={styles.iconCircle}>{tool.icon}</View>
-                      <View style={styles.toolTextArea}>
-                        <Text variant="h3" weight="bold" color="primary-foreground">{tool.title}</Text>
-                        <Text variant="body" color="primary-foreground" style={styles.toolDescription}>{tool.description}</Text>
-                      </View>
-                    </CardContent>
-                  </LinearGradient>
-                )}
-              </Card>
-            </TouchableOpacity>
-          ))}
+          {loopedTools.map(renderCard)}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </LinearGradient>
   );
 };
@@ -208,12 +231,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: theme.spacing.xl,
   },
   cardsList: {
-    gap: 20,
-    marginTop: theme.spacing.xl,
+    gap: CARD_GAP,
   },
   cardTouchable: {
     height: CARD_HEIGHT,
