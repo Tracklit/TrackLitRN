@@ -6,6 +6,7 @@ interface PoseOverlayProps {
   landmarks: PoseLandmark[];
   width: number;
   height: number;
+  colorByConfidence?: boolean;
 }
 
 const CONNECTIONS: [number, number][] = [
@@ -25,7 +26,20 @@ const CONNECTIONS: [number, number][] = [
 const VISIBILITY_THRESHOLD = 0.5;
 const LANDMARK_SIZE = 6;
 
-export const PoseOverlay: React.FC<PoseOverlayProps> = ({ landmarks, width, height }) => {
+function getConfidenceColor(visibility: number): string {
+  if (visibility >= 0.7) return '#00FF88';
+  if (visibility >= 0.4) return '#FFD600';
+  return '#FF3366';
+}
+
+function getLineColor(visA: number, visB: number): string {
+  const avg = (visA + visB) / 2;
+  if (avg >= 0.7) return '#00FF88';
+  if (avg >= 0.4) return '#FFD600';
+  return '#FF6644';
+}
+
+export const PoseOverlay: React.FC<PoseOverlayProps> = ({ landmarks, width, height, colorByConfidence = true }) => {
   if (!landmarks || landmarks.length === 0 || width === 0 || height === 0) return null;
 
   const getPos = (idx: number) => {
@@ -44,6 +58,10 @@ export const PoseOverlay: React.FC<PoseOverlayProps> = ({ landmarks, width, heig
     const length = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
+    const lineColor = colorByConfidence
+      ? getLineColor(landmarks[a].visibility, landmarks[b].visibility)
+      : '#00FF88';
+
     return (
       <View
         key={`line-${idx}`}
@@ -53,6 +71,7 @@ export const PoseOverlay: React.FC<PoseOverlayProps> = ({ landmarks, width, heig
             left: posA.x,
             top: posA.y,
             width: length,
+            backgroundColor: lineColor,
             transform: [{ rotate: `${angle}deg` }],
           },
         ]}
@@ -65,6 +84,8 @@ export const PoseOverlay: React.FC<PoseOverlayProps> = ({ landmarks, width, heig
     const x = lm.x * width;
     const y = lm.y * height;
 
+    const dotColor = colorByConfidence ? getConfidenceColor(lm.visibility) : '#FF3366';
+
     return (
       <View
         key={`dot-${idx}`}
@@ -73,6 +94,7 @@ export const PoseOverlay: React.FC<PoseOverlayProps> = ({ landmarks, width, heig
           {
             left: x - LANDMARK_SIZE / 2,
             top: y - LANDMARK_SIZE / 2,
+            backgroundColor: dotColor,
           },
         ]}
       />
@@ -96,7 +118,6 @@ const styles = StyleSheet.create({
   line: {
     position: 'absolute',
     height: 3,
-    backgroundColor: '#00FF88',
     transformOrigin: 'left center',
     borderRadius: 1.5,
     opacity: 0.85,
@@ -106,7 +127,6 @@ const styles = StyleSheet.create({
     width: LANDMARK_SIZE,
     height: LANDMARK_SIZE,
     borderRadius: LANDMARK_SIZE / 2,
-    backgroundColor: '#FF3366',
     borderWidth: 1,
     borderColor: '#fff',
   },

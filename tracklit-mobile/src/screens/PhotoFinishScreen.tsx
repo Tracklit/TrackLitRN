@@ -8,6 +8,7 @@ import {
   PanResponder,
   GestureResponderEvent,
   FlatList,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +28,7 @@ import {
   Trash,
   VideoCamera,
   Person,
+  Camera,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -35,6 +37,11 @@ import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { MediaPipeBridge, type MediaPipeBridgeRef, type PoseLandmark } from '@/components/MediaPipeBridge';
 import { PoseOverlay } from '@/components/PoseOverlay';
+import { AdvancedAnalysis } from '@/components/AdvancedAnalysis';
+import { FrameComparison } from '@/components/FrameComparison';
+import { AIAnalysisModal } from '@/components/AIAnalysisModal';
+import { apiRequest } from '@/lib/api';
+import { formatAnalysisForAI, formatComparisonForAI, computeFullAnalysis, type FrameAnalysis } from '@/utils/poseAnalysis';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCRUB_HEIGHT = 56;
@@ -81,6 +88,14 @@ export const PhotoFinishScreen: React.FC = () => {
   const [poseLandmarks, setPoseLandmarks] = useState<PoseLandmark[] | null>(null);
   const [poseProcessing, setPoseProcessing] = useState(false);
   const [videoLayout, setVideoLayout] = useState({ width: 0, height: 0 });
+
+  const [compFrameA, setCompFrameA] = useState<{ uri: string; landmarks: PoseLandmark[]; timeMs: number; frame: number } | null>(null);
+  const [compFrameB, setCompFrameB] = useState<{ uri: string; landmarks: PoseLandmark[]; timeMs: number; frame: number } | null>(null);
+
+  const [aiModalVisible, setAiModalVisible] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
     loadLibrary();
@@ -278,6 +293,70 @@ export const PhotoFinishScreen: React.FC = () => {
     setShowLibrary(false);
   };
 
+  const captureComparisonFrame = useCallback(async () => {
+    if (!videoUri || !poseLandmarks) return;
+    try {
+      const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
+        time: currentPosition,
+        quality: 0.8,
+      });
+      const frame = Math.round((currentPosition / 1000) * frameRate);
+      const capturedFrame = { uri, landmarks: [...poseLandmarks], timeMs: currentPosition, frame };
+
+      if (!compFrameA) {
+        setCompFrameA(capturedFrame);
+      } else if (!compFrameB) {
+        setCompFrameB(capturedFrame);
+      } else {
+        setCompFrameA(capturedFrame);
+        setCompFrameB(null);
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to capture frame');
+    }
+  }, [videoUri, poseLandmarks, currentPosition, frameRate, compFrameA, compFrameB]);
+
+  const clearComparisonFrames = useCallback(() => {
+    setCompFrameA(null);
+    setCompFrameB(null);
+  }, []);
+
+  const handleAIAnalysis = useCallback(async (analysis: FrameAnalysis) => {
+    setAiModalVisible(true);
+    setAiLoading(true);
+    setAiResult(null);
+    setAiError(null);
+
+    try {
+      const frame = Math.round((currentPosition / 1000) * frameRate);
+      const frameInfo = { frame, fps: frameRate, timeMs: currentPosition };
+
+      let prompt: string;
+      if (compFrameA && compFrameB) {
+        const analysisA = computeFullAnalysis(compFrameA.landmarks, compFrameA.timeMs);
+        const analysisB = computeFullAnalysis(compFrameB.landmarks, compFrameB.timeMs);
+        const frameInfoA = { frame: compFrameA.frame, fps: frameRate, timeMs: compFrameA.timeMs };
+        const frameInfoB = { frame: compFrameB.frame, fps: frameRate, timeMs: compFrameB.timeMs };
+        prompt = `You are a track and field biomechanics expert. Analyze this athlete's two-frame comparison from video analysis and provide specific, actionable coaching feedback.\n\n${formatComparisonForAI(analysisA, analysisB, frameInfoA, frameInfoB)}\n\nProvide:\n1. **Form Assessment** — What the athlete is doing well and areas to improve\n2. **Key Observations** — Most important biomechanical findings from the comparison\n3. **Movement Analysis** — How the athlete's body position changed between frames\n4. **Improvement Suggestions** — 3-5 specific drills or technique cues\n5. **Program Recommendation** — Suggest a training program focus to address the findings`;
+      } else {
+        prompt = `You are a track and field biomechanics expert. Analyze this athlete's pose data from video analysis and provide specific, actionable coaching feedback.\n\n${formatAnalysisForAI(analysis, frameInfo)}\n\nProvide:\n1. **Form Assessment** — What the athlete is doing well and areas to improve\n2. **Key Observations** — Most important biomechanical findings\n3. **Symmetry Analysis** — Any imbalances detected and their implications\n4. **Improvement Suggestions** — 3-5 specific drills or technique cues\n5. **Program Recommendation** — Suggest a training program focus to address the findings`;
+      }
+
+      const response = await apiRequest<{ response: string; message?: string }>('/api/sprinthia/chat', {
+        method: 'POST',
+        data: {
+          message: prompt,
+          context: 'photo_finish_analysis',
+        },
+      });
+
+      setAiResult(response.response || response.message || 'No analysis returned');
+    } catch (err: any) {
+      setAiError(err?.message || 'Failed to get AI analysis. Please try again.');
+    }
+    setAiLoading(false);
+  }, [currentPosition, frameRate, compFrameA, compFrameB]);
+
   if (showLibrary) {
     return (
       <LinearGradient
@@ -378,12 +457,14 @@ export const PhotoFinishScreen: React.FC = () => {
     );
   }
 
+  const hasAnalysisPanel = poseEnabled && poseLandmarks;
+
   return (
     <View style={styles.videoContainer}>
       <TouchableOpacity
         activeOpacity={1}
         onPress={handleVideoTap}
-        style={styles.videoTouchArea}
+        style={[styles.videoTouchArea, hasAnalysisPanel && styles.videoTouchAreaCompact]}
       >
         <View
           style={styles.videoWrapper}
@@ -441,6 +522,9 @@ export const PhotoFinishScreen: React.FC = () => {
             setClockOverlays([]);
             setPoseEnabled(false);
             setPoseLandmarks(null);
+            setCompFrameA(null);
+            setCompFrameB(null);
+            setAiResult(null);
           }}
           style={styles.topBtn}
         >
@@ -464,6 +548,12 @@ export const PhotoFinishScreen: React.FC = () => {
           >
             <Person size={20} color={poseEnabled ? '#00FF88' : '#fff'} weight="fill" />
           </TouchableOpacity>
+
+          {poseEnabled && poseLandmarks && (
+            <TouchableOpacity onPress={captureComparisonFrame} style={styles.topBtn}>
+              <Camera size={20} color="#fff" weight="fill" />
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             onPress={() => setClockMode(!clockMode)}
@@ -494,7 +584,7 @@ export const PhotoFinishScreen: React.FC = () => {
         </View>
       )}
 
-      <View style={[styles.scrubContainer, { paddingBottom: insets.bottom + 8 }]}>
+      <View style={[styles.scrubContainer, hasAnalysisPanel ? styles.scrubContainerStatic : {}, { paddingBottom: hasAnalysisPanel ? 4 : insets.bottom + 8 }]}>
         <View style={styles.timeRow}>
           <Text style={styles.timeText}>{formatTime(currentPosition)}</Text>
           <Text style={styles.frameText}>Frame {currentFrame}</Text>
@@ -507,6 +597,29 @@ export const PhotoFinishScreen: React.FC = () => {
         </View>
       </View>
 
+      {poseEnabled && poseLandmarks && (
+        <ScrollView
+          style={styles.analysisScroll}
+          contentContainerStyle={[styles.analysisScrollContent, { paddingBottom: insets.bottom + 20 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <FrameComparison
+            frameA={compFrameA}
+            frameB={compFrameB}
+            onCaptureFrame={captureComparisonFrame}
+            onClear={clearComparisonFrames}
+            canCapture={poseEnabled && !!poseLandmarks}
+          />
+
+          <AdvancedAnalysis
+            landmarks={poseLandmarks}
+            timestamp={currentPosition}
+            onRequestAI={handleAIAnalysis}
+            aiLoading={aiLoading}
+          />
+        </ScrollView>
+      )}
+
       {poseEnabled && poseProcessing && (
         <View style={styles.poseLoadingIndicator}>
           <Text variant="small" weight="bold" style={{ color: '#00FF88' }}>
@@ -514,6 +627,14 @@ export const PhotoFinishScreen: React.FC = () => {
           </Text>
         </View>
       )}
+
+      <AIAnalysisModal
+        visible={aiModalVisible}
+        onClose={() => setAiModalVisible(false)}
+        loading={aiLoading}
+        analysis={aiResult}
+        error={aiError}
+      />
 
       <MediaPipeBridge ref={mediaPipeRef} />
     </View>
@@ -568,6 +689,10 @@ const styles = StyleSheet.create({
   },
   videoTouchArea: {
     flex: 1,
+  },
+  videoTouchAreaCompact: {
+    flex: 0,
+    height: '55%',
   },
   video: {
     flex: 1,
@@ -630,6 +755,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: 16,
     paddingTop: 10,
+  },
+  scrubContainerStatic: {
+    position: 'relative',
+    backgroundColor: '#111',
   },
   timeRow: {
     flexDirection: 'row',
@@ -754,5 +883,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+  },
+  analysisScroll: {
+    backgroundColor: '#111',
+    maxHeight: 300,
+  },
+  analysisScrollContent: {
+    paddingTop: 4,
+    paddingBottom: 20,
   },
 });

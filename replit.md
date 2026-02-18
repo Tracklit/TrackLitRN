@@ -67,6 +67,11 @@ migrations/          - Database migrations
 - 2026-02-18: ToolsScreen: 2-column grid layout with light gray border, orange dividers, centered icon/text cards
 - 2026-02-18: PhotoFinishScreen: full rewrite — upload via expo-image-picker, edge-to-edge inline video, scrub bar, digital clock overlays (tap to place, long-press to remove, syncs with framerate), FPS selector (24/25/30/60/120/240), Save to Library (device + AsyncStorage), saved videos list
 - 2026-02-18: MediaPipe pose skeleton overlay in Photo Finish — uses WebView bridge with @mediapipe/tasks-vision JS SDK, expo-video-thumbnails for frame capture, PoseOverlay draws 33 landmarks + skeleton connections
+- 2026-02-18: Advanced Analysis panel in Photo Finish — computes 7 metrics from pose data: joint angles, body symmetry, center of mass, stride/position metrics, trunk lean angle, frame comparison, confidence scoring
+- 2026-02-18: Confidence-based color coding on PoseOverlay landmarks (green=high, yellow=medium, red=low visibility)
+- 2026-02-18: Frame Comparison feature — capture two frames with skeleton overlays, compare side-by-side with time/frame diff
+- 2026-02-18: AI Analysis via Sprinthia API — sends structured pose metrics for written biomechanics analysis with improvement suggestions and "Create Program" button
+- 2026-02-18: New files: poseAnalysis.ts (metrics computation), AdvancedAnalysis.tsx (collapsible metrics panel), FrameComparison.tsx, AIAnalysisModal.tsx
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
