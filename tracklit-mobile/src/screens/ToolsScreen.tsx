@@ -1,17 +1,13 @@
-import React, { useRef, useCallback } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
   Alert,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  useAnimatedRef,
-} from 'react-native-reanimated';
 import {
   PlayCircle,
   FlagCheckered,
@@ -53,96 +49,69 @@ interface Tool {
   screen?: ToolScreen;
 }
 
-const CARD_HEIGHT = 160;
-const CARD_GAP = 20;
-const STEP = CARD_HEIGHT + CARD_GAP;
-
 export const ToolsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
-  const scrollRef = useAnimatedRef<Animated.ScrollView>();
-  const isAdjustingRef = useRef(false);
 
   const tools: Tool[] = [
     {
       id: 'video-analysis',
       title: 'Video Analysis',
-      description: 'AI-powered race video analysis with Sprinthia',
-      icon: <PlayCircle size={24} color={theme.colors.primaryForeground} weight="fill" />,
+      description: 'AI-powered race video analysis',
+      icon: <PlayCircle size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'VideoAnalysis',
     },
     {
       id: 'photo-finish',
       title: 'Photo Finish',
-      description: 'Analyze race videos with timing overlays',
-      icon: <FlagCheckered size={24} color={theme.colors.primaryForeground} weight="fill" />,
+      description: 'Race videos with timing overlays',
+      icon: <FlagCheckered size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'PhotoFinish',
     },
     {
       id: 'start-gun',
       title: 'Start Gun',
       description: 'Simulate a race start signal',
-      icon: <SpeakerHigh size={24} color={theme.colors.primaryForeground} weight="fill" />,
+      icon: <SpeakerHigh size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'StartGun',
     },
     {
       id: 'stopwatch',
       title: 'Stopwatch',
-      description: 'Track your time with precision',
-      icon: <Timer size={24} color={theme.colors.primaryForeground} weight="fill" />,
+      description: 'Track time with precision',
+      icon: <Timer size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'Stopwatch',
     },
     {
       id: 'journal',
       title: 'Journal',
-      description: 'View and search your workout notes',
-      icon: <BookOpen size={24} color={theme.colors.primaryForeground} weight="fill" />,
+      description: 'Search your workout notes',
+      icon: <BookOpen size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'Journal',
     },
     {
       id: 'exercise-library',
       title: 'Exercise Library',
-      description: 'Store and organize your training videos',
-      icon: <VideoCamera size={24} color={theme.colors.primaryForeground} weight="fill" />,
+      description: 'Organize training videos',
+      icon: <VideoCamera size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'ExerciseLibrary',
     },
     {
       id: 'velocity-tracker',
       title: 'Velocity Tracker',
-      description: 'Track speed and acceleration metrics',
-      icon: <Gauge size={24} color={theme.colors.primaryForeground} weight="fill" />,
+      description: 'Speed & acceleration metrics',
+      icon: <Gauge size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'VelocityTracker',
     },
     {
       id: 'sprint-time-prediction',
-      title: 'Sprint Time Prediction',
-      description: 'Calculate predicted times across sprint distances',
-      icon: <Gauge size={24} color={theme.colors.primaryForeground} weight="fill" />,
+      title: 'Sprint Prediction',
+      description: 'Predicted sprint times',
+      icon: <Gauge size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'SprintTimePrediction',
     },
   ];
-
-  const count = tools.length;
-  const oneSetHeight = count * STEP;
-  const loopedTools = [...tools, ...tools, ...tools];
-
-  const handleScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (isAdjustingRef.current) return;
-    const y = e.nativeEvent.contentOffset.y;
-
-    if (y < oneSetHeight * 0.25 || y > oneSetHeight * 1.75) {
-      isAdjustingRef.current = true;
-      const offset = y % oneSetHeight;
-      const newY = oneSetHeight + offset;
-      (scrollRef.current as any)?.scrollTo({ y: newY, animated: false });
-      setTimeout(() => { isAdjustingRef.current = false; }, 50);
-    }
-  }, [oneSetHeight]);
-
-  const handleContentSizeChange = useCallback(() => {
-    (scrollRef.current as any)?.scrollTo({ y: oneSetHeight, animated: false });
-  }, [oneSetHeight]);
 
   const handleToolPress = (tool: Tool) => {
     if (tool.comingSoon) {
@@ -158,9 +127,14 @@ export const ToolsScreen: React.FC = () => {
     }
   };
 
-  const renderCard = (tool: Tool, idx: number) => (
+  const rows: Tool[][] = [];
+  for (let i = 0; i < tools.length; i += 2) {
+    rows.push(tools.slice(i, i + 2));
+  }
+
+  const renderCard = (tool: Tool) => (
     <TouchableOpacity
-      key={`${tool.id}-${idx}`}
+      key={tool.id}
       onPress={() => handleToolPress(tool)}
       activeOpacity={0.85}
       style={styles.cardTouchable}
@@ -169,28 +143,24 @@ export const ToolsScreen: React.FC = () => {
         {tool.comingSoon ? (
           <CardContent style={styles.toolContent}>
             <View style={styles.iconCircle}>{tool.icon}</View>
-            <View style={styles.toolTextArea}>
-              <View style={styles.toolTitleRow}>
-                <Text variant="body" weight="bold" color="muted">{tool.title}</Text>
-                <Lock size={10} color={theme.colors.textMuted} weight="fill" />
-              </View>
-              <Text variant="small" color="muted" style={styles.toolDescription}>{tool.description}</Text>
-              <Text variant="small" color="muted" style={styles.comingSoonText}>Coming soon</Text>
+            <Text variant="body" weight="bold" color="muted" numberOfLines={1}>{tool.title}</Text>
+            <Text variant="small" color="muted" numberOfLines={2} style={styles.toolDescription}>{tool.description}</Text>
+            <View style={styles.comingSoonRow}>
+              <Lock size={10} color={theme.colors.textMuted} weight="fill" />
+              <Text variant="small" color="muted">Coming soon</Text>
             </View>
           </CardContent>
         ) : (
           <LinearGradient
-            colors={theme.gradients.webPurple.colors}
-            start={theme.gradients.webPurple.start}
-            end={theme.gradients.webPurple.end}
+            colors={['#e65100', '#bf360c', '#7b1fa2', '#5b21b6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.toolGradient}
           >
             <CardContent style={styles.toolContent}>
               <View style={styles.iconCircle}>{tool.icon}</View>
-              <View style={styles.toolTextArea}>
-                <Text variant="h3" weight="bold" color="primary-foreground">{tool.title}</Text>
-                <Text variant="body" color="primary-foreground" style={styles.toolDescription}>{tool.description}</Text>
-              </View>
+              <Text variant="body" weight="bold" color="primary-foreground" numberOfLines={1}>{tool.title}</Text>
+              <Text variant="small" color="primary-foreground" numberOfLines={2} style={styles.toolDescription}>{tool.description}</Text>
             </CardContent>
           </LinearGradient>
         )}
@@ -204,24 +174,20 @@ export const ToolsScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <Animated.ScrollView
-        ref={scrollRef}
-        contentInsetAdjustmentBehavior="never"
+      <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: 12, paddingBottom: 12 },
+          { paddingTop: insets.top + 12, paddingBottom: contentBottomPadding },
         ]}
-        style={{ marginTop: insets.top, marginBottom: contentBottomPadding }}
         showsVerticalScrollIndicator={false}
-        onMomentumScrollEnd={handleScrollEnd}
-        onScrollEndDrag={handleScrollEnd}
-        onContentSizeChange={handleContentSizeChange}
-        scrollEventThrottle={16}
       >
-        <View style={styles.cardsList}>
-          {loopedTools.map(renderCard)}
-        </View>
-      </Animated.ScrollView>
+        {rows.map((row, idx) => (
+          <View key={idx} style={styles.row}>
+            {row.map(renderCard)}
+            {row.length === 1 && <View style={styles.cardTouchable} />}
+          </View>
+        ))}
+      </ScrollView>
     </LinearGradient>
   );
 };
@@ -231,13 +197,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
   },
-  cardsList: {
-    gap: CARD_GAP,
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
   },
   cardTouchable: {
-    height: CARD_HEIGHT,
+    flex: 1,
+    aspectRatio: 0.9,
   },
   toolCard: {
     flex: 1,
@@ -259,35 +228,29 @@ const styles = StyleSheet.create({
   },
   toolContent: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.xl,
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    gap: 8,
   },
   iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  toolTextArea: {
-    flex: 1,
-    gap: 4,
-  },
-  toolTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
+    marginBottom: 4,
   },
   toolDescription: {
-    marginTop: 4,
-    lineHeight: 20,
-    opacity: 0.9,
+    textAlign: 'center',
+    lineHeight: 18,
+    opacity: 0.85,
   },
-  comingSoonText: {
-    marginTop: theme.spacing.xs,
+  comingSoonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 });

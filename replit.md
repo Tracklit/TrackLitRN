@@ -64,7 +64,7 @@ migrations/          - Database migrations
 - 2026-02-17: Drawer: blocks touch pass-through, X close button, very dark gray background (#1a1a1a)
 - 2026-02-18: Onboarding: removed sample program text, switched Lucide to Phosphor icons, restyled cards (16px border-radius, subtle rgba backgrounds)
 - 2026-02-18: HomeScreen: added 500ms fade-in animation on mount using Reanimated
-- 2026-02-18: ToolsScreen: 160px tall cards (2x previous) with purple gradient matching Practice, auto-scrolling vertical carousel that loops
+- 2026-02-18: ToolsScreen: 2-column grid layout with orange-to-purple gradient (fiery orange from logo), centered icon/text cards
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
