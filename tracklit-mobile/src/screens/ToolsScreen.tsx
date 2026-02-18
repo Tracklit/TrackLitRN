@@ -151,18 +151,11 @@ export const ToolsScreen: React.FC = () => {
             </View>
           </CardContent>
         ) : (
-          <LinearGradient
-            colors={['#5b21b6', '#7b1fa2', '#7b1fa2', '#bf360c']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.toolGradient}
-          >
-            <CardContent style={styles.toolContent}>
-              <View style={styles.iconCircle}>{tool.icon}</View>
-              <Text variant="body" weight="bold" color="primary-foreground" numberOfLines={1}>{tool.title}</Text>
-              <Text variant="small" color="primary-foreground" numberOfLines={2} style={styles.toolDescription}>{tool.description}</Text>
-            </CardContent>
-          </LinearGradient>
+          <CardContent style={styles.toolContent}>
+            <View style={styles.iconCircle}>{tool.icon}</View>
+            <Text variant="body" weight="bold" color="primary-foreground" numberOfLines={1}>{tool.title}</Text>
+            <Text variant="small" color="primary-foreground" numberOfLines={2} style={styles.toolDescription}>{tool.description}</Text>
+          </CardContent>
         )}
       </Card>
     </TouchableOpacity>
@@ -182,10 +175,13 @@ export const ToolsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {rows.map((row, idx) => (
-          <View key={idx} style={styles.row}>
-            {row.map(renderCard)}
-            {row.length === 1 && <View style={styles.cardTouchable} />}
-          </View>
+          <React.Fragment key={idx}>
+            {idx > 0 && <View style={styles.divider} />}
+            <View style={styles.row}>
+              {row.map(renderCard)}
+              {row.length === 1 && <View style={styles.cardTouchable} />}
+            </View>
+          </React.Fragment>
         ))}
       </ScrollView>
     </LinearGradient>
@@ -202,11 +198,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(191, 54, 12, 0.15)',
+    marginVertical: 14,
+    marginHorizontal: 8,
   },
   cardTouchable: {
     flex: 1,
-    aspectRatio: 1.05,
+    aspectRatio: 1.2,
   },
   toolCard: {
     flex: 1,
@@ -214,17 +215,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     padding: 0,
     marginBottom: 0,
-    borderWidth: 0.5,
-    borderColor: 'rgba(148, 163, 184, 0.25)',
-    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(191, 54, 12, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     ...theme.shadows.md,
   },
   toolCardDisabled: {
     backgroundColor: 'rgba(15, 23, 42, 0.3)',
     borderColor: theme.colors.border,
-  },
-  toolGradient: {
-    flex: 1,
   },
   toolContent: {
     flex: 1,
