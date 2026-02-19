@@ -87,6 +87,7 @@ migrations/          - Database migrations
 - 2026-02-19: ChatConversationScreen: Telegram dark theme — blue own bubbles (#2b5278), dark other bubbles (#1e2c3a), date separators, inline timestamps with check marks, Phosphor icons, orange send button
 - 2026-02-19: PhotoFinishScreen: upload section wrapped in dashed-border card (16px radius, rgba bg) for clear tap affordance
 - 2026-02-19: BottomNavigation: removed Profile tab (5 tabs: Home, Practice, Programs, Feed, Tools), Profile still accessible via drawer
+- 2026-02-19: Ticker replaced with Instagram-style horizontal carousel — circular profile image cards with type badges (journal=orange Book, feed=indigo Newspaper, system=red dot), infinite loop scrolling via 3x data duplication, taps open detail modal
 - 2026-02-19: Ticker animation: changed from horizontal slide to vertical — new messages slide in from top, old messages slide out to bottom
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts

@@ -2,26 +2,24 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   ScrollView,
+  FlatList,
   StyleSheet,
   StatusBar,
   TouchableOpacity,
   RefreshControl,
   Modal,
   Alert,
+  Image,
 } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withDelay,
-  cancelAnimation,
   Easing,
-  runOnJS,
 } from 'react-native-reanimated';
 import {
   Bell,
   PaperPlaneTilt,
-  CaretDown,
   X,
   CaretRight,
   Star,
@@ -34,6 +32,7 @@ import {
   User,
   Heart,
   FloppyDisk,
+  Newspaper,
 } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -94,13 +93,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [greeting, setGreeting] = useState('');
   const { user, refreshUser } = useAuth();
   const queryClient = useQueryClient();
-  const [tickerCollapsed, setTickerCollapsed] = useState(false);
-  const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
-  const [nextActivityIndex, setNextActivityIndex] = useState<number | null>(null);
   const [tickerModalVisible, setTickerModalVisible] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<CommunityActivity | null>(null);
   const [likedActivities, setLikedActivities] = useState<Set<number>>(new Set());
-  const isAnimatingRef = useRef(false);
+  const carouselRef = useRef<FlatList>(null);
   const userId = user?.id;
 
   const screenOpacity = useSharedValue(0);
@@ -110,55 +106,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const screenFadeStyle = useAnimatedStyle(() => ({
     opacity: screenOpacity.value,
   }));
-
-  const currentOpacity = useSharedValue(1);
-  const currentTranslateY = useSharedValue(0);
-  const nextOpacity = useSharedValue(0);
-  const nextTranslateY = useSharedValue(-20);
-
-  const ANIM_DURATION = 400;
-  const easeOutCubic = Easing.bezier(0.33, 1, 0.68, 1);
-
-  const currentAnimStyle = useAnimatedStyle(() => ({
-    opacity: currentOpacity.value,
-    transform: [{ translateY: currentTranslateY.value }],
-  }));
-
-  const nextAnimStyle = useAnimatedStyle(() => ({
-    opacity: nextOpacity.value,
-    transform: [{ translateY: nextTranslateY.value }],
-  }));
-
-  const promoteNext = useCallback((idx: number) => {
-    currentOpacity.value = 1;
-    currentTranslateY.value = 0;
-    nextOpacity.value = 0;
-    nextTranslateY.value = -20;
-
-    setNextActivityIndex(null);
-    setCurrentActivityIndex(idx);
-    isAnimatingRef.current = false;
-  }, []);
-
-  const triggerTransition = useCallback((nextIdx: number) => {
-    if (isAnimatingRef.current) return;
-    isAnimatingRef.current = true;
-    setNextActivityIndex(nextIdx);
-
-    const outConfig = { duration: ANIM_DURATION, easing: easeOutCubic };
-    const inConfig = { duration: ANIM_DURATION, easing: easeOutCubic };
-
-    currentOpacity.value = withTiming(0, outConfig);
-    currentTranslateY.value = withTiming(20, outConfig);
-
-    nextOpacity.value = withTiming(1, inConfig);
-    nextTranslateY.value = withTiming(0, inConfig, (finished) => {
-      'worklet';
-      if (finished) {
-        runOnJS(promoteNext)(nextIdx);
-      }
-    });
-  }, [promoteNext]);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -205,12 +152,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   });
 
   const activities = activitiesQuery.data ?? [];
-  const currentActivity =
-    activities.length > 0 ? activities[currentActivityIndex % activities.length] : undefined;
-  const nextActivity =
-    nextActivityIndex !== null && activities.length > 0
-      ? activities[nextActivityIndex % activities.length]
-      : undefined;
+
+  const CAROUSEL_COPIES = 3;
+  const carouselData = activities.length > 0
+    ? Array.from({ length: CAROUSEL_COPIES }, (_, copyIdx) =>
+        activities.map((a, i) => ({ ...a, _carouselKey: `${copyIdx}-${i}` }))
+      ).flat()
+    : [];
+  const carouselMiddleOffset = activities.length;
+
+  const handleCarouselScrollEnd = useCallback((contentOffsetX: number, itemWidth: number) => {
+    if (!activities.length || !carouselRef.current) return;
+    const totalItemWidth = itemWidth;
+    const singleSetWidth = activities.length * totalItemWidth;
+    if (contentOffsetX < singleSetWidth * 0.3) {
+      carouselRef.current.scrollToOffset({ offset: contentOffsetX + singleSetWidth, animated: false });
+    } else if (contentOffsetX > singleSetWidth * 1.7) {
+      carouselRef.current.scrollToOffset({ offset: contentOffsetX - singleSetWidth, animated: false });
+    }
+  }, [activities.length]);
+
+  const getActivityBadge = (activityType: ActivityType) => {
+    switch (activityType) {
+      case 'journal_entry':
+        return 'journal';
+      case 'user_joined':
+      case 'group_joined':
+        return 'system';
+      default:
+        return 'feed';
+    }
+  };
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications-home'],
@@ -246,30 +218,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         ).length
       : 0;
 
-  const currentIndexRef = useRef(0);
-  currentIndexRef.current = currentActivityIndex;
-
-  const isPaused = tickerModalVisible;
-
-  useEffect(() => {
-    if (tickerCollapsed || isPaused) {
-      isAnimatingRef.current = false;
-      setNextActivityIndex(null);
-      currentOpacity.value = 1;
-      currentTranslateY.value = 0;
-      nextOpacity.value = 0;
-      nextTranslateY.value = -20;
-    }
-  }, [tickerCollapsed, isPaused]);
-
-  useEffect(() => {
-    if (!activities.length || isPaused || tickerCollapsed) return;
-    const id = setInterval(() => {
-      const nextIdx = (currentIndexRef.current + 1) % activities.length;
-      triggerTransition(nextIdx);
-    }, 7000);
-    return () => clearInterval(id);
-  }, [activities.length, isPaused, tickerCollapsed, triggerTransition]);
+  const CAROUSEL_ITEM_WIDTH = 80;
 
   const formatTimeAgo = (dateString: string) => {
     const now = Date.now();
@@ -445,90 +394,83 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       >
         <InlineRefreshHeader visible={isRefreshing} />
 
-        {/* Feed ticker */}
-        <View style={styles.tickerContainer}>
-          {tickerCollapsed ? (
-            <TouchableOpacity
-              style={styles.tickerCollapsed}
-              activeOpacity={0.8}
-              onPress={() => setTickerCollapsed(false)}
-            >
-              <Text variant="body" weight="medium" color="foreground">
-                Feed
-              </Text>
-              <CaretDown size={12} color="#cbd5e1" weight="fill" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.tickerCard}
-              activeOpacity={0.85}
-              onPress={() => handleTickerTap(currentActivity)}
-            >
-              <View style={styles.tickerControls}>
-                <TouchableOpacity
-                  style={styles.tickerIconButton}
-                  onPress={(e) => { e.stopPropagation(); setTickerCollapsed(true); }}
-                >
-                  <X size={10} color="#ffffff" weight="bold" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.tickerContent}>
-                <Animated.View style={[styles.tickerMessageLayer, currentAnimStyle]}>
-                  <View style={styles.tickerHeaderRow}>
-                    <View style={styles.tickerAvatar}>
-                      {(() => {
-                        const ActivityIcon = getActivityIconComponent(currentActivity?.activityType ?? 'user');
-                        return <ActivityIcon size={12} color="#e2e8f0" weight="fill" />;
-                      })()}
-                    </View>
-                    <View style={styles.tickerTitleBlock}>
-                      <Text variant="caption" color="accent" numberOfLines={1}>
-                        {currentActivity?.title ?? 'Community updates'}
-                      </Text>
-                      {!!currentActivity?.user?.username && (
-                        <Text variant="caption" color="secondary" numberOfLines={1}>
-                          {currentActivity.user.username} · {formatTimeAgo(currentActivity.createdAt)}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                  <Text variant="caption" weight="medium" color="foreground" numberOfLines={1}>
-                    {currentActivity?.description ??
-                      'Athletes are crushing their sessions today. Tap Feed to see more.'}
-                  </Text>
-                </Animated.View>
+        {/* Activity Carousel */}
+        {activities.length > 0 && (
+          <View style={styles.carouselContainer}>
+            <FlatList
+              ref={carouselRef}
+              data={carouselData}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item._carouselKey}
+              contentContainerStyle={styles.carouselContent}
+              contentOffset={{ x: carouselMiddleOffset * CAROUSEL_ITEM_WIDTH, y: 0 }}
+              onMomentumScrollEnd={(e) =>
+                handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH)
+              }
+              onScrollEndDrag={(e) => {
+                if (!e.nativeEvent.velocity || (Math.abs(e.nativeEvent.velocity.x) < 0.1)) {
+                  handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH);
+                }
+              }}
+              getItemLayout={(_, index) => ({
+                length: CAROUSEL_ITEM_WIDTH,
+                offset: CAROUSEL_ITEM_WIDTH * index,
+                index,
+              })}
+              renderItem={({ item }) => {
+                const badge = getActivityBadge(item.activityType);
+                const hasProfileImage = !!item.user?.profileImageUrl;
+                const initial = (item.user?.name?.[0] || item.user?.username?.[0] || '?').toUpperCase();
+                const username = item.user?.name?.split(' ')[0] || item.user?.username || '';
 
-                {nextActivity && (
-                  <Animated.View style={[styles.tickerMessageLayer, nextAnimStyle]}>
-                    <View style={styles.tickerHeaderRow}>
-                      <View style={styles.tickerAvatar}>
-                        {(() => {
-                          const ActivityIcon = getActivityIconComponent(nextActivity.activityType ?? 'user');
-                          return <ActivityIcon size={12} color="#e2e8f0" weight="fill" />;
-                        })()}
+                return (
+                  <TouchableOpacity
+                    style={styles.carouselItem}
+                    activeOpacity={0.7}
+                    onPress={() => handleTickerTap(item)}
+                  >
+                    <View style={styles.carouselRing}>
+                      <View style={styles.carouselCircle}>
+                        {hasProfileImage ? (
+                          <Image
+                            source={{ uri: item.user!.profileImageUrl }}
+                            style={styles.carouselImage}
+                          />
+                        ) : (
+                          <Text style={styles.carouselInitial}>{initial}</Text>
+                        )}
                       </View>
-                      <View style={styles.tickerTitleBlock}>
-                        <Text variant="caption" color="accent" numberOfLines={1}>
-                          {nextActivity.title ?? 'Community updates'}
-                        </Text>
-                        {!!nextActivity.user?.username && (
-                          <Text variant="caption" color="secondary" numberOfLines={1}>
-                            {nextActivity.user.username} · {formatTimeAgo(nextActivity.createdAt)}
-                          </Text>
+                      <View style={[
+                        styles.carouselBadge,
+                        badge === 'journal' && styles.carouselBadgeJournal,
+                        badge === 'feed' && styles.carouselBadgeFeed,
+                        badge === 'system' && styles.carouselBadgeSystem,
+                      ]}>
+                        {badge === 'journal' ? (
+                          <Book size={10} color="#fff" weight="fill" />
+                        ) : badge === 'feed' ? (
+                          <Newspaper size={10} color="#fff" weight="fill" />
+                        ) : (
+                          <View style={styles.carouselRedDot} />
                         )}
                       </View>
                     </View>
-                    <Text variant="caption" weight="medium" color="foreground" numberOfLines={1}>
-                      {nextActivity.description ??
-                        'Athletes are crushing their sessions today. Tap Feed to see more.'}
+                    <Text
+                      variant="caption"
+                      color="secondary"
+                      numberOfLines={1}
+                      style={styles.carouselUsername}
+                    >
+                      {username}
                     </Text>
-                  </Animated.View>
-                )}
-              </View>
-            </TouchableOpacity>
-          )}
-          <View style={styles.tickerDivider} />
-        </View>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+            <View style={styles.carouselDivider} />
+          </View>
+        )}
 
         {/* Practice Card */}
         <TouchableOpacity
@@ -756,84 +698,85 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
-  tickerContainer: {
+  carouselContainer: {
     marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
-  tickerCollapsed: {
-    height: 36,
-    borderRadius: 12,
-    paddingHorizontal: theme.spacing.lg,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
-    flexDirection: 'row',
+  carouselContent: {
+    paddingHorizontal: 8,
+  },
+  carouselItem: {
+    width: 80,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingVertical: 6,
   },
-  tickerCard: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: theme.spacing.lg,
-    height: 76,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    width: '100%',
-    alignSelf: 'stretch',
-    overflow: 'hidden',
+  carouselRing: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: 'rgba(255,152,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  tickerDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    marginTop: theme.spacing.lg,
-  },
-  tickerControls: {
-    position: 'absolute',
-    right: 10,
-    top: 10,
-    flexDirection: 'row',
-    zIndex: 2,
-  },
-  tickerIconButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+  carouselCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  tickerContent: {
-    paddingRight: 36,
-    position: 'relative',
-    flex: 1,
     overflow: 'hidden',
   },
-  tickerMessageLayer: {
+  carouselImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  carouselInitial: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#e2e8f0',
+  },
+  carouselBadge: {
     position: 'absolute',
-    top: 0,
-    left: 0,
+    bottom: 0,
     right: 0,
-    gap: 2,
-  },
-  tickerHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 2,
-  },
-  tickerAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 2,
+    borderColor: '#0f1623',
   },
-  tickerTitleBlock: {
-    flex: 1,
+  carouselBadgeJournal: {
+    backgroundColor: '#FF9800',
+  },
+  carouselBadgeFeed: {
+    backgroundColor: '#6366f1',
+  },
+  carouselBadgeSystem: {
+    backgroundColor: '#1e293b',
+  },
+  carouselRedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ef4444',
+  },
+  carouselUsername: {
+    marginTop: 4,
+    fontSize: 10,
+    textAlign: 'center',
+    width: 72,
+  },
+  carouselDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginTop: 8,
+    marginHorizontal: theme.spacing.container,
   },
   categoryCard: {
     height: 90,
@@ -980,13 +923,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.container,
   },
   modalContent: {
-    backgroundColor: '#1a1028',
-    borderRadius: 16,
+    backgroundColor: '#141c2b',
+    borderRadius: 12,
     paddingHorizontal: 20,
     paddingBottom: 20,
     paddingTop: 16,
     borderWidth: 0.5,
-    borderColor: 'rgba(100, 116, 139, 0.3)',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   modalCloseButton: {
     position: 'absolute',
