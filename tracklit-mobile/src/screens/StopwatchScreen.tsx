@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -16,11 +16,17 @@ import {
   Pause,
   ArrowClockwise,
   Flag,
+  Info,
 } from 'phosphor-react-native';
 
 import { Text } from '../components/ui/Text';
 import theme from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+
+let VolumeManager: any = null;
+try {
+  VolumeManager = require('react-native-volume-manager').VolumeManager;
+} catch {}
 
 export const StopwatchScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -28,24 +34,80 @@ export const StopwatchScreen: React.FC = () => {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [laps, setLaps] = useState<number[]>([]);
+  const startTimeRef = useRef<number>(0);
+  const accumulatedRef = useRef<number>(0);
+  const animFrameRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const tick = useCallback(() => {
+    if (startTimeRef.current === 0) return;
+    const now = Date.now();
+    setTime(accumulatedRef.current + (now - startTimeRef.current));
+  }, []);
 
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
     if (isRunning) {
-      interval = setInterval(() => {
-        setTime(prev => prev + 10);
-      }, 10);
+      if (animFrameRef.current) {
+        clearInterval(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+      startTimeRef.current = Date.now();
+      animFrameRef.current = setInterval(tick, 16);
+    } else {
+      if (animFrameRef.current) {
+        clearInterval(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+      if (startTimeRef.current > 0) {
+        accumulatedRef.current += Date.now() - startTimeRef.current;
+        startTimeRef.current = 0;
+      }
     }
     return () => {
-      if (interval) clearInterval(interval);
+      if (animFrameRef.current) {
+        clearInterval(animFrameRef.current);
+        animFrameRef.current = null;
+      }
     };
-  }, [isRunning]);
+  }, [isRunning, tick]);
+
+  useEffect(() => {
+    if (!VolumeManager) return;
+    let listener: any;
+    let lastVolume = -1;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    try {
+      VolumeManager.showNativeVolumeUI({ enabled: false });
+      listener = VolumeManager.addVolumeListener((result: { volume: number }) => {
+        if (lastVolume < 0) {
+          lastVolume = result.volume;
+          return;
+        }
+        if (result.volume > lastVolume) {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            setIsRunning(prev => !prev);
+            debounceTimer = null;
+          }, 100);
+        }
+        lastVolume = result.volume;
+      });
+    } catch {}
+    return () => {
+      try {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        listener?.remove();
+        VolumeManager?.showNativeVolumeUI({ enabled: true });
+      } catch {}
+    };
+  }, []);
 
   const handleStartStop = () => setIsRunning(prev => !prev);
 
   const handleReset = () => {
     setTime(0);
     setIsRunning(false);
+    accumulatedRef.current = 0;
+    startTimeRef.current = 0;
     setLaps([]);
   };
 
@@ -128,11 +190,18 @@ export const StopwatchScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             {isRunning ? (
-              <Pause size={52} color="#fff" weight="fill" />
+              <Pause size={72} color="#fff" weight="fill" />
             ) : (
-              <Play size={52} color="#fff" weight="fill" />
+              <Play size={72} color="#fff" weight="fill" />
             )}
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.tipRow}>
+          <Info size={14} color="rgba(255,255,255,0.35)" weight="fill" />
+          <Text variant="small" style={styles.tipText}>
+            Use your volume button to start/stop
+          </Text>
         </View>
 
         <View style={styles.controlsRow}>
@@ -218,7 +287,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: theme.spacing.xl,
-    gap: 28,
+    gap: 32,
   },
   header: {
     flexDirection: 'row',
@@ -235,7 +304,7 @@ const styles = StyleSheet.create({
   timerSection: {
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
   timerDigitsRow: {
     flexDirection: 'row',
@@ -283,22 +352,22 @@ const styles = StyleSheet.create({
   center: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 20,
   },
   glow: {
     position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(255,152,0,0.15)',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(255,152,0,0.12)',
   },
   glowActive: {
-    backgroundColor: 'rgba(239,68,68,0.2)',
+    backgroundColor: 'rgba(239,68,68,0.15)',
   },
   mainButton: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,152,0,0.2)',
@@ -308,6 +377,15 @@ const styles = StyleSheet.create({
   mainButtonActive: {
     backgroundColor: 'rgba(239,68,68,0.2)',
     borderColor: '#ef4444',
+  },
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  tipText: {
+    color: 'rgba(255,255,255,0.35)',
   },
   controlsRow: {
     flexDirection: 'row',

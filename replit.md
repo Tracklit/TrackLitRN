@@ -79,6 +79,8 @@ migrations/          - Database migrations
 - 2026-02-19: Added velocity & acceleration tracking — stores landmark history across frames, computes motion derivatives for 7 body parts, new Motion tab in analysis
 - 2026-02-19: Joint angle toggle on skeleton — Angle icon button shows/hides degree labels at each joint on PoseOverlay
 - 2026-02-19: New file: FullAnalysisModal.tsx (wraps AdvancedAnalysis + FrameComparison in slide-up modal)
+- 2026-02-19: StopwatchScreen: doubled start button (140→240px), fixed timer accuracy using Date.now() instead of setInterval increments, added volume-up button start/stop via react-native-volume-manager (debounced, requires dev build), info text hint, increased spacing (gap 32px)
+- 2026-02-19: StartGunScreen: phase command card made half-width (50-60%), centered with bottom spacing
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
