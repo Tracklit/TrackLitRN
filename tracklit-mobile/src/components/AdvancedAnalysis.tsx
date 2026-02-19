@@ -11,6 +11,11 @@ import {
   ShieldCheck,
   Brain,
   Barbell,
+  Lightning,
+  ArrowRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -20,6 +25,8 @@ import {
   type FrameAnalysis,
   type JointAngle,
   type SymmetryMetric,
+  type MotionVector,
+  type LandmarkSnapshot,
 } from '@/utils/poseAnalysis';
 
 interface AdvancedAnalysisProps {
@@ -27,6 +34,7 @@ interface AdvancedAnalysisProps {
   timestamp: number;
   onRequestAI: (analysis: FrameAnalysis) => void;
   aiLoading?: boolean;
+  landmarkHistory?: LandmarkSnapshot[];
 }
 
 function AngleBar({ angle, max = 180 }: { angle: number; max?: number }) {
@@ -64,19 +72,52 @@ function ConfidenceDot({ score, name }: { score: number; name: string }) {
   );
 }
 
+function MotionRow({ vector }: { vector: MotionVector }) {
+  const dirIcon = () => {
+    if (vector.velocity.magnitude < 0.01) return null;
+    const angle = Math.atan2(-vector.velocity.y, vector.velocity.x) * (180 / Math.PI);
+    if (angle > -45 && angle <= 45) return <ArrowRight size={12} color="#00FF88" weight="bold" />;
+    if (angle > 45 && angle <= 135) return <ArrowUp size={12} color="#00FF88" weight="bold" />;
+    if (angle > -135 && angle <= -45) return <ArrowDown size={12} color="#00FF88" weight="bold" />;
+    return <ArrowLeft size={12} color="#00FF88" weight="bold" />;
+  };
+
+  const accelColor = vector.acceleration.magnitude > 0.5 ? '#FF9800' : '#888';
+
+  return (
+    <View style={styles.motionRow}>
+      <View style={styles.motionLeft}>
+        <Text variant="small" style={styles.metricLabel}>{vector.bodyPart}</Text>
+        <View style={styles.motionDir}>{dirIcon()}</View>
+      </View>
+      <View style={styles.motionRight}>
+        <View style={styles.motionMetric}>
+          <Text variant="small" style={styles.motionLabel}>Vel</Text>
+          <Text variant="small" weight="bold" style={styles.motionValue}>{vector.velocity.magnitude.toFixed(2)}</Text>
+        </View>
+        <View style={styles.motionMetric}>
+          <Text variant="small" style={styles.motionLabel}>Acc</Text>
+          <Text variant="small" weight="bold" style={[styles.motionValue, { color: accelColor }]}>{vector.acceleration.magnitude.toFixed(2)}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export const AdvancedAnalysis: React.FC<AdvancedAnalysisProps> = ({
   landmarks,
   timestamp,
   onRequestAI,
   aiLoading = false,
+  landmarkHistory,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'angles' | 'symmetry' | 'position' | 'confidence'>('angles');
+  const [activeTab, setActiveTab] = useState<'angles' | 'symmetry' | 'position' | 'confidence' | 'motion'>('angles');
 
   const analysis = useMemo(() => {
     if (!landmarks || landmarks.length === 0) return null;
-    return computeFullAnalysis(landmarks, timestamp);
-  }, [landmarks, timestamp]);
+    return computeFullAnalysis(landmarks, timestamp, landmarkHistory);
+  }, [landmarks, timestamp, landmarkHistory]);
 
   if (!analysis) return null;
 
@@ -84,6 +125,7 @@ export const AdvancedAnalysis: React.FC<AdvancedAnalysisProps> = ({
     { key: 'angles' as const, label: 'Angles', icon: Crosshair },
     { key: 'symmetry' as const, label: 'Symmetry', icon: Scales },
     { key: 'position' as const, label: 'Position', icon: PersonArmsSpread },
+    { key: 'motion' as const, label: 'Motion', icon: Lightning },
     { key: 'confidence' as const, label: 'Quality', icon: ShieldCheck },
   ];
 
@@ -202,6 +244,35 @@ export const AdvancedAnalysis: React.FC<AdvancedAnalysisProps> = ({
                     <Text variant="small" weight="bold" style={styles.strideValue}>{m.value}{m.unit}</Text>
                   </View>
                 ))}
+              </View>
+            )}
+
+            {activeTab === 'motion' && (
+              <View>
+                {analysis.motion ? (
+                  <>
+                    <View style={styles.motionOverview}>
+                      <View style={styles.motionOverviewItem}>
+                        <Text variant="small" style={styles.quickLabel}>Avg Speed</Text>
+                        <Text variant="body" weight="bold" style={styles.quickValue}>{analysis.motion.overallSpeed.toFixed(2)}</Text>
+                        <Text variant="small" style={styles.quickSub}>units/s</Text>
+                      </View>
+                      <View style={styles.quickDivider} />
+                      <View style={styles.motionOverviewItem}>
+                        <Text variant="small" style={styles.quickLabel}>Direction</Text>
+                        <Text variant="body" weight="bold" style={styles.quickValue}>{analysis.motion.dominantDirection}</Text>
+                        <Text variant="small" style={styles.quickSub}>dominant</Text>
+                      </View>
+                    </View>
+                    {analysis.motion.vectors.map((v, i) => (
+                      <MotionRow key={i} vector={v} />
+                    ))}
+                  </>
+                ) : (
+                  <Text variant="small" style={styles.emptyText}>
+                    Scrub through frames to see velocity and acceleration data. Need at least 2 frames.
+                  </Text>
+                )}
               </View>
             )}
 
@@ -574,5 +645,51 @@ const styles = StyleSheet.create({
   aiButtonText: {
     color: '#fff',
     fontSize: 15,
+  },
+  motionOverview: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  motionOverviewItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  motionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  motionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  motionDir: {
+    width: 16,
+    alignItems: 'center',
+  },
+  motionRight: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  motionMetric: {
+    alignItems: 'center',
+    minWidth: 50,
+  },
+  motionLabel: {
+    color: '#666',
+    fontSize: 9,
+    textTransform: 'uppercase',
+  },
+  motionValue: {
+    color: '#00FF88',
+    fontSize: 13,
   },
 });

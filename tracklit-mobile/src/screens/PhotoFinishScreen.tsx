@@ -8,7 +8,6 @@ import {
   PanResponder,
   GestureResponderEvent,
   FlatList,
-  ScrollView,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +28,8 @@ import {
   VideoCamera,
   Person,
   Camera,
+  ChartBar,
+  Angle,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -37,11 +38,10 @@ import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { MediaPipeBridge, type MediaPipeBridgeRef, type PoseLandmark } from '@/components/MediaPipeBridge';
 import { PoseOverlay } from '@/components/PoseOverlay';
-import { AdvancedAnalysis } from '@/components/AdvancedAnalysis';
-import { FrameComparison } from '@/components/FrameComparison';
+import { FullAnalysisModal } from '@/components/FullAnalysisModal';
 import { AIAnalysisModal } from '@/components/AIAnalysisModal';
 import { apiRequest } from '@/lib/api';
-import { formatAnalysisForAI, formatComparisonForAI, computeFullAnalysis, type FrameAnalysis } from '@/utils/poseAnalysis';
+import { formatAnalysisForAI, formatComparisonForAI, computeFullAnalysis, type FrameAnalysis, type LandmarkSnapshot } from '@/utils/poseAnalysis';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCRUB_HEIGHT = 56;
@@ -96,6 +96,11 @@ export const PhotoFinishScreen: React.FC = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  const [analysisModalVisible, setAnalysisModalVisible] = useState(false);
+  const [showAngles, setShowAngles] = useState(false);
+  const [landmarkHistory, setLandmarkHistory] = useState<LandmarkSnapshot[]>([]);
+  const MAX_HISTORY = 5;
 
   useEffect(() => {
     loadLibrary();
@@ -227,6 +232,12 @@ export const PhotoFinishScreen: React.FC = () => {
 
       const landmarks = await mediaPipeRef.current.detectPose(base64);
       setPoseLandmarks(landmarks);
+      if (landmarks) {
+        setLandmarkHistory((prev) => {
+          const updated = [...prev, { landmarks, timestamp: currentPosition }];
+          return updated.length > MAX_HISTORY ? updated.slice(-MAX_HISTORY) : updated;
+        });
+      }
     } catch {
       setPoseLandmarks(null);
     }
@@ -457,14 +468,12 @@ export const PhotoFinishScreen: React.FC = () => {
     );
   }
 
-  const hasAnalysisPanel = poseEnabled && poseLandmarks;
-
   return (
     <View style={styles.videoContainer}>
       <TouchableOpacity
         activeOpacity={1}
         onPress={handleVideoTap}
-        style={[styles.videoTouchArea, hasAnalysisPanel && styles.videoTouchAreaCompact]}
+        style={styles.videoTouchArea}
       >
         <View
           style={styles.videoWrapper}
@@ -487,6 +496,7 @@ export const PhotoFinishScreen: React.FC = () => {
               landmarks={poseLandmarks}
               width={videoLayout.width}
               height={videoLayout.height}
+              showAngles={showAngles}
             />
           )}
         </View>
@@ -525,6 +535,8 @@ export const PhotoFinishScreen: React.FC = () => {
             setCompFrameA(null);
             setCompFrameB(null);
             setAiResult(null);
+            setLandmarkHistory([]);
+            setShowAngles(false);
           }}
           style={styles.topBtn}
         >
@@ -542,7 +554,10 @@ export const PhotoFinishScreen: React.FC = () => {
           <TouchableOpacity
             onPress={() => {
               setPoseEnabled(!poseEnabled);
-              if (!poseEnabled) setPoseLandmarks(null);
+              if (!poseEnabled) {
+                setPoseLandmarks(null);
+                setLandmarkHistory([]);
+              }
             }}
             style={[styles.topBtn, poseEnabled && styles.topBtnPose]}
           >
@@ -550,8 +565,26 @@ export const PhotoFinishScreen: React.FC = () => {
           </TouchableOpacity>
 
           {poseEnabled && poseLandmarks && (
+            <TouchableOpacity
+              onPress={() => setShowAngles(!showAngles)}
+              style={[styles.topBtn, showAngles && styles.topBtnAngle]}
+            >
+              <Angle size={20} color={showAngles ? '#FF9800' : '#fff'} weight="fill" />
+            </TouchableOpacity>
+          )}
+
+          {poseEnabled && poseLandmarks && (
             <TouchableOpacity onPress={captureComparisonFrame} style={styles.topBtn}>
               <Camera size={20} color="#fff" weight="fill" />
+            </TouchableOpacity>
+          )}
+
+          {poseEnabled && poseLandmarks && (
+            <TouchableOpacity
+              onPress={() => setAnalysisModalVisible(true)}
+              style={[styles.topBtn, styles.topBtnAnalysis]}
+            >
+              <ChartBar size={20} color="#FF9800" weight="fill" />
             </TouchableOpacity>
           )}
 
@@ -584,7 +617,7 @@ export const PhotoFinishScreen: React.FC = () => {
         </View>
       )}
 
-      <View style={[styles.scrubContainer, hasAnalysisPanel ? styles.scrubContainerStatic : {}, { paddingBottom: hasAnalysisPanel ? 4 : insets.bottom + 8 }]}>
+      <View style={[styles.scrubContainer, { paddingBottom: insets.bottom + 8 }]}>
         <View style={styles.timeRow}>
           <Text style={styles.timeText}>{formatTime(currentPosition)}</Text>
           <Text style={styles.frameText}>Frame {currentFrame}</Text>
@@ -597,28 +630,20 @@ export const PhotoFinishScreen: React.FC = () => {
         </View>
       </View>
 
-      {poseEnabled && poseLandmarks && (
-        <ScrollView
-          style={styles.analysisScroll}
-          contentContainerStyle={[styles.analysisScrollContent, { paddingBottom: insets.bottom + 20 }]}
-          showsVerticalScrollIndicator={false}
-        >
-          <FrameComparison
-            frameA={compFrameA}
-            frameB={compFrameB}
-            onCaptureFrame={captureComparisonFrame}
-            onClear={clearComparisonFrames}
-            canCapture={poseEnabled && !!poseLandmarks}
-          />
-
-          <AdvancedAnalysis
-            landmarks={poseLandmarks}
-            timestamp={currentPosition}
-            onRequestAI={handleAIAnalysis}
-            aiLoading={aiLoading}
-          />
-        </ScrollView>
-      )}
+      <FullAnalysisModal
+        visible={analysisModalVisible}
+        onClose={() => setAnalysisModalVisible(false)}
+        landmarks={poseLandmarks}
+        timestamp={currentPosition}
+        onRequestAI={handleAIAnalysis}
+        aiLoading={aiLoading}
+        frameA={compFrameA}
+        frameB={compFrameB}
+        onCaptureFrame={captureComparisonFrame}
+        onClearFrames={clearComparisonFrames}
+        canCapture={poseEnabled && !!poseLandmarks}
+        landmarkHistory={landmarkHistory}
+      />
 
       {poseEnabled && poseProcessing && (
         <View style={styles.poseLoadingIndicator}>
@@ -690,10 +715,6 @@ const styles = StyleSheet.create({
   videoTouchArea: {
     flex: 1,
   },
-  videoTouchAreaCompact: {
-    flex: 0,
-    height: '55%',
-  },
   video: {
     flex: 1,
   },
@@ -755,10 +776,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: 16,
     paddingTop: 10,
-  },
-  scrubContainerStatic: {
-    position: 'relative',
-    backgroundColor: '#111',
   },
   timeRow: {
     flexDirection: 'row',
@@ -884,12 +901,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  analysisScroll: {
-    backgroundColor: '#111',
-    maxHeight: 300,
+  topBtnAngle: {
+    backgroundColor: 'rgba(255,152,0,0.2)',
+    borderWidth: 1,
+    borderColor: '#FF9800',
   },
-  analysisScrollContent: {
-    paddingTop: 4,
-    paddingBottom: 20,
+  topBtnAnalysis: {
+    backgroundColor: 'rgba(255,152,0,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,152,0,0.4)',
   },
 });

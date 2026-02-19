@@ -72,6 +72,10 @@ migrations/          - Database migrations
 - 2026-02-18: Frame Comparison feature — capture two frames with skeleton overlays, compare side-by-side with time/frame diff
 - 2026-02-18: AI Analysis via Sprinthia API — sends structured pose metrics for written biomechanics analysis with improvement suggestions and "Create Program" button
 - 2026-02-18: New files: poseAnalysis.ts (metrics computation), AdvancedAnalysis.tsx (collapsible metrics panel), FrameComparison.tsx, AIAnalysisModal.tsx
+- 2026-02-19: Photo Finish: separated analysis into FullAnalysisModal — video stays fullscreen, ChartBar icon opens modal with all analysis content
+- 2026-02-19: Added velocity & acceleration tracking — stores landmark history across frames, computes motion derivatives for 7 body parts, new Motion tab in analysis
+- 2026-02-19: Joint angle toggle on skeleton — Angle icon button shows/hides degree labels at each joint on PoseOverlay
+- 2026-02-19: New file: FullAnalysisModal.tsx (wraps AdvancedAnalysis + FrameComparison in slide-up modal)
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message

@@ -44,6 +44,24 @@ export interface ConfidenceScore {
   }[];
 }
 
+export interface MotionVector {
+  bodyPart: string;
+  velocity: { x: number; y: number; magnitude: number };
+  acceleration: { x: number; y: number; magnitude: number };
+  unit: string;
+}
+
+export interface MotionData {
+  vectors: MotionVector[];
+  overallSpeed: number;
+  dominantDirection: string;
+}
+
+export interface LandmarkSnapshot {
+  landmarks: PoseLandmark[];
+  timestamp: number;
+}
+
 export interface FrameAnalysis {
   jointAngles: JointAngle[];
   symmetry: SymmetryMetric[];
@@ -51,6 +69,7 @@ export interface FrameAnalysis {
   strideMetrics: StrideMetric[];
   leanAngle: LeanAngle;
   confidence: ConfidenceScore;
+  motion?: MotionData;
   timestamp: number;
 }
 
@@ -432,7 +451,91 @@ export function computeConfidence(landmarks: PoseLandmark[]): ConfidenceScore {
   return { overall, regions: regionScores };
 }
 
-export function computeFullAnalysis(landmarks: PoseLandmark[], timestamp: number = 0): FrameAnalysis {
+export function computeMotion(history: LandmarkSnapshot[]): MotionData | null {
+  if (history.length < 2) return null;
+
+  const current = history[history.length - 1];
+  const previous = history[history.length - 2];
+  const dtSeconds = Math.abs(current.timestamp - previous.timestamp) / 1000;
+  if (dtSeconds === 0) return null;
+
+  const trackedParts: { name: string; indices: number[] }[] = [
+    { name: 'Center of Mass', indices: [LANDMARK.LEFT_HIP, LANDMARK.RIGHT_HIP, LANDMARK.LEFT_SHOULDER, LANDMARK.RIGHT_SHOULDER] },
+    { name: 'Left Hand', indices: [LANDMARK.LEFT_WRIST] },
+    { name: 'Right Hand', indices: [LANDMARK.RIGHT_WRIST] },
+    { name: 'Left Foot', indices: [LANDMARK.LEFT_ANKLE] },
+    { name: 'Right Foot', indices: [LANDMARK.RIGHT_ANKLE] },
+    { name: 'Left Knee', indices: [LANDMARK.LEFT_KNEE] },
+    { name: 'Right Knee', indices: [LANDMARK.RIGHT_KNEE] },
+  ];
+
+  const vectors: MotionVector[] = [];
+
+  for (const part of trackedParts) {
+    const currPositions = part.indices
+      .filter((i) => current.landmarks[i] && isVisible(current.landmarks[i]))
+      .map((i) => current.landmarks[i]);
+    const prevPositions = part.indices
+      .filter((i) => previous.landmarks[i] && isVisible(previous.landmarks[i]))
+      .map((i) => previous.landmarks[i]);
+
+    if (currPositions.length === 0 || prevPositions.length === 0) continue;
+
+    const currX = currPositions.reduce((s, l) => s + l.x, 0) / currPositions.length;
+    const currY = currPositions.reduce((s, l) => s + l.y, 0) / currPositions.length;
+    const prevX = prevPositions.reduce((s, l) => s + l.x, 0) / prevPositions.length;
+    const prevY = prevPositions.reduce((s, l) => s + l.y, 0) / prevPositions.length;
+
+    const vx = (currX - prevX) / dtSeconds;
+    const vy = (currY - prevY) / dtSeconds;
+    const vMag = Math.sqrt(vx * vx + vy * vy);
+
+    let ax = 0, ay = 0, aMag = 0;
+    if (history.length >= 3) {
+      const older = history[history.length - 3];
+      const dtPrev = Math.abs(previous.timestamp - older.timestamp) / 1000;
+      if (dtPrev > 0) {
+        const olderPositions = part.indices
+          .filter((i) => older.landmarks[i] && isVisible(older.landmarks[i]))
+          .map((i) => older.landmarks[i]);
+        if (olderPositions.length > 0) {
+          const olderX = olderPositions.reduce((s, l) => s + l.x, 0) / olderPositions.length;
+          const olderY = olderPositions.reduce((s, l) => s + l.y, 0) / olderPositions.length;
+          const prevVx = (prevX - olderX) / dtPrev;
+          const prevVy = (prevY - olderY) / dtPrev;
+          ax = (vx - prevVx) / dtSeconds;
+          ay = (vy - prevVy) / dtSeconds;
+          aMag = Math.sqrt(ax * ax + ay * ay);
+        }
+      }
+    }
+
+    vectors.push({
+      bodyPart: part.name,
+      velocity: { x: Math.round(vx * 100) / 100, y: Math.round(vy * 100) / 100, magnitude: Math.round(vMag * 100) / 100 },
+      acceleration: { x: Math.round(ax * 100) / 100, y: Math.round(ay * 100) / 100, magnitude: Math.round(aMag * 100) / 100 },
+      unit: 'units/s',
+    });
+  }
+
+  const overallSpeed = vectors.length > 0
+    ? Math.round(vectors.reduce((s, v) => s + v.velocity.magnitude, 0) / vectors.length * 100) / 100
+    : 0;
+
+  const comVector = vectors.find((v) => v.bodyPart === 'Center of Mass');
+  let dominantDirection = 'stationary';
+  if (comVector && comVector.velocity.magnitude > 0.01) {
+    const angle = Math.atan2(-comVector.velocity.y, comVector.velocity.x) * (180 / Math.PI);
+    if (angle > -45 && angle <= 45) dominantDirection = 'right';
+    else if (angle > 45 && angle <= 135) dominantDirection = 'up';
+    else if (angle > -135 && angle <= -45) dominantDirection = 'down';
+    else dominantDirection = 'left';
+  }
+
+  return { vectors, overallSpeed, dominantDirection };
+}
+
+export function computeFullAnalysis(landmarks: PoseLandmark[], timestamp: number = 0, history?: LandmarkSnapshot[]): FrameAnalysis {
   return {
     jointAngles: computeJointAngles(landmarks),
     symmetry: computeSymmetry(landmarks),
@@ -440,6 +543,7 @@ export function computeFullAnalysis(landmarks: PoseLandmark[], timestamp: number
     strideMetrics: computeStrideMetrics(landmarks),
     leanAngle: computeLeanAngle(landmarks) || { angle: 0, direction: 'upright', description: 'Unable to compute' },
     confidence: computeConfidence(landmarks),
+    motion: history ? computeMotion(history) || undefined : undefined,
     timestamp,
   };
 }
@@ -476,6 +580,14 @@ export function formatAnalysisForAI(analysis: FrameAnalysis, frameInfo?: { frame
   text += `Overall: ${analysis.confidence.overall}%\n`;
   for (const r of analysis.confidence.regions) {
     text += `  ${r.name}: ${r.score}% (${r.status})\n`;
+  }
+
+  if (analysis.motion) {
+    text += '\n== MOTION (VELOCITY & ACCELERATION) ==\n';
+    text += `Overall Speed: ${analysis.motion.overallSpeed} units/s | Direction: ${analysis.motion.dominantDirection}\n`;
+    for (const v of analysis.motion.vectors) {
+      text += `${v.bodyPart}: vel=${v.velocity.magnitude.toFixed(2)} acc=${v.acceleration.magnitude.toFixed(2)} ${v.unit}\n`;
+    }
   }
 
   return text;
