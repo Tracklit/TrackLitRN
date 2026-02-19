@@ -72,6 +72,9 @@ migrations/          - Database migrations
 - 2026-02-18: Frame Comparison feature — capture two frames with skeleton overlays, compare side-by-side with time/frame diff
 - 2026-02-18: AI Analysis via Sprinthia API — sends structured pose metrics for written biomechanics analysis with improvement suggestions and "Create Program" button
 - 2026-02-18: New files: poseAnalysis.ts (metrics computation), AdvancedAnalysis.tsx (collapsible metrics panel), FrameComparison.tsx, AIAnalysisModal.tsx
+- 2026-02-19: StartGunScreen: removed title text, added 25px spacing below start button, added Gun Flash toggle (flashes device torch on bang via hidden CameraView), torch timer cleanup on reset/unmount
+- 2026-02-19: ToolsScreen: Photo Finish icon changed to FilmStrip, Start Gun icon changed to PersonSimpleThrow
+- 2026-02-19: app.json: added expo-camera plugin with camera permission for iOS/Android flash feature
 - 2026-02-19: Photo Finish: separated analysis into FullAnalysisModal — video stays fullscreen, ChartBar icon opens modal with all analysis content
 - 2026-02-19: Added velocity & acceleration tracking — stores landmark history across frames, computes motion derivatives for 7 body parts, new Motion tab in analysis
 - 2026-02-19: Joint angle toggle on skeleton — Angle icon button shows/hides degree labels at each joint on PoseOverlay

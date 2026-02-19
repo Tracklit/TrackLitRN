@@ -17,7 +17,8 @@
         "NSMicrophoneUsageDescription": "Allow TrackLit to access your microphone for Sprinthia voice input.",
         "NSPhotoLibraryUsageDescription": "Allow TrackLit to access your photo library for uploads.",
         "NSPhotoLibraryAddUsageDescription": "Allow TrackLit to save media to your photo library.",
-        "NSSpeechRecognitionUsageDescription": "Allow TrackLit to transcribe your voice notes."
+        "NSSpeechRecognitionUsageDescription": "Allow TrackLit to transcribe your voice notes.",
+        "NSCameraUsageDescription": "Allow TrackLit to use the camera flash for the Start Gun feature."
       }
     },
     "android": {
@@ -29,13 +30,21 @@
       },
       "versionCode": 2,
       "permissions": [
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "CAMERA",
+        "FLASHLIGHT"
       ]
     },
     "plugins": [
       "expo-font",
       "@react-native-community/datetimepicker",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow TrackLit to use the camera flash for the Start Gun feature."
+        }
+      ]
     ]
   }
 }
