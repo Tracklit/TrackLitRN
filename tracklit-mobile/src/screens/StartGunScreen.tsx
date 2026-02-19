@@ -230,7 +230,7 @@ export const StartGunScreen: React.FC = () => {
           <View style={styles.headerBtn} />
         </View>
 
-        <View style={styles.phaseIndicator}>
+        <View style={[styles.phaseCard, phase !== 'idle' && styles.phaseCardActive]}>
           <Text style={[styles.phaseText, { color: getPhaseColor() }]}>
             {getPhaseLabel()}
           </Text>
@@ -419,9 +419,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  phaseIndicator: {
+  phaseCard: {
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: 'rgba(148,163,184,0.25)',
+  },
+  phaseCardActive: {
+    borderColor: 'rgba(255,152,0,0.4)',
+    backgroundColor: 'rgba(255,152,0,0.06)',
   },
   phaseText: {
     fontSize: 18,

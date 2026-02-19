@@ -4,48 +4,44 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Pressable,
   Platform,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import {
+  ArrowLeft,
+  Play,
+  Pause,
+  ArrowClockwise,
+  Flag,
+} from 'phosphor-react-native';
 
 import { Text } from '../components/ui/Text';
-import { Button } from '../components/ui/Button';
 import theme from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
-import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 
 export const StopwatchScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [time, setTime] = useState(0); // Time in milliseconds
+  const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [laps, setLaps] = useState<number[]>([]);
-  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
+    let interval: ReturnType<typeof setInterval>;
     if (isRunning) {
       interval = setInterval(() => {
-        setTime(prevTime => prevTime + 10);
+        setTime(prev => prev + 10);
       }, 10);
     }
-
     return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
+      if (interval) clearInterval(interval);
     };
   }, [isRunning]);
 
-  const handleStartStop = () => {
-    setIsRunning(prev => !prev);
-  };
+  const handleStartStop = () => setIsRunning(prev => !prev);
 
   const handleReset = () => {
     setTime(0);
@@ -54,210 +50,134 @@ export const StopwatchScreen: React.FC = () => {
   };
 
   const handleLap = () => {
-    if (isRunning) {
-      setLaps(prevLaps => [...prevLaps, time]);
-    }
+    if (isRunning) setLaps(prev => [...prev, time]);
   };
 
-  const formatTime = (milliseconds: number): string => {
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    const ms = Math.floor((milliseconds % 1000) / 10);
-    
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+  const formatTime = (ms: number): string => {
+    const totalSec = Math.floor(ms / 1000);
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    const centis = Math.floor((ms % 1000) / 10);
+    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}.${centis.toString().padStart(2, '0')}`;
   };
-
-  const latestLapDelta = laps.length > 0 ? time - (laps[laps.length - 1] || 0) : 0;
 
   return (
     <LinearGradient
-      colors={['#020617', '#0f172a', '#020617']}
-      locations={[0, 0.5, 1]}
+      colors={theme.gradient.background}
+      locations={theme.gradient.locations}
       style={styles.container}
     >
       <ScrollView
-        style={[styles.scroll, { paddingTop: insets.top }]}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true }) },
-        ]}
+        style={{ paddingTop: insets.top }}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={styles.headerBtn}
             onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Back"
           >
-            <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} solid />
+            <ArrowLeft size={22} color={theme.colors.foreground} weight="bold" />
           </TouchableOpacity>
-          <Text variant="h2" weight="bold" color="foreground">
-            Stopwatch
-          </Text>
-          <View style={styles.backButton} />
+          <View style={styles.headerBtn} />
         </View>
 
-        {/* Main Timer Card */}
-        <View style={styles.timerCardWrap}>
-          {isRunning && <View style={styles.timerGlow} pointerEvents="none" />}
-          <LinearGradient
-            colors={['rgba(30, 41, 59, 0.6)', 'rgba(15, 23, 42, 0.6)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.timerCard}
+        <View style={styles.timerCard}>
+          <Text style={styles.timerText}>
+            {formatTime(time)}
+          </Text>
+          {laps.length > 0 && (
+            <Text variant="small" style={styles.currentLapLabel}>
+              Lap {laps.length + 1}: {formatTime(time - laps[laps.length - 1])}
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.center}>
+          <View style={[styles.glow, isRunning && styles.glowActive]} />
+          <TouchableOpacity
+            style={[styles.mainButton, isRunning && styles.mainButtonActive]}
+            onPress={handleStartStop}
+            activeOpacity={0.8}
           >
-            <View style={styles.timerContent}>
-              <View style={styles.timerTextWrap}>
-                <Text variant="h1" weight="bold" color="foreground" style={styles.timerText}>
-                  {formatTime(time)}
-                </Text>
-                {laps.length > 0 && (
-                  <Text variant="small" color="muted" style={styles.latestLapText}>
-                    Lap {laps.length}: {formatTime(latestLapDelta)}
-                  </Text>
-                )}
-              </View>
-
-              <View style={styles.buttonWrap}>
-                <View
-                  pointerEvents="none"
-                  style={[styles.buttonGlow, isRunning && styles.buttonGlowActive]}
-                />
-                <Pressable
-                  onPress={handleStartStop}
-                  data-testid="button-start-stop"
-                  style={({ pressed }) => [
-                    styles.bigButton,
-                    pressed && styles.bigButtonPressed,
-                  ]}
-                >
-                  <LinearGradient
-                    colors={
-                      isRunning
-                        ? ['#ef4444', '#dc2626']
-                        : ['#3b82f6', '#22d3ee']
-                    }
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.bigButtonGradient}
-                  >
-                    <View style={styles.buttonRing} />
-                    <View style={styles.bigButtonContent}>
-                      <FontAwesome5
-                        name={isRunning ? 'pause' : 'play'}
-                        size={54}
-                        color="white"
-                        solid
-                        style={isRunning ? undefined : { marginLeft: 6 }}
-                      />
-                      <Text variant="body" weight="bold" color="primary-foreground" style={styles.bigButtonText}>
-                        {isRunning ? 'Stop' : 'Start'}
-                      </Text>
-                    </View>
-                  </LinearGradient>
-                </Pressable>
-              </View>
-            </View>
-          </LinearGradient>
+            {isRunning ? (
+              <Pause size={52} color="#fff" weight="fill" />
+            ) : (
+              <Play size={52} color="#fff" weight="fill" />
+            )}
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.tipRow}>
-          <Text variant="small" color="muted" style={styles.tipText}>
-            Use your volume up button to start/stop the timer
-          </Text>
-        </View>
+        <View style={{ height: 25 }} />
 
         <View style={styles.controlsRow}>
-          <Button
+          <TouchableOpacity
+            style={[styles.controlBtn, !isRunning && styles.controlBtnDisabled]}
             onPress={handleLap}
             disabled={!isRunning}
-            data-testid="button-lap"
-            size="lg"
-            style={styles.controlButton}
+            activeOpacity={0.8}
           >
-            <FontAwesome5 name="flag" size={16} color="white" solid />
-            <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
-              Lap
+            <Flag size={16} color="#fff" weight="fill" />
+            <Text variant="small" weight="bold" style={styles.controlBtnText}>
+              LAP
             </Text>
-          </Button>
-          <Button
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.controlBtn, (isRunning || time === 0) && styles.controlBtnDisabled]}
             onPress={handleReset}
-            data-testid="button-reset"
-            size="lg"
-            variant="outline"
-            style={styles.controlButtonAlt}
+            disabled={isRunning || time === 0}
+            activeOpacity={0.8}
           >
-            <FontAwesome5 name="redo" size={16} color={theme.colors.foreground} solid />
-            <Text variant="body" weight="bold" color="foreground" style={styles.buttonText}>
-              Reset
+            <ArrowClockwise size={16} color="#fff" weight="bold" />
+            <Text variant="small" weight="bold" style={styles.controlBtnText}>
+              RESET
             </Text>
-          </Button>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          onPress={() => setIsMuted(prev => !prev)}
-          data-testid="button-toggle-sound"
-          style={styles.soundToggle}
-          accessibilityRole="button"
-          accessibilityLabel="Toggle sound"
-        >
-          <FontAwesome5 name={isMuted ? 'volume-mute' : 'volume-up'} size={16} color={theme.colors.mutedForeground} solid />
-          <Text variant="small" color="muted" style={styles.soundToggleText}>
-            {isMuted ? 'Sound Off' : 'Sound On'}
-          </Text>
-        </TouchableOpacity>
-
         {laps.length > 0 && (
-          <View style={styles.lapsCard}>
+          <View style={styles.card}>
             <View style={styles.lapsHeader}>
-              <FontAwesome5 name="flag" size={16} color="#60a5fa" solid />
-              <Text variant="h4" weight="semiBold" color="foreground" style={styles.lapsTitle}>
+              <Flag size={18} color="#FF9800" weight="fill" />
+              <Text variant="body" weight="bold" style={styles.lapsTitle}>
                 Lap Times
               </Text>
             </View>
-            <ScrollView
-              style={styles.lapsScroll}
-              contentContainerStyle={styles.lapsList}
-              showsVerticalScrollIndicator={false}
-            >
-              {laps
-                .slice()
-                .reverse()
-                .map((lapTime, index) => {
-                  const actualIndex = laps.length - 1 - index;
-                  const prevLapTime = actualIndex > 0 ? laps[actualIndex - 1] : 0;
-                  const relativeLapTime = lapTime - prevLapTime;
-                  return (
-                    <View key={actualIndex} style={styles.lapItem}>
-                      <View style={styles.lapInfo}>
-                        <View style={styles.lapBadge}>
-                          <Text variant="small" weight="bold" color="primary">
-                            {actualIndex + 1}
-                          </Text>
-                        </View>
-                        <View>
-                          <Text variant="body" weight="semiBold" color="foreground" style={styles.lapTimeText}>
-                            {formatTime(lapTime)}
-                          </Text>
-                          <Text variant="small" color="muted" style={styles.lapDeltaText}>
-                            +{formatTime(relativeLapTime)}
-                          </Text>
-                        </View>
+            {laps
+              .slice()
+              .reverse()
+              .map((lapTime, index) => {
+                const actualIndex = laps.length - 1 - index;
+                const prevLapTime = actualIndex > 0 ? laps[actualIndex - 1] : 0;
+                const delta = lapTime - prevLapTime;
+                return (
+                  <View key={actualIndex} style={styles.lapRow}>
+                    <View style={styles.lapLeft}>
+                      <View style={styles.lapBadge}>
+                        <Text variant="small" weight="bold" style={styles.lapBadgeText}>
+                          {actualIndex + 1}
+                        </Text>
                       </View>
-                      {index === 0 && (
-                        <View style={styles.latestBadge}>
-                          <Text variant="small" weight="semiBold" color="primary" style={styles.latestBadgeText}>
-                            Latest
-                          </Text>
-                        </View>
-                      )}
+                      <View>
+                        <Text variant="body" weight="semiBold" style={styles.lapTime}>
+                          {formatTime(lapTime)}
+                        </Text>
+                        <Text variant="small" style={styles.lapDelta}>
+                          +{formatTime(delta)}
+                        </Text>
+                      </View>
                     </View>
-                  );
-                })}
-            </ScrollView>
+                    {index === 0 && (
+                      <View style={styles.latestBadge}>
+                        <Text variant="small" weight="bold" style={styles.latestBadgeText}>
+                          Latest
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
           </View>
         )}
       </ScrollView>
@@ -269,223 +189,163 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scroll: {
-    flex: 1,
-  },
   content: {
-    flex: 1,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    gap: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: 12,
   },
-  backButton: {
+  headerBtn: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  timerCardWrap: {
-    marginTop: theme.spacing.xl,
-    marginBottom: theme.spacing.xl * 1.5,
-  },
   timerCard: {
-    borderRadius: 24,
-    padding: theme.spacing.xxxl,
-    borderWidth: 1,
-    borderColor: 'rgba(51, 65, 85, 0.5)',
-    overflow: 'hidden',
-  },
-  timerContent: {
     alignItems: 'center',
-    gap: theme.spacing.xl,
-  },
-  timerGlow: {
-    position: 'absolute',
-    top: -12,
-    left: -12,
-    right: -12,
-    bottom: -12,
-    borderRadius: 28,
-    backgroundColor: 'rgba(59, 130, 246, 0.12)',
-    shadowColor: '#3b82f6',
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-  },
-  timerTextWrap: {
-    alignItems: 'center',
-    gap: theme.spacing.sm,
+    justifyContent: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: 'rgba(148,163,184,0.25)',
+    gap: 6,
   },
   timerText: {
-    fontSize: 64,
+    fontSize: 56,
+    fontWeight: '200',
+    color: '#fff',
     letterSpacing: -1,
     fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' }),
-    lineHeight: 72,
-    paddingTop: 6,
+    lineHeight: 64,
   },
-  latestLapText: {
+  currentLapLabel: {
+    color: '#FF9800',
     fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' }),
   },
-  buttonWrap: {
-    position: 'relative',
+  center: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: theme.spacing.sm,
-    width: '100%',
-    height: 240,
+    paddingVertical: 8,
   },
-  buttonGlow: {
+  glow: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255,152,0,0.15)',
   },
-  buttonGlowActive: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+  glowActive: {
+    backgroundColor: 'rgba(239,68,68,0.2)',
   },
-  bigButton: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    overflow: 'hidden',
-  },
-  bigButtonGradient: {
-    flex: 1,
+  mainButton: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  bigButtonPressed: {
-    transform: [{ scale: 0.98 }],
-  },
-  buttonRing: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    backgroundColor: 'rgba(255,152,0,0.2)',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: '#FF9800',
   },
-  bigButtonContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.md,
-  },
-  bigButtonText: {
-    fontSize: 22,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-  },
-  tipRow: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-  },
-  tipText: {
-    textAlign: 'center',
+  mainButtonActive: {
+    backgroundColor: 'rgba(239,68,68,0.2)',
+    borderColor: '#ef4444',
   },
   controlsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.md,
+    justifyContent: 'center',
+    gap: 16,
   },
-  controlButton: {
-    flex: 1,
+  controlBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.sm,
+    gap: 8,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  controlButtonAlt: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
+  controlBtnDisabled: {
+    opacity: 0.3,
   },
-  buttonText: {
-    marginLeft: theme.spacing.xs,
+  controlBtnText: {
+    color: '#fff',
   },
-  soundToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-  },
-  soundToggleText: {
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  lapsCard: {
-    marginTop: theme.spacing.xl,
-    backgroundColor: 'rgba(30, 41, 59, 0.4)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(51, 65, 85, 0.5)',
-    padding: theme.spacing.lg,
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 0.5,
+    borderColor: 'rgba(148,163,184,0.25)',
+    gap: 10,
   },
   lapsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
+    gap: 10,
+    marginBottom: 4,
   },
   lapsTitle: {
-    marginBottom: 0,
+    color: '#fff',
   },
-  lapsScroll: {
-    maxHeight: 320,
-  },
-  lapsList: {
-    gap: theme.spacing.sm,
-  },
-  lapItem: {
+  lapRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: 16,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(51, 65, 85, 0.3)',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(148,163,184,0.15)',
   },
-  lapInfo: {
+  lapLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
   },
   lapBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
+    backgroundColor: 'rgba(255,152,0,0.15)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,152,0,0.3)',
   },
-  lapTimeText: {
+  lapBadgeText: {
+    color: '#FF9800',
+  },
+  lapTime: {
+    color: '#fff',
     fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' }),
   },
-  lapDeltaText: {
+  lapDelta: {
+    color: 'rgba(255,255,255,0.4)',
     fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' }),
   },
   latestBadge: {
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderColor: 'rgba(59, 130, 246, 0.3)',
-    borderWidth: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,152,0,0.15)',
+    borderColor: 'rgba(255,152,0,0.3)',
+    borderWidth: 0.5,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
     borderRadius: 999,
   },
   latestBadgeText: {
+    color: '#FF9800',
     textTransform: 'uppercase',
     letterSpacing: 1,
+    fontSize: 10,
   },
 });
