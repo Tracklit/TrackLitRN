@@ -630,17 +630,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       <Modal
         visible={tickerModalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setTickerModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHandle} />
+        <TouchableOpacity
+          style={[styles.modalOverlay, { paddingTop: insets.top + 60 }]}
+          activeOpacity={1}
+          onPress={() => setTickerModalVisible(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.modalContent}
+            onPress={() => {}}
+          >
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setTickerModalVisible(false)}
             >
-              <X size={20} color="#94a3b8" weight="bold" />
+              <X size={16} color="#94a3b8" weight="bold" />
             </TouchableOpacity>
 
             {selectedActivity && (
@@ -649,7 +656,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                   <View style={styles.modalAvatar}>
                     {(() => {
                       const ActivityIcon = getActivityIconComponent(selectedActivity.activityType);
-                      return <ActivityIcon size={20} color="#e2e8f0" weight="fill" />;
+                      return <ActivityIcon size={18} color="#e2e8f0" weight="fill" />;
                     })()}
                   </View>
                   <View style={{ flex: 1 }}>
@@ -679,7 +686,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     onPress={() => handleLikeActivity(selectedActivity.id)}
                   >
                     <Heart
-                      size={20}
+                      size={18}
                       color={likedActivities.has(selectedActivity.id) ? '#ef4444' : '#94a3b8'}
                       weight={likedActivities.has(selectedActivity.id) ? 'fill' : 'regular'}
                     />
@@ -697,7 +704,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     onPress={() => saveToJournalMutation.mutate(selectedActivity)}
                     disabled={saveToJournalMutation.isPending}
                   >
-                    <FloppyDisk size={20} color="#FF9800" weight="fill" />
+                    <FloppyDisk size={18} color="#FF9800" weight="fill" />
                     <Text variant="caption" weight="medium" color="secondary">
                       {saveToJournalMutation.isPending ? 'Saving...' : 'Save to Journal'}
                     </Text>
@@ -705,8 +712,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 </View>
               </>
             )}
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </LinearGradient>
   );
@@ -978,34 +985,27 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-start',
+    paddingHorizontal: theme.spacing.container,
   },
   modalContent: {
-    backgroundColor: '#1a1a2e',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-    paddingTop: 12,
-    minHeight: 280,
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(148,163,184,0.4)',
-    alignSelf: 'center',
-    marginBottom: 16,
+    backgroundColor: '#1a1028',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 16,
+    borderWidth: 0.5,
+    borderColor: 'rgba(100, 116, 139, 0.3)',
   },
   modalCloseButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    top: 12,
+    right: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -1014,25 +1014,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 20,
-    paddingRight: 40,
+    marginBottom: 16,
+    paddingRight: 36,
   },
   modalAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(147,51,234,0.15)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(15,23,42,0.35)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.25)',
+    borderColor: 'rgba(148,163,184,0.35)',
   },
   modalBody: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   modalActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   modalActionButton: {
     flex: 1,
@@ -1040,7 +1040,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 0.5,
