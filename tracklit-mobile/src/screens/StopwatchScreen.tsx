@@ -53,13 +53,20 @@ export const StopwatchScreen: React.FC = () => {
     if (isRunning) setLaps(prev => [...prev, time]);
   };
 
-  const formatTime = (ms: number): string => {
+  const formatTime = (ms: number) => {
     const totalSec = Math.floor(ms / 1000);
     const min = Math.floor(totalSec / 60);
     const sec = totalSec % 60;
     const centis = Math.floor((ms % 1000) / 10);
+    return { min, sec, centis };
+  };
+
+  const formatTimeStr = (ms: number): string => {
+    const { min, sec, centis } = formatTime(ms);
     return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}.${centis.toString().padStart(2, '0')}`;
   };
+
+  const { min, sec, centis } = formatTime(time);
 
   return (
     <LinearGradient
@@ -82,13 +89,33 @@ export const StopwatchScreen: React.FC = () => {
           <View style={styles.headerBtn} />
         </View>
 
-        <View style={styles.timerCard}>
-          <Text style={styles.timerText}>
-            {formatTime(time)}
-          </Text>
+        <View style={styles.timerSection}>
+          <View style={styles.timerDigitsRow}>
+            <View style={styles.digitBlock}>
+              <Text style={styles.digitText}>
+                {min.toString().padStart(2, '0')}
+              </Text>
+              <Text style={styles.digitLabel}>MIN</Text>
+            </View>
+            <Text style={styles.colonText}>:</Text>
+            <View style={styles.digitBlock}>
+              <Text style={styles.digitText}>
+                {sec.toString().padStart(2, '0')}
+              </Text>
+              <Text style={styles.digitLabel}>SEC</Text>
+            </View>
+            <Text style={styles.colonText}>.</Text>
+            <View style={styles.digitBlock}>
+              <Text style={styles.centisText}>
+                {centis.toString().padStart(2, '0')}
+              </Text>
+              <Text style={styles.digitLabel}>{' '}</Text>
+            </View>
+          </View>
+
           {laps.length > 0 && (
             <Text variant="small" style={styles.currentLapLabel}>
-              Lap {laps.length + 1}: {formatTime(time - laps[laps.length - 1])}
+              Lap {laps.length + 1}:  {formatTimeStr(time - laps[laps.length - 1])}
             </Text>
           )}
         </View>
@@ -107,8 +134,6 @@ export const StopwatchScreen: React.FC = () => {
             )}
           </TouchableOpacity>
         </View>
-
-        <View style={{ height: 25 }} />
 
         <View style={styles.controlsRow}>
           <TouchableOpacity
@@ -161,10 +186,10 @@ export const StopwatchScreen: React.FC = () => {
                       </View>
                       <View>
                         <Text variant="body" weight="semiBold" style={styles.lapTime}>
-                          {formatTime(lapTime)}
+                          {formatTimeStr(lapTime)}
                         </Text>
                         <Text variant="small" style={styles.lapDelta}>
-                          +{formatTime(delta)}
+                          +{formatTimeStr(delta)}
                         </Text>
                       </View>
                     </View>
@@ -185,13 +210,15 @@ export const StopwatchScreen: React.FC = () => {
   );
 };
 
+const mono = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' });
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   content: {
     paddingHorizontal: theme.spacing.xl,
-    gap: 16,
+    gap: 28,
   },
   header: {
     flexDirection: 'row',
@@ -205,33 +232,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  timerCard: {
+  timerSection: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: 'rgba(148,163,184,0.25)',
+    gap: 12,
+    paddingVertical: 12,
+  },
+  timerDigitsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  digitBlock: {
+    alignItems: 'center',
     gap: 6,
   },
-  timerText: {
-    fontSize: 56,
+  digitText: {
+    fontSize: 72,
     fontWeight: '200',
     color: '#fff',
-    letterSpacing: -1,
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' }),
-    lineHeight: 64,
+    fontFamily: mono,
+    lineHeight: 80,
+    letterSpacing: -2,
+  },
+  centisText: {
+    fontSize: 48,
+    fontWeight: '200',
+    color: 'rgba(255,255,255,0.5)',
+    fontFamily: mono,
+    lineHeight: 80,
+    letterSpacing: -2,
+  },
+  colonText: {
+    fontSize: 60,
+    fontWeight: '200',
+    color: 'rgba(255,255,255,0.3)',
+    fontFamily: mono,
+    lineHeight: 80,
+    marginHorizontal: 4,
+  },
+  digitLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.3)',
+    letterSpacing: 2,
   },
   currentLapLabel: {
     color: '#FF9800',
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' }),
+    fontFamily: mono,
+    marginTop: 4,
   },
   center: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   glow: {
     position: 'absolute',
@@ -328,11 +380,11 @@ const styles = StyleSheet.create({
   },
   lapTime: {
     color: '#fff',
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' }),
+    fontFamily: mono,
   },
   lapDelta: {
     color: 'rgba(255,255,255,0.4)',
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' }),
+    fontFamily: mono,
   },
   latestBadge: {
     backgroundColor: 'rgba(255,152,0,0.15)',
