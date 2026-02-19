@@ -114,10 +114,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const currentOpacity = useSharedValue(1);
   const currentTranslateY = useSharedValue(0);
   const nextOpacity = useSharedValue(0);
-  const nextTranslateY = useSharedValue(-14);
-  const nextScale = useSharedValue(0.98);
+  const nextTranslateY = useSharedValue(-20);
 
-  const ANIM_DURATION = 280;
+  const ANIM_DURATION = 400;
   const easeOutCubic = Easing.bezier(0.33, 1, 0.68, 1);
 
   const currentAnimStyle = useAnimatedStyle(() => ({
@@ -127,25 +126,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const nextAnimStyle = useAnimatedStyle(() => ({
     opacity: nextOpacity.value,
-    transform: [{ translateY: nextTranslateY.value }, { scale: nextScale.value }],
+    transform: [{ translateY: nextTranslateY.value }],
   }));
 
   const promoteNext = useCallback((idx: number) => {
-    cancelAnimation(currentOpacity);
-    cancelAnimation(currentTranslateY);
-    cancelAnimation(nextOpacity);
-    cancelAnimation(nextTranslateY);
-    cancelAnimation(nextScale);
-
+    currentOpacity.value = 1;
+    currentTranslateY.value = 0;
     nextOpacity.value = 0;
-    nextTranslateY.value = -14;
-    nextScale.value = 0.98;
+    nextTranslateY.value = -20;
 
     setNextActivityIndex(null);
     setCurrentActivityIndex(idx);
-
-    currentOpacity.value = 1;
-    currentTranslateY.value = 0;
     isAnimatingRef.current = false;
   }, []);
 
@@ -154,19 +145,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     isAnimatingRef.current = true;
     setNextActivityIndex(nextIdx);
 
-    const timingConfig = { duration: ANIM_DURATION, easing: easeOutCubic };
+    const outConfig = { duration: ANIM_DURATION, easing: easeOutCubic };
+    const inConfig = { duration: ANIM_DURATION, easing: easeOutCubic };
 
-    currentOpacity.value = withTiming(0, timingConfig);
-    currentTranslateY.value = withTiming(14, timingConfig);
+    currentOpacity.value = withTiming(0, outConfig);
+    currentTranslateY.value = withTiming(20, outConfig);
 
-    nextOpacity.value = withDelay(50, withTiming(1, timingConfig));
-    nextTranslateY.value = withDelay(50, withTiming(0, timingConfig));
-    nextScale.value = withDelay(50, withTiming(1, timingConfig, (finished) => {
+    nextOpacity.value = withTiming(1, inConfig);
+    nextTranslateY.value = withTiming(0, inConfig, (finished) => {
       'worklet';
       if (finished) {
         runOnJS(promoteNext)(nextIdx);
       }
-    }));
+    });
   }, [promoteNext]);
 
   useEffect(() => {
@@ -267,8 +258,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       currentOpacity.value = 1;
       currentTranslateY.value = 0;
       nextOpacity.value = 0;
-      nextTranslateY.value = -14;
-      nextScale.value = 0.98;
+      nextTranslateY.value = -20;
     }
   }, [tickerCollapsed, isPaused]);
 
@@ -768,79 +758,79 @@ const styles = StyleSheet.create({
   },
   tickerContainer: {
     marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   tickerCollapsed: {
-    height: 40,
-    borderRadius: 16,
+    height: 36,
+    borderRadius: 12,
     paddingHorizontal: theme.spacing.lg,
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.3)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   tickerCard: {
-    borderRadius: 16,
-    paddingVertical: theme.spacing.md,
-    paddingBottom: theme.spacing.md,
+    borderRadius: 12,
+    paddingVertical: 12,
     paddingHorizontal: theme.spacing.lg,
-    height: 80,
+    height: 76,
     borderWidth: 0.5,
-    borderColor: 'rgba(100, 116, 139, 0.25)',
-    backgroundColor: 'rgba(147, 51, 234, 0.08)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     width: '100%',
     alignSelf: 'stretch',
     overflow: 'hidden',
   },
   tickerDivider: {
     height: 1,
-    backgroundColor: 'rgba(148, 163, 184, 0.15)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     marginTop: theme.spacing.lg,
   },
   tickerControls: {
     position: 'absolute',
-    right: theme.spacing.sm,
-    top: theme.spacing.sm,
+    right: 10,
+    top: 10,
     flexDirection: 'row',
-    gap: theme.spacing.xs,
+    zIndex: 2,
   },
   tickerIconButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   tickerContent: {
-    paddingRight: 48,
+    paddingRight: 36,
     position: 'relative',
-    minHeight: 44,
+    flex: 1,
+    overflow: 'hidden',
   },
   tickerMessageLayer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    gap: theme.spacing.xs,
+    gap: 2,
   },
   tickerHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.xs,
+    gap: 8,
+    marginBottom: 2,
   },
   tickerAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(15,23,42,0.35)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.35)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   tickerTitleBlock: {
     flex: 1,
