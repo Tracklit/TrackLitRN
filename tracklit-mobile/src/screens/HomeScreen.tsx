@@ -588,7 +588,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                         activeOpacity={0.7}
                         onPress={() => !disabled && handleCardPress(card.route)}
                       >
-                        <CaretRight size={14} color="#60a5fa" weight="fill" />
+                        <CaretRight size={14} color="#cbd5e1" weight="fill" />
                       </TouchableOpacity>
                     )}
                     <CaretRight size={12} color={disabled ? '#94a3b8' : '#cbd5e1'} weight="fill" />
@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 31,
-    borderWidth: 3,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#60a5fa',
+    backgroundColor: 'rgba(203,213,225,0.5)',
   },
   categoryIcons: {
     flexDirection: 'row',
@@ -890,7 +890,7 @@ const styles = StyleSheet.create({
   previewButton: {
     padding: theme.spacing.xs,
     borderRadius: theme.borderRadius.md,
-    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+    backgroundColor: 'rgba(203,213,225,0.08)',
   },
   cardDisabled: {
     opacity: 0.5,
