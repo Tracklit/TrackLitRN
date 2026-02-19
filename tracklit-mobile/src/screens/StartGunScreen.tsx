@@ -12,15 +12,23 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Slider from '@react-native-community/slider';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import {
+  ArrowLeft,
+  Play,
+  ArrowClockwise,
+  SpeakerHigh,
+  SpeakerSlash,
+  CaretDown,
+  CaretUp,
+  Crosshair,
+  GearSix,
+} from 'phosphor-react-native';
 import { Audio } from 'expo-av';
 
 import { Text } from '@/components/ui/Text';
-import { Card, CardContent } from '@/components/ui/Card';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
-// Audio assets - use require for expo-av compatibility
 const marksAudio = require('../../assets/audio/on-your-marks.mp3');
 const setAudio = require('../../assets/audio/set.mp3');
 const bangAudio = require('../../assets/audio/bang.mp3');
@@ -33,6 +41,8 @@ const delay = (ms: number) =>
     }, ms);
   });
 
+type SequencePhase = 'idle' | 'marks' | 'marks-wait' | 'set' | 'set-wait' | 'bang' | 'done';
+
 export const StartGunScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -40,6 +50,7 @@ export const StartGunScreen: React.FC = () => {
   const [setDelayValue, setSetDelayValue] = useState(1.5);
   const [useRandomizer, setUseRandomizer] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
+  const [phase, setPhase] = useState<SequencePhase>('idle');
   const [volume, setVolume] = useState(80);
   const [isMuted, setIsMuted] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -51,7 +62,6 @@ export const StartGunScreen: React.FC = () => {
   useEffect(() => {
     const loadSounds = async () => {
       try {
-        // Configure audio mode for playback
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: false,
@@ -85,7 +95,6 @@ export const StartGunScreen: React.FC = () => {
       await sound.setVolumeAsync(isMuted ? 0 : volume / 100);
       await sound.setPositionAsync(0);
       await sound.playAsync();
-      // Wait for playback to complete
       return new Promise((resolve) => {
         const checkStatus = async () => {
           const status = await sound.getStatusAsync();
@@ -109,36 +118,69 @@ export const StartGunScreen: React.FC = () => {
       sequenceIdRef.current += 1;
       const sequenceId = sequenceIdRef.current;
 
+      setPhase('marks');
       await playSound(marksRef.current);
       if (sequenceIdRef.current !== sequenceId) return;
+
+      setPhase('marks-wait');
       await delay(marksDelay * 1000);
       if (sequenceIdRef.current !== sequenceId) return;
 
+      setPhase('set');
       await playSound(setRef.current);
       if (sequenceIdRef.current !== sequenceId) return;
 
+      setPhase('set-wait');
       const randomExtra = useRandomizer ? (Math.random() * 2 - 1) * 1.0 : 0;
       const gunDelay = Math.max(0.1, setDelayValue + randomExtra);
       await delay(gunDelay * 1000);
       if (sequenceIdRef.current !== sequenceId) return;
 
+      setPhase('bang');
       await playSound(bangRef.current);
+      setPhase('done');
     } catch (error) {
       Alert.alert('Start gun error', 'Unable to play audio sequence.');
     } finally {
       setIsRunning(false);
+      setTimeout(() => setPhase('idle'), 2000);
     }
   };
 
   const resetSequence = async () => {
     sequenceIdRef.current += 1;
     setIsRunning(false);
+    setPhase('idle');
     try {
       await marksRef.current?.stopAsync();
       await setRef.current?.stopAsync();
       await bangRef.current?.stopAsync();
     } catch (error) {
       // Ignore errors when stopping sounds that aren't playing
+    }
+  };
+
+  const getPhaseLabel = () => {
+    switch (phase) {
+      case 'marks': return 'ON YOUR MARKS';
+      case 'marks-wait': return 'ON YOUR MARKS...';
+      case 'set': return 'SET';
+      case 'set-wait': return 'SET...';
+      case 'bang': return 'GO!';
+      case 'done': return 'COMPLETE';
+      default: return 'READY';
+    }
+  };
+
+  const getPhaseColor = () => {
+    switch (phase) {
+      case 'marks':
+      case 'marks-wait': return '#FF9800';
+      case 'set':
+      case 'set-wait': return '#FFD600';
+      case 'bang': return '#00FF88';
+      case 'done': return '#00FF88';
+      default: return 'rgba(255,255,255,0.5)';
     }
   };
 
@@ -150,33 +192,41 @@ export const StartGunScreen: React.FC = () => {
     >
       <ScrollView
         style={{ paddingTop: insets.top }}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={styles.headerBtn}
             onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Back"
           >
-            <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} solid />
+            <ArrowLeft size={22} color={theme.colors.foreground} weight="bold" />
           </TouchableOpacity>
-          <Text variant="h2" weight="bold" color="foreground">
+          <Text variant="h3" weight="bold" color="foreground">
             Start Gun
           </Text>
-          <View style={styles.backButton} />
+          <View style={styles.headerBtn} />
+        </View>
+
+        <View style={styles.phaseIndicator}>
+          <Text style={[styles.phaseText, { color: getPhaseColor() }]}>
+            {getPhaseLabel()}
+          </Text>
         </View>
 
         <View style={styles.center}>
-          <View style={styles.glow} />
+          <View style={[styles.glow, phase === 'bang' && styles.glowActive]} />
           <TouchableOpacity
             style={[styles.startButton, isRunning && styles.startButtonActive]}
             onPress={startSequence}
             disabled={isRunning}
             activeOpacity={0.8}
           >
-            <FontAwesome5 name="play" size={48} color="white" solid />
+            {isRunning ? (
+              <Crosshair size={52} color="#fff" weight="fill" />
+            ) : (
+              <Play size={52} color="#fff" weight="fill" />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -186,99 +236,108 @@ export const StartGunScreen: React.FC = () => {
           disabled={!isRunning}
           activeOpacity={0.8}
         >
-          <FontAwesome5 name="redo" size={16} color="white" solid />
-          <Text variant="small" weight="bold" color="primary-foreground">
+          <ArrowClockwise size={16} color="#fff" weight="bold" />
+          <Text variant="small" weight="bold" style={styles.resetText}>
             RESET
           </Text>
         </TouchableOpacity>
 
-        <Card style={styles.volumeCard}>
-          <CardContent style={styles.volumeContent}>
-            <TouchableOpacity onPress={() => setIsMuted((prev) => !prev)} style={styles.muteButton}>
-              <FontAwesome5 name={isMuted ? 'volume-mute' : 'volume-up'} size={18} color="white" solid />
+        <View style={styles.card}>
+          <View style={styles.cardRow}>
+            <TouchableOpacity onPress={() => setIsMuted((prev) => !prev)} style={styles.muteBtn}>
+              {isMuted ? (
+                <SpeakerSlash size={20} color="#FF3366" weight="fill" />
+              ) : (
+                <SpeakerHigh size={20} color="#fff" weight="fill" />
+              )}
             </TouchableOpacity>
-            <View style={styles.volumeSliderWrap}>
+            <View style={styles.sliderWrap}>
               <Slider
                 minimumValue={0}
                 maximumValue={100}
                 step={1}
                 value={volume}
                 onValueChange={setVolume}
-                minimumTrackTintColor={theme.colors.primary}
-                maximumTrackTintColor={theme.colors.border}
-                thumbTintColor="white"
+                minimumTrackTintColor="#FF9800"
+                maximumTrackTintColor="rgba(255,255,255,0.15)"
+                thumbTintColor="#fff"
                 disabled={isMuted}
               />
             </View>
-            <Text variant="small" color="muted" style={styles.volumeValue}>
+            <Text variant="small" style={styles.volumeLabel}>
               {isMuted ? 'Muted' : `${volume}%`}
             </Text>
-          </CardContent>
-        </Card>
+          </View>
+        </View>
 
         <TouchableOpacity
           style={styles.settingsToggle}
           onPress={() => setShowSettings((prev) => !prev)}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
         >
-          <Text variant="body" weight="semiBold" color="foreground">
-            Settings & Options
-          </Text>
-          <FontAwesome5 name={showSettings ? 'chevron-up' : 'chevron-down'} size={14} color={theme.colors.textMuted} />
+          <View style={styles.settingsToggleLeft}>
+            <GearSix size={18} color="rgba(255,255,255,0.6)" weight="fill" />
+            <Text variant="body" weight="semiBold" style={styles.settingsToggleText}>
+              Settings & Options
+            </Text>
+          </View>
+          {showSettings ? (
+            <CaretUp size={16} color="rgba(255,255,255,0.4)" weight="bold" />
+          ) : (
+            <CaretDown size={16} color="rgba(255,255,255,0.4)" weight="bold" />
+          )}
         </TouchableOpacity>
 
         {showSettings && (
-          <Card style={styles.settingsCard}>
-            <CardContent style={styles.settingsContent}>
-              <Text variant="body" weight="semiBold" color="foreground">
-                Timing
-              </Text>
+          <View style={styles.card}>
+            <Text variant="body" weight="bold" style={styles.sectionLabel}>
+              Timing
+            </Text>
 
-              <View style={styles.settingRow}>
-                <View style={styles.settingHeader}>
-                  <Text variant="small" color="muted">Marks to Set</Text>
-                  <Text variant="small" color="foreground">{marksDelay.toFixed(1)}s</Text>
-                </View>
-                <Slider
-                  minimumValue={1}
-                  maximumValue={20}
-                  value={marksDelay}
-                  step={0.5}
-                  minimumTrackTintColor={theme.colors.primary}
-                  maximumTrackTintColor={theme.colors.border}
-                  thumbTintColor={theme.colors.primary}
-                  onValueChange={setMarksDelay}
-                />
+            <View style={styles.settingRow}>
+              <View style={styles.settingHeader}>
+                <Text variant="small" style={styles.settingLabel}>Marks to Set</Text>
+                <Text variant="small" style={styles.settingValue}>{marksDelay.toFixed(1)}s</Text>
               </View>
+              <Slider
+                minimumValue={1}
+                maximumValue={20}
+                value={marksDelay}
+                step={0.5}
+                minimumTrackTintColor="#FF9800"
+                maximumTrackTintColor="rgba(255,255,255,0.15)"
+                thumbTintColor="#FF9800"
+                onValueChange={setMarksDelay}
+              />
+            </View>
 
-              <View style={styles.settingRow}>
-                <View style={styles.settingHeader}>
-                  <Text variant="small" color="muted">Set to Gun</Text>
-                  <Text variant="small" color="foreground">{setDelayValue.toFixed(1)}s</Text>
-                </View>
-                <Slider
-                  minimumValue={0.5}
-                  maximumValue={10}
-                  value={setDelayValue}
-                  step={0.5}
-                  minimumTrackTintColor={theme.colors.primary}
-                  maximumTrackTintColor={theme.colors.border}
-                  thumbTintColor={theme.colors.primary}
-                  onValueChange={setSetDelayValue}
-                />
+            <View style={styles.settingRow}>
+              <View style={styles.settingHeader}>
+                <Text variant="small" style={styles.settingLabel}>Set to Gun</Text>
+                <Text variant="small" style={styles.settingValue}>{setDelayValue.toFixed(1)}s</Text>
               </View>
+              <Slider
+                minimumValue={0.5}
+                maximumValue={10}
+                value={setDelayValue}
+                step={0.5}
+                minimumTrackTintColor="#FF9800"
+                maximumTrackTintColor="rgba(255,255,255,0.15)"
+                thumbTintColor="#FF9800"
+                onValueChange={setSetDelayValue}
+              />
+            </View>
 
-              <View style={styles.switchRow}>
-                <Text variant="small" color="muted">Randomize gun timing</Text>
-                <Switch
-                  value={useRandomizer}
-                  onValueChange={setUseRandomizer}
-                  trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                  thumbColor={theme.colors.foreground}
-                />
-              </View>
-            </CardContent>
-          </Card>
+            <View style={styles.switchRow}>
+              <Text variant="small" style={styles.settingLabel}>Randomize gun timing</Text>
+              <Switch
+                value={useRandomizer}
+                onValueChange={setUseRandomizer}
+                trackColor={{ false: 'rgba(255,255,255,0.15)', true: '#FF9800' }}
+                thumbColor="#fff"
+              />
+            </View>
+          </View>
         )}
       </ScrollView>
     </LinearGradient>
@@ -290,32 +349,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl * 2,
-    gap: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    gap: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: 12,
   },
-  backButton: {
+  headerBtn: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  phaseIndicator: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  phaseText: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 2,
+  },
   center: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 8,
   },
   glow: {
     position: 'absolute',
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: 'rgba(168, 85, 247, 0.25)',
+    backgroundColor: 'rgba(255,152,0,0.15)',
+  },
+  glowActive: {
+    backgroundColor: 'rgba(0,255,136,0.25)',
   },
   startButton: {
     width: 140,
@@ -323,81 +394,103 @@ const styles = StyleSheet.create({
     borderRadius: 70,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.secondary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
+    backgroundColor: 'rgba(255,152,0,0.2)',
+    borderWidth: 2,
+    borderColor: '#FF9800',
   },
   startButtonActive: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: 'rgba(255,152,0,0.35)',
+    borderColor: '#FFD600',
   },
   resetButton: {
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.lg,
-    borderRadius: theme.borderRadius.round,
-    backgroundColor: theme.colors.darkGray,
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   resetButtonDisabled: {
-    opacity: 0.4,
+    opacity: 0.3,
   },
-  volumeCard: {
-    marginBottom: 0,
+  resetText: {
+    color: '#fff',
   },
-  volumeContent: {
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 0.5,
+    borderColor: 'rgba(148,163,184,0.25)',
+    gap: 14,
+  },
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
   },
-  muteButton: {
-    width: 36,
-    height: 36,
-    borderRadius: theme.borderRadius.lg,
+  muteBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.lightGray,
   },
-  volumeSliderWrap: {
+  sliderWrap: {
     flex: 1,
   },
-  volumeValue: {
-    width: 64,
+  volumeLabel: {
+    color: 'rgba(255,255,255,0.5)',
+    width: 50,
     textAlign: 'right',
   },
   settingsToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.card,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(148,163,184,0.25)',
   },
-  settingsCard: {
-    marginBottom: 0,
+  settingsToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  settingsContent: {
-    gap: theme.spacing.md,
+  settingsToggleText: {
+    color: '#fff',
+  },
+  sectionLabel: {
+    color: '#FF9800',
+    fontSize: 14,
   },
   settingRow: {
-    gap: theme.spacing.sm,
+    gap: 4,
   },
   settingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  settingLabel: {
+    color: 'rgba(255,255,255,0.6)',
+  },
+  settingValue: {
+    color: '#fff',
+    fontWeight: '600',
+  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingTop: 4,
   },
 });
-

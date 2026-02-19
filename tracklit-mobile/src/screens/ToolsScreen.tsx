@@ -10,7 +10,7 @@ import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   FlagCheckered,
-  SpeakerHigh,
+  Crosshair,
   Timer,
   BookOpen,
   VideoCamera,
@@ -53,7 +53,7 @@ export const ToolsScreen: React.FC = () => {
     {
       id: 'photo-finish',
       title: 'Photo Finish',
-      description: 'Race videos with timing overlays',
+      description: 'Upload and Analyze Your Videos',
       icon: <FlagCheckered size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'PhotoFinish',
     },
@@ -61,7 +61,7 @@ export const ToolsScreen: React.FC = () => {
       id: 'start-gun',
       title: 'Start Gun',
       description: 'Simulate a race start signal',
-      icon: <SpeakerHigh size={28} color={theme.colors.primaryForeground} weight="fill" />,
+      icon: <Crosshair size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'StartGun',
     },
     {
