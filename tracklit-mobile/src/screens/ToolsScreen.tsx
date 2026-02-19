@@ -9,13 +9,11 @@ import {
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  PlayCircle,
   FlagCheckered,
   SpeakerHigh,
   Timer,
   BookOpen,
   VideoCamera,
-  Gauge,
   Lock,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -34,10 +32,7 @@ type ToolScreen = Extract<
   | 'PhotoFinish'
   | 'Journal'
   | 'IntervalTimer'
-  | 'VideoAnalysis'
   | 'ExerciseLibrary'
-  | 'VelocityTracker'
-  | 'SprintTimePrediction'
 >;
 
 interface Tool {
@@ -55,13 +50,6 @@ export const ToolsScreen: React.FC = () => {
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
   const tools: Tool[] = [
-    {
-      id: 'video-analysis',
-      title: 'Video Analysis',
-      description: 'AI-powered race video analysis',
-      icon: <PlayCircle size={28} color={theme.colors.primaryForeground} weight="fill" />,
-      screen: 'VideoAnalysis',
-    },
     {
       id: 'photo-finish',
       title: 'Photo Finish',
@@ -96,20 +84,6 @@ export const ToolsScreen: React.FC = () => {
       description: 'Organize training videos',
       icon: <VideoCamera size={28} color={theme.colors.primaryForeground} weight="fill" />,
       screen: 'ExerciseLibrary',
-    },
-    {
-      id: 'velocity-tracker',
-      title: 'Velocity Tracker',
-      description: 'Speed & acceleration metrics',
-      icon: <Gauge size={28} color={theme.colors.primaryForeground} weight="fill" />,
-      screen: 'VelocityTracker',
-    },
-    {
-      id: 'sprint-time-prediction',
-      title: 'Sprint Prediction',
-      description: 'Predicted sprint times',
-      icon: <Gauge size={28} color={theme.colors.primaryForeground} weight="fill" />,
-      screen: 'SprintTimePrediction',
     },
   ];
 

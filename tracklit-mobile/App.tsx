@@ -93,7 +93,6 @@ import { ClubManagementScreen } from './src/screens/ClubManagementScreen';
 import { CreateGroupScreen } from './src/screens/CreateGroupScreen';
 import { ProgramCreateScreen } from './src/screens/ProgramCreateScreen';
 import { ProgramEditorScreen } from './src/screens/ProgramEditorScreen';
-import { VideoAnalysisScreen } from './src/screens/VideoAnalysisScreen';
 import { ExerciseLibraryScreen } from './src/screens/ExerciseLibraryScreen';
 import { ExerciseLibraryAddScreen } from './src/screens/ExerciseLibraryAddScreen';
 import { VelocityTrackerScreen } from './src/screens/VelocityTrackerScreen';
@@ -122,7 +121,6 @@ const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'Journal',
   'JournalEntry',
   'IntervalTimer',
-  'VideoAnalysis',
   'ExerciseLibrary',
   'ExerciseLibraryAdd',
   'VelocityTracker',
@@ -243,7 +241,6 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="Journal" component={JournalScreen} />
     <RootStack.Screen name="JournalEntry" component={JournalEntryScreen} />
     <RootStack.Screen name="IntervalTimer" component={IntervalTimerScreen} />
-    <RootStack.Screen name="VideoAnalysis" component={VideoAnalysisScreen} />
     <RootStack.Screen name="ExerciseLibrary" component={ExerciseLibraryScreen} />
     <RootStack.Screen name="ExerciseLibraryAdd" component={ExerciseLibraryAddScreen} />
     <RootStack.Screen name="VelocityTracker" component={VelocityTrackerScreen} />

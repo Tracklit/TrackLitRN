@@ -24,7 +24,6 @@ export type RootStackParamList = {
   Journal: undefined;
   JournalEntry: { date: string };
   IntervalTimer: undefined;
-  VideoAnalysis: undefined;
   ExerciseLibrary: undefined;
   ExerciseLibraryAdd: undefined;
   VelocityTracker: undefined;
