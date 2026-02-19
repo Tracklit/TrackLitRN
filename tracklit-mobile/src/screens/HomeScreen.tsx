@@ -126,98 +126,112 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     else setGreeting('Good evening');
   }, []);
 
+  const PLACEHOLDER_ACTIVITIES: CommunityActivity[] = [
+    {
+      id: 1,
+      userId: 1,
+      activityType: 'workout',
+      title: 'Sprint Training Complete',
+      description: 'Finished 6x100m sprint session with excellent form. Felt strong on the blocks and maintained good posture through the drive phase.',
+      createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+      user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: 'https://i.pravatar.cc/150?img=11' },
+    },
+    {
+      id: 2,
+      userId: 2,
+      activityType: 'user_joined',
+      title: 'New Athlete Joined',
+      description: 'Welcome Sarah M. to the TrackLit community!',
+      createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+      user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: 'https://i.pravatar.cc/150?img=5' },
+    },
+    {
+      id: 3,
+      userId: 3,
+      activityType: 'meet_created',
+      title: 'Spring Championship Meet',
+      description: 'New meet scheduled for April 15th at Metro Stadium. Events include 100m, 200m, 400m, and 4x100m relay.',
+      createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: 'https://i.pravatar.cc/150?img=12' },
+    },
+    {
+      id: 4,
+      userId: 4,
+      activityType: 'journal_entry',
+      title: 'Recovery Day Reflection',
+      description: 'Took an easy recovery day with stretching and foam rolling. Feeling fresh for tomorrow\'s tempo run.',
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      user: { id: 4, username: 'mia_track', name: 'Mia T.', profileImageUrl: 'https://i.pravatar.cc/150?img=9' },
+    },
+    {
+      id: 5,
+      userId: 5,
+      activityType: 'workout',
+      title: 'Hurdle Drills Session',
+      description: 'Worked on 3-step rhythm over 5 hurdles. Coach said my trail leg is improving. PB on the last rep!',
+      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+      user: { id: 5, username: 'hurdle_king', name: 'Marcus D.', profileImageUrl: 'https://i.pravatar.cc/150?img=13' },
+    },
+    {
+      id: 6,
+      userId: 6,
+      activityType: 'meet_results',
+      title: 'Regional Qualifiers Results',
+      description: 'Congrats to all athletes who competed today! 3 new personal bests recorded across the squad.',
+      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+      user: { id: 6, username: 'coach_rivera', name: 'Coach Rivera', profileImageUrl: 'https://i.pravatar.cc/150?img=14' },
+    },
+    {
+      id: 7,
+      userId: 7,
+      activityType: 'program_assigned',
+      title: 'New Program: Speed Endurance',
+      description: '8-week speed endurance block starting Monday. Focus on lactate threshold and race-pace training.',
+      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      user: { id: 7, username: 'ella_sprints', name: 'Ella W.', profileImageUrl: 'https://i.pravatar.cc/150?img=16' },
+    },
+    {
+      id: 8,
+      userId: 8,
+      activityType: 'group_joined',
+      title: 'Joined Sprint Squad',
+      description: 'Jordan K. just joined the Sprint Squad training group. Welcome to the team!',
+      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+      user: { id: 8, username: 'jordan_k', name: 'Jordan K.', profileImageUrl: 'https://i.pravatar.cc/150?img=8' },
+    },
+    {
+      id: 9,
+      userId: 9,
+      activityType: 'journal_entry',
+      title: 'Pre-Competition Notes',
+      description: 'Visualized my race plan for Saturday. Feeling confident about the 200m. Goal: sub-22 seconds.',
+      createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+      user: { id: 9, username: 'dash_quinn', name: 'Quinn L.', profileImageUrl: 'https://i.pravatar.cc/150?img=33' },
+    },
+  ];
+
+  const AVATAR_FALLBACKS = [11, 5, 12, 9, 13, 14, 16, 8, 33, 3, 7, 15, 18, 20, 25, 27, 30, 35, 40, 45];
+
   const activitiesQuery = useQuery<CommunityActivity[]>({
     queryKey: ['community-activities'],
     queryFn: () => apiRequest<CommunityActivity[]>('/api/community/activities'),
     refetchInterval: 30000,
     retry: false,
     staleTime: 60000,
-    initialData: [
-      {
-        id: 1,
-        userId: 1,
-        activityType: 'workout',
-        title: 'Sprint Training Complete',
-        description: 'Finished 6x100m sprint session with excellent form. Felt strong on the blocks and maintained good posture through the drive phase.',
-        createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-        user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: 'https://i.pravatar.cc/150?img=11' },
-      },
-      {
-        id: 2,
-        userId: 2,
-        activityType: 'user_joined',
-        title: 'New Athlete Joined',
-        description: 'Welcome Sarah M. to the TrackLit community!',
-        createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: 'https://i.pravatar.cc/150?img=5' },
-      },
-      {
-        id: 3,
-        userId: 3,
-        activityType: 'meet_created',
-        title: 'Spring Championship Meet',
-        description: 'New meet scheduled for April 15th at Metro Stadium. Events include 100m, 200m, 400m, and 4x100m relay.',
-        createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-        user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: 'https://i.pravatar.cc/150?img=12' },
-      },
-      {
-        id: 4,
-        userId: 4,
-        activityType: 'journal_entry',
-        title: 'Recovery Day Reflection',
-        description: 'Took an easy recovery day with stretching and foam rolling. Feeling fresh for tomorrow\'s tempo run.',
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        user: { id: 4, username: 'mia_track', name: 'Mia T.', profileImageUrl: 'https://i.pravatar.cc/150?img=9' },
-      },
-      {
-        id: 5,
-        userId: 5,
-        activityType: 'workout',
-        title: 'Hurdle Drills Session',
-        description: 'Worked on 3-step rhythm over 5 hurdles. Coach said my trail leg is improving. PB on the last rep!',
-        createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-        user: { id: 5, username: 'hurdle_king', name: 'Marcus D.', profileImageUrl: 'https://i.pravatar.cc/150?img=13' },
-      },
-      {
-        id: 6,
-        userId: 6,
-        activityType: 'meet_results',
-        title: 'Regional Qualifiers Results',
-        description: 'Congrats to all athletes who competed today! 3 new personal bests recorded across the squad.',
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-        user: { id: 6, username: 'coach_rivera', name: 'Coach Rivera', profileImageUrl: 'https://i.pravatar.cc/150?img=14' },
-      },
-      {
-        id: 7,
-        userId: 7,
-        activityType: 'program_assigned',
-        title: 'New Program: Speed Endurance',
-        description: '8-week speed endurance block starting Monday. Focus on lactate threshold and race-pace training.',
-        createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-        user: { id: 7, username: 'ella_sprints', name: 'Ella W.', profileImageUrl: 'https://i.pravatar.cc/150?img=16' },
-      },
-      {
-        id: 8,
-        userId: 8,
-        activityType: 'group_joined',
-        title: 'Joined Sprint Squad',
-        description: 'Jordan K. just joined the Sprint Squad training group. Welcome to the team!',
-        createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        user: { id: 8, username: 'jordan_k', name: 'Jordan K.', profileImageUrl: 'https://i.pravatar.cc/150?img=8' },
-      },
-      {
-        id: 9,
-        userId: 9,
-        activityType: 'journal_entry',
-        title: 'Pre-Competition Notes',
-        description: 'Visualized my race plan for Saturday. Feeling confident about the 200m. Goal: sub-22 seconds.',
-        createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-        user: { id: 9, username: 'dash_quinn', name: 'Quinn L.', profileImageUrl: 'https://i.pravatar.cc/150?img=33' },
-      },
-    ],
+    placeholderData: PLACEHOLDER_ACTIVITIES,
+    select: (data: CommunityActivity[]) => {
+      if (!data || data.length === 0) return PLACEHOLDER_ACTIVITIES;
+      return data.map((a, i) => {
+        if (a.user && !a.user.profileImageUrl) {
+          const imgIdx = AVATAR_FALLBACKS[i % AVATAR_FALLBACKS.length];
+          return { ...a, user: { ...a.user, profileImageUrl: `https://i.pravatar.cc/150?img=${imgIdx}` } };
+        }
+        return a;
+      });
+    },
   });
 
-  const activities = activitiesQuery.data ?? [];
+  const activities = activitiesQuery.data ?? PLACEHOLDER_ACTIVITIES;
 
   const CAROUSEL_COPIES = 3;
   const carouselData = activities.length > 0
