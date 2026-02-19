@@ -12,14 +12,12 @@ import {
   BookOpen,
   Newspaper,
   Wrench,
-  UserCircle,
 } from 'phosphor-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-import { useAuth } from '@/contexts/AuthContext';
 import theme from '@/utils/theme';
 
-type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Tools' | 'Profile';
+type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Tools';
 
 interface NavItem {
   title: string;
@@ -58,12 +56,6 @@ const navItems: NavItem[] = [
     routeName: 'Tools',
     key: 'tools',
     IconComponent: Wrench,
-  },
-  {
-    title: 'Profile',
-    routeName: 'Profile',
-    key: 'profile',
-    IconComponent: UserCircle,
   },
 ];
 

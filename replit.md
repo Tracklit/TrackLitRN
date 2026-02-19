@@ -44,7 +44,7 @@ migrations/          - Database migrations
 
 ## Design Decisions
 - All icons use Phosphor with "fill" weight for visual consistency
-- Bottom nav has 6 tabs: Home, Practice, Programs, Feed, Tools, Profile
+- Bottom nav has 5 tabs: Home, Practice, Programs, Feed, Tools (Profile accessible via drawer)
 - Sprinthia (AI assistant) is a RootStack screen, accessible from HomeScreen cards and drawer menu
 - Bottom nav height is 48px with icons properly centered
 - Sidebar drawer uses very dark gray background (#1a1a1a) with X close button, blocks touch pass-through
@@ -85,6 +85,9 @@ migrations/          - Database migrations
 - 2026-02-19: Ticker: removed pause/play button, tap-to-expand modal with full message, Like (local toggle) and Save to Journal (POST /api/journal) actions
 - 2026-02-19: ChatScreen: full Telegram-style restyle — flat chat rows with large avatars, merged groups+DMs sorted by recency, orange unread pills, Phosphor icons, orange FAB
 - 2026-02-19: ChatConversationScreen: Telegram dark theme — blue own bubbles (#2b5278), dark other bubbles (#1e2c3a), date separators, inline timestamps with check marks, Phosphor icons, orange send button
+- 2026-02-19: PhotoFinishScreen: upload section wrapped in dashed-border card (16px radius, rgba bg) for clear tap affordance
+- 2026-02-19: BottomNavigation: removed Profile tab (5 tabs: Home, Practice, Programs, Feed, Tools), Profile still accessible via drawer
+- 2026-02-19: Ticker animation: changed from horizontal slide to vertical — new messages slide in from top, old messages slide out to bottom
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message

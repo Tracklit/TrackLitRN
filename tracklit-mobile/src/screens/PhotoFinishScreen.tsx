@@ -479,15 +479,17 @@ export const PhotoFinishScreen: React.FC = () => {
           </View>
 
           <View style={styles.uploadArea}>
-            <TouchableOpacity onPress={handleUpload} style={styles.uploadCircle} activeOpacity={0.8}>
-              <UploadSimple size={40} color={theme.colors.primaryForeground} weight="fill" />
+            <TouchableOpacity onPress={handleUpload} style={styles.uploadCard} activeOpacity={0.7}>
+              <View style={styles.uploadCircle}>
+                <UploadSimple size={40} color={theme.colors.primaryForeground} weight="fill" />
+              </View>
+              <Text variant="h3" weight="bold" color="foreground" style={{ marginTop: 20 }}>
+                Upload a Video
+              </Text>
+              <Text variant="body" color="muted" style={{ textAlign: 'center', marginTop: 8, paddingHorizontal: 12 }}>
+                Select a race finish video to analyze frame by frame
+              </Text>
             </TouchableOpacity>
-            <Text variant="h3" weight="bold" color="foreground" style={{ marginTop: 20 }}>
-              Upload a Video
-            </Text>
-            <Text variant="body" color="muted" style={{ textAlign: 'center', marginTop: 8 }}>
-              Select a race finish video to analyze frame by frame
-            </Text>
           </View>
 
           {savedVideos.length > 0 && (
@@ -729,6 +731,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  uploadCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderStyle: 'dashed',
+    width: '100%',
   },
   uploadCircle: {
     width: 80,

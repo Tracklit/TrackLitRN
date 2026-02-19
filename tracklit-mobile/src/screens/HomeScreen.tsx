@@ -112,9 +112,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   }));
 
   const currentOpacity = useSharedValue(1);
-  const currentTranslateX = useSharedValue(0);
+  const currentTranslateY = useSharedValue(0);
   const nextOpacity = useSharedValue(0);
-  const nextTranslateX = useSharedValue(12);
+  const nextTranslateY = useSharedValue(-14);
   const nextScale = useSharedValue(0.98);
 
   const ANIM_DURATION = 280;
@@ -122,30 +122,30 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const currentAnimStyle = useAnimatedStyle(() => ({
     opacity: currentOpacity.value,
-    transform: [{ translateX: currentTranslateX.value }],
+    transform: [{ translateY: currentTranslateY.value }],
   }));
 
   const nextAnimStyle = useAnimatedStyle(() => ({
     opacity: nextOpacity.value,
-    transform: [{ translateX: nextTranslateX.value }, { scale: nextScale.value }],
+    transform: [{ translateY: nextTranslateY.value }, { scale: nextScale.value }],
   }));
 
   const promoteNext = useCallback((idx: number) => {
     cancelAnimation(currentOpacity);
-    cancelAnimation(currentTranslateX);
+    cancelAnimation(currentTranslateY);
     cancelAnimation(nextOpacity);
-    cancelAnimation(nextTranslateX);
+    cancelAnimation(nextTranslateY);
     cancelAnimation(nextScale);
 
     nextOpacity.value = 0;
-    nextTranslateX.value = 12;
+    nextTranslateY.value = -14;
     nextScale.value = 0.98;
 
     setNextActivityIndex(null);
     setCurrentActivityIndex(idx);
 
     currentOpacity.value = 1;
-    currentTranslateX.value = 0;
+    currentTranslateY.value = 0;
     isAnimatingRef.current = false;
   }, []);
 
@@ -157,10 +157,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     const timingConfig = { duration: ANIM_DURATION, easing: easeOutCubic };
 
     currentOpacity.value = withTiming(0, timingConfig);
-    currentTranslateX.value = withTiming(-12, timingConfig);
+    currentTranslateY.value = withTiming(14, timingConfig);
 
     nextOpacity.value = withDelay(50, withTiming(1, timingConfig));
-    nextTranslateX.value = withDelay(50, withTiming(0, timingConfig));
+    nextTranslateY.value = withDelay(50, withTiming(0, timingConfig));
     nextScale.value = withDelay(50, withTiming(1, timingConfig, (finished) => {
       'worklet';
       if (finished) {
@@ -265,9 +265,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       isAnimatingRef.current = false;
       setNextActivityIndex(null);
       currentOpacity.value = 1;
-      currentTranslateX.value = 0;
+      currentTranslateY.value = 0;
       nextOpacity.value = 0;
-      nextTranslateX.value = 12;
+      nextTranslateY.value = -14;
       nextScale.value = 0.98;
     }
   }, [tickerCollapsed, isPaused]);
