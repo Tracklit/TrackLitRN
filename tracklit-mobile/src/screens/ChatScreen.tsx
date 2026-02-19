@@ -13,19 +13,27 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
-import { ChevronRight, Search, X, MessageCircle, Users as UsersIcon } from 'lucide-react-native';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { format, isToday, isYesterday } from 'date-fns';
+import {
+  ArrowLeft,
+  MagnifyingGlass,
+  X,
+  ChatCircle,
+  UsersThree,
+  PencilSimple,
+  Lock,
+  WarningCircle,
+  ChatTeardropDots,
+  Plus,
+} from 'phosphor-react-native';
 
 import { Text } from '../components/ui/Text';
-import { Card, CardContent } from '../components/ui/Card';
 import { Avatar } from '../components/ui/Avatar';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '../utils/theme';
-import { WebScreen } from '@/components/web/Screen';
 
 interface Friend {
   id: number;
@@ -58,6 +66,19 @@ interface Conversation {
   unreadCount?: number;
 }
 
+type ListItem =
+  | { kind: 'group'; data: ChatGroup }
+  | { kind: 'dm'; data: Conversation };
+
+const formatChatTime = (dateStr?: string) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '';
+  if (isToday(d)) return format(d, 'HH:mm');
+  if (isYesterday(d)) return 'Yesterday';
+  return format(d, 'dd/MM/yy');
+};
+
 export const ChatScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -70,21 +91,18 @@ export const ChatScreen: React.FC = () => {
   const [showFriendsModal, setShowFriendsModal] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
 
-  // Fetch chat groups
   const groupsQuery = useQuery({
     queryKey: ['chat-groups'],
     queryFn: () => apiRequest<ChatGroup[]>('/api/chat/groups'),
     enabled: isAuthenticated && !isGuest && hasValidToken,
   });
 
-  // Fetch direct conversations
   const conversationsQuery = useQuery({
     queryKey: ['conversations'],
     queryFn: () => apiRequest<Conversation[]>('/api/conversations'),
     enabled: isAuthenticated && !isGuest && hasValidToken,
   });
 
-  // Fetch friends for new DM
   const friendsQuery = useQuery({
     queryKey: ['friends'],
     queryFn: () => apiRequest<Friend[]>('/api/friends'),
@@ -99,7 +117,17 @@ export const ChatScreen: React.FC = () => {
     (f.name?.toLowerCase() || f.username.toLowerCase()).includes(friendSearch.toLowerCase())
   );
 
-  // Start a new DM conversation
+  const allItems: ListItem[] = [
+    ...groups.map((g): ListItem => ({ kind: 'group', data: g })),
+    ...conversations.map((c): ListItem => ({ kind: 'dm', data: c })),
+  ].sort((a, b) => {
+    const aTime = a.kind === 'group' ? a.data.lastMessageAt : a.data.lastMessageAt;
+    const bTime = b.kind === 'group' ? b.data.lastMessageAt : b.data.lastMessageAt;
+    if (!aTime) return 1;
+    if (!bTime) return -1;
+    return new Date(bTime).getTime() - new Date(aTime).getTime();
+  });
+
   const startConversationMutation = useMutation({
     mutationFn: async (userId: number) => {
       return apiRequest<{ conversationId: number }>('/api/conversations', {
@@ -111,7 +139,6 @@ export const ChatScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       setShowFriendsModal(false);
       setShowNewChatModal(false);
-      // Navigate to the conversation
       navigation.navigate('ChatConversation', {
         conversationId: data.conversationId || userId,
         type: 'direct',
@@ -120,7 +147,6 @@ export const ChatScreen: React.FC = () => {
   });
 
   const handleStartDM = useCallback((friend: Friend) => {
-    // Check if conversation already exists
     const existingConvo = conversations.find(
       (c) => c.otherUserId === friend.id
     );
@@ -142,16 +168,16 @@ export const ChatScreen: React.FC = () => {
   };
 
   const handleGroupPress = (group: ChatGroup) => {
-    navigation.navigate('ChatConversation', { 
-      conversationId: group.id, 
-      type: 'group' 
+    navigation.navigate('ChatConversation', {
+      conversationId: group.id,
+      type: 'group'
     });
   };
 
   const handleConversationPress = (conversation: Conversation) => {
-    navigation.navigate('ChatConversation', { 
-      conversationId: conversation.id, 
-      type: 'direct' 
+    navigation.navigate('ChatConversation', {
+      conversationId: conversation.id,
+      type: 'direct'
     });
   };
 
@@ -170,21 +196,96 @@ export const ChatScreen: React.FC = () => {
     }
   }, [combinedError?.status, logout]);
 
+  const renderChatRow = (item: ListItem) => {
+    const isGroup = item.kind === 'group';
+    const key = `${item.kind}-${item.data.id}`;
+    const name = isGroup
+      ? (item.data as ChatGroup).name
+      : (item.data as Conversation).otherUserName || (item.data as Conversation).otherUserUsername || 'Unknown';
+    const lastMsg = item.data.lastMessage;
+    const time = formatChatTime(item.data.lastMessageAt);
+    const unread = item.data.unreadCount ?? 0;
+    const avatarSrc = isGroup
+      ? (item.data as ChatGroup).imageUrl
+      : (item.data as Conversation).otherUserProfileImage;
+    const fallbackLetter = (name?.[0] || '?').toUpperCase();
+
+    return (
+      <TouchableOpacity
+        key={key}
+        style={styles.chatRow}
+        activeOpacity={0.6}
+        onPress={() =>
+          isGroup
+            ? handleGroupPress(item.data as ChatGroup)
+            : handleConversationPress(item.data as Conversation)
+        }
+      >
+        <View style={styles.avatarWrap}>
+          <Avatar size="lg" src={avatarSrc || undefined} fallback={fallbackLetter} />
+          {isGroup && (
+            <View style={styles.groupBadgeIcon}>
+              <UsersThree size={10} color="#fff" weight="fill" />
+            </View>
+          )}
+        </View>
+
+        <View style={styles.chatRowBody}>
+          <View style={styles.chatRowTop}>
+            <Text
+              variant="body"
+              weight={unread > 0 ? 'bold' : 'semiBold'}
+              color="foreground"
+              numberOfLines={1}
+              style={styles.chatRowName}
+            >
+              {name}
+            </Text>
+            <Text
+              variant="small"
+              color={unread > 0 ? 'accent' : 'muted'}
+              style={unread > 0 ? styles.timeBold : undefined}
+            >
+              {time}
+            </Text>
+          </View>
+          <View style={styles.chatRowBottom}>
+            <Text
+              variant="caption"
+              color={unread > 0 ? 'foreground' : 'muted'}
+              numberOfLines={1}
+              style={[styles.chatRowPreview, unread > 0 && styles.chatRowPreviewBold]}
+            >
+              {lastMsg || (isGroup ? `${(item.data as ChatGroup).memberCount ?? 0} members` : 'No messages yet')}
+            </Text>
+            {unread > 0 && (
+              <View style={styles.unreadPill}>
+                <Text style={styles.unreadPillText}>
+                  {unread > 999 ? '999+' : unread}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <WebScreen
-      backgroundColor={theme.colors.webChatBackground}
-      scrollable={false}
-      contentStyle={{ paddingTop: theme.spacing.lg }}
-    >
-      {/* Header */}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ChevronRight size={20} color={theme.colors.foreground} style={{ transform: [{ rotate: '180deg' }] }} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={22} color="#fff" weight="bold" />
         </TouchableOpacity>
-        <Text variant="h3" weight="bold" color="foreground">
-          Messages
+        <Text variant="h3" weight="bold" color="foreground" style={styles.headerTitle}>
+          Chats
         </Text>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity
+          style={styles.headerAction}
+          onPress={() => setShowNewChatModal(true)}
+        >
+          <PencilSimple size={22} color="#94a3b8" weight="fill" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -202,7 +303,7 @@ export const ChatScreen: React.FC = () => {
       >
         {isGuest || !hasValidToken ? (
           <View style={styles.emptyState}>
-            <FontAwesome5 name="user-lock" size={48} color={theme.colors.textMuted} solid />
+            <Lock size={48} color={theme.colors.textMuted} weight="fill" />
             <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
               Sign In Required
             </Text>
@@ -219,16 +320,16 @@ export const ChatScreen: React.FC = () => {
           </View>
         ) : hasError ? (
           <View style={styles.emptyState}>
-            <FontAwesome5 name="exclamation-circle" size={48} color={theme.colors.textMuted} solid />
+            <WarningCircle size={48} color={theme.colors.textMuted} weight="fill" />
             <Text variant="body" color="muted" style={styles.emptyText}>
               {combinedError?.status === 401
                 ? 'Session expired. Please sign in again.'
-                : `Unable to load messages.${combinedError?.message ? ` ${combinedError.message}` : ''} Pull to refresh.`}
+                : `Unable to load messages. Pull to refresh.`}
             </Text>
           </View>
-        ) : groups.length === 0 && conversations.length === 0 ? (
+        ) : allItems.length === 0 ? (
           <View style={styles.emptyState}>
-            <FontAwesome5 name="comments" size={48} color={theme.colors.textMuted} solid />
+            <ChatTeardropDots size={48} color={theme.colors.textMuted} weight="fill" />
             <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
               No Messages Yet
             </Text>
@@ -237,125 +338,7 @@ export const ChatScreen: React.FC = () => {
             </Text>
           </View>
         ) : (
-          <>
-            {/* Group Chats Section */}
-            {groups.length > 0 && (
-              <View style={styles.section}>
-                <Text variant="h4" weight="semiBold" color="foreground" style={styles.sectionTitle}>
-                  Group Chats
-                </Text>
-                {groups.map((group) => (
-                  <TouchableOpacity 
-                    key={group.id} 
-                    onPress={() => handleGroupPress(group)}
-                  >
-                      <Card style={styles.chatCard}>
-                      <CardContent style={styles.chatContent}>
-                        <View style={styles.avatarContainer}>
-                          {group.imageUrl ? (
-                            <Avatar size="md" src={group.imageUrl} fallback={group.name[0]} />
-                          ) : (
-                            <View style={styles.groupAvatar}>
-                              <FontAwesome5 name="users" size={20} color={theme.colors.primary} solid />
-                            </View>
-                          )}
-                          {group.unreadCount && group.unreadCount > 0 && (
-                            <View style={styles.unreadBadge}>
-                              <Text variant="small" color="primary-foreground" weight="bold">
-                                {group.unreadCount > 99 ? '99+' : group.unreadCount}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                        
-                        <View style={styles.chatInfo}>
-                          <View style={styles.chatHeader}>
-                            <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
-                              {group.name}
-                            </Text>
-                            {group.lastMessageAt && (
-                              <Text variant="small" color="muted">
-                                {formatDistanceToNow(new Date(group.lastMessageAt), { addSuffix: false })}
-                              </Text>
-                            )}
-                          </View>
-                          
-                          {group.lastMessage && (
-                            <Text variant="small" color="muted" numberOfLines={1} style={styles.lastMessage}>
-                              {group.lastMessage}
-                            </Text>
-                          )}
-                          
-                          {group.memberCount && (
-                            <Text variant="small" color="muted">
-                              {group.memberCount} members
-                            </Text>
-                          )}
-                        </View>
-                        
-                        <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} />
-                      </CardContent>
-                    </Card>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-
-            {/* Direct Messages Section */}
-            {conversations.length > 0 && (
-              <View style={styles.section}>
-                <Text variant="h4" weight="semiBold" color="foreground" style={styles.sectionTitle}>
-                  Direct Messages
-                </Text>
-                {conversations.map((conversation) => (
-                  <TouchableOpacity 
-                    key={conversation.id} 
-                    onPress={() => handleConversationPress(conversation)}
-                  >
-                      <Card style={styles.chatCard}>
-                      <CardContent style={styles.chatContent}>
-                        <View style={styles.avatarContainer}>
-                          <Avatar 
-                            size="md" 
-                            src={conversation.otherUserProfileImage} 
-                            fallback={conversation.otherUserName?.[0] || 'U'} 
-                          />
-                          {conversation.unreadCount && conversation.unreadCount > 0 && (
-                            <View style={styles.unreadBadge}>
-                              <Text variant="small" color="primary-foreground" weight="bold">
-                                {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                        
-                        <View style={styles.chatInfo}>
-                          <View style={styles.chatHeader}>
-                            <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
-                              {conversation.otherUserName || conversation.otherUserUsername || 'Unknown'}
-                            </Text>
-                            {conversation.lastMessageAt && (
-                              <Text variant="small" color="muted">
-                                {formatDistanceToNow(new Date(conversation.lastMessageAt), { addSuffix: false })}
-                              </Text>
-                            )}
-                          </View>
-                          
-                          {conversation.lastMessage && (
-                            <Text variant="small" color="muted" numberOfLines={1} style={styles.lastMessage}>
-                              {conversation.lastMessage}
-                            </Text>
-                          )}
-                        </View>
-                        
-                        <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} />
-                      </CardContent>
-                    </Card>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </>
+          allItems.map(renderChatRow)
         )}
       </ScrollView>
 
@@ -363,14 +346,11 @@ export const ChatScreen: React.FC = () => {
         <TouchableOpacity
           style={[styles.fab, { bottom: theme.layout.bottomNavHeight + insets.bottom + theme.spacing.lg }]}
           onPress={() => setShowNewChatModal(true)}
-          accessibilityRole="button"
-          accessibilityLabel="New chat"
         >
-          <FontAwesome5 name="plus" size={18} color={theme.colors.primaryForeground} solid />
+          <PencilSimple size={22} color="#fff" weight="fill" />
         </TouchableOpacity>
       )}
 
-      {/* New Chat Options Modal */}
       <Modal
         visible={showNewChatModal}
         transparent
@@ -395,7 +375,7 @@ export const ChatScreen: React.FC = () => {
               }}
             >
               <View style={styles.modalOptionIcon}>
-                <MessageCircle size={24} color={theme.colors.primary} />
+                <ChatCircle size={24} color="#FF9800" weight="fill" />
               </View>
               <View style={styles.modalOptionText}>
                 <Text variant="body" weight="semiBold" color="foreground">New Message</Text>
@@ -411,7 +391,7 @@ export const ChatScreen: React.FC = () => {
               }}
             >
               <View style={styles.modalOptionIcon}>
-                <UsersIcon size={24} color={theme.colors.primary} />
+                <UsersThree size={24} color="#FF9800" weight="fill" />
               </View>
               <View style={styles.modalOptionText}>
                 <Text variant="body" weight="semiBold" color="foreground">New Group</Text>
@@ -429,7 +409,6 @@ export const ChatScreen: React.FC = () => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Friends Selection Modal */}
       <Modal
         visible={showFriendsModal}
         animationType="slide"
@@ -438,14 +417,14 @@ export const ChatScreen: React.FC = () => {
         <View style={[styles.friendsModal, { paddingTop: insets.top }]}>
           <View style={styles.friendsModalHeader}>
             <TouchableOpacity onPress={() => setShowFriendsModal(false)}>
-              <X size={24} color={theme.colors.foreground} />
+              <X size={24} color="#fff" weight="bold" />
             </TouchableOpacity>
             <Text variant="h4" weight="bold" color="foreground">Select Friend</Text>
             <View style={{ width: 24 }} />
           </View>
 
           <View style={styles.searchContainer}>
-            <Search size={18} color={theme.colors.textMuted} />
+            <MagnifyingGlass size={18} color={theme.colors.textMuted} weight="bold" />
             <TextInput
               style={styles.friendSearchInput}
               placeholder="Search friends..."
@@ -456,8 +435,11 @@ export const ChatScreen: React.FC = () => {
           </View>
 
           <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag" style={styles.friendsList} contentContainerStyle={{ paddingBottom: insets.bottom + theme.spacing.lg }}>
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            style={styles.friendsList}
+            contentContainerStyle={{ paddingBottom: insets.bottom + theme.spacing.lg }}
+          >
             {friendsQuery.isLoading ? (
               <View style={styles.center}>
                 <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -473,6 +455,7 @@ export const ChatScreen: React.FC = () => {
                 <TouchableOpacity
                   key={friend.id}
                   style={styles.friendItem}
+                  activeOpacity={0.6}
                   onPress={() => handleStartDM(friend)}
                   disabled={startConversationMutation.isPending}
                 >
@@ -487,128 +470,148 @@ export const ChatScreen: React.FC = () => {
                     </Text>
                     <Text variant="small" color="muted">@{friend.username}</Text>
                   </View>
-                  <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} />
                 </TouchableOpacity>
               ))
             )}
           </ScrollView>
         </View>
       </Modal>
-    </WebScreen>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0f1623',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.webBorderLight,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
   },
-  headerSpacer: {
+  headerTitle: {
     flex: 1,
+    marginLeft: 12,
+  },
+  headerAction: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
+    paddingTop: 4,
   },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xl * 2,
-  },
-  emptyTitle: {
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
-  },
-  emptyText: {
-    textAlign: 'center',
-    paddingHorizontal: theme.spacing.lg,
-  },
-  section: {
-    marginBottom: theme.spacing.xl,
-  },
-  sectionTitle: {
-    marginBottom: theme.spacing.md,
-  },
-  chatCard: {
-    marginBottom: theme.spacing.sm,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderColor: theme.colors.webBorderLight,
-  },
-  chatContent: {
+  chatRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
-  avatarContainer: {
+  avatarWrap: {
     position: 'relative',
-    marginRight: theme.spacing.md,
+    marginRight: 14,
   },
-  groupAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: theme.colors.muted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  unreadBadge: {
+  groupBadgeIcon: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: theme.colors.webPurpleStart,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    bottom: -1,
+    right: -1,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#5b21b6',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
     borderWidth: 2,
-    borderColor: theme.colors.webChatBackground,
+    borderColor: '#0f1623',
   },
-  fab: {
-    position: 'absolute',
-    right: theme.spacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: theme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadows.lg,
-  },
-  chatInfo: {
+  chatRowBody: {
     flex: 1,
-    marginRight: theme.spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+    paddingBottom: 10,
   },
-  chatHeader: {
+  chatRowTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
+    marginBottom: 4,
   },
-  lastMessage: {
-    marginBottom: theme.spacing.xs,
+  chatRowName: {
+    flex: 1,
+    marginRight: 8,
+  },
+  timeBold: {
+    fontWeight: '600',
+  },
+  chatRowBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chatRowPreview: {
+    flex: 1,
+    marginRight: 8,
+  },
+  chatRowPreviewBold: {
+    fontWeight: '500',
+  },
+  unreadPill: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FF9800',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  unreadPillText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    marginTop: 16,
+    marginBottom: 6,
+  },
+  emptyText: {
+    textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FF9800',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
+    shadowColor: '#FF9800',
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   center: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: 40,
   },
   modalOverlay: {
     flex: 1,
@@ -616,86 +619,80 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.colors.card,
+    backgroundColor: '#1a1a2e',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    padding: 20,
+    paddingBottom: 32,
   },
   modalTitle: {
     textAlign: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: 20,
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing.md,
+    paddingVertical: 14,
+    gap: 14,
   },
   modalOptionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(147, 51, 234, 0.15)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,152,0,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
   },
   modalOptionText: {
     flex: 1,
   },
   cancelButton: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    marginTop: theme.spacing.sm,
+    paddingVertical: 14,
+    marginTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   friendsModal: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#0f1623',
   },
   friendsModalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: theme.spacing.lg,
-    marginVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    marginHorizontal: 16,
+    marginVertical: 10,
+    paddingHorizontal: 14,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    gap: 10,
   },
   friendSearchInput: {
     flex: 1,
-    marginLeft: theme.spacing.sm,
-    color: theme.colors.foreground,
-    fontSize: 16,
+    color: '#fff',
+    fontSize: 15,
   },
   friendsList: {
     flex: 1,
-    paddingHorizontal: theme.spacing.lg,
   },
   friendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 14,
   },
   friendInfo: {
     flex: 1,
-    marginLeft: theme.spacing.md,
   },
 });
-
