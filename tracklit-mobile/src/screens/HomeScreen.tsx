@@ -788,10 +788,9 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   carouselToggle: {
-    position: 'absolute',
-    top: 0,
-    right: theme.spacing.container,
-    zIndex: 1,
+    alignSelf: 'flex-end',
+    marginRight: theme.spacing.container,
+    marginBottom: 4,
     padding: 4,
   },
   carouselContent: {
