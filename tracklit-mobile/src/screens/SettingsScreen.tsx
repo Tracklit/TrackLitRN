@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -52,6 +53,13 @@ export const SettingsScreen: React.FC = () => {
     user?.defaultClubId !== null && user?.defaultClubId !== undefined ? String(user.defaultClubId) : '',
   );
   const [isPrivate, setIsPrivate] = useState(!!user?.isPrivate);
+  const [showActivityFeed, setShowActivityFeed] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem('carousel_hidden').then(val => {
+      if (val === 'true') setShowActivityFeed(false);
+    });
+  }, []);
 
   // Keep local state in sync with latest user
   React.useEffect(() => {
@@ -270,6 +278,34 @@ export const SettingsScreen: React.FC = () => {
             <Text variant="body" color="muted" style={styles.helperText}>
               Push notification settings will be available in a future update.
             </Text>
+          </CardContent>
+        </Card>
+
+        {/* Display */}
+        <Card style={styles.card}>
+          <CardHeader>
+            <CardTitle>Display</CardTitle>
+          </CardHeader>
+          <CardContent style={styles.cardContent}>
+            <View style={styles.switchRow}>
+              <View style={{ flex: 1 }}>
+                <Text variant="body" weight="semiBold" color="foreground">
+                  Show activity feed
+                </Text>
+                <Text variant="small" color="muted" style={styles.helperText}>
+                  Show the activity carousel on the home screen.
+                </Text>
+              </View>
+              <Switch
+                value={showActivityFeed}
+                onValueChange={(val) => {
+                  setShowActivityFeed(val);
+                  AsyncStorage.setItem('carousel_hidden', val ? 'false' : 'true');
+                }}
+                thumbColor={showActivityFeed ? theme.colors.primary : theme.colors.textMuted}
+                trackColor={{ true: theme.colors.primary + '66', false: theme.colors.muted }}
+              />
+            </View>
           </CardContent>
         </Card>
 

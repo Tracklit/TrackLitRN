@@ -11,6 +11,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,6 +24,8 @@ import {
   X,
   CaretRight,
   Star,
+  Minus,
+  Plus,
   Book,
   Users,
   CalendarBlank,
@@ -97,8 +100,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [selectedActivity, setSelectedActivity] = useState<CommunityActivity | null>(null);
   const [likedActivities, setLikedActivities] = useState<Set<number>>(new Set());
   const [readActivities, setReadActivities] = useState<Set<number>>(new Set());
+  const [carouselCollapsed, setCarouselCollapsed] = useState(false);
+  const [carouselHidden, setCarouselHidden] = useState(false);
   const carouselRef = useRef<FlatList>(null);
   const userId = user?.id;
+
+  useEffect(() => {
+    AsyncStorage.getItem('carousel_hidden').then(val => {
+      if (val === 'true') setCarouselHidden(true);
+    });
+  }, []);
 
   const screenOpacity = useSharedValue(0);
   useEffect(() => {
@@ -451,83 +462,97 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         <InlineRefreshHeader visible={isRefreshing} />
 
         {/* Activity Carousel */}
-        {activities.length > 0 && (
+        {activities.length > 0 && !carouselHidden && (
           <View style={styles.carouselContainer}>
-            <FlatList
-              ref={carouselRef}
-              data={carouselData}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item._carouselKey}
-              contentContainerStyle={styles.carouselContent}
-              contentOffset={{ x: carouselMiddleOffset * CAROUSEL_ITEM_WIDTH, y: 0 }}
-              onMomentumScrollEnd={(e) =>
-                handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH)
-              }
-              onScrollEndDrag={(e) => {
-                if (!e.nativeEvent.velocity || (Math.abs(e.nativeEvent.velocity.x) < 0.1)) {
-                  handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH);
+            <TouchableOpacity
+              style={styles.carouselToggle}
+              activeOpacity={0.6}
+              onPress={() => setCarouselCollapsed(prev => !prev)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              {carouselCollapsed ? (
+                <Plus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
+              ) : (
+                <Minus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
+              )}
+            </TouchableOpacity>
+            {!carouselCollapsed && (
+              <FlatList
+                ref={carouselRef}
+                data={carouselData}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item._carouselKey}
+                contentContainerStyle={styles.carouselContent}
+                contentOffset={{ x: carouselMiddleOffset * CAROUSEL_ITEM_WIDTH, y: 0 }}
+                onMomentumScrollEnd={(e) =>
+                  handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH)
                 }
-              }}
-              getItemLayout={(_, index) => ({
-                length: CAROUSEL_ITEM_WIDTH,
-                offset: CAROUSEL_ITEM_WIDTH * index,
-                index,
-              })}
-              renderItem={({ item }) => {
-                const badge = getActivityBadge(item.activityType);
-                const hasProfileImage = !!item.user?.profileImageUrl;
-                const initial = (item.user?.name?.[0] || item.user?.username?.[0] || '?').toUpperCase();
-                const username = item.user?.name?.split(' ')[0] || item.user?.username || '';
-                const isRead = readActivities.has(item.id);
+                onScrollEndDrag={(e) => {
+                  if (!e.nativeEvent.velocity || (Math.abs(e.nativeEvent.velocity.x) < 0.1)) {
+                    handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH);
+                  }
+                }}
+                getItemLayout={(_, index) => ({
+                  length: CAROUSEL_ITEM_WIDTH,
+                  offset: CAROUSEL_ITEM_WIDTH * index,
+                  index,
+                })}
+                renderItem={({ item }) => {
+                  const badge = getActivityBadge(item.activityType);
+                  const hasProfileImage = !!item.user?.profileImageUrl;
+                  const initial = (item.user?.name?.[0] || item.user?.username?.[0] || '?').toUpperCase();
+                  const username = item.user?.name?.split(' ')[0] || item.user?.username || '';
+                  const isRead = readActivities.has(item.id);
 
-                return (
-                  <TouchableOpacity
-                    style={styles.carouselItem}
-                    activeOpacity={0.7}
-                    onPress={() => handleTickerTap(item)}
-                  >
-                    <View style={[
-                      styles.carouselRing,
-                      isRead ? styles.carouselRingRead : styles.carouselRingUnread,
-                    ]}>
-                      <View style={styles.carouselCircle}>
-                        {hasProfileImage ? (
-                          <Image
-                            source={{ uri: item.user!.profileImageUrl }}
-                            style={styles.carouselImage}
-                          />
-                        ) : (
-                          <Text style={styles.carouselInitial}>{initial}</Text>
-                        )}
-                      </View>
-                      <View style={[
-                        styles.carouselBadge,
-                        badge === 'journal' && styles.carouselBadgeJournal,
-                        badge === 'feed' && styles.carouselBadgeFeed,
-                        badge === 'system' && styles.carouselBadgeSystem,
-                      ]}>
-                        {badge === 'journal' ? (
-                          <Book size={10} color="#fff" weight="fill" />
-                        ) : badge === 'feed' ? (
-                          <Newspaper size={10} color="#fff" weight="fill" />
-                        ) : (
-                          <View style={styles.carouselRedDot} />
-                        )}
-                      </View>
-                    </View>
-                    <Text
-                      variant="caption"
-                      color="secondary"
-                      numberOfLines={1}
-                      style={styles.carouselUsername}
+                  return (
+                    <TouchableOpacity
+                      style={styles.carouselItem}
+                      activeOpacity={0.7}
+                      onPress={() => handleTickerTap(item)}
                     >
-                      {username}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }}
-            />
+                      <View style={[
+                        styles.carouselRing,
+                        isRead ? styles.carouselRingRead : styles.carouselRingUnread,
+                      ]}>
+                        <View style={styles.carouselCircle}>
+                          {hasProfileImage ? (
+                            <Image
+                              source={{ uri: item.user!.profileImageUrl }}
+                              style={styles.carouselImage}
+                            />
+                          ) : (
+                            <Text style={styles.carouselInitial}>{initial}</Text>
+                          )}
+                        </View>
+                        <View style={[
+                          styles.carouselBadge,
+                          badge === 'journal' && styles.carouselBadgeJournal,
+                          badge === 'feed' && styles.carouselBadgeFeed,
+                          badge === 'system' && styles.carouselBadgeSystem,
+                        ]}>
+                          {badge === 'journal' ? (
+                            <Book size={10} color="#fff" weight="fill" />
+                          ) : badge === 'feed' ? (
+                            <Newspaper size={10} color="#fff" weight="fill" />
+                          ) : (
+                            <View style={styles.carouselRedDot} />
+                          )}
+                        </View>
+                      </View>
+                      <Text
+                        variant="caption"
+                        color="secondary"
+                        numberOfLines={1}
+                        style={styles.carouselUsername}
+                      >
+                        {username}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            )}
             <View style={styles.carouselDivider} />
           </View>
         )}
@@ -761,6 +786,13 @@ const styles = StyleSheet.create({
   carouselContainer: {
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.md,
+  },
+  carouselToggle: {
+    position: 'absolute',
+    top: 0,
+    right: theme.spacing.container,
+    zIndex: 1,
+    padding: 4,
   },
   carouselContent: {
     paddingHorizontal: 8,
