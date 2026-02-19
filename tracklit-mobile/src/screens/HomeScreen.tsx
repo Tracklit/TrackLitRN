@@ -6,6 +6,8 @@ import {
   StatusBar,
   TouchableOpacity,
   RefreshControl,
+  Modal,
+  Alert,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -20,8 +22,6 @@ import {
   Bell,
   PaperPlaneTilt,
   CaretDown,
-  Play,
-  Pause,
   X,
   CaretRight,
   Star,
@@ -32,9 +32,11 @@ import {
   Trophy,
   BookOpen,
   User,
+  Heart,
+  FloppyDisk,
 } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Card } from '../components/ui/Card';
@@ -93,9 +95,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const { user, refreshUser } = useAuth();
   const queryClient = useQueryClient();
   const [tickerCollapsed, setTickerCollapsed] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
   const [nextActivityIndex, setNextActivityIndex] = useState<number | null>(null);
+  const [tickerModalVisible, setTickerModalVisible] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<CommunityActivity | null>(null);
+  const [likedActivities, setLikedActivities] = useState<Set<number>>(new Set());
   const isAnimatingRef = useRef(false);
   const userId = user?.id;
 
@@ -254,6 +258,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const currentIndexRef = useRef(0);
   currentIndexRef.current = currentActivityIndex;
 
+  const isPaused = tickerModalVisible;
+
   useEffect(() => {
     if (tickerCollapsed || isPaused) {
       isAnimatingRef.current = false;
@@ -283,6 +289,44 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
     return `${Math.floor(diff / 86400)}d ago`;
   };
+
+  const handleTickerTap = (activity: CommunityActivity | undefined) => {
+    if (!activity) return;
+    setSelectedActivity(activity);
+    setTickerModalVisible(true);
+  };
+
+  const handleLikeActivity = (activityId: number) => {
+    setLikedActivities(prev => {
+      const next = new Set(prev);
+      if (next.has(activityId)) next.delete(activityId);
+      else next.add(activityId);
+      return next;
+    });
+  };
+
+  const saveToJournalMutation = useMutation({
+    mutationFn: (activity: CommunityActivity) =>
+      apiRequest('/api/journal', {
+        method: 'POST',
+        data: {
+          title: activity.title,
+          notes: `Saved from community feed:\n\n${activity.description || ''}\n\nOriginally posted by ${activity.user?.name || activity.user?.username || 'Unknown'}`,
+          type: 'workout',
+          date: new Date().toISOString().split('T')[0],
+          moodRating: 5,
+          isPublic: false,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journal'] });
+      Alert.alert('Saved', 'Added to your Journal.');
+      setTickerModalVisible(false);
+    },
+    onError: () => {
+      Alert.alert('Error', 'Could not save to Journal. Please try again.');
+    },
+  });
 
   const getActivityIconComponent = (activityType: ActivityType) => {
     switch (activityType) {
@@ -364,7 +408,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
               >
-              <Bell size={18} color="#94a3b8" weight="fill" />
+              <Bell size={22} color="#94a3b8" weight="fill" />
               {unreadNotifications > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -379,7 +423,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Messages"
               >
-              <PaperPlaneTilt size={16} color="#94a3b8" weight="fill" />
+              <PaperPlaneTilt size={19} color="#94a3b8" weight="fill" />
               {unreadMessages > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -425,19 +469,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               <CaretDown size={12} color="#cbd5e1" weight="fill" />
             </TouchableOpacity>
           ) : (
-            <View
+            <TouchableOpacity
               style={styles.tickerCard}
+              activeOpacity={0.85}
+              onPress={() => handleTickerTap(currentActivity)}
             >
               <View style={styles.tickerControls}>
                 <TouchableOpacity
                   style={styles.tickerIconButton}
-                  onPress={() => setIsPaused((prev) => !prev)}
-                >
-                  {isPaused ? <Play size={10} color="#ffffff" weight="fill" /> : <Pause size={10} color="#ffffff" weight="fill" />}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.tickerIconButton}
-                  onPress={() => setTickerCollapsed(true)}
+                  onPress={(e) => { e.stopPropagation(); setTickerCollapsed(true); }}
                 >
                   <X size={10} color="#ffffff" weight="bold" />
                 </TouchableOpacity>
@@ -495,7 +535,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                   </Animated.View>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           )}
           <View style={styles.tickerDivider} />
         </View>
@@ -586,6 +626,88 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         </View>
       </ScrollView>
       </Animated.View>
+
+      <Modal
+        visible={tickerModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setTickerModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHandle} />
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setTickerModalVisible(false)}
+            >
+              <X size={20} color="#94a3b8" weight="bold" />
+            </TouchableOpacity>
+
+            {selectedActivity && (
+              <>
+                <View style={styles.modalHeader}>
+                  <View style={styles.modalAvatar}>
+                    {(() => {
+                      const ActivityIcon = getActivityIconComponent(selectedActivity.activityType);
+                      return <ActivityIcon size={20} color="#e2e8f0" weight="fill" />;
+                    })()}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text variant="body" weight="bold" color="foreground">
+                      {selectedActivity.title}
+                    </Text>
+                    {!!selectedActivity.user?.username && (
+                      <Text variant="caption" color="secondary">
+                        {selectedActivity.user.name || selectedActivity.user.username} · {formatTimeAgo(selectedActivity.createdAt)}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.modalBody}>
+                  <Text variant="body" color="foreground" style={{ lineHeight: 22 }}>
+                    {selectedActivity.description || 'No additional details available.'}
+                  </Text>
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.modalActionButton,
+                      likedActivities.has(selectedActivity.id) && styles.modalActionButtonActive,
+                    ]}
+                    onPress={() => handleLikeActivity(selectedActivity.id)}
+                  >
+                    <Heart
+                      size={20}
+                      color={likedActivities.has(selectedActivity.id) ? '#ef4444' : '#94a3b8'}
+                      weight={likedActivities.has(selectedActivity.id) ? 'fill' : 'regular'}
+                    />
+                    <Text
+                      variant="caption"
+                      weight="medium"
+                      color={likedActivities.has(selectedActivity.id) ? 'foreground' : 'secondary'}
+                    >
+                      {likedActivities.has(selectedActivity.id) ? 'Liked' : 'Like'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.modalActionButton}
+                    onPress={() => saveToJournalMutation.mutate(selectedActivity)}
+                    disabled={saveToJournalMutation.isPending}
+                  >
+                    <FloppyDisk size={20} color="#FF9800" weight="fill" />
+                    <Text variant="caption" weight="medium" color="secondary">
+                      {saveToJournalMutation.isPending ? 'Saving...' : 'Save to Journal'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 };
@@ -770,15 +892,15 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -6,
-    right: -6,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    top: -8,
+    right: -8,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: '#ef4444',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.xs,
+    paddingHorizontal: 5,
   },
   practiceCardWrapper: {
     marginBottom: theme.spacing.xxxl,
@@ -853,5 +975,79 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500' as const,
     fontStyle: 'italic' as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#1a1a2e',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    paddingTop: 12,
+    minHeight: 280,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(148,163,184,0.4)',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+    paddingRight: 40,
+  },
+  modalAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(147,51,234,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.25)',
+  },
+  modalBody: {
+    marginBottom: 24,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(148,163,184,0.2)',
+  },
+  modalActionButtonActive: {
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    borderColor: 'rgba(239,68,68,0.3)',
   },
 });

@@ -81,6 +81,8 @@ migrations/          - Database migrations
 - 2026-02-19: New file: FullAnalysisModal.tsx (wraps AdvancedAnalysis + FrameComparison in slide-up modal)
 - 2026-02-19: StopwatchScreen: doubled start button (140→240px), fixed timer accuracy using Date.now() instead of setInterval increments, added volume-up button start/stop via react-native-volume-manager (debounced, requires dev build), info text hint, increased spacing (gap 32px)
 - 2026-02-19: StartGunScreen: phase command card made half-width (50-60%), centered with bottom spacing
+- 2026-02-19: HomeScreen: Bell icon 18→22, PaperPlaneTilt 16→19 (20% size up), notification badge enlarged (minWidth 20, height 20, more padding)
+- 2026-02-19: Ticker: removed pause/play button, tap-to-expand modal with full message, Like (local toggle) and Save to Journal (POST /api/journal) actions
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
