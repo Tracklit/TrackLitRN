@@ -14,6 +14,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  ActionSheetIOS,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -397,6 +398,32 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
+  const showNativePhotoSheet = (type: 'avatar' | 'action') => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Take Photo', 'Choose From Library', 'Remove Photo', 'Cancel'],
+          destructiveButtonIndex: 2,
+          cancelButtonIndex: 3,
+          title: type === 'avatar' ? 'Profile Photo' : 'Action Shot',
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 0) {
+            const uri = await takePhoto();
+            if (uri) { if (type === 'avatar') setAvatarUri(uri); else setActionShotUri(uri); }
+          } else if (buttonIndex === 1) {
+            const uri = await pickImage();
+            if (uri) { if (type === 'avatar') setAvatarUri(uri); else setActionShotUri(uri); }
+          } else if (buttonIndex === 2) {
+            if (type === 'avatar') setAvatarUri(null); else setActionShotUri(null);
+          }
+        }
+      );
+    } else {
+      setShowPhotoModal(type);
+    }
+  };
+
   const handleSave = async () => {
     await saveProfileData();
     editSnapshot.current = null;
@@ -515,12 +542,8 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                   style={styles.avatarContainer}
                   onPress={() => {
                     if (isOwnProfile) {
-                      if (!isEditing) {
-                        startEditing();
-                        setTimeout(() => setShowPhotoModal('avatar'), 100);
-                      } else {
-                        setShowPhotoModal('avatar');
-                      }
+                      if (!isEditing) startEditing();
+                      showNativePhotoSheet('avatar');
                     }
                   }}
                   activeOpacity={isOwnProfile ? 0.7 : 1}
@@ -614,7 +637,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                         onPress={() => {
                           if (isOwnProfile) {
                             if (!isEditing) startEditing();
-                            setShowPhotoModal('action');
+                            showNativePhotoSheet('action');
                           }
                         }}
                         activeOpacity={isOwnProfile ? 0.7 : 1}
