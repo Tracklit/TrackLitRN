@@ -90,6 +90,9 @@ migrations/          - Database migrations
 - 2026-02-19: Ticker replaced with Instagram-style horizontal carousel — circular profile image cards with type badges (journal=orange Book, feed=indigo Newspaper, system=red dot), infinite loop scrolling via 3x data duplication, taps open detail modal
 - 2026-02-19: Ticker animation: changed from horizontal slide to vertical — new messages slide in from top, old messages slide out to bottom
 - 2026-02-17: Ticker animation: smooth slide-and-fade with Reanimated (translateX + opacity + scale, easeOutCubic)
+- 2026-02-20: PublicProfileScreen: full AAA sports game rewrite — dark bg (#0E0F14), stadium hero background, gradient avatar border (blue→purple→cyan), glass summary panel (Cards/Connections/Leaderboard Rank), Digital Athlete Card with gradient border, athlete name/event, Level badge, XP bar (animated 800ms), PB/SB/Rank stats in glass panels, Recent Form SVG graph, Connect/Message buttons (visitor) vs Edit Profile (owner), Connections list
+- 2026-02-20: Drawer: added "My Profile" link (UserCircle icon) that navigates to PublicProfileScreen with own user data, disabled for guests
+- 2026-02-20: Design spec: one screen serves both own profile and public profile views (like Instagram)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
 - 2026-02-13: Switched all icons from FontAwesome5 to Phosphor (filled weight)

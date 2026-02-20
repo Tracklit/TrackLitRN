@@ -41,6 +41,7 @@ import {
   SignOut,
   ArrowLeft,
   X,
+  UserCircle,
 } from 'phosphor-react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -496,6 +497,23 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     {
       title: 'ACCOUNT',
       items: [
+        {
+          label: 'My Profile',
+          IconComponent: UserCircle,
+          disabled: isGuest || !user?.id,
+          onPress: () => {
+            if (isGuest || !user?.id) return;
+            navigateIntoAppStack({
+              screen: 'PublicProfile',
+              params: {
+                userId: Number(user.id),
+                name: (user as any)?.name || null,
+                username: (user as any)?.username || null,
+                profileImageUrl: (user as any)?.profileImageUrl || null,
+              },
+            });
+          },
+        },
         {
           label: 'Spikes',
           IconComponent: CurrencyCircleDollar,
