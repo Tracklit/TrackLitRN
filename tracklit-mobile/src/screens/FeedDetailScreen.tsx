@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -26,20 +26,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import theme from '@/utils/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedPost'>;
-
-interface FeedItem {
-  id: number;
-  userId: number | null;
-  name?: string | null;
-  username?: string | null;
-  profileImageUrl?: string | null;
-  content?: string | null;
-  createdAt: string;
-  likesCount: number;
-  commentsCount: number;
-  isLiked: boolean;
-  isOwnPost: boolean;
-}
 
 interface FeedComment {
   id: number;
@@ -81,22 +67,12 @@ const PLACEHOLDER_COMMENTS: FeedComment[] = [
 export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
   const postId = route.params?.id;
+  const postData = route.params?.postData;
   const [commentText, setCommentText] = useState('');
   const { user } = useAuth();
   const canInteract = !!user && user.id !== 'guest';
-  const [liked, setLiked] = useState(false);
-
-  const postQuery = useQuery({
-    queryKey: ['feed-post', postId],
-    enabled: !!postId,
-    queryFn: async () => {
-      try {
-        return await apiRequest<FeedItem>(`/api/feed/posts/${postId}`);
-      } catch {
-        return null;
-      }
-    },
-  });
+  const [liked, setLiked] = useState(postData?.isLiked ?? false);
+  const inputRef = useRef<TextInput>(null);
 
   const commentsQuery = useQuery({
     queryKey: ['feed-comments', postId],
@@ -116,7 +92,6 @@ export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     mutationFn: () =>
       apiRequest(`/api/feed/posts/${postId}/like`, { method: 'POST' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feed-post', postId] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
     },
   });
@@ -130,7 +105,6 @@ export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     onSuccess: () => {
       setCommentText('');
       queryClient.invalidateQueries({ queryKey: ['feed-comments', postId] });
-      queryClient.invalidateQueries({ queryKey: ['feed-post', postId] });
     },
     onError: (error: Error) => {
       Alert.alert('Unable to comment', error.message || 'Please try again.');
@@ -173,10 +147,70 @@ export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
-  const post = postQuery.data;
   const comments = commentsQuery.data ?? PLACEHOLDER_COMMENTS;
-  const postLiked = liked || (post?.isLiked ?? false);
-  const postLikeCount = (post?.likesCount ?? 0) + (liked && !post?.isLiked ? 1 : 0);
+  const postLikeCount = (postData?.likesCount ?? 0) + (liked && !postData?.isLiked ? 1 : !liked && postData?.isLiked ? -1 : 0);
+
+  const renderHeader = () => (
+    <>
+      {postData && (
+        <View style={styles.postSection}>
+          <View style={styles.postHeader}>
+            {postData.profileImageUrl ? (
+              <Image source={{ uri: postData.profileImageUrl }} style={styles.postAvatar} />
+            ) : (
+              <Avatar fallback={(postData.name?.[0] || '?').toUpperCase()} size="md" />
+            )}
+            <View style={styles.postMeta}>
+              <Text variant="body" weight="semiBold" color="foreground">
+                {postData.name || 'TrackLit Athlete'}
+              </Text>
+              <Text variant="small" color="muted">
+                {postData.username ? `@${postData.username} · ` : ''}{formatDistanceToNow(new Date(postData.createdAt), { addSuffix: true })}
+              </Text>
+            </View>
+          </View>
+          {postData.content && (
+            <Text variant="body" color="secondary" style={styles.postContent}>
+              {postData.content}
+            </Text>
+          )}
+          <View style={styles.postActions}>
+            <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+              <Heart size={20} color={liked ? '#FF9800' : 'rgba(255,255,255,0.3)'} weight={liked ? 'fill' : 'regular'} />
+              <Text variant="small" color={liked ? 'primary' : 'muted'}>{postLikeCount}</Text>
+            </TouchableOpacity>
+            <Text variant="small" color="muted">{comments.length} comments</Text>
+          </View>
+          <View style={styles.commentsDivider} />
+        </View>
+      )}
+    </>
+  );
+
+  const renderComment = ({ item: comment }: { item: FeedComment }) => (
+    <View style={styles.commentRow}>
+      <View style={styles.commentAvatarCol}>
+        {comment.profileImageUrl ? (
+          <Image source={{ uri: comment.profileImageUrl }} style={styles.commentAvatar} />
+        ) : (
+          <Avatar fallback={(comment.name?.[0] || '?').toUpperCase()} size="sm" />
+        )}
+      </View>
+      <View style={styles.commentBody}>
+        <View style={styles.commentNameRow}>
+          <Text variant="small" weight="semiBold" color="foreground">
+            {comment.name || 'Athlete'}
+          </Text>
+          <Text variant="small" color="muted" style={styles.commentTime}>
+            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+          </Text>
+        </View>
+        <Text variant="body" color="secondary" style={styles.commentText}>
+          {comment.content}
+        </Text>
+      </View>
+    </View>
+  );
 
   return (
     <LinearGradient
@@ -186,93 +220,35 @@ export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     >
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={insets.top}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.md }]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={styles.backRow}
           >
-            <ArrowLeft size={20} color="#e2e8f0" weight="bold" />
-            <Text variant="body" weight="semiBold" color="foreground">Post</Text>
+            <ArrowLeft size={22} color="#e2e8f0" weight="bold" />
           </TouchableOpacity>
+          <Text variant="body" weight="semiBold" color="foreground">
+            Comments
+          </Text>
+          <View style={{ width: 22 }} />
         </View>
 
-        <ScrollView
+        <FlatList
+          data={comments}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderComment}
+          ListHeaderComponent={renderHeader}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          style={styles.flex}
+          keyboardDismissMode="interactive"
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-        >
-          {post ? (
-            <View style={styles.postSection}>
-              <View style={styles.postHeader}>
-                {post.profileImageUrl ? (
-                  <Image source={{ uri: post.profileImageUrl }} style={styles.postAvatar} />
-                ) : (
-                  <Avatar fallback={(post.name?.[0] || '?').toUpperCase()} size="md" />
-                )}
-                <View style={styles.postMeta}>
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    {post.name || 'TrackLit Athlete'}
-                  </Text>
-                  <Text variant="small" color="muted">
-                    {post.username ? `@${post.username} · ` : ''}{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-                  </Text>
-                </View>
-              </View>
-              {post.content && (
-                <Text variant="body" color="secondary" style={styles.postContent}>
-                  {post.content}
-                </Text>
-              )}
-              <View style={styles.postActions}>
-                <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-                  <Heart size={18} color={postLiked ? '#FF9800' : 'rgba(255,255,255,0.3)'} weight={postLiked ? 'fill' : 'regular'} />
-                  <Text variant="small" color={postLiked ? 'primary' : 'muted'}>{postLikeCount}</Text>
-                </TouchableOpacity>
-                <Text variant="small" color="muted">{comments.length} comments</Text>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.postSection}>
-              <Text variant="body" color="muted">Loading post...</Text>
-            </View>
-          )}
+        />
 
-          <View style={styles.commentsDivider} />
-
-          {comments.map((comment) => (
-            <View key={comment.id} style={styles.commentRow}>
-              <View style={styles.commentAvatarCol}>
-                {comment.profileImageUrl ? (
-                  <Image source={{ uri: comment.profileImageUrl }} style={styles.commentAvatar} />
-                ) : (
-                  <Avatar fallback={(comment.name?.[0] || '?').toUpperCase()} size="sm" />
-                )}
-              </View>
-              <View style={styles.commentBody}>
-                <View style={styles.commentNameRow}>
-                  <Text variant="small" weight="semiBold" color="foreground">
-                    {comment.name || 'Athlete'}
-                  </Text>
-                  <Text variant="small" color="muted" style={styles.commentTime}>
-                    {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                  </Text>
-                </View>
-                <Text variant="body" color="secondary" style={styles.commentText}>
-                  {comment.content}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-
-        <View style={[styles.inputBar, { paddingBottom: insets.bottom + theme.spacing.sm }]}>
+        <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
           <TextInput
+            ref={inputRef}
             style={styles.commentInput}
             placeholder="Add a comment..."
             placeholderTextColor="rgba(255,255,255,0.3)"
@@ -304,25 +280,21 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.xl,
     paddingBottom: theme.spacing.md,
   },
-  backRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   scrollContent: {
     paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: theme.spacing.md,
   },
   postSection: {
-    paddingVertical: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    paddingBottom: theme.spacing.sm,
   },
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: theme.spacing.sm,
   },
   postAvatar: {
     width: 40,
@@ -334,14 +306,15 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.md,
   },
   postContent: {
-    marginTop: theme.spacing.sm,
     lineHeight: 22,
+    fontSize: 14,
+    marginBottom: theme.spacing.md,
   },
   postActions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   actionButton: {
     flexDirection: 'row',
@@ -350,7 +323,7 @@ const styles = StyleSheet.create({
   },
   commentsDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   commentRow: {
     flexDirection: 'row',
@@ -385,26 +358,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.sm,
+    paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(255,255,255,0.08)',
     gap: theme.spacing.sm,
+    backgroundColor: '#111',
   },
   commentInput: {
     flex: 1,
     borderWidth: 0.5,
     borderColor: 'rgba(255,255,255,0.12)',
     borderRadius: 20,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     color: theme.colors.foreground,
     backgroundColor: 'rgba(255,255,255,0.04)',
     fontSize: 14,
   },
   sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },

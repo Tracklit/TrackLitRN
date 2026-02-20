@@ -318,7 +318,7 @@ export const FeedScreen: React.FC = () => {
         </TouchableOpacity>
         {item.content && (
           <TouchableOpacity
-            onPress={() => navigation.navigate('FeedPost', { id: item.id })}
+            onPress={() => navigation.navigate('FeedPost', { id: item.id, postData: { name: item.name, username: item.username, profileImageUrl: item.profileImageUrl, content: item.content, createdAt: item.createdAt, likesCount: item.likesCount, commentsCount: item.commentsCount, isLiked: item.isLiked } })}
             activeOpacity={0.7}
           >
             <Text variant="body" color="secondary" style={styles.postContent}>
@@ -354,7 +354,7 @@ export const FeedScreen: React.FC = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.socialButton}
-            onPress={() => navigation.navigate('FeedPost', { id: item.id })}
+            onPress={() => navigation.navigate('FeedPost', { id: item.id, postData: { name: item.name, username: item.username, profileImageUrl: item.profileImageUrl, content: item.content, createdAt: item.createdAt, likesCount: item.likesCount, commentsCount: item.commentsCount, isLiked: item.isLiked } })}
           >
             <ChatCircle size={20} color="rgba(255,255,255,0.3)" weight="regular" />
             <Text variant="small" color="muted" style={styles.socialLabel}>
