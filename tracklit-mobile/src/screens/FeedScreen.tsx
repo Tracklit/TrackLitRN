@@ -180,12 +180,17 @@ export const FeedScreen: React.FC = () => {
 
   const feedQuery = useQuery({
     queryKey: ['feed', filter],
-    queryFn: () => apiRequest<FeedItem[]>(`/api/feed?filter=${filter}`),
-    placeholderData: PLACEHOLDER_FEED,
-    select: (data: FeedItem[]) => {
-      if (!data || data.length === 0) return PLACEHOLDER_FEED;
-      return data;
+    queryFn: async () => {
+      try {
+        const data = await apiRequest<FeedItem[]>(`/api/feed?filter=${filter}`);
+        return data && data.length > 0 ? data : PLACEHOLDER_FEED;
+      } catch {
+        return PLACEHOLDER_FEED;
+      }
     },
+    initialData: PLACEHOLDER_FEED,
+    staleTime: 60000,
+    retry: false,
   });
 
   const likeMutation = useMutation({
