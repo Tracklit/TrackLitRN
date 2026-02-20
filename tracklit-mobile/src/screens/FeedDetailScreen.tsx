@@ -150,16 +150,29 @@ export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const comments = commentsQuery.data ?? PLACEHOLDER_COMMENTS;
   const postLikeCount = (postData?.likesCount ?? 0) + (liked && !postData?.isLiked ? 1 : !liked && postData?.isLiked ? -1 : 0);
 
+  const handleAvatarPress = () => {
+    if (postData?.userId) {
+      navigation.navigate('PublicProfile', {
+        userId: postData.userId,
+        name: postData.name,
+        username: postData.username,
+        profileImageUrl: postData.profileImageUrl,
+      });
+    }
+  };
+
   const renderHeader = () => (
     <>
       {postData && (
         <View style={styles.postSection}>
           <View style={styles.postHeader}>
-            {postData.profileImageUrl ? (
-              <Image source={{ uri: postData.profileImageUrl }} style={styles.postAvatar} />
-            ) : (
-              <Avatar fallback={(postData.name?.[0] || '?').toUpperCase()} size="md" />
-            )}
+            <TouchableOpacity onPress={handleAvatarPress} activeOpacity={0.7}>
+              {postData.profileImageUrl ? (
+                <Image source={{ uri: postData.profileImageUrl }} style={styles.postAvatar} />
+              ) : (
+                <Avatar fallback={(postData.name?.[0] || '?').toUpperCase()} size="md" />
+              )}
+            </TouchableOpacity>
             <View style={styles.postMeta}>
               <Text variant="body" weight="semiBold" color="foreground">
                 {postData.name || 'TrackLit Athlete'}

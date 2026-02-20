@@ -87,6 +87,7 @@ import { FootRehabProgramScreen } from './src/screens/rehab/FootRehabProgramScre
 import { RehabProgramComingSoonScreen } from './src/screens/rehab/RehabProgramComingSoonScreen';
 import { SpikesScreen } from './src/screens/SpikesScreen';
 import { SubscriptionsScreen } from './src/screens/SubscriptionsScreen';
+import { PublicProfileScreen } from './src/screens/PublicProfileScreen';
 import { ClubsScreen } from './src/screens/ClubsScreen';
 import { ClubDetailScreen } from './src/screens/ClubDetailScreen';
 import { ClubManagementScreen } from './src/screens/ClubManagementScreen';
@@ -135,6 +136,7 @@ const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'ChatConversation',
   'Notifications',
   'Connections',
+  'PublicProfile',
   'Coaches',
   'Athletes',
   'Clubs',
@@ -234,6 +236,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="MarketplaceCreateListing" component={MarketplaceCreateListingScreen} />
     <RootStack.Screen name="Settings" component={SettingsScreen} />
     <RootStack.Screen name="FeedPost" component={FeedDetailScreen} />
+    <RootStack.Screen name="PublicProfile" component={PublicProfileScreen} />
     <RootStack.Screen name="Stopwatch" component={StopwatchScreen} />
     <RootStack.Screen name="StartGun" component={StartGunScreen} />
     <RootStack.Screen name="PhotoFinish" component={PhotoFinishScreen} />

@@ -17,7 +17,8 @@ export type RootStackParamList = {
   MarketplaceCart: undefined;
   MarketplaceCreateListing: undefined;
   Settings: undefined;
-  FeedPost: { id?: number | string; postData?: { name?: string | null; username?: string | null; profileImageUrl?: string | null; content?: string | null; createdAt: string; likesCount: number; commentsCount: number; isLiked: boolean } } | undefined;
+  FeedPost: { id?: number | string; postData?: { userId?: number | null; name?: string | null; username?: string | null; profileImageUrl?: string | null; content?: string | null; createdAt: string; likesCount: number; commentsCount: number; isLiked: boolean } } | undefined;
+  PublicProfile: { userId: number; name?: string | null; username?: string | null; profileImageUrl?: string | null };
   Stopwatch: undefined;
   StartGun: undefined;
   PhotoFinish: undefined;

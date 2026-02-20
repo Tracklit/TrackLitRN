@@ -289,6 +289,33 @@ export const FeedScreen: React.FC = () => {
     }
   };
 
+  const navigateToPost = (item: FeedItem) => {
+    navigation.navigate('FeedPost', {
+      id: item.id,
+      postData: {
+        userId: item.userId,
+        name: item.name,
+        username: item.username,
+        profileImageUrl: item.profileImageUrl,
+        content: item.content,
+        createdAt: item.createdAt,
+        likesCount: item.likesCount,
+        commentsCount: item.commentsCount,
+        isLiked: item.isLiked,
+      },
+    });
+  };
+
+  const navigateToProfile = (item: FeedItem) => {
+    if (!item.userId) return;
+    navigation.navigate('PublicProfile', {
+      userId: item.userId,
+      name: item.name,
+      username: item.username,
+      profileImageUrl: item.profileImageUrl,
+    });
+  };
+
   const renderItem = ({ item }: { item: FeedItem }) => {
     const liked = localLikes[item.id] !== undefined ? localLikes[item.id] : item.isLiked;
     const likeCount = item.likesCount + (liked && !item.isLiked ? 1 : !liked && item.isLiked ? -1 : 0);
@@ -296,17 +323,22 @@ export const FeedScreen: React.FC = () => {
     const initial = (item.name?.[0] || item.username?.[0] || '?').toUpperCase();
 
     return (
-      <View style={styles.postContainer}>
-        <TouchableOpacity
-          style={styles.postHeader}
-          onPress={() => navigation.navigate('FeedPost', { id: item.id })}
-          activeOpacity={0.7}
-        >
-          {hasProfileImage ? (
-            <Image source={{ uri: item.profileImageUrl! }} style={styles.avatarImage} />
-          ) : (
-            <Avatar fallback={initial} size="md" style={styles.avatarFallback} />
-          )}
+      <TouchableOpacity
+        style={styles.postContainer}
+        onPress={() => navigateToPost(item)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.postHeader}>
+          <TouchableOpacity
+            onPress={(e) => { e.stopPropagation(); navigateToProfile(item); }}
+            activeOpacity={0.7}
+          >
+            {hasProfileImage ? (
+              <Image source={{ uri: item.profileImageUrl! }} style={styles.avatarImage} />
+            ) : (
+              <Avatar fallback={initial} size="md" style={styles.avatarFallback} />
+            )}
+          </TouchableOpacity>
           <View style={styles.postMeta}>
             <Text variant="body" weight="semiBold" color="foreground">
               {item.name || 'TrackLit Athlete'}
@@ -315,21 +347,17 @@ export const FeedScreen: React.FC = () => {
               {item.username ? `@${item.username} · ` : ''}{formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
             </Text>
           </View>
-        </TouchableOpacity>
+        </View>
         {item.content && (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('FeedPost', { id: item.id, postData: { name: item.name, username: item.username, profileImageUrl: item.profileImageUrl, content: item.content, createdAt: item.createdAt, likesCount: item.likesCount, commentsCount: item.commentsCount, isLiked: item.isLiked } })}
-            activeOpacity={0.7}
-          >
-            <Text variant="body" color="secondary" style={styles.postContent}>
-              {item.content}
-            </Text>
-          </TouchableOpacity>
+          <Text variant="body" color="secondary" style={styles.postContent}>
+            {item.content}
+          </Text>
         )}
         {item.isJournalEntry && (
           <TouchableOpacity
             style={styles.journalLink}
-            onPress={() => {
+            onPress={(e) => {
+              e.stopPropagation();
               setSelectedJournalPost(item);
               setJournalModalVisible(true);
             }}
@@ -344,7 +372,7 @@ export const FeedScreen: React.FC = () => {
         <View style={styles.postFooter}>
           <TouchableOpacity
             style={styles.socialButton}
-            onPress={() => handleLocalLike(item)}
+            onPress={(e) => { e.stopPropagation(); handleLocalLike(item); }}
             disabled={likeMutation.isPending}
           >
             <Heart size={20} color={liked ? '#FF9800' : 'rgba(255,255,255,0.3)'} weight={liked ? 'fill' : 'regular'} />
@@ -354,7 +382,7 @@ export const FeedScreen: React.FC = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.socialButton}
-            onPress={() => navigation.navigate('FeedPost', { id: item.id, postData: { name: item.name, username: item.username, profileImageUrl: item.profileImageUrl, content: item.content, createdAt: item.createdAt, likesCount: item.likesCount, commentsCount: item.commentsCount, isLiked: item.isLiked } })}
+            onPress={() => navigateToPost(item)}
           >
             <ChatCircle size={20} color="rgba(255,255,255,0.3)" weight="regular" />
             <Text variant="small" color="muted" style={styles.socialLabel}>
@@ -362,7 +390,7 @@ export const FeedScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -379,12 +407,15 @@ export const FeedScreen: React.FC = () => {
       <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.md }]}>
         <InlineRefreshHeader visible={isRefreshing} />
         <TouchableOpacity
-          style={styles.backButton}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <ArrowLeft size={22} color="#e2e8f0" weight="bold" />
         </TouchableOpacity>
+        <Text variant="body" weight="semiBold" color="foreground">
+          Feed
+        </Text>
+        <View style={{ width: 22 }} />
       </View>
 
       <View style={styles.filterRow}>
@@ -569,16 +600,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.xl,
     paddingBottom: theme.spacing.sm,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   filterRow: {
     flexDirection: 'row',

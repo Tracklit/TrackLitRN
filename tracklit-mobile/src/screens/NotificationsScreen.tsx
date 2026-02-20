@@ -91,9 +91,18 @@ export const NotificationsScreen: React.FC = () => {
       markReadMutation.mutate(n.id);
     }
 
+    if (n.type === 'friend_request' || n.type === 'connection_request') {
+      navigation.navigate('Connections');
+      return;
+    }
+
+    if (n.type === 'friend_accepted') {
+      navigation.navigate('Connections');
+      return;
+    }
+
     const url = n.actionUrl || '';
 
-    // Best-effort deep links into mobile navigation
     if (url.startsWith('/rehab')) {
       navigation.navigate('Rehab');
       return;
@@ -113,8 +122,6 @@ export const NotificationsScreen: React.FC = () => {
       navigation.navigate('MainTabs', { screen: 'Tools' } as any);
       return;
     }
-
-    // Default: do nothing (still marked read)
   };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
