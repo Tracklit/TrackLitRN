@@ -333,7 +333,7 @@ export const FeedScreen: React.FC = () => {
             onPress={() => handleLocalLike(item)}
             disabled={likeMutation.isPending}
           >
-            <Heart size={15} color={liked ? '#FF9800' : 'rgba(255,255,255,0.3)'} weight={liked ? 'fill' : 'regular'} />
+            <Heart size={20} color={liked ? '#FF9800' : 'rgba(255,255,255,0.3)'} weight={liked ? 'fill' : 'regular'} />
             <Text variant="small" color={liked ? 'primary' : 'muted'} style={styles.socialLabel}>
               {likeCount}
             </Text>
@@ -342,7 +342,7 @@ export const FeedScreen: React.FC = () => {
             style={styles.socialButton}
             onPress={() => navigation.navigate('FeedPost', { id: item.id })}
           >
-            <ChatCircle size={15} color="rgba(255,255,255,0.3)" weight="regular" />
+            <ChatCircle size={20} color="rgba(255,255,255,0.3)" weight="regular" />
             <Text variant="small" color="muted" style={styles.socialLabel}>
               {item.commentsCount}
             </Text>
@@ -500,52 +500,6 @@ export const FeedScreen: React.FC = () => {
               onChangeText={setComposerText}
               autoFocus
             />
-            <TouchableOpacity
-              style={styles.journalToggle}
-              onPress={() => {
-                if (!composerText.trim()) {
-                  Alert.alert('Write something first', 'Add your journal entry text before posting.');
-                  return;
-                }
-                const journalPost: FeedItem = {
-                  id: Date.now(),
-                  userId: user?.id ? Number(user.id) : 0,
-                  name: user?.name || user?.username || 'You',
-                  username: user?.username || '',
-                  profileImageUrl: null,
-                  content: composerText.trim().split('\n')[0],
-                  createdAt: new Date().toISOString(),
-                  likesCount: 0,
-                  commentsCount: 0,
-                  isLiked: false,
-                  isOwnPost: true,
-                  isJournalEntry: true,
-                  journalTitle: 'Journal Entry',
-                  journalNotes: composerText.trim(),
-                };
-                const currentData = feedQuery.data || PLACEHOLDER_FEED;
-                queryClient.setQueryData(['feed', filter], [journalPost, ...currentData]);
-                queryClient.invalidateQueries({ queryKey: ['community-activities'] });
-                setComposerText('');
-                setIsComposerOpen(false);
-                apiRequest('/api/journal', {
-                  method: 'POST',
-                  data: {
-                    title: 'Journal Entry',
-                    notes: composerText.trim(),
-                    type: 'general',
-                    date: new Date().toISOString().split('T')[0],
-                    moodRating: 5,
-                    isPublic: true,
-                  },
-                }).catch(() => {});
-              }}
-            >
-              <Book size={16} color="#FF9800" weight="fill" />
-              <Text variant="small" color="primary" weight="medium">
-                Post as Journal Entry
-              </Text>
-            </TouchableOpacity>
           </KeyboardAwareScreenScrollView>
         </View>
       </Modal>
@@ -651,7 +605,8 @@ const styles = StyleSheet.create({
   postContent: {
     marginTop: theme.spacing.sm,
     marginLeft: 48,
-    lineHeight: 21,
+    lineHeight: 20,
+    fontSize: 13,
   },
   journalLink: {
     flexDirection: 'row',
@@ -729,14 +684,6 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     fontSize: 16,
     lineHeight: 22,
-  },
-  journalToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: theme.spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   journalModalBackdrop: {
     flex: 1,
