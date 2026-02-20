@@ -40,6 +40,7 @@ interface NotificationItem {
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'friend_request':
+    case 'friend_request_received':
     case 'connection_request':
       return { name: 'user-plus', color: '#3b82f6' };
     case 'friend_accepted':
@@ -91,7 +92,7 @@ export const NotificationsScreen: React.FC = () => {
       markReadMutation.mutate(n.id);
     }
 
-    if (n.type === 'friend_request' || n.type === 'connection_request') {
+    if (n.type === 'friend_request' || n.type === 'friend_request_received' || n.type === 'connection_request') {
       navigation.navigate('Connections');
       return;
     }
