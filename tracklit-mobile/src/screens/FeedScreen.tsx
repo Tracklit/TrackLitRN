@@ -271,19 +271,18 @@ export const FeedScreen: React.FC = () => {
     const initial = (item.name?.[0] || item.username?.[0] || '?').toUpperCase();
 
     return (
-      <View style={styles.card}>
+      <View style={styles.postContainer}>
         <TouchableOpacity
-          style={styles.cardHeader}
+          style={styles.postHeader}
           onPress={() => navigation.navigate('FeedPost', { id: item.id })}
+          activeOpacity={0.7}
         >
-          <View style={styles.avatarContainer}>
-            {hasProfileImage ? (
-              <Image source={{ uri: item.profileImageUrl! }} style={styles.avatarImage} />
-            ) : (
-              <Avatar fallback={initial} size="md" style={styles.cardAvatar} />
-            )}
-          </View>
-          <View style={styles.cardHeaderText}>
+          {hasProfileImage ? (
+            <Image source={{ uri: item.profileImageUrl! }} style={styles.avatarImage} />
+          ) : (
+            <Avatar fallback={initial} size="md" style={styles.avatarFallback} />
+          )}
+          <View style={styles.postMeta}>
             <Text variant="body" weight="semiBold" color="foreground">
               {item.name || 'TrackLit Athlete'}
             </Text>
@@ -295,19 +294,20 @@ export const FeedScreen: React.FC = () => {
         {item.content && (
           <TouchableOpacity
             onPress={() => navigation.navigate('FeedPost', { id: item.id })}
+            activeOpacity={0.7}
           >
-            <Text variant="body" color="foreground" style={styles.cardContentText}>
+            <Text variant="body" color="secondary" style={styles.postContent}>
               {item.content}
             </Text>
           </TouchableOpacity>
         )}
-        <View style={styles.cardFooter}>
+        <View style={styles.postFooter}>
           <TouchableOpacity
             style={styles.socialButton}
             onPress={() => handleLocalLike(item)}
             disabled={likeMutation.isPending}
           >
-            <Heart size={16} color={liked ? '#FF9800' : '#94a3b8'} weight={liked ? 'fill' : 'regular'} />
+            <Heart size={15} color={liked ? '#FF9800' : 'rgba(255,255,255,0.3)'} weight={liked ? 'fill' : 'regular'} />
             <Text variant="small" color={liked ? 'primary' : 'muted'} style={styles.socialLabel}>
               {likeCount}
             </Text>
@@ -316,7 +316,7 @@ export const FeedScreen: React.FC = () => {
             style={styles.socialButton}
             onPress={() => navigation.navigate('FeedPost', { id: item.id })}
           >
-            <ChatCircle size={16} color="#94a3b8" weight="regular" />
+            <ChatCircle size={15} color="rgba(255,255,255,0.3)" weight="regular" />
             <Text variant="small" color="muted" style={styles.socialLabel}>
               {item.commentsCount}
             </Text>
@@ -326,20 +326,18 @@ export const FeedScreen: React.FC = () => {
     );
   };
 
+  const renderDivider = () => (
+    <View style={styles.divider} />
+  );
+
   return (
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={{ paddingTop: insets.top }}>
         <InlineRefreshHeader visible={isRefreshing} />
-        <Text variant="h2" weight="bold" color="foreground">
-          Feed
-        </Text>
-        <Text variant="body" color="muted">
-          Catch up with your TrackLit community
-        </Text>
       </View>
 
       <View style={styles.filterRow}>
@@ -351,9 +349,9 @@ export const FeedScreen: React.FC = () => {
           onPress={() => setFilter('all')}
         >
           <Text
-            variant="body"
+            variant="caption"
             color={filter === 'all' ? 'foreground' : 'muted'}
-            weight="medium"
+            weight={filter === 'all' ? 'bold' : 'medium'}
           >
             Everyone
           </Text>
@@ -366,9 +364,9 @@ export const FeedScreen: React.FC = () => {
           onPress={() => setFilter('connections')}
         >
           <Text
-            variant="body"
+            variant="caption"
             color={filter === 'connections' ? 'foreground' : 'muted'}
-            weight="medium"
+            weight={filter === 'connections' ? 'bold' : 'medium'}
           >
             Connections
           </Text>
@@ -380,10 +378,10 @@ export const FeedScreen: React.FC = () => {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={[
           styles.listContent,
-          // Feed is a stack screen (no bottom tab bar), but still needs safe-area padding.
-          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl * 3 }) },
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },
         ]}
         renderItem={renderItem}
+        ItemSeparatorComponent={renderDivider}
         refreshControl={
           <RefreshControl
             tintColor="#fff"
@@ -423,16 +421,10 @@ export const FeedScreen: React.FC = () => {
             { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg },
           ]}
           onPress={() => setIsComposerOpen(true)}
-          data-testid="button-create-post"
         >
-          <LinearGradient
-            colors={theme.gradients.webPurple.colors}
-            start={theme.gradients.webPurple.start}
-            end={theme.gradients.webPurple.end}
-            style={styles.fabGradient}
-          >
+          <View style={styles.fabCircle}>
             <PencilSimpleLine size={22} color="white" weight="fill" />
-          </LinearGradient>
+          </View>
         </TouchableOpacity>
       )}
 
@@ -491,73 +483,64 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-  },
   filterRow: {
     flexDirection: 'row',
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.muted,
-    padding: theme.spacing.xs,
-    marginBottom: theme.spacing.lg,
-    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+    marginHorizontal: theme.spacing.xl,
+    gap: theme.spacing.lg,
   },
   filterButton: {
-    flex: 1,
-    alignItems: 'center',
     paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.xs,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   activeFilterButton: {
-    backgroundColor: theme.colors.background,
+    borderBottomColor: '#FF9800',
   },
   listContent: {
-    paddingBottom: theme.spacing.xl * 3,
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
   },
-  card: {
-    backgroundColor: theme.colors.background + 'EE',
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    gap: theme.spacing.md,
+  postContainer: {
+    paddingVertical: theme.spacing.lg,
   },
-  cardHeader: {
+  postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatarContainer: {
-    marginRight: theme.spacing.md,
-  },
   avatarImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
-  cardAvatar: {
+  avatarFallback: {
   },
-  cardHeaderText: {
+  postMeta: {
     flex: 1,
+    marginLeft: theme.spacing.md,
   },
-  cardContentText: {
-    lineHeight: 22,
+  postContent: {
+    marginTop: theme.spacing.sm,
+    marginLeft: 48,
+    lineHeight: 21,
   },
-  cardFooter: {
+  postFooter: {
     flexDirection: 'row',
-    gap: theme.spacing.lg,
+    marginTop: theme.spacing.sm,
+    marginLeft: 48,
+    gap: theme.spacing.xl,
   },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.xs,
     gap: 5,
   },
   socialLabel: {
     marginTop: 1,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   emptyState: {
     alignItems: 'center',
@@ -569,18 +552,17 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    right: theme.spacing.lg,
-    bottom: theme.spacing.xl * 2,
+    right: theme.spacing.xl,
     width: 56,
     height: 56,
     borderRadius: 28,
-    overflow: 'hidden',
-    ...theme.shadows.lg,
     zIndex: 50,
     elevation: 20,
   },
-  fabGradient: {
+  fabCircle: {
     flex: 1,
+    borderRadius: 28,
+    backgroundColor: '#FF9800',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -590,9 +572,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: theme.colors.background,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     maxHeight: '85%',
   },
   modalCardContent: {
@@ -604,12 +586,13 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     minHeight: 120,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 12,
     padding: theme.spacing.md,
     color: theme.colors.foreground,
     textAlignVertical: 'top',
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   modalActions: {
     flexDirection: 'row',
