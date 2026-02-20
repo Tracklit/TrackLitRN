@@ -158,13 +158,12 @@ export const PracticeScreen: React.FC = () => {
     setDaysToShow(7);
     setWorkoutCards([]);
     setIsLoadingCards(true);
+    setDocViewerUrl(null);
+    setDocAutoOpened(false);
     await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(assignment.id));
     await queryClient.invalidateQueries({
       queryKey: ['/api/programs', assignment.programId, 'sessions'],
     });
-    if (assignment.program?.isUploadedProgram && assignment.program?.programFileUrl) {
-      setDocViewerUrl(assignment.program.programFileUrl);
-    }
   };
 
   useEffect(() => {
@@ -216,7 +215,7 @@ export const PracticeScreen: React.FC = () => {
 
         {selectedProgram ? (
           <View style={styles.contentContainer}>
-            {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent ? (
+            {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent && (
               <Card style={styles.textProgramCard}>
                 <CardContent>
                   <View style={styles.programHeaderRow}>
@@ -237,7 +236,9 @@ export const PracticeScreen: React.FC = () => {
                   </View>
                 </CardContent>
               </Card>
-            ) : selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl ? (
+            )}
+
+            {selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl && (
               docViewerUrl ? (
                 <DocumentViewer
                   url={docViewerUrl}
@@ -266,47 +267,51 @@ export const PracticeScreen: React.FC = () => {
                   </CardContent>
                 </Card>
               )
-            ) : (
+            )}
+
+            {(isLoadingCards || isLoadingProgramSessions) && (
               <View style={styles.cardsList}>
-                {isLoadingCards || isLoadingProgramSessions ? (
-                  <View style={styles.loadingState}>
-                    <Text variant="body" color="muted">
-                      Loading sessions...
-                    </Text>
-                  </View>
-                ) : workoutCards.length > 0 ? (
-                  <>
-                    {workoutCards.map((card) => (
-                      <WorkoutCard
-                        key={card.id}
-                        card={card}
-                        programId={selectedProgramId}
-                        onFinish={(date: string) => navigation.navigate('JournalEntry', { date })}
-                      />
-                    ))}
-                    {selectedProgram.program?.importedFromSheet && (
-                      <View style={styles.loadMoreContainer}>
-                        <Button variant="default" onPress={() => setDaysToShow((prev) => prev + 7)}>
-                          Load More Days
-                        </Button>
-                      </View>
-                    )}
-                  </>
-                ) : (
-                  <LinearGradient
-                    colors={['#1e40af', '#c084fc']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.emptyGradientCard}
-                  >
-                    <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
-                      No workout sessions available
-                    </Text>
-                    <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
-                      Check back later or contact your coach for program updates.
-                    </Text>
-                  </LinearGradient>
-                )}
+                <View style={styles.loadingState}>
+                  <Text variant="body" color="muted">Loading sessions...</Text>
+                </View>
+              </View>
+            )}
+
+            {!isLoadingCards && !isLoadingProgramSessions && workoutCards.length > 0 && (
+              <View style={styles.cardsList}>
+                {workoutCards.map((card) => (
+                  <WorkoutCard
+                    key={card.id}
+                    card={card}
+                    programId={selectedProgramId}
+                    onFinish={(date: string) => navigation.navigate('JournalEntry', { date })}
+                  />
+                ))}
+                <View style={styles.loadMoreContainer}>
+                  <Button variant="default" onPress={() => setDaysToShow((prev) => prev + 7)}>
+                    Load More Days
+                  </Button>
+                </View>
+              </View>
+            )}
+
+            {!isLoadingCards && !isLoadingProgramSessions && programSessions.length === 0
+              && !selectedProgram.program?.isTextBased
+              && !selectedProgram.program?.isUploadedProgram && (
+              <View style={styles.cardsList}>
+                <LinearGradient
+                  colors={['#1e40af', '#c084fc']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.emptyGradientCard}
+                >
+                  <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
+                    No workout sessions available
+                  </Text>
+                  <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
+                    Check back later or contact your coach for program updates.
+                  </Text>
+                </LinearGradient>
               </View>
             )}
           </View>
