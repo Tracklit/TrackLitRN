@@ -135,6 +135,12 @@ export const PracticeScreen: React.FC = () => {
     const cards: any[] = [];
 
     const sessionsToUse = programSessions ?? [];
+    console.warn('[Practice] Building cards:', {
+      programTitle: selectedProgram.program?.title,
+      programId: selectedProgram.programId,
+      sessionCount: sessionsToUse.length,
+      sampleDates: sessionsToUse.slice(0, 3).map((s: any) => ({ date: s.date, dayNumber: s.dayNumber, title: s.title })),
+    });
 
     let startDate: Date | null = null;
     if (sessionsToUse.length > 0) {

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TextInput,
   Modal,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
@@ -25,10 +26,11 @@ import {
   ClipboardText,
   ShoppingBag,
   Barbell,
+  Trash,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
 import { apiRequest } from '@/lib/api';
@@ -144,6 +146,75 @@ export const ProgramsScreen: React.FC = () => {
   const handleContinuePurchasedProgram = async (purchase: PurchasedProgramItem) => {
     await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(purchase.id));
     navigation.navigate('MainTabs', { screen: 'Practice' } as never);
+  };
+
+  const deleteProgramMutation = useMutation({
+    mutationFn: async (programId: number | string) => {
+      await apiRequest(`/api/programs/${programId}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
+      queryClient.invalidateQueries({ queryKey: ['today-session'] });
+    },
+  });
+
+  const unassignProgramMutation = useMutation({
+    mutationFn: async (purchaseId: number | string) => {
+      await apiRequest(`/api/purchased-programs/${purchaseId}`, { method: 'DELETE' });
+    },
+    onSuccess: async () => {
+      const storedId = await AsyncStorage.getItem(PROGRAM_SELECTION_KEY);
+      if (storedId) {
+        await AsyncStorage.removeItem(PROGRAM_SELECTION_KEY);
+      }
+      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
+      queryClient.invalidateQueries({ queryKey: ['user-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['today-session'] });
+    },
+  });
+
+  const handleDeleteProgram = (program: Program) => {
+    Alert.alert(
+      'Delete Program',
+      `Are you sure you want to delete "${program.title}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteProgramMutation.mutate(program.id, {
+              onSuccess: () => Alert.alert('Deleted', `"${program.title}" has been deleted.`),
+              onError: (err: any) => Alert.alert('Error', err?.message || 'Failed to delete program.'),
+            });
+          },
+        },
+      ]
+    );
+  };
+
+  const handleUnassignProgram = (purchase: PurchasedProgramItem) => {
+    const title = purchase.program?.title || 'this program';
+    Alert.alert(
+      'Remove Program',
+      `Are you sure you want to remove "${title}" from your assigned programs?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            unassignProgramMutation.mutate(purchase.id, {
+              onSuccess: () => Alert.alert('Removed', `"${title}" has been removed.`),
+              onError: (err: any) => Alert.alert('Error', err?.message || 'Failed to remove program.'),
+            });
+          },
+        },
+      ]
+    );
   };
 
   const handleCreateAction = () => {
@@ -278,6 +349,7 @@ export const ProgramsScreen: React.FC = () => {
             isError={myProgramsQuery.isError}
             isGuest={isGuest}
             onContinue={handleContinueProgram}
+            onDelete={handleDeleteProgram}
             viewMode={viewMode}
           />
         ) : activeTab === 'purchased' ? (
@@ -287,6 +359,7 @@ export const ProgramsScreen: React.FC = () => {
             isError={purchasedProgramsQuery.isError}
             isGuest={isGuest}
             onContinue={handleContinuePurchasedProgram}
+            onRemove={handleUnassignProgram}
             viewMode={viewMode}
           />
         ) : (
@@ -396,6 +469,7 @@ interface MyProgramsTabProps {
   isError: boolean;
   isGuest: boolean;
   onContinue: (program: Program) => void;
+  onDelete: (program: Program) => void;
   viewMode: 'cards' | 'list';
 }
 
@@ -405,6 +479,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   isError,
   isGuest,
   onContinue,
+  onDelete,
   viewMode,
 }) => {
   if (isGuest) {
@@ -452,6 +527,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
           key={program.id}
           program={program}
           onContinue={() => onContinue(program)}
+          onDelete={() => onDelete(program)}
           buttonLabel="Edit Program"
         />
       ))}
@@ -463,6 +539,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
           key={program.id}
           program={program}
           onContinue={() => onContinue(program)}
+          onDelete={() => onDelete(program)}
           buttonLabel="Edit Program"
         />
       ))}
@@ -476,6 +553,7 @@ interface PurchasedProgramsTabProps {
   isError: boolean;
   isGuest: boolean;
   onContinue: (purchase: PurchasedProgramItem) => void;
+  onRemove: (purchase: PurchasedProgramItem) => void;
   viewMode: 'cards' | 'list';
 }
 
@@ -485,6 +563,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   isError,
   isGuest,
   onContinue,
+  onRemove,
   viewMode,
 }) => {
   if (isGuest) {
@@ -535,6 +614,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
             purchase.isAssigned ? 'Assigned' : purchase.isCreated ? 'Created' : 'Purchased'
           }
           onContinue={() => onContinue(purchase)}
+          onDelete={() => onRemove(purchase)}
           buttonLabel="Assign"
         />
       ))}
@@ -554,6 +634,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
               : 'TrackLit'
           }
           onContinue={() => onContinue(purchase)}
+          onDelete={() => onRemove(purchase)}
           price={purchase.program?.price}
           buttonLabel="Assign"
         />
@@ -638,6 +719,7 @@ interface ProgramCardItemProps {
   subtitle?: string;
   price?: number;
   onContinue: () => void;
+  onDelete?: () => void;
   buttonLabel?: string;
 }
 
@@ -647,17 +729,23 @@ const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
   subtitle,
   price,
   onContinue,
+  onDelete,
   buttonLabel = 'Continue',
 }) => {
   return (
     <View style={styles.programCard}>
       <View style={styles.programCardInner}>
         <View style={styles.programTitleRow}>
-          <Text style={styles.programTitleText} numberOfLines={1}>{program.title}</Text>
+          <Text style={[styles.programTitleText, { flex: 1 }]} numberOfLines={1}>{program.title}</Text>
           {badgeLabel && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{badgeLabel}</Text>
             </View>
+          )}
+          {onDelete && (
+            <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} activeOpacity={0.7}>
+              <Trash size={18} color="#ef4444" weight="fill" />
+            </TouchableOpacity>
           )}
         </View>
         <Text style={styles.programSubtext} numberOfLines={1}>
@@ -703,6 +791,7 @@ interface ProgramListItemProps {
   program: Program;
   badgeLabel?: string;
   onContinue: () => void;
+  onDelete?: () => void;
   buttonLabel?: string;
 }
 
@@ -710,6 +799,7 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
   program,
   badgeLabel,
   onContinue,
+  onDelete,
   buttonLabel = 'Continue',
 }) => {
   return (
@@ -717,11 +807,16 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
       <View style={styles.listContent}>
         <View style={styles.listMain}>
           <View style={styles.listTitleRow}>
-            <Text style={styles.listTitleText} numberOfLines={1}>{program.title}</Text>
+            <Text style={[styles.listTitleText, { flex: 1 }]} numberOfLines={1}>{program.title}</Text>
             {badgeLabel && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{badgeLabel}</Text>
               </View>
+            )}
+            {onDelete && (
+              <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} activeOpacity={0.7}>
+                <Trash size={16} color="#ef4444" weight="fill" />
+              </TouchableOpacity>
             )}
           </View>
           <Text style={styles.programSubtext} numberOfLines={1}>
@@ -737,6 +832,10 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
 };
 
 const styles = StyleSheet.create({
+  deleteBtn: {
+    padding: 6,
+    marginLeft: 8,
+  },
   container: {
     flex: 1,
     backgroundColor: C.bg,
