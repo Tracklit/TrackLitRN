@@ -120,20 +120,58 @@ export const PracticeScreen: React.FC = () => {
   }, [programIdsKey, programs]);
 
   useEffect(() => {
-    if (!programSessions || programSessions.length === 0) {
+    if (!selectedProgram) {
       setIsLoadingCards(false);
-      setWorkoutCards((prev) => (prev.length === 0 ? prev : []));
+      setWorkoutCards([]);
       return;
     }
 
-    setIsLoadingCards(true);
+    if (isLoadingProgramSessions) {
+      setIsLoadingCards(true);
+      return;
+    }
+
     const today = new Date();
     const cards: any[] = [];
+
+    const sessionsToUse = programSessions ?? [];
+
+    let startDate: Date | null = null;
+    if (sessionsToUse.length > 0) {
+      const MONTH_MAP: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+      const dateKeys = sessionsToUse
+        .map((s: any) => s.date)
+        .filter(Boolean)
+        .map((d: string) => {
+          const isoMatch = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (isoMatch) return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+          const shortMatch = d.match(/^([A-Za-z]{3})-(\d{1,2})$/);
+          if (shortMatch) {
+            const mon = shortMatch[1][0].toUpperCase() + shortMatch[1].slice(1).toLowerCase();
+            const monthIdx = MONTH_MAP[mon];
+            if (monthIdx !== undefined) return new Date(new Date().getFullYear(), monthIdx, parseInt(shortMatch[2]));
+          }
+          return null;
+        })
+        .filter(Boolean) as Date[];
+      if (dateKeys.length > 0) {
+        dateKeys.sort((a, b) => a.getTime() - b.getTime());
+        startDate = dateKeys[0];
+      }
+    }
 
     for (let i = 0; i < daysToShow; i += 1) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
-      const sessionForDate = findSessionForDate(programSessions, date);
+
+      let sessionForDate = findSessionForDate(sessionsToUse, date);
+
+      if (!sessionForDate && startDate && sessionsToUse.length > 0) {
+        const daysSinceStart = Math.round((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        if (daysSinceStart >= 1) {
+          sessionForDate = sessionsToUse.find((s: any) => s.dayNumber === daysSinceStart) || null;
+        }
+      }
 
       cards.push({
         id: `${date.getTime()}-${i}`,
@@ -151,7 +189,7 @@ export const PracticeScreen: React.FC = () => {
 
     setWorkoutCards(cards);
     setIsLoadingCards(false);
-  }, [programSessions, daysToShow]);
+  }, [selectedProgram, programSessions, isLoadingProgramSessions, daysToShow]);
 
   const handleSelectProgram = async (assignment: PurchasedProgramItem) => {
     setSelectedProgram(assignment);

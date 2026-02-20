@@ -118,7 +118,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         setSelectedProgramId(val);
         setSelectionLoaded(true);
       });
-    }, [])
+      queryClient.invalidateQueries({ queryKey: ['today-session'] });
+      queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
+    }, [queryClient])
   );
 
   const purchasedProgramsQuery = useQuery({
@@ -181,6 +183,31 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       });
 
       if (!todaySession) {
+        const parsedDates = programData.sessions
+          .map((s: any) => s.date || s.columnA)
+          .filter(Boolean)
+          .map((d: string) => {
+            const isoM = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (isoM) return new Date(parseInt(isoM[1]), parseInt(isoM[2]) - 1, parseInt(isoM[3]));
+            const shortM = d.match(/^([A-Za-z]{3})-(\d{1,2})$/);
+            if (shortM) {
+              const monIdx = MONTHS.indexOf(shortM[1][0].toUpperCase() + shortM[1].slice(1).toLowerCase());
+              if (monIdx >= 0) return new Date(today.getFullYear(), monIdx, parseInt(shortM[2]));
+            }
+            return null;
+          })
+          .filter(Boolean) as Date[];
+        if (parsedDates.length > 0) {
+          parsedDates.sort((a, b) => a.getTime() - b.getTime());
+          const programStart = parsedDates[0];
+          const daysSinceStart = Math.round((today.getTime() - programStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          if (daysSinceStart >= 1) {
+            todaySession = programData.sessions.find((s: any) => s.dayNumber === daysSinceStart);
+          }
+        }
+      }
+
+      if (!todaySession) {
         const incomplete = programData.sessions.filter((s: any) => !s.completed_at);
         todaySession = incomplete.length > 0 ? incomplete[0] : programData.sessions[0];
       }
@@ -193,7 +220,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       return { title: sessionTitle, description: desc, dayNumber: dayNum, totalDays, completedCount, programTitle: programData.title || 'Program' };
     },
     enabled: !!resolvedProgramId,
-    staleTime: 60000,
+    staleTime: 30000,
     retry: 1,
   });
 

@@ -50,6 +50,12 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
     });
   }, [programs]);
 
+  const selectedTitle = useMemo(() => {
+    if (!selectedProgramId || programs.length === 0) return 'Assign Program';
+    const match = programs.find((p) => String(p.id) === String(selectedProgramId));
+    return match?.program?.title || 'Assign Program';
+  }, [selectedProgramId, programs]);
+
   useEffect(() => {
     Animated.timing(animValue, {
       toValue: isOpen ? 1 : 0,
@@ -78,7 +84,7 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
         >
           <ClipboardText size={14} color={theme.colors.primaryForeground} weight="fill" />
           <Text variant="small" weight="medium" color="primary-foreground" numberOfLines={1} style={styles.buttonLabel}>
-            Assign Program
+            {selectedTitle}
           </Text>
           <CaretDown
             size={12}
@@ -102,7 +108,7 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
           ) : sortedPrograms.length > 0 ? (
             <View style={styles.programList}>
               {sortedPrograms.map((assignment) => {
-                const isSelected = selectedProgramId === assignment.id;
+                const isSelected = String(selectedProgramId) === String(assignment.id);
                 return (
                   <TouchableOpacity
                     key={assignment.id}

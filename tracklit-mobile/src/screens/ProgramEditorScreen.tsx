@@ -257,10 +257,12 @@ export const ProgramEditorScreen: React.FC = () => {
     [programId]
   );
 
-  const handleSaveAll = useCallback(async () => {
-    if (!isOwner || isUploadedProgram) return;
+  const handleSaveAll = useCallback(async (silent = false) => {
+    if (isUploadedProgram) return;
     try {
-      await updateProgramMutation.mutateAsync();
+      if (isOwner) {
+        await updateProgramMutation.mutateAsync();
+      }
       const payloadSessions = buildSessionPayload();
       if (payloadSessions.length > 0) {
         try {
@@ -275,9 +277,13 @@ export const ProgramEditorScreen: React.FC = () => {
           invalidateProgramQueries();
         }
       }
-      Alert.alert('Saved', 'Program changes were saved successfully.');
+      if (!silent) {
+        Alert.alert('Saved', 'Program changes were saved successfully.');
+      }
     } catch (error: any) {
-      Alert.alert('Save failed', error?.message || 'Unable to save program changes.');
+      if (!silent) {
+        Alert.alert('Save failed', error?.message || 'Unable to save program changes.');
+      }
     }
   }, [
     isOwner,
@@ -378,7 +384,14 @@ export const ProgramEditorScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => {
+          const sessions = buildSessionPayload();
+          if (sessions.length > 0 && !isUploadedProgram && isOwner) {
+            handleSaveAll(true).finally(() => navigation.goBack());
+          } else {
+            navigation.goBack();
+          }
+        }}>
           <ArrowLeft size={20} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Program Editor</Text>
@@ -388,8 +401,8 @@ export const ProgramEditorScreen: React.FC = () => {
               <Eye size={16} color={C.textPrimary} weight="fill" />
               <Text style={styles.webBtnText}>View</Text>
             </TouchableOpacity>
-          ) : isOwner ? (
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSaveAll} disabled={isSaving} activeOpacity={0.8}>
+          ) : (
+            <TouchableOpacity style={styles.saveBtn} onPress={() => handleSaveAll(false)} disabled={isSaving} activeOpacity={0.8}>
               <LinearGradient
                 colors={[C.orange, C.orangeLight]}
                 start={{ x: 0, y: 0 }}
@@ -406,10 +419,6 @@ export const ProgramEditorScreen: React.FC = () => {
                 )}
               </LinearGradient>
             </TouchableOpacity>
-          ) : (
-            <View style={styles.readOnlyBadge}>
-              <Text style={styles.readOnlyText}>Read Only</Text>
-            </View>
           )}
         </View>
       </View>
