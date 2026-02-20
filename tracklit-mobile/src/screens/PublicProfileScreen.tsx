@@ -12,6 +12,8 @@ import {
   Animated as RNAnimated,
   TextInput,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -206,6 +208,11 @@ const xpStyles = StyleSheet.create({
 });
 
 async function pickImage(): Promise<string | null> {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== 'granted') {
+    Alert.alert('Permission needed', 'Photo library permission is required to choose photos.');
+    return null;
+  }
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     allowsEditing: true,
@@ -465,10 +472,16 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                     {spikesCount.toLocaleString()}
                   </Text>
                 </View>
-                <View style={[styles.currencyBadge, styles.coinBadge]}>
-                  <Coin size={14} color="#FFD700" weight="fill" />
-                  <Text style={styles.currencyText}>250</Text>
-                </View>
+                {isOwnProfile && !isEditing && (
+                  <TouchableOpacity
+                    style={styles.currencyBadge}
+                    onPress={startEditing}
+                    activeOpacity={0.7}
+                  >
+                    <PencilSimple size={14} color={COLORS.orange} weight="fill" />
+                    <Text style={styles.currencyText}>Edit</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
@@ -576,11 +589,10 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                       >
                         {displayActionShot ? (
                           <Image source={{ uri: displayActionShot }} style={styles.athleteImage} />
-                        ) : displayImage ? (
-                          <Image source={{ uri: displayImage }} style={styles.athleteImage} />
                         ) : (
                           <View style={styles.athleteImagePlaceholder}>
-                            <Avatar fallback={(displayName[0] || '?').toUpperCase()} size="lg" />
+                            <Camera size={36} color={COLORS.textMuted} weight="fill" />
+                            <Text style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 4, fontWeight: '600', letterSpacing: 1 }}>ACTION SHOT</Text>
                           </View>
                         )}
                         {isEditing && (
@@ -589,11 +601,6 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                             <Text style={styles.actionShotLabel}>
                               {displayActionShot ? 'Change Action Shot' : 'Upload Action Shot'}
                             </Text>
-                          </View>
-                        )}
-                        {!isEditing && !displayActionShot && (
-                          <View style={styles.actionShotHintOverlay}>
-                            <Text style={styles.actionShotHintText}>ACTION SHOT</Text>
                           </View>
                         )}
                       </TouchableOpacity>
@@ -746,25 +753,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                 </LinearGradient>
               </TouchableOpacity>
             </View>
-          ) : (
-            <View style={styles.actionRow}>
-              <TouchableOpacity
-                style={[styles.actionBtnConnect, { flex: 1 }]}
-                onPress={startEditing}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={[COLORS.orange, '#FF9D00']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.actionBtnGradient}
-                >
-                  <PencilSimple size={18} color="white" weight="fill" />
-                  <Text style={styles.actionBtnText}>EDIT PROFILE</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          )}
+          ) : null}
 
           <View style={styles.connectionsSection}>
             <Text style={styles.sectionTitle}>Connections</Text>
@@ -874,38 +863,33 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
         animationType="fade"
         onRequestClose={() => setEditModal(null)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setEditModal(null)}
+        <KeyboardAvoidingView
+          style={styles.editModalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View style={styles.editSheet} onStartShouldSetResponder={() => true}>
-            <Text style={styles.photoSheetTitle}>
-              {editModal?.field === 'pb' ? 'Personal Best' : 'Season Best'}
-            </Text>
-            <Text style={styles.editSheetHint}>
-              Enter your {editModal?.field === 'pb' ? 'personal best' : 'season best'} time
-            </Text>
-            <TextInput
-              style={styles.editSheetInput}
-              value={editModal?.value ?? ''}
-              onChangeText={(val) => setEditModal(prev => prev ? { ...prev, value: val } : null)}
-              placeholder="e.g. 9.92"
-              placeholderTextColor={COLORS.textMuted}
-              keyboardType="decimal-pad"
-              autoFocus
-              selectTextOnFocus
-            />
-            <View style={styles.editSheetButtons}>
-              <TouchableOpacity
-                style={styles.editSheetCancelBtn}
-                onPress={() => setEditModal(null)}
-              >
-                <Text style={styles.editSheetCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.editSheetSaveBtn}
-                onPress={() => {
+          <TouchableOpacity
+            style={styles.editModalOverlay}
+            activeOpacity={1}
+            onPress={() => setEditModal(null)}
+          >
+            <View style={styles.editSheet} onStartShouldSetResponder={() => true}>
+              <Text style={styles.photoSheetTitle}>
+                {editModal?.field === 'pb' ? 'Personal Best' : 'Season Best'}
+              </Text>
+              <Text style={styles.editSheetHint}>
+                Enter your {editModal?.field === 'pb' ? 'personal best' : 'season best'} time
+              </Text>
+              <TextInput
+                style={styles.editSheetInput}
+                value={editModal?.value ?? ''}
+                onChangeText={(val) => setEditModal(prev => prev ? { ...prev, value: val } : null)}
+                placeholder="e.g. 9.92"
+                placeholderTextColor={COLORS.textMuted}
+                keyboardType="decimal-pad"
+                autoFocus
+                selectTextOnFocus
+                returnKeyType="done"
+                onSubmitEditing={() => {
                   if (editModal) {
                     const val = editModal.value.trim() || '--';
                     if (editModal.field === 'pb') setEditPB(val);
@@ -913,19 +897,38 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                     setEditModal(null);
                   }
                 }}
-              >
-                <LinearGradient
-                  colors={[COLORS.orange, '#FF9D00']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.editSheetSaveBtnInner}
+              />
+              <View style={styles.editSheetButtons}>
+                <TouchableOpacity
+                  style={styles.editSheetCancelBtn}
+                  onPress={() => setEditModal(null)}
                 >
-                  <Text style={styles.editSheetSaveText}>Save</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                  <Text style={styles.editSheetCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.editSheetSaveBtn}
+                  onPress={() => {
+                    if (editModal) {
+                      const val = editModal.value.trim() || '--';
+                      if (editModal.field === 'pb') setEditPB(val);
+                      else setEditSB(val);
+                      setEditModal(null);
+                    }
+                  }}
+                >
+                  <LinearGradient
+                    colors={[COLORS.orange, '#FF9D00']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.editSheetSaveBtnInner}
+                  >
+                    <Text style={styles.editSheetSaveText}>Done</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -1390,6 +1393,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'flex-end',
   },
+  editModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
   photoSheet: {
     backgroundColor: COLORS.card,
     borderTopLeftRadius: 20,
@@ -1431,10 +1440,9 @@ const styles = StyleSheet.create({
 
   editSheet: {
     backgroundColor: COLORS.card,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderRadius: 20,
     paddingTop: 20,
-    paddingBottom: 34,
+    paddingBottom: 24,
     paddingHorizontal: 24,
   },
   editSheetHint: {
