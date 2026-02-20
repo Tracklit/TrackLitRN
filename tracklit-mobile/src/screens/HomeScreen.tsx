@@ -578,7 +578,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => handleCardPress('Practice')}
-          style={styles.practiceCardWrapper}
+          style={[styles.practiceCardWrapper, carouselHidden && { marginTop: 16 }]}
         >
           <LinearGradient
             colors={['#6d28d9', '#c084fc']}
