@@ -515,8 +515,12 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                   style={styles.avatarContainer}
                   onPress={() => {
                     if (isOwnProfile) {
-                      if (!isEditing) startEditing();
-                      setShowPhotoModal('avatar');
+                      if (!isEditing) {
+                        startEditing();
+                        setTimeout(() => setShowPhotoModal('avatar'), 100);
+                      } else {
+                        setShowPhotoModal('avatar');
+                      }
                     }
                   }}
                   activeOpacity={isOwnProfile ? 0.7 : 1}
@@ -852,7 +856,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
           activeOpacity={1}
           onPress={() => setShowPhotoModal(null)}
         >
-          <View style={styles.photoSheet}>
+          <View style={styles.photoSheet} onStartShouldSetResponder={() => true}>
             <Text style={styles.photoSheetTitle}>
               {showPhotoModal === 'avatar' ? 'Profile Photo' : 'Action Shot'}
             </Text>
