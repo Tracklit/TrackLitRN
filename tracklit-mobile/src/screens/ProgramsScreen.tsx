@@ -25,15 +25,13 @@ import {
   ClipboardText,
   ShoppingBag,
   Barbell,
+  CaretRight,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
@@ -41,10 +39,24 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import type { RootStackParamList } from '@/navigation/types';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
-import theme from '../utils/theme';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
+
+const C = {
+  bg: '#0E0F14',
+  surface: '#161823',
+  card: '#1C1F2B',
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8C0FF',
+  textMuted: '#8A90B5',
+  border: 'rgba(255,255,255,0.08)',
+  glass: 'rgba(255,255,255,0.05)',
+  tabBg: 'rgba(255,255,255,0.04)',
+  tabActive: 'rgba(255,122,0,0.15)',
+};
 
 interface Program {
   id: number | string;
@@ -104,21 +116,18 @@ export const ProgramsScreen: React.FC = () => {
   const isCoach = user?.isCoach === true;
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
-  // Fetch user's programs
   const myProgramsQuery = useQuery({
     queryKey: ['user-programs'],
     queryFn: () => apiRequest<Program[]>('/api/programs'),
     enabled: isAuthenticated && !isGuest,
   });
 
-  // Fetch purchased/assigned programs (web parity: /api/purchased-programs)
   const purchasedProgramsQuery = useQuery({
     queryKey: ['purchased-programs'],
     queryFn: () => apiRequest<PurchasedProgramItem[]>('/api/purchased-programs'),
     enabled: isAuthenticated && !isGuest,
   });
 
-  // Fetch workout library (web parity: /api/workout-library)
   const workoutLibraryQuery = useQuery({
     queryKey: ['workout-library'],
     queryFn: () => apiRequest<WorkoutLibraryResponse>('/api/workout-library'),
@@ -183,11 +192,7 @@ export const ProgramsScreen: React.FC = () => {
   });
 
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -210,11 +215,11 @@ export const ProgramsScreen: React.FC = () => {
 
         <View style={styles.searchRow}>
           <View style={styles.searchInputWrapper}>
-            <MagnifyingGlass size={14} color="rgba(255,255,255,0.6)" weight="fill" />
+            <MagnifyingGlass size={14} color={C.textMuted} weight="fill" />
             <TextInput
               style={styles.searchInput}
               placeholder="Search programs..."
-              placeholderTextColor="rgba(255,255,255,0.6)"
+              placeholderTextColor={C.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -224,11 +229,9 @@ export const ProgramsScreen: React.FC = () => {
             style={styles.filterButton}
             onPress={() => setShowFilterModal(true)}
           >
-            <Funnel size={14} color="white" weight="fill" />
-            <Text variant="caption" weight="medium" color="primary-foreground" style={styles.filterText}>
-              Filter
-            </Text>
-            <CaretDown size={10} color="white" weight="fill" />
+            <Funnel size={14} color={C.textPrimary} weight="fill" />
+            <Text style={styles.filterText}>Filter</Text>
+            <CaretDown size={10} color={C.textPrimary} weight="fill" />
           </TouchableOpacity>
 
           <View style={styles.viewToggle}>
@@ -238,7 +241,7 @@ export const ProgramsScreen: React.FC = () => {
             >
               <SquaresFour
                 size={14}
-                color={viewMode === 'cards' ? theme.colors.webPurpleStart : 'rgba(255,255,255,0.6)'}
+                color={viewMode === 'cards' ? C.orange : C.textMuted}
                 weight="fill"
               />
             </TouchableOpacity>
@@ -248,64 +251,31 @@ export const ProgramsScreen: React.FC = () => {
             >
               <List
                 size={14}
-                color={viewMode === 'list' ? theme.colors.webPurpleStart : 'rgba(255,255,255,0.6)'}
+                color={viewMode === 'list' ? C.orange : C.textMuted}
                 weight="fill"
               />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Tabs */}
-        <LinearGradient
-          colors={['rgba(91, 33, 182, 0.3)', 'rgba(124, 58, 237, 0.3)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.tabs}
-        >
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'my-programs' && styles.activeTab]}
-            onPress={() => setActiveTab('my-programs')}
-            data-testid="tab-my-programs"
-          >
-            <Text
-              variant="small"
-              weight="medium"
-              style={[styles.tabText, activeTab === 'my-programs' && styles.activeTabText]}
+        <View style={styles.tabs}>
+          {([
+            { key: 'my-programs', label: 'My Programs' },
+            { key: 'purchased', label: 'Purchased' },
+            { key: 'workout-library', label: 'Library' },
+          ] as const).map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+              onPress={() => setActiveTab(tab.key)}
             >
-              My Programs
-            </Text>
-          </TouchableOpacity>
+              <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'purchased' && styles.activeTab]}
-            onPress={() => setActiveTab('purchased')}
-            data-testid="tab-purchased-programs"
-          >
-            <Text
-              variant="small"
-              weight="medium"
-              style={[styles.tabText, activeTab === 'purchased' && styles.activeTabText]}
-            >
-              Purchased
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'workout-library' && styles.activeTab]}
-            onPress={() => setActiveTab('workout-library')}
-            data-testid="tab-workout-library"
-          >
-            <Text
-              variant="small"
-              weight="medium"
-              style={[styles.tabText, activeTab === 'workout-library' && styles.activeTabText]}
-            >
-              Workout Library
-            </Text>
-          </TouchableOpacity>
-        </LinearGradient>
-
-        {/* Content */}
         {activeTab === 'my-programs' ? (
           <MyProgramsTab
             programs={filteredMyPrograms}
@@ -354,17 +324,13 @@ export const ProgramsScreen: React.FC = () => {
                   setShowFilterModal(false);
                 }}
               >
-                <Text
-                  variant="body"
-                  weight={filterCategory === category ? 'semiBold' : 'regular'}
-                  color={filterCategory === category ? 'foreground' : 'muted'}
-                >
+                <Text style={[styles.filterOptionText, filterCategory === category && styles.filterOptionActive]}>
                   {category === 'all'
                     ? 'All Programs'
                     : `${category.charAt(0).toUpperCase()}${category.slice(1)} Programs`}
                 </Text>
                 {filterCategory === category && (
-                  <Check size={12} color={theme.colors.primary} weight="bold" />
+                  <Check size={12} color={C.orange} weight="bold" />
                 )}
               </TouchableOpacity>
             ))}
@@ -374,15 +340,14 @@ export const ProgramsScreen: React.FC = () => {
 
       {isAuthenticated && !isGuest && activeTab === 'my-programs' && (
         <TouchableOpacity
-          style={[styles.fab, { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg }]}
+          style={[styles.fab, { bottom: getBottomNavOverlayHeight(insets.bottom) + 16 }]}
           onPress={handleCreateAction}
-          accessibilityRole="button"
-          accessibilityLabel="Create program"
+          activeOpacity={0.8}
         >
           <LinearGradient
-            colors={theme.gradients.webPurple.colors}
-            start={theme.gradients.webPurple.start}
-            end={theme.gradients.webPurple.end}
+            colors={[C.orange, C.orangeLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
             style={styles.fabGradient}
           >
             <Plus size={22} color="white" weight="bold" />
@@ -409,9 +374,7 @@ export const ProgramsScreen: React.FC = () => {
               <View style={styles.menuIconWrapper}>
                 <Plus size={16} color="white" weight="bold" />
               </View>
-              <Text variant="small" weight="medium" color="primary-foreground">
-                Create a Program
-              </Text>
+              <Text style={styles.menuItemText}>Create a Program</Text>
             </TouchableOpacity>
             <View style={styles.menuDivider} />
             <TouchableOpacity
@@ -425,14 +388,12 @@ export const ProgramsScreen: React.FC = () => {
               <View style={styles.menuIconWrapper}>
                 <User size={16} color="white" weight="fill" />
               </View>
-              <Text variant="small" weight="medium" color="primary-foreground">
-                Find a Coach
-              </Text>
+              <Text style={styles.menuItemText}>Find a Coach</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -446,34 +407,21 @@ interface MyProgramsTabProps {
   viewMode: 'cards' | 'list';
 }
 
-const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ 
-  programs, 
-  isLoading, 
-  isError, 
+const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
+  programs,
+  isLoading,
+  isError,
   isGuest,
   onContinue,
   onViewDetails,
   viewMode,
 }) => {
-  const getLevelColor = (level?: string) => {
-    switch (level) {
-      case 'Beginner': return 'success';
-      case 'Intermediate': return 'warning';
-      case 'Advanced': return 'destructive';
-      default: return 'default';
-    }
-  };
-
   if (isGuest) {
     return (
       <View style={styles.emptyState}>
-        <LockSimple size={48} color={theme.colors.textMuted} weight="fill" />
-        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
-          Sign In Required
-        </Text>
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Sign in to view your enrolled training programs.
-        </Text>
+        <LockSimple size={48} color={C.textMuted} weight="fill" />
+        <Text style={styles.emptyTitle}>Sign In Required</Text>
+        <Text style={styles.emptyDescription}>Sign in to view your enrolled training programs.</Text>
       </View>
     );
   }
@@ -481,10 +429,8 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   if (isLoading) {
     return (
       <View style={styles.emptyState}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Loading your programs...
-        </Text>
+        <ActivityIndicator size="large" color={C.orange} />
+        <Text style={styles.emptyDescription}>Loading your programs...</Text>
       </View>
     );
   }
@@ -492,10 +438,8 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   if (isError) {
     return (
       <View style={styles.emptyState}>
-        <WarningCircle size={48} color={theme.colors.textMuted} weight="fill" />
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Unable to load programs. Pull to refresh.
-        </Text>
+        <WarningCircle size={48} color={C.textMuted} weight="fill" />
+        <Text style={styles.emptyDescription}>Unable to load programs. Pull to refresh.</Text>
       </View>
     );
   }
@@ -503,13 +447,9 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   if (programs.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <ClipboardText size={48} color={theme.colors.textMuted} weight="fill" />
-        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
-          No Programs Yet
-        </Text>
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          You haven't created any training programs yet.
-        </Text>
+        <ClipboardText size={48} color={C.textMuted} weight="fill" />
+        <Text style={styles.emptyTitle}>No Programs Yet</Text>
+        <Text style={styles.emptyDescription}>You haven't created any training programs yet.</Text>
       </View>
     );
   }
@@ -531,7 +471,6 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
         <ProgramCardItem
           key={program.id}
           program={program}
-          levelBadge={getLevelColor(program.level || program.difficulty)}
           onContinue={() => onContinue(program)}
           onViewDetails={() => onViewDetails(program)}
         />
@@ -552,7 +491,7 @@ interface PurchasedProgramsTabProps {
 
 const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   purchases,
-  isLoading, 
+  isLoading,
   isError,
   isGuest,
   onContinue,
@@ -562,13 +501,9 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   if (isGuest) {
     return (
       <View style={styles.emptyState}>
-        <LockSimple size={48} color={theme.colors.textMuted} weight="fill" />
-        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
-          Sign In Required
-        </Text>
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Sign in to view your purchased and assigned programs.
-        </Text>
+        <LockSimple size={48} color={C.textMuted} weight="fill" />
+        <Text style={styles.emptyTitle}>Sign In Required</Text>
+        <Text style={styles.emptyDescription}>Sign in to view your purchased and assigned programs.</Text>
       </View>
     );
   }
@@ -576,10 +511,8 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   if (isLoading) {
     return (
       <View style={styles.emptyState}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Loading purchased programs...
-        </Text>
+        <ActivityIndicator size="large" color={C.orange} />
+        <Text style={styles.emptyDescription}>Loading purchased programs...</Text>
       </View>
     );
   }
@@ -587,10 +520,8 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   if (isError) {
     return (
       <View style={styles.emptyState}>
-        <WarningCircle size={48} color={theme.colors.textMuted} weight="fill" />
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Unable to load purchased programs. Pull to refresh.
-        </Text>
+        <WarningCircle size={48} color={C.textMuted} weight="fill" />
+        <Text style={styles.emptyDescription}>Unable to load purchased programs. Pull to refresh.</Text>
       </View>
     );
   }
@@ -598,13 +529,9 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   if (purchases.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <ShoppingBag size={48} color={theme.colors.textMuted} weight="fill" />
-        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
-          No Purchased Programs
-        </Text>
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Purchases and coach assignments will show up here.
-        </Text>
+        <ShoppingBag size={48} color={C.textMuted} weight="fill" />
+        <Text style={styles.emptyTitle}>No Purchased Programs</Text>
+        <Text style={styles.emptyDescription}>Purchases and coach assignments will show up here.</Text>
       </View>
     );
   }
@@ -632,7 +559,6 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
           badgeLabel={
             purchase.isAssigned ? 'Assigned' : purchase.isCreated ? 'Created' : 'Purchased'
           }
-          badgeVariant={purchase.isAssigned ? 'secondary' : purchase.isCreated ? 'outline' : 'default'}
           subtitle={
             purchase.isAssigned && purchase.assignerName
               ? `Coach: ${purchase.assignerName}`
@@ -659,13 +585,9 @@ const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoadin
   if (isGuest) {
     return (
       <View style={styles.emptyState}>
-        <LockSimple size={48} color={theme.colors.textMuted} weight="fill" />
-        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
-          Sign In Required
-        </Text>
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Sign in to view your workout library.
-        </Text>
+        <LockSimple size={48} color={C.textMuted} weight="fill" />
+        <Text style={styles.emptyTitle}>Sign In Required</Text>
+        <Text style={styles.emptyDescription}>Sign in to view your workout library.</Text>
       </View>
     );
   }
@@ -673,10 +595,8 @@ const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoadin
   if (isLoading) {
     return (
       <View style={styles.emptyState}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Loading workout library...
-        </Text>
+        <ActivityIndicator size="large" color={C.orange} />
+        <Text style={styles.emptyDescription}>Loading workout library...</Text>
       </View>
     );
   }
@@ -684,25 +604,20 @@ const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoadin
   if (isError) {
     return (
       <View style={styles.emptyState}>
-        <WarningCircle size={48} color={theme.colors.textMuted} weight="fill" />
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Unable to load workout library. Pull to refresh.
-        </Text>
+        <WarningCircle size={48} color={C.textMuted} weight="fill" />
+        <Text style={styles.emptyDescription}>Unable to load workout library. Pull to refresh.</Text>
       </View>
     );
   }
 
-  const workouts = filteredWorkouts ?? [];
+  const workouts = filteredWorkouts ?? library?.workouts ?? [];
+
   if (workouts.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <Barbell size={48} color={theme.colors.textMuted} weight="fill" />
-        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
-          No workouts saved
-        </Text>
-        <Text variant="body" color="muted" style={styles.emptyDescription}>
-          Save workouts from Practice to see them here.
-        </Text>
+        <Barbell size={48} color={C.textMuted} weight="fill" />
+        <Text style={styles.emptyTitle}>No workouts saved</Text>
+        <Text style={styles.emptyDescription}>Save workouts from Practice to see them here.</Text>
       </View>
     );
   }
@@ -710,26 +625,19 @@ const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoadin
   return (
     <View style={styles.programsContainer}>
       {workouts.map((workout) => (
-        <Card key={workout.id} style={styles.programCard}>
-          <CardHeader style={styles.programHeader}>
+        <View key={workout.id} style={styles.programCard}>
+          <View style={styles.programCardInner}>
             <View style={styles.programTitleRow}>
-              <CardTitle style={styles.programTitle}>{workout.title}</CardTitle>
-              <Badge variant="outline" size="sm">
-                {workout.category || 'Workout'}
-              </Badge>
+              <Text style={styles.programTitleText} numberOfLines={1}>{workout.title}</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{workout.category || 'Workout'}</Text>
+              </View>
             </View>
             {!!workout.description && (
-              <Text variant="small" color="muted">
-                {workout.description}
-              </Text>
+              <Text style={styles.programSubtext} numberOfLines={2}>{workout.description}</Text>
             )}
-          </CardHeader>
-          <CardContent>
-            <Text variant="small" color="muted">
-              Saved workout (details coming next).
-            </Text>
-          </CardContent>
-        </Card>
+          </View>
+        </View>
       ))}
     </View>
   );
@@ -737,9 +645,7 @@ const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoadin
 
 interface ProgramCardItemProps {
   program: Program;
-  levelBadge?: 'success' | 'warning' | 'destructive' | 'default';
   badgeLabel?: string;
-  badgeVariant?: 'default' | 'secondary' | 'outline';
   subtitle?: string;
   price?: number;
   onContinue: () => void;
@@ -748,74 +654,63 @@ interface ProgramCardItemProps {
 
 const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
   program,
-  levelBadge,
   badgeLabel,
-  badgeVariant = 'default',
   subtitle,
   price,
   onContinue,
   onViewDetails,
 }) => {
   return (
-    <Card style={styles.programCard}>
-      <CardHeader style={styles.programHeader}>
+    <View style={styles.programCard}>
+      <View style={styles.programCardInner}>
         <View style={styles.programTitleRow}>
-          <CardTitle style={styles.programTitle}>{program.title}</CardTitle>
+          <Text style={styles.programTitleText} numberOfLines={1}>{program.title}</Text>
           {badgeLabel && (
-            <Badge variant={badgeVariant} size="sm">
-              {badgeLabel}
-            </Badge>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{badgeLabel}</Text>
+            </View>
           )}
         </View>
-        <Text variant="small" color="muted">
+        <Text style={styles.programSubtext} numberOfLines={1}>
           {subtitle ?? (program.coachName ? `by ${program.coachName}` : 'TrackLit Program')}
-          {program.durationWeeks ? ` • ${program.durationWeeks} weeks` : program.duration ? ` • ${program.duration}` : ''}
+          {program.durationWeeks ? ` · ${program.durationWeeks} weeks` : program.duration ? ` · ${program.duration}` : ''}
         </Text>
-      </CardHeader>
 
-      <CardContent>
         {program.events && program.events.length > 0 && (
           <View style={styles.eventsContainer}>
             {program.events.map((event, index) => (
-              <Badge key={index} variant="outline" size="sm">
-                {event}
-              </Badge>
+              <View key={index} style={styles.eventBadge}>
+                <Text style={styles.eventBadgeText}>{event}</Text>
+              </View>
             ))}
           </View>
         )}
 
         {!!price && price > 0 && (
           <View style={styles.priceRow}>
-            <Text variant="h3" weight="bold" color="primary">
-              ${price}
-            </Text>
-            <Text variant="small" color="muted">
-              one-time payment
-            </Text>
+            <Text style={styles.priceText}>${price}</Text>
+            <Text style={styles.programSubtext}>one-time</Text>
           </View>
         )}
 
         <View style={styles.programActions}>
-          <Button
-            variant="default"
-            size="sm"
-            style={styles.actionButton}
-            onPress={onContinue}
-            data-testid={`button-continue-program-${program.id}`}
-          >
-            Continue
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onPress={onViewDetails}
-            data-testid={`button-view-program-${program.id}`}
-          >
-            View Details
-          </Button>
+          <TouchableOpacity style={styles.actionBtnPrimary} onPress={onContinue} activeOpacity={0.8}>
+            <LinearGradient
+              colors={[C.orange, C.orangeLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionBtnGradient}
+            >
+              <Text style={styles.actionBtnPrimaryText}>Continue</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtnOutline} onPress={onViewDetails} activeOpacity={0.7}>
+            <Text style={styles.actionBtnOutlineText}>Details</Text>
+            <CaretRight size={12} color={C.textMuted} weight="bold" />
+          </TouchableOpacity>
         </View>
-      </CardContent>
-    </Card>
+      </View>
+    </View>
   );
 };
 
@@ -833,55 +728,50 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
   onViewDetails,
 }) => {
   return (
-    <Card style={styles.listCard}>
-      <CardContent style={styles.listContent}>
+    <View style={styles.listCard}>
+      <View style={styles.listContent}>
         <View style={styles.listMain}>
           <View style={styles.listTitleRow}>
-            <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
-              {program.title}
-            </Text>
+            <Text style={styles.listTitleText} numberOfLines={1}>{program.title}</Text>
             {badgeLabel && (
-              <Badge variant="secondary" size="sm">
-                {badgeLabel}
-              </Badge>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{badgeLabel}</Text>
+              </View>
             )}
           </View>
-          <Text variant="small" color="muted" numberOfLines={1}>
+          <Text style={styles.programSubtext} numberOfLines={1}>
             {program.description || 'No description'}
           </Text>
         </View>
         <View style={styles.listActions}>
           <TouchableOpacity onPress={onViewDetails}>
-            <Text variant="small" color="muted">
-              Details
-            </Text>
+            <Text style={styles.listActionMuted}>Details</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onContinue}>
-            <Text variant="small" color="primary">
-              Continue
-            </Text>
+            <Text style={styles.listActionPrimary}>Continue</Text>
           </TouchableOpacity>
         </View>
-      </CardContent>
-    </Card>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: C.bg,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: 20,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: 8,
     flexWrap: 'wrap',
-    marginTop: theme.spacing.xl,
-    marginBottom: theme.spacing.lg,
+    marginTop: 20,
+    marginBottom: 16,
   },
   searchInputWrapper: {
     flex: 1,
@@ -889,166 +779,264 @@ const styles = StyleSheet.create({
     height: 40,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
+    gap: 8,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
   },
   searchInput: {
     flex: 1,
-    color: theme.colors.foreground,
-    fontSize: theme.typography.sizes.xs,
+    color: C.textPrimary,
+    fontSize: 13,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 40,
-    gap: theme.spacing.xs,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    gap: 4,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    paddingHorizontal: 10,
+    borderRadius: 12,
   },
   filterText: {
-    marginHorizontal: theme.spacing.xs,
+    fontSize: 12,
+    fontWeight: '500',
+    color: C.textPrimary,
+    marginHorizontal: 2,
   },
   viewToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 40,
-    borderRadius: theme.borderRadius.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: C.border,
     overflow: 'hidden',
   },
   viewToggleButton: {
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: 10,
     height: '100%',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: C.glass,
   },
   viewToggleActive: {
-    backgroundColor: theme.colors.foreground,
+    backgroundColor: 'rgba(255,122,0,0.12)',
   },
   tabs: {
     flexDirection: 'row',
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.xs,
-    marginBottom: theme.spacing.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: C.tabBg,
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 20,
+    borderWidth: 0.5,
+    borderColor: C.border,
   },
   tab: {
     flex: 1,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.sm,
+    paddingVertical: 10,
     alignItems: 'center',
+    borderRadius: 11,
   },
-  activeTab: {
-    backgroundColor: theme.colors.foreground,
+  tabActive: {
+    backgroundColor: C.tabActive,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
   },
   tabText: {
-    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.textMuted,
   },
-  activeTabText: {
-    color: theme.colors.webPurpleStart,
+  tabTextActive: {
+    color: C.orange,
   },
   programsContainer: {
-    gap: theme.spacing.lg,
+    gap: 12,
   },
   listContainer: {
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   programCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.webCardBorder,
-    marginBottom: 0,
+    borderRadius: 14,
+    backgroundColor: C.card,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    overflow: 'hidden',
   },
-  programHeader: {
-    paddingBottom: theme.spacing.sm,
+  programCardInner: {
+    padding: 16,
+    gap: 8,
   },
   programTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
   },
-  programTitle: {
+  programTitleText: {
     flex: 1,
-    marginRight: theme.spacing.md,
+    fontSize: 15,
+    fontWeight: '700',
+    color: C.textPrimary,
+    marginRight: 8,
+  },
+  programSubtext: {
+    fontSize: 13,
+    color: C.textMuted,
+  },
+  badge: {
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.orange,
   },
   eventsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.md,
+    gap: 6,
+    marginTop: 4,
+  },
+  eventBadge: {
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  eventBadgeText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: C.textSecondary,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
+    gap: 6,
+    marginTop: 4,
+  },
+  priceText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: C.orange,
   },
   programActions: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
+    gap: 10,
+    marginTop: 8,
   },
-  actionButton: {
+  actionBtnPrimary: {
     flex: 1,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  actionBtnGradient: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  actionBtnPrimaryText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  actionBtnOutline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
+  },
+  actionBtnOutlineText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.textMuted,
   },
   listCard: {
-    marginBottom: theme.spacing.sm,
-    borderRadius: theme.borderRadius.webCard,
-    borderWidth: 1,
-    borderColor: theme.colors.webCardBorder,
+    borderRadius: 12,
+    backgroundColor: C.card,
+    borderWidth: 0.5,
+    borderColor: C.border,
   },
   listContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
+    padding: 14,
   },
   listMain: {
     flex: 1,
-    gap: theme.spacing.xs,
+    gap: 4,
   },
   listTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: 8,
+  },
+  listTitleText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.textPrimary,
   },
   listActions: {
     alignItems: 'flex-end',
-    gap: theme.spacing.xs,
+    gap: 6,
+  },
+  listActionMuted: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: C.textMuted,
+  },
+  listActionPrimary: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.orange,
   },
   emptyState: {
     alignItems: 'center',
-    paddingTop: theme.spacing.xl * 2,
+    paddingTop: 60,
   },
   emptyTitle: {
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.textPrimary,
+    marginTop: 16,
+    marginBottom: 8,
   },
   emptyDescription: {
+    fontSize: 14,
+    color: C.textMuted,
     textAlign: 'center',
-    marginBottom: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  emptyButton: {
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: 20,
   },
   fab: {
     position: 'absolute',
-    right: theme.spacing.xl + theme.spacing.sm,
+    right: 24,
     width: 64,
     height: 64,
     borderRadius: 32,
     overflow: 'hidden',
-    ...theme.shadows.lg,
+    shadowColor: C.orange,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
   fabGradient: {
     flex: 1,
@@ -1057,60 +1045,72 @@ const styles = StyleSheet.create({
   },
   filterOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 20,
   },
   filterModal: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.sm,
-  },
-  menuOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-    paddingRight: theme.spacing.xl + theme.spacing.sm,
-    paddingBottom: theme.spacing.lg,
-  },
-  createMenu: {
-    width: 220,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(124, 58, 237, 0.35)',
-    paddingVertical: theme.spacing.md,
-    marginBottom: 72,
-    ...theme.shadows.lg,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-  },
-  menuIconWrapper: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(124, 58, 237, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginHorizontal: theme.spacing.lg,
+    backgroundColor: C.card,
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 16,
+    gap: 8,
   },
   filterOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: 10,
+  },
+  filterOptionText: {
+    fontSize: 14,
+    color: C.textMuted,
+  },
+  filterOptionActive: {
+    color: C.orange,
+    fontWeight: '600',
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    paddingRight: 24,
+    paddingBottom: 16,
+  },
+  createMenu: {
+    width: 220,
+    backgroundColor: C.card,
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    paddingVertical: 8,
+    marginBottom: 72,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  menuItemText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: C.textPrimary,
+  },
+  menuIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,122,0,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuDivider: {
+    height: 0.5,
+    backgroundColor: C.border,
+    marginHorizontal: 16,
   },
 });

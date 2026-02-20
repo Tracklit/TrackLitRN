@@ -50,6 +50,7 @@ import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { apiRequest } from '@/lib/api';
+import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
 
 import theme from '../utils/theme';
 
@@ -103,6 +104,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [readActivities, setReadActivities] = useState<Set<number>>(new Set());
   const [carouselCollapsed, setCarouselCollapsed] = useState(false);
   const [carouselHidden, setCarouselHidden] = useState(false);
+  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const carouselRef = useRef<FlatList>(null);
   const userId = user?.id;
 
@@ -111,8 +113,60 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       AsyncStorage.getItem('carousel_hidden').then(val => {
         setCarouselHidden(val === 'true');
       });
+      AsyncStorage.getItem(PROGRAM_SELECTION_KEY).then(val => {
+        setSelectedProgramId(val);
+      });
     }, [])
   );
+
+  const purchasedProgramsQuery = useQuery({
+    queryKey: ['purchased-programs-home'],
+    queryFn: () => apiRequest<Array<{ id: number | string; programId: number | string; program?: { title?: string } }>>('/api/purchased-programs'),
+    enabled: !!userId && userId !== 'guest',
+    staleTime: 120000,
+  });
+
+  const resolvedProgramId = React.useMemo(() => {
+    if (!selectedProgramId) return null;
+    const purchases = purchasedProgramsQuery.data;
+    if (!purchases) return selectedProgramId;
+    const match = purchases.find((p) => String(p.id) === selectedProgramId);
+    return match ? String(match.programId) : selectedProgramId;
+  }, [selectedProgramId, purchasedProgramsQuery.data]);
+
+  const todaySessionQuery = useQuery({
+    queryKey: ['today-session', resolvedProgramId],
+    queryFn: async () => {
+      if (!resolvedProgramId) return null;
+      const programData = await apiRequest<{ sessions?: any[]; title?: string }>(`/api/programs/${resolvedProgramId}`);
+      if (!programData?.sessions?.length) return null;
+      const today = new Date();
+      const todayStr = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][today.getMonth()]}-${today.getDate()}`;
+      const todayISO = today.toISOString().split('T')[0];
+      let todaySession = programData.sessions.find((s: any) => {
+        const d = (s.date || s.columnA || '').trim();
+        if (!d) return false;
+        if (d === todayStr) return true;
+        if (d.startsWith(todayISO)) return true;
+        try { return new Date(d).toISOString().split('T')[0] === todayISO; } catch { return false; }
+      });
+      if (!todaySession) {
+        const incomplete = programData.sessions.filter((s: any) => !s.completed_at);
+        todaySession = incomplete.length > 0 ? incomplete[0] : programData.sessions[0];
+      }
+      const title = todaySession.title || todaySession.preActivation1 || todaySession.columnB || 'Training Session';
+      const desc = todaySession.shortDistanceWorkout || todaySession.columnD || todaySession.description || '';
+      const dayNum = todaySession.dayNumber || 1;
+      const totalDays = programData.sessions.length;
+      const completedCount = programData.sessions.filter((s: any) => s.completed_at).length;
+      return { title, description: desc, dayNumber: dayNum, totalDays, completedCount, programTitle: programData.title || 'Program' };
+    },
+    enabled: !!resolvedProgramId,
+    staleTime: 60000,
+    retry: 1,
+  });
+
+  const todaySession = todaySessionQuery.data;
 
   const screenOpacity = useSharedValue(0);
   useEffect(() => {
@@ -590,11 +644,56 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               <View style={styles.practiceLabelPill}>
                 <Text style={styles.practiceLabelText}>TODAY'S SESSION</Text>
               </View>
+              {todaySession && (
+                <Text style={styles.practiceDayLabel}>
+                  Day {todaySession.dayNumber}/{todaySession.totalDays}
+                </Text>
+              )}
             </View>
 
-            <Text style={styles.practiceNoSession}>
-              No Session Scheduled — add a Program to get started
-            </Text>
+            {todaySession ? (
+              <>
+                <Text style={styles.practiceSessionTitle} numberOfLines={2}>
+                  {todaySession.title}
+                </Text>
+                {!!todaySession.description && (
+                  <Text style={styles.practiceSessionDesc} numberOfLines={2}>
+                    {todaySession.description}
+                  </Text>
+                )}
+                <View style={styles.practiceStatsRow}>
+                  <View style={styles.practiceStat}>
+                    <Text style={styles.practiceStatValue}>
+                      {todaySession.completedCount}
+                      <Text style={styles.practiceStatUnit}>/{todaySession.totalDays}</Text>
+                    </Text>
+                    <Text style={styles.practiceStatLabel}>Completed</Text>
+                  </View>
+                  <View style={styles.practiceStat}>
+                    <Text style={styles.practiceStatValue}>
+                      {todaySession.totalDays > 0 ? Math.round((todaySession.completedCount / todaySession.totalDays) * 100) : 0}
+                      <Text style={styles.practiceStatUnit}>%</Text>
+                    </Text>
+                    <Text style={styles.practiceStatLabel}>Progress</Text>
+                  </View>
+                </View>
+                <View style={styles.practiceProgressTrack}>
+                  <View
+                    style={[
+                      styles.practiceProgressFill,
+                      { width: `${todaySession.totalDays > 0 ? Math.max(2, (todaySession.completedCount / todaySession.totalDays) * 100) : 2}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.practiceProgramName} numberOfLines={1}>
+                  {todaySession.programTitle}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.practiceNoSession}>
+                No Session Scheduled — add a Program to get started
+              </Text>
+            )}
           </LinearGradient>
         </TouchableOpacity>
 
@@ -1022,6 +1121,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#f97316',
     borderRadius: 3,
     minWidth: 6,
+  },
+  practiceDayLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 11,
+    fontWeight: '600' as const,
+    letterSpacing: 0.5,
+  },
+  practiceSessionTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800' as const,
+    marginBottom: 4,
+  },
+  practiceSessionDesc: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
+    fontWeight: '500' as const,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  practiceProgramName: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11,
+    fontWeight: '600' as const,
+    letterSpacing: 0.3,
+    marginTop: 4,
   },
   practiceNoSession: {
     color: 'rgba(255,255,255,0.55)',

@@ -30,24 +30,31 @@ import { useMutation } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { Text } from '@/components/ui/Text';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { uploadProgramFile } from '@/lib/upload';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
-import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
+const C = {
+  bg: '#0E0F14',
+  surface: '#161823',
+  card: '#1C1F2B',
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8C0FF',
+  textMuted: '#8A90B5',
+  border: 'rgba(255,255,255,0.08)',
+  glass: 'rgba(255,255,255,0.05)',
+};
+
 type Visibility = 'public' | 'private' | 'premium';
-
 type PriceType = 'spikes' | 'money';
-
 type DurationWeeks = 1 | 2 | 4 | 6 | 8 | 12;
-
 type CreateMethod = 'builder' | 'upload' | 'text' | 'sprinthia' | 'import';
 
 type CreateProgramPayload = {
@@ -67,12 +74,12 @@ type SprinthiaFormData = {
   workoutsPerWeek: number;
   gymWorkoutsPerWeek: number;
   blockFocus:
-  | 'speed'
-  | 'speed-maintenance'
-  | 'speed-endurance'
-  | 'mixed'
-  | 'short-to-long'
-  | 'long-to-short';
+    | 'speed'
+    | 'speed-maintenance'
+    | 'speed-endurance'
+    | 'mixed'
+    | 'short-to-long'
+    | 'long-to-short';
   aiPrompt: string;
 };
 
@@ -110,27 +117,15 @@ export const ProgramCreateScreen: React.FC = () => {
   const [generatedProgram, setGeneratedProgram] = useState<string | null>(null);
 
   const ensurePricing = (nextVisibility: Visibility) => {
-    if (nextVisibility !== 'premium') {
-      setPrice('0');
-    }
+    if (nextVisibility !== 'premium') setPrice('0');
   };
 
   const createProgramMutation = useMutation({
     mutationFn: async (payload: CreateProgramPayload) => {
-      if (!isAuthenticated || isGuest) {
-        throw new Error('Login required');
-      }
-      if (!payload.title.trim()) {
-        throw new Error('Program title is required');
-      }
-      if (payload.isTextBased && !payload.textContent?.trim()) {
-        throw new Error('Program content is required');
-      }
-
-      return apiRequest<{ id: number | string }>('/api/programs', {
-        method: 'POST',
-        data: payload,
-      });
+      if (!isAuthenticated || isGuest) throw new Error('Login required');
+      if (!payload.title.trim()) throw new Error('Program title is required');
+      if (payload.isTextBased && !payload.textContent?.trim()) throw new Error('Program content is required');
+      return apiRequest<{ id: number | string }>('/api/programs', { method: 'POST', data: payload });
     },
     onSuccess: (program) => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
@@ -155,42 +150,22 @@ export const ProgramCreateScreen: React.FC = () => {
 
   const uploadProgramMutation = useMutation({
     mutationFn: async () => {
-      if (!isAuthenticated || isGuest) {
-        throw new Error('Login required');
-      }
-      if (!uploadFile) {
-        throw new Error('Select a file to upload');
-      }
-      if (!title.trim()) {
-        throw new Error('Program title is required');
-      }
-
+      if (!isAuthenticated || isGuest) throw new Error('Login required');
+      if (!uploadFile) throw new Error('Select a file to upload');
+      if (!title.trim()) throw new Error('Program title is required');
       const priceNum = Number(price);
-      if (!Number.isFinite(priceNum) || priceNum < 0) {
-        throw new Error('Price must be 0 or greater');
-      }
-
+      if (!Number.isFinite(priceNum) || priceNum < 0) throw new Error('Price must be 0 or greater');
       return uploadProgramFile({
         file: uploadFile,
-        fields: {
-          title: title.trim(),
-          description: description.trim(),
-          visibility,
-          price: priceNum,
-          priceType,
-          duration,
-        },
+        fields: { title: title.trim(), description: description.trim(), visibility, price: priceNum, priceType, duration },
       });
     },
     onSuccess: (program: { id?: number | string }) => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
       queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
       Alert.alert('Uploaded', 'Your program document was uploaded successfully.');
-      if (program?.id !== undefined) {
-        navigation.replace('ProgramDetail', { id: program.id });
-      } else {
-        navigation.goBack();
-      }
+      if (program?.id !== undefined) navigation.replace('ProgramDetail', { id: program.id });
+      else navigation.goBack();
     },
     onError: (error: Error) => {
       Alert.alert('Unable to upload program', error.message || 'Please try again.');
@@ -199,33 +174,19 @@ export const ProgramCreateScreen: React.FC = () => {
 
   const importSheetMutation = useMutation({
     mutationFn: async () => {
-      if (!isAuthenticated || isGuest) {
-        throw new Error('Login required');
-      }
-      if (!importTitle.trim()) {
-        throw new Error('Program title is required');
-      }
-      if (!importSheetUrl.trim()) {
-        throw new Error('Google Sheet URL is required');
-      }
-
+      if (!isAuthenticated || isGuest) throw new Error('Login required');
+      if (!importTitle.trim()) throw new Error('Program title is required');
+      if (!importSheetUrl.trim()) throw new Error('Google Sheet URL is required');
       const durationNum = Number(importDuration);
-      if (!Number.isFinite(durationNum) || durationNum <= 0) {
-        throw new Error('Duration must be at least 1 day');
-      }
-
+      if (!Number.isFinite(durationNum) || durationNum <= 0) throw new Error('Duration must be at least 1 day');
       return apiRequest<{ program: { id: number | string }; importedSessions: number }>(
         '/api/programs/import-sheet',
         {
           method: 'POST',
           data: {
-            title: importTitle.trim(),
-            description: importDescription.trim(),
-            googleSheetUrl: importSheetUrl.trim(),
-            category: importCategory,
-            level: importLevel,
-            visibility: importVisibility,
-            duration: durationNum,
+            title: importTitle.trim(), description: importDescription.trim(),
+            googleSheetUrl: importSheetUrl.trim(), category: importCategory,
+            level: importLevel, visibility: importVisibility, duration: durationNum,
           },
         },
       );
@@ -233,16 +194,10 @@ export const ProgramCreateScreen: React.FC = () => {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
       queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
-      Alert.alert(
-        'Imported',
-        `Program imported successfully with ${response?.importedSessions ?? 0} sessions.`,
-      );
+      Alert.alert('Imported', `Program imported successfully with ${response?.importedSessions ?? 0} sessions.`);
       setShowImportModal(false);
-      if (response?.program?.id !== undefined) {
-        navigation.replace('ProgramDetail', { id: response.program.id });
-      } else {
-        navigation.navigate('MainTabs', { screen: 'Programs' } as never);
-      }
+      if (response?.program?.id !== undefined) navigation.replace('ProgramDetail', { id: response.program.id });
+      else navigation.navigate('MainTabs', { screen: 'Programs' } as never);
     },
     onError: (error: Error) => {
       Alert.alert('Import failed', error.message || 'Please try again.');
@@ -251,23 +206,12 @@ export const ProgramCreateScreen: React.FC = () => {
 
   const generateSprinthiaMutation = useMutation({
     mutationFn: async () => {
-      if (!isAuthenticated || isGuest) {
-        throw new Error('Login required');
-      }
-      if (!title.trim()) {
-        throw new Error('Program title is required');
-      }
-      if (!sprinthiaData.aiPrompt.trim()) {
-        throw new Error('AI prompt is required');
-      }
-
+      if (!isAuthenticated || isGuest) throw new Error('Login required');
+      if (!title.trim()) throw new Error('Program title is required');
+      if (!sprinthiaData.aiPrompt.trim()) throw new Error('AI prompt is required');
       return apiRequest<{ content: string }>('/api/sprinthia/generate-program', {
         method: 'POST',
-        data: {
-          ...sprinthiaData,
-          title: title.trim(),
-          description: description.trim(),
-        },
+        data: { ...sprinthiaData, title: title.trim(), description: description.trim() },
       });
     },
     onSuccess: (response) => {
@@ -281,17 +225,10 @@ export const ProgramCreateScreen: React.FC = () => {
 
   const regenerateSprinthiaMutation = useMutation({
     mutationFn: async () => {
-      if (!generatedProgram) {
-        throw new Error('No program to rewrite');
-      }
+      if (!generatedProgram) throw new Error('No program to rewrite');
       return apiRequest<{ content: string }>('/api/sprinthia/regenerate-program', {
         method: 'POST',
-        data: {
-          ...sprinthiaData,
-          title: title.trim(),
-          description: description.trim(),
-          previousContent: generatedProgram,
-        },
+        data: { ...sprinthiaData, title: title.trim(), description: description.trim(), previousContent: generatedProgram },
       });
     },
     onSuccess: (response) => {
@@ -303,52 +240,22 @@ export const ProgramCreateScreen: React.FC = () => {
   });
 
   const pill = (selected: boolean) => [styles.pill, selected && styles.pillActive];
+  const pillText = (selected: boolean): any => [styles.pillText, selected && styles.pillTextActive];
 
   const methods = [
-    {
-      id: 'upload' as const,
-      title: 'Upload Document',
-      description: 'Share existing training documents in PDF or DOCX format.',
-      Icon: FileArrowUp,
-    },
-    {
-      id: 'builder' as const,
-      title: 'Program Builder',
-      description: 'Create a structured program with sessions and exercises.',
-      Icon: ClipboardText,
-    },
-    {
-      id: 'text' as const,
-      title: 'Text Based',
-      description: 'Create a simple text-based program for Practice view.',
-      Icon: Keyboard,
-    },
-    {
-      id: 'sprinthia' as const,
-      title: 'Build With Sprinthia',
-      description: 'Generate a text program with AI assistance.',
-      Icon: Robot,
-    },
-    {
-      id: 'import' as const,
-      title: 'Import from Sheets',
-      description: 'Connect Google Sheets for auto-sync.',
-      Icon: Upload,
-    },
+    { id: 'upload' as const, title: 'Upload Document', description: 'Share existing training documents.', Icon: FileArrowUp },
+    { id: 'builder' as const, title: 'Program Builder', description: 'Structured sessions & exercises.', Icon: ClipboardText },
+    { id: 'text' as const, title: 'Text Based', description: 'Simple text-based program.', Icon: Keyboard },
+    { id: 'sprinthia' as const, title: 'Sprinthia AI', description: 'Generate with AI assistance.', Icon: Robot },
+    { id: 'import' as const, title: 'Import Sheets', description: 'Connect Google Sheets.', Icon: Upload },
   ];
 
   const pickUploadFile = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
-
+      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
       if (result.canceled) return;
-
-      const file = result.assets[0];
-      setUploadFile(file);
-    } catch (error) {
+      setUploadFile(result.assets[0]);
+    } catch {
       Alert.alert('File selection failed', 'Unable to select a document.');
     }
   };
@@ -359,15 +266,7 @@ export const ProgramCreateScreen: React.FC = () => {
       Alert.alert('Invalid price', 'Price must be 0 or greater.');
       return;
     }
-
-    createProgramMutation.mutate({
-      title: title.trim(),
-      description: description.trim(),
-      visibility,
-      price: priceNum,
-      priceType,
-      duration,
-    });
+    createProgramMutation.mutate({ title: title.trim(), description: description.trim(), visibility, price: priceNum, priceType, duration });
   };
 
   const handleCreateText = () => {
@@ -376,17 +275,7 @@ export const ProgramCreateScreen: React.FC = () => {
       Alert.alert('Invalid price', 'Price must be 0 or greater.');
       return;
     }
-
-    createProgramMutation.mutate({
-      title: title.trim(),
-      description: description.trim(),
-      visibility,
-      price: priceNum,
-      priceType,
-      duration,
-      isTextBased: true,
-      textContent: textContent.trim(),
-    });
+    createProgramMutation.mutate({ title: title.trim(), description: description.trim(), visibility, price: priceNum, priceType, duration, isTextBased: true, textContent: textContent.trim() });
   };
 
   const continueToEditSprinthia = () => {
@@ -398,34 +287,74 @@ export const ProgramCreateScreen: React.FC = () => {
 
   const showPricing = visibility === 'premium';
 
+  const renderVisibilityPills = (vis: Visibility, setVis: (v: Visibility) => void, onPricing?: (v: Visibility) => void) => (
+    <View style={styles.pillRow}>
+      {(['public', 'private', 'premium'] as const).map((v) => (
+        <TouchableOpacity key={v} style={pill(vis === v)} onPress={() => { setVis(v); onPricing?.(v); }}>
+          <Text style={pillText(vis === v)}>{v}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderDurationPills = () => (
+    <View style={styles.pillRow}>
+      {([1, 2, 4, 6, 8, 12] as const).map((w) => (
+        <TouchableOpacity key={w} style={pill(duration === w)} onPress={() => setDuration(w)}>
+          <Text style={pillText(duration === w)}>{w}w</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderPricingSection = () => showPricing ? (
+    <>
+      <Text style={styles.sectionLabel}>Pricing</Text>
+      <View style={styles.pillRow}>
+        {(['spikes', 'money'] as const).map((t) => (
+          <TouchableOpacity key={t} style={pill(priceType === t)} onPress={() => setPriceType(t)}>
+            <Text style={pillText(priceType === t)}>{t}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <TextInput
+        style={styles.input}
+        placeholder="Price"
+        placeholderTextColor={C.textMuted}
+        value={price}
+        onChangeText={setPrice}
+        keyboardType="decimal-pad"
+      />
+    </>
+  ) : null;
+
+  const renderGradientBtn = (label: string, onPress: () => void, loading: boolean, icon?: React.ReactNode) => (
+    <TouchableOpacity style={styles.gradientBtn} onPress={onPress} activeOpacity={0.8} disabled={loading || !isAuthenticated || isGuest}>
+      <LinearGradient colors={[C.orange, C.orangeLight]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.gradientBtnInner}>
+        {icon}
+        <Text style={styles.gradientBtnText}>{loading ? 'Working...' : label}</Text>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={18} color="white" weight="fill" />
+          <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
-        <Text variant="h3" weight="bold" color="primary-foreground">
-          Create Program
-        </Text>
+        <Text style={styles.headerTitle}>Create Program</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <KeyboardAwareScreenScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
         extraScrollHeight={120}
       >
         <View style={styles.pageHeader}>
-          <Text variant="h3" weight="bold" color="foreground">
-            Create New Program
-          </Text>
-          <Text variant="body" color="muted">
-            Build a training program for your athletes or share with the community.
-          </Text>
+          <Text style={styles.pageTitle}>Create New Program</Text>
+          <Text style={styles.pageSubtitle}>Build a training program for your athletes or share with the community.</Text>
         </View>
 
         {!selectedMethod ? (
@@ -436,894 +365,476 @@ export const ProgramCreateScreen: React.FC = () => {
                 style={styles.methodCard}
                 activeOpacity={0.85}
                 onPress={() => {
-                  if (item.id === 'import') {
-                    setShowImportModal(true);
-                  } else {
-                    setSelectedMethod(item.id);
-                  }
+                  if (item.id === 'import') setShowImportModal(true);
+                  else setSelectedMethod(item.id);
                 }}
               >
-                <LinearGradient
-                  colors={theme.gradients.webPurple.colors}
-                  start={theme.gradients.webPurple.start}
-                  end={theme.gradients.webPurple.end}
-                  style={styles.methodCardContent}
-                >
-                  <View style={styles.methodIcon}>
-                    <item.Icon size={20} color="white" weight="fill" />
-                  </View>
-                  <Text variant="body" weight="bold" color="primary-foreground" style={styles.methodTitle}>
-                    {item.title}
-                  </Text>
-                  <Text variant="small" color="primary-foreground" style={styles.methodDescription}>
-                    {item.description}
-                  </Text>
-                </LinearGradient>
+                <View style={styles.methodIcon}>
+                  <item.Icon size={20} color={C.orange} weight="fill" />
+                </View>
+                <Text style={styles.methodTitle}>{item.title}</Text>
+                <Text style={styles.methodDescription}>{item.description}</Text>
               </TouchableOpacity>
             ))}
           </View>
         ) : (
-          <Button
-            variant="outline"
-            onPress={() => setSelectedMethod(null)}
-            style={styles.chooseMethodButton}
-          >
-            <ArrowLeft size={14} color={theme.colors.primaryForeground} weight="fill" />
-            <Text variant="small" weight="medium" color="primary-foreground" style={styles.chooseMethodText}>
-              Choose Different Method
-            </Text>
-          </Button>
+          <TouchableOpacity style={styles.backMethodBtn} onPress={() => setSelectedMethod(null)} activeOpacity={0.7}>
+            <ArrowLeft size={14} color={C.orange} weight="bold" />
+            <Text style={styles.backMethodText}>Choose Different Method</Text>
+          </TouchableOpacity>
         )}
 
         {selectedMethod === 'builder' && (
-          <Card style={styles.card}>
-            <CardHeader style={styles.cardHeader}>
-              <View style={styles.cardHeaderRow}>
-                <BookOpen size={16} color={theme.colors.primary} weight="fill" />
-                <CardTitle>Build Custom Program</CardTitle>
-              </View>
-              <Text variant="small" color="muted">
-                Create a structured training program with custom sessions and exercises.
-              </Text>
-            </CardHeader>
-            <CardContent style={{ gap: theme.spacing.md }}>
-              <TextInput
-                style={styles.input}
-                placeholder="Program title"
-                placeholderTextColor={theme.colors.textMuted}
-                value={title}
-                onChangeText={setTitle}
-              />
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Description"
-                placeholderTextColor={theme.colors.textMuted}
-                value={description}
-                onChangeText={setDescription}
-                multiline
-              />
-
-              <Text variant="body" weight="semiBold" color="foreground">
-                Visibility
-              </Text>
-              <View style={styles.pillRow}>
-                {(['public', 'private', 'premium'] as const).map((v) => (
-                  <TouchableOpacity
-                    key={v}
-                    style={pill(visibility === v)}
-                    onPress={() => {
-                      setVisibility(v);
-                      ensurePricing(v);
-                    }}
-                  >
-                    <Text
-                      variant="small"
-                      weight="medium"
-                      color={visibility === v ? 'foreground' : 'muted'}
-                      style={visibility === v ? styles.pillTextActive : undefined}
-                    >
-                      {v}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text variant="body" weight="semiBold" color="foreground">
-                Duration
-              </Text>
-              <View style={styles.pillRow}>
-                {([1, 2, 4, 6, 8, 12] as const).map((w) => (
-                  <TouchableOpacity key={w} style={pill(duration === w)} onPress={() => setDuration(w)}>
-                    <Text
-                      variant="small"
-                      weight="medium"
-                      color={duration === w ? 'foreground' : 'muted'}
-                      style={duration === w ? styles.pillTextActive : undefined}
-                    >
-                      {w}w
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {showPricing && (
-                <>
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Pricing
-                  </Text>
-                  <View style={styles.pillRow}>
-                    {(['spikes', 'money'] as const).map((t) => (
-                      <TouchableOpacity key={t} style={pill(priceType === t)} onPress={() => setPriceType(t)}>
-                        <Text
-                          variant="small"
-                          weight="medium"
-                          color={priceType === t ? 'foreground' : 'muted'}
-                          style={priceType === t ? styles.pillTextActive : undefined}
-                        >
-                          {t}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Price"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={price}
-                    onChangeText={setPrice}
-                    keyboardType="decimal-pad"
-                  />
-                </>
-              )}
-
-              <Button
-                variant="default"
-                size="lg"
-                onPress={handleCreateBuilder}
-                loading={createProgramMutation.isPending}
-                disabled={!isAuthenticated || isGuest}
-              >
-                <Check size={16} color="white" weight="fill" />
-                <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
-                  Create Program
-                </Text>
-              </Button>
-
-              {(!isAuthenticated || isGuest) && (
-                <Text variant="small" color="muted" style={styles.helperText}>
-                  Sign in to create programs.
-                </Text>
-              )}
-            </CardContent>
-          </Card>
+          <View style={styles.formCard}>
+            <View style={styles.formCardHeader}>
+              <BookOpen size={16} color={C.orange} weight="fill" />
+              <Text style={styles.formCardTitle}>Build Custom Program</Text>
+            </View>
+            <Text style={styles.formCardSubtitle}>Create a structured training program with custom sessions and exercises.</Text>
+            <View style={styles.formFields}>
+              <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={title} onChangeText={setTitle} />
+              <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={C.textMuted} value={description} onChangeText={setDescription} multiline />
+              <Text style={styles.sectionLabel}>Visibility</Text>
+              {renderVisibilityPills(visibility, setVisibility, ensurePricing)}
+              <Text style={styles.sectionLabel}>Duration</Text>
+              {renderDurationPills()}
+              {renderPricingSection()}
+              {renderGradientBtn('Create Program', handleCreateBuilder, createProgramMutation.isPending, <Check size={16} color="white" weight="fill" />)}
+              {(!isAuthenticated || isGuest) && <Text style={styles.helperText}>Sign in to create programs.</Text>}
+            </View>
+          </View>
         )}
 
         {selectedMethod === 'upload' && (
-          <Card style={styles.card}>
-            <CardHeader style={styles.cardHeader}>
-              <View style={styles.cardHeaderRow}>
-                <FileArrowUp size={16} color={theme.colors.primary} weight="fill" />
-                <CardTitle>Upload Program Document</CardTitle>
-              </View>
-              <Text variant="small" color="muted">
-                Share existing training documents in PDF or DOCX format.
-              </Text>
-            </CardHeader>
-            <CardContent style={{ gap: theme.spacing.md }}>
-              <TextInput
-                style={styles.input}
-                placeholder="Program title"
-                placeholderTextColor={theme.colors.textMuted}
-                value={title}
-                onChangeText={setTitle}
-              />
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Description"
-                placeholderTextColor={theme.colors.textMuted}
-                value={description}
-                onChangeText={setDescription}
-                multiline
-              />
-
+          <View style={styles.formCard}>
+            <View style={styles.formCardHeader}>
+              <FileArrowUp size={16} color={C.orange} weight="fill" />
+              <Text style={styles.formCardTitle}>Upload Program Document</Text>
+            </View>
+            <Text style={styles.formCardSubtitle}>Share existing training documents in PDF or DOCX format.</Text>
+            <View style={styles.formFields}>
+              <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={title} onChangeText={setTitle} />
+              <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={C.textMuted} value={description} onChangeText={setDescription} multiline />
               <TouchableOpacity style={styles.uploadPicker} onPress={pickUploadFile}>
-                <Paperclip size={16} color="white" weight="fill" />
-                <Text variant="small" weight="medium" color="primary-foreground">
-                  {uploadFile?.name ?? 'Choose file'}
-                </Text>
+                <Paperclip size={16} color={C.textPrimary} weight="fill" />
+                <Text style={styles.uploadPickerText}>{uploadFile?.name ?? 'Choose file'}</Text>
               </TouchableOpacity>
-              <Text variant="small" color="muted">
-                Supported formats: PDF, DOC, DOCX (max 10MB)
-              </Text>
-
-              <Text variant="body" weight="semiBold" color="foreground">
-                Visibility
-              </Text>
-              <View style={styles.pillRow}>
-                {(['public', 'private', 'premium'] as const).map((v) => (
-                  <TouchableOpacity
-                    key={v}
-                    style={pill(visibility === v)}
-                    onPress={() => {
-                      setVisibility(v);
-                      ensurePricing(v);
-                    }}
-                  >
-                    <Text
-                      variant="small"
-                      weight="medium"
-                      color={visibility === v ? 'foreground' : 'muted'}
-                      style={visibility === v ? styles.pillTextActive : undefined}
-                    >
-                      {v}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {showPricing && (
-                <>
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Pricing
-                  </Text>
-                  <View style={styles.pillRow}>
-                    {(['spikes', 'money'] as const).map((t) => (
-                      <TouchableOpacity key={t} style={pill(priceType === t)} onPress={() => setPriceType(t)}>
-                        <Text
-                          variant="small"
-                          weight="medium"
-                          color={priceType === t ? 'foreground' : 'muted'}
-                          style={priceType === t ? styles.pillTextActive : undefined}
-                        >
-                          {t}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Price"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={price}
-                    onChangeText={setPrice}
-                    keyboardType="decimal-pad"
-                  />
-                </>
-              )}
-
-              <Button
-                variant="default"
-                size="lg"
-                onPress={() => uploadProgramMutation.mutate()}
-                loading={uploadProgramMutation.isPending}
-                disabled={!isAuthenticated || isGuest}
-              >
-                <CloudArrowUp size={16} color="white" weight="fill" />
-                <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
-                  Upload Program
-                </Text>
-              </Button>
-            </CardContent>
-          </Card>
+              <Text style={styles.helperText}>Supported formats: PDF, DOC, DOCX (max 10MB)</Text>
+              <Text style={styles.sectionLabel}>Visibility</Text>
+              {renderVisibilityPills(visibility, setVisibility, ensurePricing)}
+              <Text style={styles.sectionLabel}>Duration</Text>
+              {renderDurationPills()}
+              {renderPricingSection()}
+              {renderGradientBtn('Upload Program', () => uploadProgramMutation.mutate(), uploadProgramMutation.isPending, <CloudArrowUp size={16} color="white" weight="fill" />)}
+            </View>
+          </View>
         )}
 
         {selectedMethod === 'text' && (
-          <Card style={styles.card}>
-            <CardHeader style={styles.cardHeader}>
-              <View style={styles.cardHeaderRow}>
-                <Keyboard size={16} color={theme.colors.primary} weight="fill" />
-                <CardTitle>Text Based Program</CardTitle>
-              </View>
-              <Text variant="small" color="muted">
-                Create a text-based program that displays as a scrollable list in Practice view.
-              </Text>
-            </CardHeader>
-            <CardContent style={{ gap: theme.spacing.md }}>
-              <TextInput
-                style={styles.input}
-                placeholder="Program title"
-                placeholderTextColor={theme.colors.textMuted}
-                value={title}
-                onChangeText={setTitle}
-              />
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Description"
-                placeholderTextColor={theme.colors.textMuted}
-                value={description}
-                onChangeText={setDescription}
-                multiline
-              />
-              <TextInput
-                style={[styles.input, styles.textAreaLarge]}
-                placeholder="Program content"
-                placeholderTextColor={theme.colors.textMuted}
-                value={textContent}
-                onChangeText={setTextContent}
-                multiline
-              />
-
-              <Text variant="body" weight="semiBold" color="foreground">
-                Visibility
-              </Text>
-              <View style={styles.pillRow}>
-                {(['public', 'private', 'premium'] as const).map((v) => (
-                  <TouchableOpacity
-                    key={v}
-                    style={pill(visibility === v)}
-                    onPress={() => {
-                      setVisibility(v);
-                      ensurePricing(v);
-                    }}
-                  >
-                    <Text
-                      variant="small"
-                      weight="medium"
-                      color={visibility === v ? 'foreground' : 'muted'}
-                      style={visibility === v ? styles.pillTextActive : undefined}
-                    >
-                      {v}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {showPricing && (
-                <>
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Pricing
-                  </Text>
-                  <View style={styles.pillRow}>
-                    {(['spikes', 'money'] as const).map((t) => (
-                      <TouchableOpacity key={t} style={pill(priceType === t)} onPress={() => setPriceType(t)}>
-                        <Text
-                          variant="small"
-                          weight="medium"
-                          color={priceType === t ? 'foreground' : 'muted'}
-                          style={priceType === t ? styles.pillTextActive : undefined}
-                        >
-                          {t}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Price"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={price}
-                    onChangeText={setPrice}
-                    keyboardType="decimal-pad"
-                  />
-                </>
-              )}
-
-              <Button
-                variant="default"
-                size="lg"
-                onPress={handleCreateText}
-                loading={createProgramMutation.isPending}
-                disabled={!isAuthenticated || isGuest}
-              >
-                <Check size={16} color="white" weight="fill" />
-                <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
-                  Create Text Program
-                </Text>
-              </Button>
-            </CardContent>
-          </Card>
+          <View style={styles.formCard}>
+            <View style={styles.formCardHeader}>
+              <Keyboard size={16} color={C.orange} weight="fill" />
+              <Text style={styles.formCardTitle}>Text Based Program</Text>
+            </View>
+            <Text style={styles.formCardSubtitle}>Create a text-based program that displays as a scrollable list in Practice view.</Text>
+            <View style={styles.formFields}>
+              <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={title} onChangeText={setTitle} />
+              <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={C.textMuted} value={description} onChangeText={setDescription} multiline />
+              <TextInput style={[styles.input, styles.textAreaLarge]} placeholder="Program content" placeholderTextColor={C.textMuted} value={textContent} onChangeText={setTextContent} multiline />
+              <Text style={styles.sectionLabel}>Visibility</Text>
+              {renderVisibilityPills(visibility, setVisibility, ensurePricing)}
+              {renderPricingSection()}
+              {renderGradientBtn('Create Text Program', handleCreateText, createProgramMutation.isPending, <Check size={16} color="white" weight="fill" />)}
+            </View>
+          </View>
         )}
 
         {selectedMethod === 'sprinthia' && (
-          <Card style={[styles.card, styles.sprinthiaCard]}>
-            <CardHeader style={styles.cardHeader}>
-              <View style={styles.cardHeaderRow}>
-                <Robot size={16} color="#f59e0b" weight="fill" />
-                <CardTitle>Build With Sprinthia AI</CardTitle>
-              </View>
-              <Text variant="small" color="muted">
-                Generate an AI-powered text program and then edit it before saving.
-              </Text>
-            </CardHeader>
-            <CardContent style={{ gap: theme.spacing.md }}>
+          <View style={[styles.formCard, { borderColor: 'rgba(245,158,11,0.2)' }]}>
+            <View style={styles.formCardHeader}>
+              <Robot size={16} color="#f59e0b" weight="fill" />
+              <Text style={styles.formCardTitle}>Build With Sprinthia AI</Text>
+            </View>
+            <Text style={styles.formCardSubtitle}>Generate an AI-powered text program and then edit it before saving.</Text>
+            <View style={styles.formFields}>
               {!generatedProgram ? (
                 <>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Program title"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={title}
-                    onChangeText={setTitle}
-                  />
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder="Description (optional)"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={description}
-                    onChangeText={setDescription}
-                    multiline
-                  />
+                  <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={title} onChangeText={setTitle} />
+                  <TextInput style={[styles.input, styles.textArea]} placeholder="Description (optional)" placeholderTextColor={C.textMuted} value={description} onChangeText={setDescription} multiline />
 
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Program Length
-                  </Text>
+                  <Text style={styles.sectionLabel}>Program Length</Text>
                   <View style={styles.pillRow}>
                     {[1, 2, 4, 6, 8, 12].map((weeks) => (
-                      <TouchableOpacity
-                        key={weeks}
-                        style={pill(sprinthiaData.totalLengthWeeks === weeks)}
-                        onPress={() =>
-                          setSprinthiaData((prev) => ({ ...prev, totalLengthWeeks: weeks }))
-                        }
-                      >
-                        <Text
-                          variant="small"
-                          weight="medium"
-                          color={sprinthiaData.totalLengthWeeks === weeks ? 'foreground' : 'muted'}
-                          style={
-                            sprinthiaData.totalLengthWeeks === weeks ? styles.pillTextActive : undefined
-                          }
-                        >
-                          {weeks}w
-                        </Text>
+                      <TouchableOpacity key={weeks} style={pill(sprinthiaData.totalLengthWeeks === weeks)} onPress={() => setSprinthiaData((prev) => ({ ...prev, totalLengthWeeks: weeks }))}>
+                        <Text style={pillText(sprinthiaData.totalLengthWeeks === weeks)}>{weeks}w</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
 
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Blocks
-                  </Text>
+                  <Text style={styles.sectionLabel}>Blocks</Text>
                   <View style={styles.pillRow}>
                     {[1, 2, 3, 4, 5, 6].map((blocks) => (
-                      <TouchableOpacity
-                        key={blocks}
-                        style={pill(sprinthiaData.blocks === blocks)}
-                        onPress={() => setSprinthiaData((prev) => ({ ...prev, blocks }))}
-                      >
-                        <Text
-                          variant="small"
-                          weight="medium"
-                          color={sprinthiaData.blocks === blocks ? 'foreground' : 'muted'}
-                          style={sprinthiaData.blocks === blocks ? styles.pillTextActive : undefined}
-                        >
-                          {blocks}
-                        </Text>
+                      <TouchableOpacity key={blocks} style={pill(sprinthiaData.blocks === blocks)} onPress={() => setSprinthiaData((prev) => ({ ...prev, blocks }))}>
+                        <Text style={pillText(sprinthiaData.blocks === blocks)}>{blocks}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
 
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Workouts Per Week
-                  </Text>
+                  <Text style={styles.sectionLabel}>Workouts Per Week</Text>
                   <View style={styles.pillRow}>
                     {[2, 3, 4, 5, 6, 7].map((count) => (
-                      <TouchableOpacity
-                        key={count}
-                        style={pill(sprinthiaData.workoutsPerWeek === count)}
-                        onPress={() => setSprinthiaData((prev) => ({ ...prev, workoutsPerWeek: count }))}
-                      >
-                        <Text
-                          variant="small"
-                          weight="medium"
-                          color={sprinthiaData.workoutsPerWeek === count ? 'foreground' : 'muted'}
-                          style={
-                            sprinthiaData.workoutsPerWeek === count ? styles.pillTextActive : undefined
-                          }
-                        >
-                          {count}
-                        </Text>
+                      <TouchableOpacity key={count} style={pill(sprinthiaData.workoutsPerWeek === count)} onPress={() => setSprinthiaData((prev) => ({ ...prev, workoutsPerWeek: count }))}>
+                        <Text style={pillText(sprinthiaData.workoutsPerWeek === count)}>{count}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
 
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Gym Workouts Per Week
-                  </Text>
+                  <Text style={styles.sectionLabel}>Gym Workouts Per Week</Text>
                   <View style={styles.pillRow}>
                     {[0, 1, 2, 3, 4, 5].map((count) => (
-                      <TouchableOpacity
-                        key={count}
-                        style={pill(sprinthiaData.gymWorkoutsPerWeek === count)}
-                        onPress={() =>
-                          setSprinthiaData((prev) => ({ ...prev, gymWorkoutsPerWeek: count }))
-                        }
-                      >
-                        <Text
-                          variant="small"
-                          weight="medium"
-                          color={sprinthiaData.gymWorkoutsPerWeek === count ? 'foreground' : 'muted'}
-                          style={
-                            sprinthiaData.gymWorkoutsPerWeek === count ? styles.pillTextActive : undefined
-                          }
-                        >
-                          {count}
-                        </Text>
+                      <TouchableOpacity key={count} style={pill(sprinthiaData.gymWorkoutsPerWeek === count)} onPress={() => setSprinthiaData((prev) => ({ ...prev, gymWorkoutsPerWeek: count }))}>
+                        <Text style={pillText(sprinthiaData.gymWorkoutsPerWeek === count)}>{count}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
 
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Block Focus
-                  </Text>
+                  <Text style={styles.sectionLabel}>Block Focus</Text>
                   <View style={styles.pillRow}>
                     {[
                       { id: 'speed', label: 'Speed' },
-                      { id: 'speed-maintenance', label: 'Speed Maintenance' },
-                      { id: 'speed-endurance', label: 'Speed Endurance' },
+                      { id: 'speed-maintenance', label: 'Speed Maint.' },
+                      { id: 'speed-endurance', label: 'Speed End.' },
                       { id: 'mixed', label: 'Mixed' },
                       { id: 'short-to-long', label: 'Short to Long' },
                       { id: 'long-to-short', label: 'Long to Short' },
                     ].map((option) => (
-                      <TouchableOpacity
-                        key={option.id}
-                        style={pill(sprinthiaData.blockFocus === option.id)}
-                        onPress={() =>
-                          setSprinthiaData((prev) => ({
-                            ...prev,
-                            blockFocus: option.id as SprinthiaFormData['blockFocus'],
-                          }))
-                        }
-                      >
-                        <Text
-                          variant="small"
-                          weight="medium"
-                          color={sprinthiaData.blockFocus === option.id ? 'foreground' : 'muted'}
-                          style={
-                            sprinthiaData.blockFocus === option.id ? styles.pillTextActive : undefined
-                          }
-                        >
-                          {option.label}
-                        </Text>
+                      <TouchableOpacity key={option.id} style={pill(sprinthiaData.blockFocus === option.id)} onPress={() => setSprinthiaData((prev) => ({ ...prev, blockFocus: option.id as SprinthiaFormData['blockFocus'] }))}>
+                        <Text style={pillText(sprinthiaData.blockFocus === option.id)}>{option.label}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
 
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder="Describe your goals and AI prompt"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={sprinthiaData.aiPrompt}
-                    onChangeText={(value) => setSprinthiaData((prev) => ({ ...prev, aiPrompt: value }))}
-                    multiline
-                  />
+                  <TextInput style={[styles.input, styles.textArea]} placeholder="Describe your goals and AI prompt" placeholderTextColor={C.textMuted} value={sprinthiaData.aiPrompt} onChangeText={(value) => setSprinthiaData((prev) => ({ ...prev, aiPrompt: value }))} multiline />
 
-                  <Button
-                    variant="default"
-                    size="lg"
-                    onPress={() => generateSprinthiaMutation.mutate()}
-                    loading={generateSprinthiaMutation.isPending}
-                    disabled={!isAuthenticated || isGuest}
-                  >
-                    <MagicWand size={16} color="white" weight="fill" />
-                    <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
-                      Generate Training Program
-                    </Text>
-                  </Button>
+                  {renderGradientBtn('Generate Training Program', () => generateSprinthiaMutation.mutate(), generateSprinthiaMutation.isPending, <MagicWand size={16} color="white" weight="fill" />)}
                 </>
               ) : (
                 <>
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Generated Program
-                  </Text>
+                  <Text style={styles.sectionLabel}>Generated Program</Text>
                   <View style={styles.generatedBox}>
-                    <Text variant="small" color="foreground" style={styles.monoText}>
-                      {generatedProgram}
-                    </Text>
+                    <Text style={styles.monoText}>{generatedProgram}</Text>
                   </View>
                   <View style={styles.generatedActions}>
-                    <Button variant="default" size="md" onPress={continueToEditSprinthia}>
-                      <PencilSimple size={14} color="white" weight="fill" />
-                      <Text variant="small" weight="bold" color="primary-foreground" style={styles.buttonText}>
-                        Continue to Edit
-                      </Text>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="md"
-                      onPress={() => regenerateSprinthiaMutation.mutate()}
-                      loading={regenerateSprinthiaMutation.isPending}
-                    >
-                      <Text variant="small" weight="medium" color="primary-foreground">
-                        Rewrite
-                      </Text>
-                    </Button>
+                    {renderGradientBtn('Continue to Edit', continueToEditSprinthia, false, <PencilSimple size={14} color="white" weight="fill" />)}
+                    <TouchableOpacity style={styles.outlineBtn} onPress={() => regenerateSprinthiaMutation.mutate()} disabled={regenerateSprinthiaMutation.isPending} activeOpacity={0.7}>
+                      <Text style={styles.outlineBtnText}>{regenerateSprinthiaMutation.isPending ? 'Rewriting...' : 'Rewrite'}</Text>
+                    </TouchableOpacity>
                   </View>
                 </>
               )}
-            </CardContent>
-          </Card>
+            </View>
+          </View>
         )}
 
-        <Modal
-          visible={showImportModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowImportModal(false)}
-        >
+        <Modal visible={showImportModal} transparent animationType="fade" onRequestClose={() => setShowImportModal(false)}>
           <Pressable style={styles.modalOverlay} onPress={() => setShowImportModal(false)}>
             <Pressable style={styles.importModal} onPress={() => undefined}>
-              <KeyboardAwareScreenScrollView
-                showsVerticalScrollIndicator={false}
-                extraScrollHeight={80}
-                contentContainerStyle={{ gap: theme.spacing.md }}
-              >
-                <Text variant="h4" weight="bold" color="foreground" style={styles.importTitle}>
-                  Import Program from Google Sheet
-                </Text>
-                <Text variant="small" color="muted">
-                  Provide a public Google Sheet URL and program details.
-                </Text>
-                <View style={styles.importFields}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Program title"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={importTitle}
-                    onChangeText={setImportTitle}
-                  />
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder="Description"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={importDescription}
-                    onChangeText={setImportDescription}
-                    multiline
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Google Sheet URL"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={importSheetUrl}
-                    onChangeText={setImportSheetUrl}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Category (sprint, distance, jumps...)"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={importCategory}
-                    onChangeText={setImportCategory}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Level (beginner, intermediate, advanced)"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={importLevel}
-                    onChangeText={setImportLevel}
-                  />
-                  <Text variant="body" weight="semiBold" color="foreground">
-                    Visibility
-                  </Text>
-                  <View style={styles.pillRow}>
-                    {(['public', 'private', 'premium'] as const).map((v) => (
-                      <TouchableOpacity
-                        key={v}
-                        style={pill(importVisibility === v)}
-                        onPress={() => setImportVisibility(v)}
-                      >
-                        <Text
-                          variant="small"
-                          weight="medium"
-                          color={importVisibility === v ? 'foreground' : 'muted'}
-                          style={importVisibility === v ? styles.pillTextActive : undefined}
-                        >
-                          {v}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Duration (days)"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={importDuration}
-                    onChangeText={setImportDuration}
-                    keyboardType="number-pad"
-                  />
+              <KeyboardAwareScreenScrollView showsVerticalScrollIndicator={false} extraScrollHeight={80} contentContainerStyle={{ gap: 12 }}>
+                <Text style={styles.importModalTitle}>Import from Google Sheet</Text>
+                <Text style={styles.formCardSubtitle}>Provide a public Google Sheet URL and program details.</Text>
+                <View style={styles.formFields}>
+                  <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={importTitle} onChangeText={setImportTitle} />
+                  <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={C.textMuted} value={importDescription} onChangeText={setImportDescription} multiline />
+                  <TextInput style={styles.input} placeholder="Google Sheet URL" placeholderTextColor={C.textMuted} value={importSheetUrl} onChangeText={setImportSheetUrl} />
+                  <TextInput style={styles.input} placeholder="Category (sprint, distance, jumps...)" placeholderTextColor={C.textMuted} value={importCategory} onChangeText={setImportCategory} />
+                  <TextInput style={styles.input} placeholder="Level (beginner, intermediate, advanced)" placeholderTextColor={C.textMuted} value={importLevel} onChangeText={setImportLevel} />
+                  <Text style={styles.sectionLabel}>Visibility</Text>
+                  {renderVisibilityPills(importVisibility, setImportVisibility)}
+                  <TextInput style={styles.input} placeholder="Duration (days)" placeholderTextColor={C.textMuted} value={importDuration} onChangeText={setImportDuration} keyboardType="number-pad" />
                 </View>
                 <View style={styles.importActions}>
-                  <Button variant="outline" size="md" onPress={() => setShowImportModal(false)}>
-                    <Text variant="small" weight="medium" color="primary-foreground">
-                      Cancel
-                    </Text>
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="md"
-                    onPress={() => importSheetMutation.mutate()}
-                    loading={importSheetMutation.isPending}
-                  >
-                    <Text variant="small" weight="bold" color="primary-foreground">
-                      Import Program
-                    </Text>
-                  </Button>
+                  <TouchableOpacity style={styles.outlineBtn} onPress={() => setShowImportModal(false)}>
+                    <Text style={styles.outlineBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                  {renderGradientBtn('Import Program', () => importSheetMutation.mutate(), importSheetMutation.isPending)}
                 </View>
               </KeyboardAwareScreenScrollView>
             </Pressable>
           </Pressable>
         </Modal>
       </KeyboardAwareScreenScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.textPrimary,
   },
   headerSpacer: { flex: 1 },
   content: {
-    padding: theme.spacing.xl,
-    gap: theme.spacing.lg,
+    padding: 20,
+    gap: 16,
   },
   pageHeader: {
-    gap: theme.spacing.sm,
+    gap: 6,
+  },
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: C.textPrimary,
+    letterSpacing: -0.3,
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    color: C.textMuted,
+    lineHeight: 20,
   },
   methodGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    gap: 10,
     justifyContent: 'space-between',
   },
   methodCard: {
     width: '48%',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: theme.colors.webBorderLight,
-  },
-  methodCardActive: {
-    borderColor: theme.colors.primary,
-  },
-  methodCardContent: {
-    minHeight: 140,
-    padding: theme.spacing.md,
+    borderRadius: 14,
+    backgroundColor: C.card,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 16,
+    minHeight: 130,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   methodIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,122,0,0.1)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.2)',
   },
   methodTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: C.textPrimary,
     textAlign: 'center',
   },
   methodDescription: {
+    fontSize: 11,
+    color: C.textMuted,
     textAlign: 'center',
-    opacity: 0.85,
+    lineHeight: 15,
   },
-  card: {
-    marginBottom: 0,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.webCardBorder,
-  },
-  cardHeader: {
-    gap: theme.spacing.sm,
-  },
-  cardHeaderRow: {
+  backMethodBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: 6,
+    paddingVertical: 10,
+  },
+  backMethodText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.orange,
+  },
+  formCard: {
+    borderRadius: 14,
+    backgroundColor: C.card,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 16,
+    gap: 10,
+  },
+  formCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  formCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  formCardSubtitle: {
+    fontSize: 13,
+    color: C.textMuted,
+    lineHeight: 18,
+  },
+  formFields: {
+    gap: 12,
+    marginTop: 4,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.textPrimary,
+    marginTop: 4,
   },
   input: {
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    color: 'white',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 0.5,
+    borderColor: C.border,
+    borderRadius: 12,
+    padding: 12,
+    color: C.textPrimary,
+    backgroundColor: C.glass,
+    fontSize: 14,
   },
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
     lineHeight: 22,
   },
+  textAreaLarge: {
+    minHeight: 200,
+    textAlignVertical: 'top',
+    lineHeight: 22,
+  },
   pillRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   pill: {
-    minWidth: 84,
+    minWidth: 60,
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    backgroundColor: C.glass,
   },
   pillActive: {
-    borderColor: 'white',
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    borderColor: 'rgba(255,122,0,0.3)',
+  },
+  pillText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: C.textMuted,
   },
   pillTextActive: {
-    color: theme.colors.webPurpleStart,
+    color: C.orange,
+    fontWeight: '600',
   },
-  buttonText: { marginLeft: theme.spacing.sm },
-  helperText: { textAlign: 'center', lineHeight: 18 },
-  chooseMethodButton: {
-    alignSelf: 'flex-start',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  gradientBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 4,
   },
-  chooseMethodText: {
-    marginLeft: theme.spacing.sm,
+  gradientBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  gradientBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  outlineBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
+  },
+  outlineBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.textMuted,
   },
   uploadPicker: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    borderStyle: 'dashed',
+    backgroundColor: C.glass,
   },
-  textAreaLarge: {
-    minHeight: 220,
-    textAlignVertical: 'top',
-    lineHeight: 20,
+  uploadPickerText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: C.textSecondary,
   },
-  sprinthiaCard: {
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+  helperText: {
+    fontSize: 12,
+    color: C.textMuted,
   },
   generatedBox: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    maxHeight: 320,
+    backgroundColor: C.glass,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    maxHeight: 300,
+  },
+  monoText: {
+    fontFamily: 'Courier',
+    fontSize: 12,
+    color: C.textPrimary,
+    lineHeight: 18,
   },
   generatedActions: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 4,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
-    padding: theme.spacing.lg,
+    paddingHorizontal: 20,
   },
   importModal: {
-    backgroundColor: '#0f172a',
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.webBorderLight,
-    gap: theme.spacing.md,
-    maxHeight: '85%',
+    backgroundColor: C.card,
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 20,
+    maxHeight: '80%',
   },
-  importTitle: {
-    marginBottom: theme.spacing.xs,
-  },
-  importFields: {
-    gap: theme.spacing.md,
+  importModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.textPrimary,
+    textAlign: 'center',
   },
   importActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.sm,
+    gap: 10,
+    marginTop: 8,
   },
 });

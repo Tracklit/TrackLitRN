@@ -101,6 +101,9 @@ migrations/          - Database migrations
 - 2026-02-20: Account Settings: full redesign with dark AAA theme (#0E0F14), stripped to essentials (Full Name, Username, Email, Change Password modal, Athlete/Coach toggle, Private Profile, Push Notifications, Show Ticker toggles), Phosphor icons, orange accent gradient save button, gear icon in PublicProfileScreen header
 - 2026-02-20: Drawer: renamed "Profile Settings" to "Account & Settings", now navigates to Settings screen (not old ProfileScreen tab)
 - 2026-02-20: Show Ticker toggle fix: HomeScreen now re-reads carousel_hidden on focus (useFocusEffect) so toggling back on takes effect immediately
+- 2026-02-20: ProgramsScreen: full dark AAA restyle — #0E0F14 bg, orange gradient FAB, glass search/filter UI, dark tabs with orange active state, glass program cards with orange gradient Continue buttons, removed Card/Badge component usage, orange accent badges
+- 2026-02-20: ProgramCreateScreen: full dark AAA restyle — dark bg (#0E0F14), orange gradient submit buttons, glass method selection cards with orange icon wrappers, dark input fields, glass pill selectors, removed Card/Button component usage for forms
+- 2026-02-20: HomeScreen Practice card: fetches today's session from selected program via AsyncStorage programId, shows session title/description, day progress (X/Y completed), progress bar, program name; falls back to next incomplete session if no date match
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
 - 2026-02-13: Switched all icons from FontAwesome5 to Phosphor (filled weight)
