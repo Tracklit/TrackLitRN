@@ -281,15 +281,6 @@ export const ProgramEditorScreen: React.FC = () => {
 
       console.warn('[ProgramEditor] Program + sessions saved via PUT');
       invalidateProgramQueries();
-      try {
-        const refreshed = await programQuery.refetch();
-        if (refreshed.data) {
-          populateFromProgram(refreshed.data);
-          console.warn('[ProgramEditor] State refreshed from server after save');
-        }
-      } catch (refetchErr) {
-        console.warn('[ProgramEditor] Refetch after save failed, keeping local state');
-      }
       if (!silent) {
         showToast('Sessions saved successfully');
       }
@@ -357,15 +348,6 @@ export const ProgramEditorScreen: React.FC = () => {
         }
 
         invalidateProgramQueries();
-        try {
-          const refreshed = await programQuery.refetch();
-          if (refreshed.data) {
-            populateFromProgram(refreshed.data);
-            console.warn('[ProgramEditor] State refreshed from server after fallback save');
-          }
-        } catch (refetchErr) {
-          console.warn('[ProgramEditor] Refetch after fallback save failed, keeping local state');
-        }
         if (!silent) {
           showToast('Sessions saved successfully');
         }
@@ -389,8 +371,6 @@ export const ProgramEditorScreen: React.FC = () => {
     buildSessionPayload,
     invalidateProgramQueries,
     showToast,
-    populateFromProgram,
-    programQuery,
   ]);
 
   const handleOpenDay = (dayNumber: number) => {
