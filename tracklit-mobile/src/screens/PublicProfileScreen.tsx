@@ -583,9 +583,14 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                     <View style={styles.athleteImageRow}>
                       <TouchableOpacity
                         style={styles.athleteImageContainer}
-                        onPress={() => isEditing && setShowPhotoModal('action')}
-                        activeOpacity={isEditing ? 0.7 : 1}
-                        disabled={!isEditing}
+                        onPress={() => {
+                          if (isOwnProfile) {
+                            if (!isEditing) startEditing();
+                            setShowPhotoModal('action');
+                          }
+                        }}
+                        activeOpacity={isOwnProfile ? 0.7 : 1}
+                        disabled={!isOwnProfile}
                       >
                         {displayActionShot ? (
                           <Image source={{ uri: displayActionShot }} style={styles.athleteImage} />
