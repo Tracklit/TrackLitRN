@@ -8,6 +8,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Image,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { PencilSimpleLine, Heart, ChatCircle, PaperPlaneTilt } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
@@ -57,9 +58,134 @@ export const FeedScreen: React.FC = () => {
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerText, setComposerText] = useState('');
 
+  const PLACEHOLDER_FEED: FeedItem[] = [
+    {
+      id: 1001,
+      userId: 1,
+      name: 'Alex R.',
+      username: 'speedster_pro',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=11',
+      content: 'Finished 6x100m sprint session with excellent form. Felt strong on the blocks and maintained good posture through the drive phase.',
+      createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+      likesCount: 12,
+      commentsCount: 3,
+      isLiked: false,
+      isOwnPost: false,
+    },
+    {
+      id: 1002,
+      userId: 2,
+      name: 'Sarah M.',
+      username: 'sarah_m_runner',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=5',
+      content: 'Just joined the TrackLit community! Excited to connect with other athletes and track my progress this season.',
+      createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+      likesCount: 8,
+      commentsCount: 5,
+      isLiked: true,
+      isOwnPost: false,
+    },
+    {
+      id: 1003,
+      userId: 3,
+      name: 'Coach Jones',
+      username: 'coach_jones',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=12',
+      content: 'New meet scheduled for April 15th at Metro Stadium. Events include 100m, 200m, 400m, and 4x100m relay. Make sure your entries are in by Friday!',
+      createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      likesCount: 24,
+      commentsCount: 7,
+      isLiked: false,
+      isOwnPost: false,
+    },
+    {
+      id: 1004,
+      userId: 4,
+      name: 'Mia T.',
+      username: 'mia_track',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=9',
+      content: 'Took an easy recovery day with stretching and foam rolling. Feeling fresh for tomorrow\'s tempo run. Remember — rest days are training days too!',
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      likesCount: 15,
+      commentsCount: 2,
+      isLiked: false,
+      isOwnPost: false,
+    },
+    {
+      id: 1005,
+      userId: 5,
+      name: 'Marcus D.',
+      username: 'hurdle_king',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=13',
+      content: 'Worked on 3-step rhythm over 5 hurdles. Coach said my trail leg is improving. PB on the last rep! 🔥',
+      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+      likesCount: 31,
+      commentsCount: 9,
+      isLiked: true,
+      isOwnPost: false,
+    },
+    {
+      id: 1006,
+      userId: 6,
+      name: 'Coach Rivera',
+      username: 'coach_rivera',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=14',
+      content: 'Congrats to all athletes who competed today! 3 new personal bests recorded across the squad. Proud of the work everyone is putting in.',
+      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+      likesCount: 42,
+      commentsCount: 11,
+      isLiked: false,
+      isOwnPost: false,
+    },
+    {
+      id: 1007,
+      userId: 7,
+      name: 'Ella W.',
+      username: 'ella_sprints',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=16',
+      content: 'Starting an 8-week speed endurance block on Monday. Focus on lactate threshold and race-pace training. Who else is in prep season?',
+      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      likesCount: 18,
+      commentsCount: 6,
+      isLiked: false,
+      isOwnPost: false,
+    },
+    {
+      id: 1008,
+      userId: 8,
+      name: 'Jordan K.',
+      username: 'jordan_k',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=8',
+      content: 'Just joined the Sprint Squad training group! Looking forward to pushing each other this season. Let\'s get faster together.',
+      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+      likesCount: 9,
+      commentsCount: 4,
+      isLiked: false,
+      isOwnPost: false,
+    },
+    {
+      id: 1009,
+      userId: 9,
+      name: 'Quinn L.',
+      username: 'dash_quinn',
+      profileImageUrl: 'https://i.pravatar.cc/150?img=33',
+      content: 'Visualized my race plan for Saturday. Feeling confident about the 200m. Goal: sub-22 seconds. Mind and body aligned.',
+      createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+      likesCount: 27,
+      commentsCount: 8,
+      isLiked: true,
+      isOwnPost: false,
+    },
+  ];
+
   const feedQuery = useQuery({
     queryKey: ['feed', filter],
     queryFn: () => apiRequest<FeedItem[]>(`/api/feed?filter=${filter}`),
+    placeholderData: PLACEHOLDER_FEED,
+    select: (data: FeedItem[]) => {
+      if (!data || data.length === 0) return PLACEHOLDER_FEED;
+      return data;
+    },
   });
 
   const likeMutation = useMutation({
@@ -122,56 +248,78 @@ export const FeedScreen: React.FC = () => {
     !!feedError &&
     /unauthorized|401|login required/i.test(feedError.message ?? '');
 
-  const renderItem = ({ item }: { item: FeedItem }) => (
-    <View style={styles.card}>
-      <TouchableOpacity
-        style={styles.cardHeader}
-        onPress={() => navigation.navigate('FeedPost', { id: item.id })}
-      >
-        <Avatar
-          fallback={item.name?.slice(0, 2)}
-          size="md"
-          style={styles.cardAvatar}
-        />
-        <View style={styles.cardHeaderText}>
-          <Text variant="body" weight="semiBold" color="foreground">
-            {item.name || 'TrackLit Athlete'}
-          </Text>
-          <Text variant="small" color="muted">
-            {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
-          </Text>
+  const [localLikes, setLocalLikes] = useState<Record<number, boolean>>({});
+
+  const handleLocalLike = (item: FeedItem) => {
+    if (!canInteract) {
+      Alert.alert('Login required', 'Sign in to like posts.');
+      return;
+    }
+    setLocalLikes(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+    handleToggleLike(item.id);
+  };
+
+  const renderItem = ({ item }: { item: FeedItem }) => {
+    const liked = localLikes[item.id] !== undefined ? localLikes[item.id] : item.isLiked;
+    const likeCount = item.likesCount + (liked && !item.isLiked ? 1 : !liked && item.isLiked ? -1 : 0);
+    const hasProfileImage = !!item.profileImageUrl;
+    const initial = (item.name?.[0] || item.username?.[0] || '?').toUpperCase();
+
+    return (
+      <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.cardHeader}
+          onPress={() => navigation.navigate('FeedPost', { id: item.id })}
+        >
+          <View style={styles.avatarContainer}>
+            {hasProfileImage ? (
+              <Image source={{ uri: item.profileImageUrl! }} style={styles.avatarImage} />
+            ) : (
+              <Avatar fallback={initial} size="md" style={styles.cardAvatar} />
+            )}
+          </View>
+          <View style={styles.cardHeaderText}>
+            <Text variant="body" weight="semiBold" color="foreground">
+              {item.name || 'TrackLit Athlete'}
+            </Text>
+            <Text variant="small" color="muted">
+              {item.username ? `@${item.username} · ` : ''}{formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {item.content && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('FeedPost', { id: item.id })}
+          >
+            <Text variant="body" color="foreground" style={styles.cardContentText}>
+              {item.content}
+            </Text>
+          </TouchableOpacity>
+        )}
+        <View style={styles.cardFooter}>
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={() => handleLocalLike(item)}
+            disabled={likeMutation.isPending}
+          >
+            <Heart size={16} color={liked ? '#FF9800' : '#94a3b8'} weight={liked ? 'fill' : 'regular'} />
+            <Text variant="small" color={liked ? 'primary' : 'muted'} style={styles.socialLabel}>
+              {likeCount}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={() => navigation.navigate('FeedPost', { id: item.id })}
+          >
+            <ChatCircle size={16} color="#94a3b8" weight="regular" />
+            <Text variant="small" color="muted" style={styles.socialLabel}>
+              {item.commentsCount}
+            </Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
-      {item.content && (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('FeedPost', { id: item.id })}
-        >
-          <Text variant="body" color="foreground" style={styles.cardContentText}>
-            {item.content}
-          </Text>
-        </TouchableOpacity>
-      )}
-      <View style={styles.cardFooter}>
-        <TouchableOpacity
-          style={styles.socialButton}
-          onPress={() => handleToggleLike(item.id)}
-          disabled={!canInteract || likeMutation.isPending}
-        >
-          <Text variant="small" color={item.isLiked ? 'primary' : 'muted'}>
-            {item.isLiked ? '♥' : '♡'} {item.likesCount}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.socialButton}
-          onPress={() => navigation.navigate('FeedPost', { id: item.id })}
-        >
-          <Text variant="small" color="muted">
-            💬 {item.commentsCount}
-          </Text>
-        </TouchableOpacity>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <LinearGradient
@@ -278,7 +426,7 @@ export const FeedScreen: React.FC = () => {
             end={theme.gradients.webPurple.end}
             style={styles.fabGradient}
           >
-            <FontAwesome5 name="plus" size={18} color="white" solid />
+            <PencilSimpleLine size={22} color="white" weight="fill" />
           </LinearGradient>
         </TouchableOpacity>
       )}
@@ -377,8 +525,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  cardAvatar: {
+  avatarContainer: {
     marginRight: theme.spacing.md,
+  },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  cardAvatar: {
   },
   cardHeaderText: {
     flex: 1,
@@ -391,7 +546,13 @@ const styles = StyleSheet.create({
     gap: theme.spacing.lg,
   },
   socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: theme.spacing.xs,
+    gap: 5,
+  },
+  socialLabel: {
+    marginTop: 1,
   },
   emptyState: {
     alignItems: 'center',
