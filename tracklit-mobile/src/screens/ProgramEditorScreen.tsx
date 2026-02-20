@@ -128,6 +128,7 @@ export const ProgramEditorScreen: React.FC = () => {
   const [sessionsByDay, setSessionsByDay] = useState<Record<number, ProgramSession>>({});
   const [editingDay, setEditingDay] = useState<number | null>(null);
   const [draftSession, setDraftSession] = useState<ProgramSession | null>(null);
+  const hasInitialized = useRef(false);
 
   const programQuery = useQuery({
     queryKey: ['program', programId],
@@ -139,13 +140,12 @@ export const ProgramEditorScreen: React.FC = () => {
   const isOwner = !!program && !!user?.id && String(program.userId) === String(user.id);
   const isUploadedProgram = program?.isUploadedProgram === true;
 
-  useEffect(() => {
-    if (!program) return;
-    setTitle(program.title ?? '');
-    setDescription(program.description ?? '');
-    setCategory(program.category ?? '');
+  const populateFromProgram = useCallback((prog: ProgramDetail) => {
+    setTitle(prog.title ?? '');
+    setDescription(prog.description ?? '');
+    setCategory(prog.category ?? '');
 
-    const sessions = program.sessions ?? [];
+    const sessions = prog.sessions ?? [];
     const earliest = sessions
       .map((session) => parseSessionDate(session.date ?? undefined))
       .filter((value): value is Date => !!value)
@@ -159,7 +159,17 @@ export const ProgramEditorScreen: React.FC = () => {
       }
     });
     setSessionsByDay(nextSessions);
-  }, [program]);
+  }, []);
+
+  useEffect(() => {
+    hasInitialized.current = false;
+  }, [programId]);
+
+  useEffect(() => {
+    if (!program || hasInitialized.current) return;
+    hasInitialized.current = true;
+    populateFromProgram(program);
+  }, [program, populateFromProgram]);
 
   const totalDays = useMemo(() => {
     const d = program?.duration;
@@ -271,6 +281,15 @@ export const ProgramEditorScreen: React.FC = () => {
 
       console.warn('[ProgramEditor] Program + sessions saved via PUT');
       invalidateProgramQueries();
+      try {
+        const refreshed = await programQuery.refetch();
+        if (refreshed.data) {
+          populateFromProgram(refreshed.data);
+          console.warn('[ProgramEditor] State refreshed from server after save');
+        }
+      } catch (refetchErr) {
+        console.warn('[ProgramEditor] Refetch after save failed, keeping local state');
+      }
       if (!silent) {
         showToast('Sessions saved successfully');
       }
@@ -338,6 +357,15 @@ export const ProgramEditorScreen: React.FC = () => {
         }
 
         invalidateProgramQueries();
+        try {
+          const refreshed = await programQuery.refetch();
+          if (refreshed.data) {
+            populateFromProgram(refreshed.data);
+            console.warn('[ProgramEditor] State refreshed from server after fallback save');
+          }
+        } catch (refetchErr) {
+          console.warn('[ProgramEditor] Refetch after fallback save failed, keeping local state');
+        }
         if (!silent) {
           showToast('Sessions saved successfully');
         }
@@ -361,6 +389,8 @@ export const ProgramEditorScreen: React.FC = () => {
     buildSessionPayload,
     invalidateProgramQueries,
     showToast,
+    populateFromProgram,
+    programQuery,
   ]);
 
   const handleOpenDay = (dayNumber: number) => {
