@@ -495,9 +495,14 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
 
                 <TouchableOpacity
                   style={styles.avatarContainer}
-                  onPress={() => isEditing && setShowPhotoModal('avatar')}
-                  activeOpacity={isEditing ? 0.7 : 1}
-                  disabled={!isEditing}
+                  onPress={() => {
+                    if (isOwnProfile) {
+                      if (!isEditing) startEditing();
+                      setShowPhotoModal('avatar');
+                    }
+                  }}
+                  activeOpacity={isOwnProfile ? 0.7 : 1}
+                  disabled={!isOwnProfile}
                 >
                   <LinearGradient
                     colors={[COLORS.gradStart, COLORS.gradMid, COLORS.gradEnd]}
