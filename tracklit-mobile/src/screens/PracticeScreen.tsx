@@ -86,7 +86,7 @@ export const PracticeScreen: React.FC = () => {
     [programs]
   );
 
-  const selectedProgramId = selectedProgram?.programId ?? null;
+  const selectedProgramId = selectedProgram?.programId ? String(selectedProgram.programId) : null;
   const { programSessions, isLoading: isLoadingProgramSessions } = useProgramSessions(selectedProgramId);
 
   useEffect(() => {
@@ -192,6 +192,11 @@ export const PracticeScreen: React.FC = () => {
   }, [selectedProgram, programSessions, isLoadingProgramSessions, daysToShow]);
 
   const handleSelectProgram = async (assignment: PurchasedProgramItem) => {
+    console.warn('[Practice] Selected program:', {
+      purchaseId: assignment.id,
+      programId: assignment.programId,
+      title: assignment.program?.title,
+    });
     setSelectedProgram(assignment);
     setDaysToShow(7);
     setWorkoutCards([]);
@@ -200,7 +205,7 @@ export const PracticeScreen: React.FC = () => {
     setDocAutoOpened(false);
     await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(assignment.id));
     await queryClient.invalidateQueries({
-      queryKey: ['/api/programs', assignment.programId, 'sessions'],
+      queryKey: ['program-sessions', String(assignment.programId)],
     });
   };
 

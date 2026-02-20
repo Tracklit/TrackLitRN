@@ -145,12 +145,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     const purchases = purchasedProgramsQuery.data;
     if (!purchases || purchases.length === 0) return null;
     if (selectedProgramId) {
-      const match = purchases.find((p) => String(p.id) === selectedProgramId);
-      if (match) return String(match.programId);
-      const directMatch = purchases.find((p) => String(p.programId) === selectedProgramId);
-      if (directMatch) return String(directMatch.programId);
-      return selectedProgramId;
+      const match = purchases.find((p) => String(p.id) === String(selectedProgramId));
+      if (match) {
+        console.warn('[Home] Resolved program:', { purchaseId: match.id, programId: match.programId, title: match.program?.title });
+        return String(match.programId);
+      }
+      const directMatch = purchases.find((p) => String(p.programId) === String(selectedProgramId));
+      if (directMatch) {
+        console.warn('[Home] Resolved via direct match:', { programId: directMatch.programId });
+        return String(directMatch.programId);
+      }
+      console.warn('[Home] No match found for selectedProgramId:', selectedProgramId);
+      return null;
     }
+    console.warn('[Home] No selection, using first purchase:', { programId: purchases[0].programId });
     return String(purchases[0].programId);
   }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
 
@@ -159,6 +167,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     queryFn: async () => {
       if (!resolvedProgramId) return null;
       const programData = await apiRequest<{ sessions?: any[]; title?: string; duration?: number }>(`/api/programs/${resolvedProgramId}`);
+      console.warn('[Home] todaySessionQuery fetched program:', {
+        id: resolvedProgramId,
+        title: programData?.title,
+        sessionCount: programData?.sessions?.length ?? 0,
+      });
       if (!programData?.sessions?.length) return null;
 
       const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -220,7 +233,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       return { title: sessionTitle, description: desc, dayNumber: dayNum, totalDays, completedCount, programTitle: programData.title || 'Program' };
     },
     enabled: !!resolvedProgramId,
-    staleTime: 30000,
+    staleTime: 0,
     retry: 1,
   });
 

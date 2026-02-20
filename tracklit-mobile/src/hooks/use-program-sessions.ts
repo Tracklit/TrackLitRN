@@ -98,22 +98,25 @@ const parseSpreadsheetData = (sessions: ProgramSession[]) => {
 };
 
 export const useProgramSessions = (programId: number | string | null) => {
+  const normalizedId = programId ? String(programId) : null;
+
   const {
     data,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['/api/programs', programId, 'sessions'],
+    queryKey: ['program-sessions', normalizedId],
     queryFn: async () => {
-      if (!programId) return [];
-      const programData = await apiRequest<ProgramResponse>(`/api/programs/${programId}`);
+      if (!normalizedId) return [];
+      const programData = await apiRequest<ProgramResponse>(`/api/programs/${normalizedId}`);
       if (programData.sessions && Array.isArray(programData.sessions)) {
         return parseSpreadsheetData(programData.sessions);
       }
       return [];
     },
-    enabled: !!programId,
+    enabled: !!normalizedId,
+    staleTime: 0,
   });
 
   return {

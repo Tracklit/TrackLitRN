@@ -178,9 +178,10 @@ export const ProgramEditorScreen: React.FC = () => {
 
   const invalidateProgramQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['program', programId] });
-    queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
+    queryClient.invalidateQueries({ queryKey: ['program-sessions', String(programId)] });
     queryClient.invalidateQueries({ queryKey: ['user-programs'] });
     queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+    queryClient.invalidateQueries({ queryKey: ['today-session'] });
   }, [programId]);
 
   const updateProgramMutation = useMutation({
@@ -265,22 +266,23 @@ export const ProgramEditorScreen: React.FC = () => {
       }
       const payloadSessions = buildSessionPayload();
       if (payloadSessions.length > 0) {
+        let batchWorked = false;
         try {
           await batchSaveMutation.mutateAsync(payloadSessions);
-        } catch (error: any) {
-          const status = error?.status;
-          const message = String(error?.message || '');
-          const isKnownBatchRouteIssue =
-            status === 400 && /invalid id parameters/i.test(message);
-          if (!isKnownBatchRouteIssue) throw error;
-          await saveSessionsIndividually(payloadSessions);
-          invalidateProgramQueries();
+          batchWorked = true;
+        } catch (batchError: any) {
+          console.warn('[ProgramEditor] Batch save failed, falling back to individual saves:', batchError?.message);
         }
+        if (!batchWorked) {
+          await saveSessionsIndividually(payloadSessions);
+        }
+        invalidateProgramQueries();
       }
       if (!silent) {
-        Alert.alert('Saved', 'Program changes were saved successfully.');
+        Alert.alert('Saved!', 'Your sessions have been saved successfully.');
       }
     } catch (error: any) {
+      console.warn('[ProgramEditor] Save failed:', error?.message);
       if (!silent) {
         Alert.alert('Save failed', error?.message || 'Unable to save program changes.');
       }
