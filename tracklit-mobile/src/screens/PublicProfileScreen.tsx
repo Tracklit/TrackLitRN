@@ -371,6 +371,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
       else setActionShotUri(null);
       return;
     }
+    await new Promise(resolve => setTimeout(resolve, 500));
     const uri = source === 'camera' ? await takePhoto() : await pickImage();
     if (uri) {
       if (type === 'avatar') setAvatarUri(uri);
