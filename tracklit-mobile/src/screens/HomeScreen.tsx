@@ -105,6 +105,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [carouselCollapsed, setCarouselCollapsed] = useState(false);
   const [carouselHidden, setCarouselHidden] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
+  const [selectionLoaded, setSelectionLoaded] = useState(false);
   const carouselRef = useRef<FlatList>(null);
   const userId = user?.id;
 
@@ -115,6 +116,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       });
       AsyncStorage.getItem(PROGRAM_SELECTION_KEY).then(val => {
         setSelectedProgramId(val);
+        setSelectionLoaded(true);
       });
     }, [])
   );
@@ -126,40 +128,69 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     staleTime: 120000,
   });
 
-  const resolvedProgramId = React.useMemo(() => {
-    if (!selectedProgramId) return null;
+  useEffect(() => {
+    if (!selectionLoaded) return;
+    if (selectedProgramId) return;
     const purchases = purchasedProgramsQuery.data;
-    if (!purchases) return selectedProgramId;
-    const match = purchases.find((p) => String(p.id) === selectedProgramId);
-    return match ? String(match.programId) : selectedProgramId;
-  }, [selectedProgramId, purchasedProgramsQuery.data]);
+    if (!purchases || purchases.length === 0) return;
+    const firstPurchase = purchases[0];
+    AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(firstPurchase.id));
+    setSelectedProgramId(String(firstPurchase.id));
+  }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
+
+  const resolvedProgramId = React.useMemo(() => {
+    if (!selectionLoaded) return null;
+    const purchases = purchasedProgramsQuery.data;
+    if (!purchases || purchases.length === 0) return null;
+    if (selectedProgramId) {
+      const match = purchases.find((p) => String(p.id) === selectedProgramId);
+      if (match) return String(match.programId);
+      const directMatch = purchases.find((p) => String(p.programId) === selectedProgramId);
+      if (directMatch) return String(directMatch.programId);
+      return selectedProgramId;
+    }
+    return String(purchases[0].programId);
+  }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
 
   const todaySessionQuery = useQuery({
     queryKey: ['today-session', resolvedProgramId],
     queryFn: async () => {
       if (!resolvedProgramId) return null;
-      const programData = await apiRequest<{ sessions?: any[]; title?: string }>(`/api/programs/${resolvedProgramId}`);
+      const programData = await apiRequest<{ sessions?: any[]; title?: string; duration?: number }>(`/api/programs/${resolvedProgramId}`);
       if (!programData?.sessions?.length) return null;
+
+      const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       const today = new Date();
-      const todayStr = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][today.getMonth()]}-${today.getDate()}`;
-      const todayISO = today.toISOString().split('T')[0];
+      const todayKey = `${MONTHS[today.getMonth()]}-${today.getDate()}`;
+
+      const normalizeDate = (raw?: string | null): string | null => {
+        if (!raw) return null;
+        const t = raw.trim();
+        if (!t) return null;
+        const shortMatch = t.match(/^([A-Za-z]{3})-(\d{1,2})$/);
+        if (shortMatch) return `${shortMatch[1][0].toUpperCase()}${shortMatch[1].slice(1).toLowerCase()}-${parseInt(shortMatch[2], 10)}`;
+        const isoMatch = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch) return `${MONTHS[parseInt(isoMatch[2], 10) - 1]}-${parseInt(isoMatch[3], 10)}`;
+        try { const d = new Date(t); if (!isNaN(d.getTime())) return `${MONTHS[d.getMonth()]}-${d.getDate()}`; } catch {}
+        return null;
+      };
+
       let todaySession = programData.sessions.find((s: any) => {
-        const d = (s.date || s.columnA || '').trim();
-        if (!d) return false;
-        if (d === todayStr) return true;
-        if (d.startsWith(todayISO)) return true;
-        try { return new Date(d).toISOString().split('T')[0] === todayISO; } catch { return false; }
+        const dateKey = normalizeDate(s.date || s.columnA);
+        return dateKey === todayKey;
       });
+
       if (!todaySession) {
         const incomplete = programData.sessions.filter((s: any) => !s.completed_at);
         todaySession = incomplete.length > 0 ? incomplete[0] : programData.sessions[0];
       }
-      const title = todaySession.title || todaySession.preActivation1 || todaySession.columnB || 'Training Session';
+
+      const sessionTitle = todaySession.title || todaySession.preActivation1 || todaySession.columnB || 'Training Session';
       const desc = todaySession.shortDistanceWorkout || todaySession.columnD || todaySession.description || '';
       const dayNum = todaySession.dayNumber || 1;
       const totalDays = programData.sessions.length;
       const completedCount = programData.sessions.filter((s: any) => s.completed_at).length;
-      return { title, description: desc, dayNumber: dayNum, totalDays, completedCount, programTitle: programData.title || 'Program' };
+      return { title: sessionTitle, description: desc, dayNumber: dayNum, totalDays, completedCount, programTitle: programData.title || 'Program' };
     },
     enabled: !!resolvedProgramId,
     staleTime: 60000,

@@ -162,7 +162,11 @@ export const ProgramEditorScreen: React.FC = () => {
 
   const totalDays = useMemo(() => {
     const d = program?.duration;
-    return typeof d === 'number' && d > 0 ? d : Math.max(Object.keys(sessionsByDay).length, 7);
+    const baseDays = typeof d === 'number' && d > 0 ? d : 7;
+    const maxSessionDay = Object.keys(sessionsByDay).length > 0
+      ? Math.max(...Object.keys(sessionsByDay).map(Number))
+      : 0;
+    return Math.max(baseDays, maxSessionDay);
   }, [program, sessionsByDay]);
 
   const startDayOfWeek = getDay(startDate);
