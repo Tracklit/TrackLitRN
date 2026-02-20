@@ -191,15 +191,13 @@ export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       >
         <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.md }]}>
           <TouchableOpacity
-            style={styles.backButton}
             onPress={() => navigation.goBack()}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={styles.backRow}
           >
-            <ArrowLeft size={22} color="#e2e8f0" weight="bold" />
+            <ArrowLeft size={20} color="#e2e8f0" weight="bold" />
+            <Text variant="body" weight="semiBold" color="foreground">Post</Text>
           </TouchableOpacity>
-          <Text variant="body" weight="semiBold" color="foreground" style={{ flex: 1, marginLeft: theme.spacing.md }}>
-            Post
-          </Text>
         </View>
 
         <ScrollView
@@ -309,13 +307,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     paddingBottom: theme.spacing.md,
   },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  backRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    gap: 8,
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.xl,

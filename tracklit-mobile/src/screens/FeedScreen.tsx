@@ -617,7 +617,8 @@ const styles = StyleSheet.create({
   },
   postFooter: {
     flexDirection: 'row',
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+    marginBottom: 4,
     marginLeft: 48,
     gap: theme.spacing.xl,
   },
