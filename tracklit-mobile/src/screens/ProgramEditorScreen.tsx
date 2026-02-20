@@ -252,11 +252,11 @@ export const ProgramEditorScreen: React.FC = () => {
     setIsSaving(true);
     try {
       const payloadSessions = buildSessionPayload();
-      console.warn('[ProgramEditor] Saving program with sessions:', {
+      console.warn('[ProgramEditor] Save started:', {
         programId,
         isOwner,
         sessionCount: payloadSessions.length,
-        sample: payloadSessions.slice(0, 2).map((s) => ({
+        sample: payloadSessions.slice(0, 3).map((s) => ({
           id: s.id,
           dayNumber: s.dayNumber,
           date: s.date,
@@ -264,31 +264,8 @@ export const ProgramEditorScreen: React.FC = () => {
         })),
       });
 
-      const programPayload: Record<string, any> = {
-        sessions: payloadSessions,
-      };
       if (isOwner) {
-        programPayload.title = title.trim();
-        programPayload.description = description.trim();
-        programPayload.category = category.trim();
-        programPayload.duration = totalDays;
-      }
-
-      await apiRequest(`/api/programs/${programId}`, {
-        method: 'PUT',
-        data: programPayload,
-      });
-
-      console.warn('[ProgramEditor] Program + sessions saved via PUT');
-      invalidateProgramQueries();
-      if (!silent) {
-        showToast('Sessions saved successfully');
-      }
-    } catch (putError: any) {
-      console.warn('[ProgramEditor] PUT with sessions failed:', putError?.message, 'status:', putError?.status);
-
-      try {
-        if (isOwner) {
+        try {
           await apiRequest(`/api/programs/${programId}`, {
             method: 'PUT',
             data: {
@@ -298,64 +275,88 @@ export const ProgramEditorScreen: React.FC = () => {
               duration: totalDays,
             },
           });
+          console.warn('[ProgramEditor] Program metadata saved');
+        } catch (metaErr: any) {
+          console.warn('[ProgramEditor] Program metadata save failed:', metaErr?.message);
+        }
+      }
+
+      if (payloadSessions.length > 0) {
+        let sessionsSaved = false;
+
+        try {
+          await apiRequest(`/api/programs/${programId}/sessions/batch`, {
+            method: 'PUT',
+            data: { sessions: payloadSessions },
+          });
+          console.warn('[ProgramEditor] Batch PUT succeeded');
+          sessionsSaved = true;
+        } catch (batchPutErr: any) {
+          console.warn('[ProgramEditor] Batch PUT failed:', batchPutErr?.message);
         }
 
-        const payloadSessions = buildSessionPayload();
-        if (payloadSessions.length > 0) {
+        if (!sessionsSaved) {
           try {
             await apiRequest(`/api/programs/${programId}/sessions/batch`, {
-              method: 'PUT',
+              method: 'POST',
               data: { sessions: payloadSessions },
             });
-            console.warn('[ProgramEditor] Batch endpoint succeeded');
-          } catch (batchErr: any) {
-            console.warn('[ProgramEditor] Batch failed too:', batchErr?.message);
-            try {
-              await apiRequest(`/api/programs/${programId}/sessions/batch`, {
-                method: 'POST',
-                data: { sessions: payloadSessions },
-              });
-              console.warn('[ProgramEditor] Batch POST succeeded');
-            } catch (batchPostErr: any) {
-              console.warn('[ProgramEditor] Batch POST also failed:', batchPostErr?.message);
-              const results = await Promise.allSettled(
-                payloadSessions.map((session) => {
-                  const { id, ...sessionData } = session;
-                  if (id != null) {
-                    return apiRequest(`/api/programs/${programId}/sessions/${id}`, {
-                      method: 'PUT',
-                      data: sessionData,
-                    });
-                  }
-                  return apiRequest(`/api/programs/${programId}/sessions`, {
-                    method: 'POST',
-                    data: sessionData,
-                  });
-                })
-              );
-              const failures = results.filter((r) => r.status === 'rejected');
-              console.warn('[ProgramEditor] Individual results:', {
-                total: results.length,
-                succeeded: results.length - failures.length,
-                failed: failures.length,
-                errors: failures.slice(0, 3).map((f: any) => f.reason?.message),
-              });
-              if (failures.length === results.length) {
-                throw new Error('Unable to save sessions. The server may not support this operation.');
-              }
-            }
+            console.warn('[ProgramEditor] Batch POST succeeded');
+            sessionsSaved = true;
+          } catch (batchPostErr: any) {
+            console.warn('[ProgramEditor] Batch POST failed:', batchPostErr?.message);
           }
         }
 
-        invalidateProgramQueries();
-        if (!silent) {
-          showToast('Sessions saved successfully');
+        if (!sessionsSaved) {
+          console.warn('[ProgramEditor] Trying individual session saves...');
+          const results = await Promise.allSettled(
+            payloadSessions.map((session) => {
+              const { id, ...sessionData } = session;
+              if (id != null) {
+                return apiRequest(`/api/programs/${programId}/sessions/${id}`, {
+                  method: 'PUT',
+                  data: sessionData,
+                });
+              }
+              return apiRequest(`/api/programs/${programId}/sessions`, {
+                method: 'POST',
+                data: sessionData,
+              });
+            })
+          );
+          const failures = results.filter((r) => r.status === 'rejected');
+          const succeeded = results.length - failures.length;
+          console.warn('[ProgramEditor] Individual save results:', {
+            total: results.length,
+            succeeded,
+            failed: failures.length,
+            errors: failures.slice(0, 3).map((f: any) => f.reason?.message),
+          });
+          if (succeeded > 0) {
+            sessionsSaved = true;
+          }
+          if (failures.length === results.length) {
+            if (!silent) {
+              Alert.alert('Save failed', 'Unable to save sessions. The server may not support this operation.');
+            }
+            return;
+          }
         }
-      } catch (fallbackError: any) {
-        console.warn('[ProgramEditor] All save strategies failed:', fallbackError?.message);
-        if (!silent) {
-          Alert.alert('Save failed', fallbackError?.message || 'Unable to save program changes.');
+
+        if (sessionsSaved) {
+          console.warn('[ProgramEditor] Sessions saved successfully');
         }
+      }
+
+      invalidateProgramQueries();
+      if (!silent) {
+        showToast('Sessions saved successfully');
+      }
+    } catch (err: any) {
+      console.warn('[ProgramEditor] Save failed:', err?.message);
+      if (!silent) {
+        Alert.alert('Save failed', err?.message || 'Unable to save program changes.');
       }
     } finally {
       setIsSaving(false);
