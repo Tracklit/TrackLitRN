@@ -515,16 +515,16 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           },
         },
         {
-          label: 'Spikes',
-          IconComponent: CurrencyCircleDollar,
-          onPress: () =>
-            navigateIntoAppStack({ screen: 'Spikes' }),
-        },
-        {
           label: 'Account & Settings',
           IconComponent: Gear,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Settings' }),
+        },
+        {
+          label: 'Spikes',
+          IconComponent: CurrencyCircleDollar,
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'Spikes' }),
         },
         {
           label: 'My Subscriptions',
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     marginHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.lg,
     backgroundColor: 'transparent',
