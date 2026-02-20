@@ -191,21 +191,17 @@ export const FeedScreen: React.FC = () => {
   const feedQuery = useQuery({
     queryKey: ['feed', filter],
     queryFn: async () => {
-      try {
-        const data = await apiRequest<FeedItem[]>(`/api/feed?filter=${filter}`);
-        if (data && data.length > 0) {
-          const realIds = new Set(data.map(p => p.id));
-          const extras = PLACEHOLDER_FEED.filter(p => !realIds.has(p.id));
-          return [...data, ...extras];
-        }
-        return PLACEHOLDER_FEED;
-      } catch {
-        return PLACEHOLDER_FEED;
+      const data = await apiRequest<FeedItem[]>(`/api/feed?filter=${filter}`);
+      if (Array.isArray(data) && data.length > 0) {
+        const realIds = new Set(data.map(p => p.id));
+        const extras = PLACEHOLDER_FEED.filter(p => !realIds.has(p.id));
+        return [...data, ...extras];
       }
+      return data ?? [];
     },
-    initialData: PLACEHOLDER_FEED,
+    placeholderData: PLACEHOLDER_FEED,
     staleTime: 30000,
-    retry: false,
+    retry: 2,
   });
 
   const likeMutation = useMutation({

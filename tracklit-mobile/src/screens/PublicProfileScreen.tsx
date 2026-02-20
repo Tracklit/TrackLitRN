@@ -73,9 +73,8 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/follow', {
+      return apiRequest(`/api/follow/${userId}`, {
         method: 'POST',
-        data: { followingId: userId },
       });
     },
     onSuccess: () => {
