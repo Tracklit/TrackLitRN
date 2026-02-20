@@ -107,6 +107,7 @@ migrations/          - Database migrations
 - 2026-02-20: ProgramsScreen: removed Details button from program cards (both card and list views), changed "Continue" to "Edit Program" on My Programs tab
 - 2026-02-20: ProgramEditorScreen: full dark AAA restyle — #0E0F14 bg, orange gradient save/action buttons, glass input fields, Phosphor icons replacing FontAwesome5, removed Card/Button/Badge UI component usage
 - 2026-02-20: ProgramEditorScreen: removed Level and Duration fields, calendar shows correct dates per day with today highlighted (purple), tappable sessions open edit modal, rest day toggle hides workout fields, read-only guard preserved
+- 2026-02-20: ProgramEditorScreen: fixed calendar day-of-week alignment (getDay offset ensures day 1 falls under correct weekday column), fixed isOwner type mismatch (String coercion), added Duplicate Week feature, start date always tappable, View opens in-app via expo-web-browser
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
 - 2026-02-13: Switched all icons from FontAwesome5 to Phosphor (filled weight)

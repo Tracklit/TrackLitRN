@@ -6,7 +6,6 @@ import {
   TextInput,
   Modal,
   Switch,
-  Linking,
   Platform,
   ActivityIndicator,
   Alert,
@@ -18,12 +17,14 @@ import {
   FloppyDisk,
   Moon,
   Eye,
+  CopySimple,
 } from 'phosphor-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as WebBrowser from 'expo-web-browser';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { format, parseISO, parse, isValid, addDays } from 'date-fns';
+import { format, parseISO, parse, isValid, addDays, getDay } from 'date-fns';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
@@ -134,7 +135,7 @@ export const ProgramEditorScreen: React.FC = () => {
   });
 
   const program = programQuery.data;
-  const isOwner = !!program && !!user?.id && program.userId === user.id;
+  const isOwner = !!program && !!user?.id && String(program.userId) === String(user.id);
   const isUploadedProgram = program?.isUploadedProgram === true;
 
   useEffect(() => {
@@ -163,7 +164,11 @@ export const ProgramEditorScreen: React.FC = () => {
     const d = program?.duration;
     return typeof d === 'number' && d > 0 ? d : Math.max(Object.keys(sessionsByDay).length, 7);
   }, [program, sessionsByDay]);
-  const totalWeeks = Math.max(1, Math.ceil(totalDays / 7));
+
+  const startDayOfWeek = getDay(startDate);
+
+  const totalCalendarSlots = startDayOfWeek + totalDays;
+  const totalWeeks = Math.max(1, Math.ceil(totalCalendarSlots / 7));
 
   const todayISO = format(new Date(), 'yyyy-MM-dd');
 
@@ -301,10 +306,43 @@ export const ProgramEditorScreen: React.FC = () => {
     setDraftSession(null);
   };
 
-  const handleViewOnWeb = () => {
+  const handleDuplicateWeek = (weekIndex: number) => {
+    if (!isOwner || isUploadedProgram) return;
+    const sourceDays: { offset: number; session: ProgramSession }[] = [];
+    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+      const slotIndex = weekIndex * 7 + dayIndex;
+      const dayNumber = slotIndex - startDayOfWeek + 1;
+      if (dayNumber >= 1 && dayNumber <= totalDays && sessionsByDay[dayNumber]) {
+        sourceDays.push({ offset: dayIndex, session: sessionsByDay[dayNumber] });
+      }
+    }
+    if (sourceDays.length === 0) {
+      Alert.alert('Empty week', 'This week has no sessions to duplicate.');
+      return;
+    }
+    const nextWeekIndex = weekIndex + 1;
+    setSessionsByDay((prev) => {
+      const next = { ...prev };
+      for (const { offset, session } of sourceDays) {
+        const targetSlot = nextWeekIndex * 7 + offset;
+        const targetDay = targetSlot - startDayOfWeek + 1;
+        if (targetDay >= 1) {
+          const { id, programId: _pid, ...rest } = session;
+          next[targetDay] = { ...rest, dayNumber: targetDay };
+        }
+      }
+      return next;
+    });
+    Alert.alert('Week duplicated', `Week ${weekIndex + 1} sessions copied to week ${weekIndex + 2}.`);
+  };
+
+  const handleViewOnWeb = async () => {
     if (!programId) return;
-    const url = program?.programFileUrl || `${env.API_BASE_URL}/programs/${programId}`;
-    Linking.openURL(url).catch(() => undefined);
+    if (program?.programFileUrl) {
+      await WebBrowser.openBrowserAsync(program.programFileUrl);
+    } else {
+      await WebBrowser.openBrowserAsync(`${env.API_BASE_URL}/programs/${programId}`);
+    }
   };
 
   const isSaving = updateProgramMutation.isPending || batchSaveMutation.isPending;
@@ -423,7 +461,6 @@ export const ProgramEditorScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.dateButton}
                 onPress={() => setShowDatePicker(true)}
-                disabled={!isOwner || isUploadedProgram}
               >
                 <Text style={styles.dateText}>{format(startDate, 'MMM d, yyyy')}</Text>
                 <CalendarBlank size={14} color={C.textMuted} weight="fill" />
@@ -447,45 +484,60 @@ export const ProgramEditorScreen: React.FC = () => {
           </View>
 
           {Array.from({ length: totalWeeks }).map((_, weekIndex) => (
-            <View key={`week-${weekIndex}`} style={styles.weekRow}>
-              {Array.from({ length: 7 }).map((__, dayIndex) => {
-                const dayNumber = weekIndex * 7 + dayIndex + 1;
-                if (dayNumber > totalDays) {
-                  return <View key={`empty-${dayNumber}`} style={styles.emptyCell} />;
-                }
-                const session = sessionsByDay[dayNumber];
-                const dayDate = addDays(startDate, dayNumber - 1);
-                const dayDateISO = formatISODate(dayDate);
-                const isToday = dayDateISO === todayISO;
-                const isRest = session?.isRestDay;
-                const hasContent = !!session && !isRest;
+            <View key={`week-${weekIndex}`}>
+              <View style={styles.weekRow}>
+                {Array.from({ length: 7 }).map((__, dayIndex) => {
+                  const slotIndex = weekIndex * 7 + dayIndex;
+                  const dayNumber = slotIndex - startDayOfWeek + 1;
 
-                return (
-                  <TouchableOpacity
-                    key={`day-${dayNumber}`}
-                    style={[
-                      styles.dayCell,
-                      isRest && styles.restCell,
-                      isToday && styles.todayCell,
-                    ]}
-                    onPress={() => handleOpenDay(dayNumber)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.dateLabel, isToday && styles.todayDateLabel]}>
-                      {format(dayDate, 'MMM d')}
-                    </Text>
-                    {isRest ? (
-                      <Moon size={12} color={C.orange} weight="fill" style={{ marginTop: 2 }} />
-                    ) : null}
-                    <Text
-                      style={[styles.cellSummary, hasContent && styles.cellSummaryActive]}
-                      numberOfLines={3}
+                  if (dayNumber < 1 || dayNumber > totalDays) {
+                    return <View key={`empty-${slotIndex}`} style={styles.emptyCell} />;
+                  }
+
+                  const session = sessionsByDay[dayNumber];
+                  const dayDate = addDays(startDate, dayNumber - 1);
+                  const dayDateISO = formatISODate(dayDate);
+                  const isToday = dayDateISO === todayISO;
+                  const isRest = session?.isRestDay;
+                  const hasContent = !!session && !isRest;
+
+                  return (
+                    <TouchableOpacity
+                      key={`day-${dayNumber}`}
+                      style={[
+                        styles.dayCell,
+                        isRest && styles.restCell,
+                        isToday && styles.todayCell,
+                      ]}
+                      onPress={() => handleOpenDay(dayNumber)}
+                      activeOpacity={0.7}
                     >
-                      {getSummary(session)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                      <Text style={[styles.dateLabel, isToday && styles.todayDateLabel]}>
+                        {format(dayDate, 'MMM d')}
+                      </Text>
+                      {isRest ? (
+                        <Moon size={12} color={C.orange} weight="fill" style={{ marginTop: 2 }} />
+                      ) : null}
+                      <Text
+                        style={[styles.cellSummary, hasContent && styles.cellSummaryActive]}
+                        numberOfLines={3}
+                      >
+                        {getSummary(session)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {isOwner && !isUploadedProgram && (
+                <TouchableOpacity
+                  style={styles.duplicateWeekBtn}
+                  onPress={() => handleDuplicateWeek(weekIndex)}
+                  activeOpacity={0.7}
+                >
+                  <CopySimple size={12} color={C.textMuted} weight="fill" />
+                  <Text style={styles.duplicateWeekText}>Duplicate Week {weekIndex + 1}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ))}
         </View>
@@ -881,6 +933,20 @@ const styles = StyleSheet.create({
   },
   cellSummaryActive: {
     color: C.textSecondary,
+  },
+  duplicateWeekBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  duplicateWeekText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: C.textMuted,
   },
   modalOverlay: {
     flex: 1,
