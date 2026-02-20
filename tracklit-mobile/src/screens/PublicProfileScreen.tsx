@@ -208,36 +208,54 @@ const xpStyles = StyleSheet.create({
 });
 
 async function pickImage(): Promise<string | null> {
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== 'granted') {
-    Alert.alert('Permission needed', 'Photo library permission is required to choose photos.');
+  try {
+    const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    console.log('[pickImage] permission status:', permResult.status);
+    if (permResult.status !== 'granted') {
+      Alert.alert('Permission needed', 'Photo library permission is required to choose photos.');
+      return null;
+    }
+    console.log('[pickImage] launching library...');
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    console.log('[pickImage] result:', JSON.stringify(result).substring(0, 200));
+    if (!result.canceled && result.assets?.[0]) {
+      return result.assets[0].uri;
+    }
+    return null;
+  } catch (err) {
+    console.error('[pickImage] error:', err);
+    Alert.alert('Error', 'Could not open photo library. Please try again.');
     return null;
   }
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    allowsEditing: true,
-    quality: 0.8,
-  });
-  if (!result.canceled && result.assets[0]) {
-    return result.assets[0].uri;
-  }
-  return null;
 }
 
 async function takePhoto(): Promise<string | null> {
-  const { status } = await ImagePicker.requestCameraPermissionsAsync();
-  if (status !== 'granted') {
-    Alert.alert('Permission needed', 'Camera permission is required to take photos.');
+  try {
+    const permResult = await ImagePicker.requestCameraPermissionsAsync();
+    console.log('[takePhoto] permission status:', permResult.status);
+    if (permResult.status !== 'granted') {
+      Alert.alert('Permission needed', 'Camera permission is required to take photos.');
+      return null;
+    }
+    console.log('[takePhoto] launching camera...');
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    console.log('[takePhoto] result:', JSON.stringify(result).substring(0, 200));
+    if (!result.canceled && result.assets?.[0]) {
+      return result.assets[0].uri;
+    }
+    return null;
+  } catch (err) {
+    console.error('[takePhoto] error:', err);
+    Alert.alert('Error', 'Could not open camera. Please try again.');
     return null;
   }
-  const result = await ImagePicker.launchCameraAsync({
-    allowsEditing: true,
-    quality: 0.8,
-  });
-  if (!result.canceled && result.assets[0]) {
-    return result.assets[0].uri;
-  }
-  return null;
 }
 
 export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {

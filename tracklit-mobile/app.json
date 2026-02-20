@@ -40,6 +40,13 @@
       "@react-native-community/datetimepicker",
       "expo-web-browser",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow TrackLit to access your photos for profile pictures and action shots.",
+          "cameraPermission": "Allow TrackLit to take photos for your profile."
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Allow TrackLit to use the camera flash for the Start Gun feature."
