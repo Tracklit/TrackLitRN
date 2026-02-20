@@ -6,10 +6,16 @@ import {
   Alert,
 } from 'react-native';
 import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button';
 import { Text } from '../../components/ui/Text';
 import { useAuth } from '../../contexts/AuthContext';
-import theme from '../../utils/theme';
+import { LinearGradient } from '@/components/LinearGradient';
+
+const COLORS = {
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textMuted: '#8A90B5',
+};
 
 interface LoginFormData {
   usernameOrEmail: string;
@@ -32,7 +38,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
 
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
@@ -40,22 +45,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
 
   const validateForm = (): boolean => {
     const newErrors: Partial<LoginFormData> = {};
-    
     if (!formData.usernameOrEmail.trim()) {
       newErrors.usernameOrEmail = 'Username or email is required';
     }
-    
     if (!formData.password.trim()) {
       newErrors.password = 'Password is required';
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleLogin = async () => {
     if (!validateForm()) return;
-
     setLoading(true);
     try {
       await login(formData.usernameOrEmail, formData.password);
@@ -82,7 +83,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="email-address"
-          data-testid="input-username"
         />
 
         <Input
@@ -92,45 +92,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
           placeholder="Enter your password"
           secureTextEntry
           error={errors.password}
-          data-testid="input-password"
         />
 
-        <Button
-          variant="default"
-          size="lg"
-          onPress={handleLogin}
-          loading={loading}
-          disabled={loading}
-          style={styles.loginButton}
-          data-testid="button-login"
-        >
-          {loading ? 'Logging in...' : 'Log In'}
-        </Button>
-      </View>
-
-      {/* Sign up / Forgot */}
-      <View style={styles.signupPrompt}>
-        <View style={styles.signupRow}>
-          <Text variant="small" color="muted">
-            Don't have an account?{' '}
-          </Text>
-          <TouchableOpacity onPress={onSwitchToRegister} data-testid="link-switch-to-register">
-            <Text variant="small" color="primary" weight="medium">
-              Sign up
+        <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} activeOpacity={0.8} disabled={loading}>
+          <LinearGradient
+            colors={[COLORS.orange, COLORS.orangeLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.primaryBtnInner}
+          >
+            <Text style={styles.primaryBtnText}>
+              {loading ? 'Logging in...' : 'Log In'}
             </Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity
-          onPress={onForgotPassword}
-          style={styles.forgotPassword}
-          data-testid="link-forgot-password"
-        >
-          <Text variant="small" color="primary" weight="medium">
-            Forgot your password?
-          </Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
 
+      <View style={styles.linksArea}>
+        <View style={styles.signupRow}>
+          <Text style={styles.mutedText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={onSwitchToRegister}>
+            <Text style={styles.linkText}>Sign up</Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity onPress={onForgotPassword} style={styles.forgotLink}>
+          <Text style={styles.linkText}>Forgot your password?</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -140,21 +128,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   form: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: 16,
   },
-  loginButton: {
-    marginTop: theme.spacing.md,
+  primaryBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginTop: 8,
   },
-  signupPrompt: {
+  primaryBtnInner: {
+    paddingVertical: 14,
     alignItems: 'center',
-    gap: theme.spacing.xs,
+    borderRadius: 14,
+  },
+  primaryBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  linksArea: {
+    alignItems: 'center',
+    gap: 6,
   },
   signupRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  forgotPassword: {
-    marginTop: theme.spacing.xs,
+  mutedText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+  },
+  linkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.orange,
+  },
+  forgotLink: {
+    marginTop: 2,
   },
 });

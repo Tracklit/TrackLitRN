@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
+import { LinearGradient } from '@/components/LinearGradient';
+import { ArrowLeft } from 'phosphor-react-native';
 import { apiRequest } from '@/lib/api';
+
+const COLORS = {
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textMuted: '#8A90B5',
+  success: '#22c55e',
+  destructive: '#ef4444',
+};
 
 interface ForgotPasswordFormProps {
   onBackToLogin?: () => void;
@@ -25,11 +34,9 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
       setError('Please enter your email');
       return;
     }
-
     setLoading(true);
     setError(null);
     setMessage(null);
-
     try {
       await apiRequest('/api/auth/forgot-password', {
         method: 'POST',
@@ -47,10 +54,8 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text variant="h3" weight="bold" color="foreground" style={styles.title}>
-        Reset Password
-      </Text>
-      <Text variant="body" color="muted" style={styles.subtitle}>
+      <Text style={styles.title}>Reset Password</Text>
+      <Text style={styles.subtitle}>
         Enter your email and we'll send you a reset link.
       </Text>
 
@@ -62,63 +67,83 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
-        data-testid="input-forgot-email"
       />
 
-      {message && (
-        <Text variant="small" color="success" style={styles.statusText}>
-          {message}
-        </Text>
-      )}
-      {error && (
-        <Text variant="small" color="destructive" style={styles.statusText}>
-          {error}
-        </Text>
-      )}
+      {message && <Text style={styles.successText}>{message}</Text>}
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
-      <Button
-        variant="default"
-        size="lg"
-        onPress={handleSubmit}
-        loading={loading}
-        disabled={loading}
-        style={styles.submit}
-        data-testid="button-send-reset-email"
-      >
-        {loading ? 'Sending...' : 'Send Reset Email'}
-      </Button>
+      <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit} activeOpacity={0.8} disabled={loading}>
+        <LinearGradient
+          colors={[COLORS.orange, COLORS.orangeLight]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.primaryBtnInner}
+        >
+          <Text style={styles.primaryBtnText}>
+            {loading ? 'Sending...' : 'Send Reset Email'}
+          </Text>
+        </LinearGradient>
+      </TouchableOpacity>
 
-      <Button
-        variant="outline"
-        size="sm"
-        onPress={onBackToLogin}
-        style={styles.backButton}
-        data-testid="link-back-to-login"
-      >
-        Back to Login
-      </Button>
+      <TouchableOpacity style={styles.backRow} onPress={onBackToLogin} activeOpacity={0.7}>
+        <ArrowLeft size={14} color={COLORS.orange} weight="bold" />
+        <Text style={styles.linkText}>Back to Login</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.md,
+    gap: 12,
   },
   title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
     textAlign: 'center',
   },
   subtitle: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  successText: {
+    fontSize: 13,
+    color: COLORS.success,
     textAlign: 'center',
   },
-  statusText: {
+  errorText: {
+    fontSize: 13,
+    color: COLORS.destructive,
     textAlign: 'center',
   },
-  submit: {
-    marginTop: theme.spacing.sm,
+  primaryBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginTop: 4,
   },
-  backButton: {
-    marginTop: theme.spacing.xs,
+  primaryBtnInner: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 14,
+  },
+  primaryBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  linkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.orange,
   },
 });
-

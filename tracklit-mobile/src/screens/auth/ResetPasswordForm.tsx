@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
+import { LinearGradient } from '@/components/LinearGradient';
+import { ArrowLeft } from 'phosphor-react-native';
 import { apiRequest } from '@/lib/api';
+
+const COLORS = {
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textMuted: '#8A90B5',
+  success: '#22c55e',
+  destructive: '#ef4444',
+};
 
 interface ResetPasswordFormProps {
   resetToken: string | null;
@@ -64,12 +73,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text variant="h3" weight="bold" color="foreground" style={styles.title}>
-        Set New Password
-      </Text>
-      <Text variant="body" color="muted" style={styles.subtitle}>
-        Enter your new password below.
-      </Text>
+      <Text style={styles.title}>Set New Password</Text>
+      <Text style={styles.subtitle}>Enter your new password below.</Text>
 
       <Input
         label="New Password"
@@ -77,7 +82,6 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
         onChangeText={setNewPassword}
         placeholder="Enter your new password"
         secureTextEntry
-        data-testid="input-new-password"
       />
 
       <Input
@@ -86,68 +90,91 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
         onChangeText={setConfirmPassword}
         placeholder="Confirm your new password"
         secureTextEntry
-        data-testid="input-confirm-password"
       />
 
-      {message && (
-        <Text variant="small" color="success" style={styles.statusText}>
-          {message}
-        </Text>
-      )}
-      {error && (
-        <Text variant="small" color="destructive" style={styles.statusText}>
-          {error}
-        </Text>
-      )}
+      {message && <Text style={styles.successText}>{message}</Text>}
+      {error && <Text style={styles.errorText}>{error}</Text>}
       {isVerifyingToken && (
-        <Text variant="small" color="muted" style={styles.statusText}>
-          Verifying reset link...
-        </Text>
+        <Text style={styles.mutedText}>Verifying reset link...</Text>
       )}
 
-      <Button
-        variant="default"
-        size="lg"
-        onPress={handleSubmit}
-        loading={loading}
-        disabled={loading || isVerifyingToken}
-        style={styles.submit}
-        data-testid="button-reset-password"
-      >
-        {loading ? 'Resetting...' : 'Reset Password'}
-      </Button>
+      <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit} activeOpacity={0.8} disabled={loading || isVerifyingToken}>
+        <LinearGradient
+          colors={[COLORS.orange, COLORS.orangeLight]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.primaryBtnInner}
+        >
+          <Text style={styles.primaryBtnText}>
+            {loading ? 'Resetting...' : 'Reset Password'}
+          </Text>
+        </LinearGradient>
+      </TouchableOpacity>
 
-      <Button
-        variant="outline"
-        size="sm"
-        onPress={onBackToLogin}
-        style={styles.backButton}
-        data-testid="link-back-to-login-2"
-      >
-        Back to Login
-      </Button>
+      <TouchableOpacity style={styles.backRow} onPress={onBackToLogin} activeOpacity={0.7}>
+        <ArrowLeft size={14} color={COLORS.orange} weight="bold" />
+        <Text style={styles.linkText}>Back to Login</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.md,
+    gap: 12,
   },
   title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
     textAlign: 'center',
   },
   subtitle: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  successText: {
+    fontSize: 13,
+    color: COLORS.success,
     textAlign: 'center',
   },
-  statusText: {
+  errorText: {
+    fontSize: 13,
+    color: COLORS.destructive,
     textAlign: 'center',
   },
-  submit: {
-    marginTop: theme.spacing.sm,
+  mutedText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    textAlign: 'center',
   },
-  backButton: {
-    marginTop: theme.spacing.xs,
+  primaryBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  primaryBtnInner: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 14,
+  },
+  primaryBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  linkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.orange,
   },
 });
-

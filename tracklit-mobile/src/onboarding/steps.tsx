@@ -7,7 +7,16 @@ import {
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
+
+const COLORS = {
+  orange: '#FF7A00',
+  textPrimary: '#FFFFFF',
+  textMuted: '#8A90B5',
+  glass: 'rgba(255,255,255,0.05)',
+  border: 'rgba(255,255,255,0.08)',
+  amberBg: 'rgba(245,158,11,0.08)',
+  amberBorder: 'rgba(245,158,11,0.15)',
+};
 
 export type OnboardingStep = {
   id: string;
@@ -24,53 +33,65 @@ const styles = StyleSheet.create({
   bulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   bulletGlyph: {
     marginTop: 2,
     width: 14,
     textAlign: 'center',
+    fontSize: 14,
+    color: COLORS.textMuted,
   },
   bulletText: {
     flex: 1,
+    fontSize: 14,
+    color: COLORS.textMuted,
+    lineHeight: 20,
   },
   panel: {
-    padding: theme.spacing.md,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    padding: 16,
+    borderRadius: 14,
+    backgroundColor: COLORS.glass,
+    borderWidth: 0.5,
+    borderColor: COLORS.border,
   },
   panelAmber: {
-    backgroundColor: 'rgba(245, 158, 11, 0.06)',
-    borderColor: 'rgba(245, 158, 11, 0.12)',
+    backgroundColor: COLORS.amberBg,
+    borderColor: COLORS.amberBorder,
+  },
+  panelLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 10,
+  },
+  bodyText: {
+    fontSize: 15,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
 
 const BulletRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <View style={styles.bulletRow}>
-    <Text variant="body" color="muted" style={styles.bulletGlyph}>
-      •
-    </Text>
-    <Text variant="body" color="muted" style={styles.bulletText}>
-      {children}
-    </Text>
+    <Text style={styles.bulletGlyph}>•</Text>
+    <Text style={styles.bulletText}>{children}</Text>
   </View>
 );
-
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'welcome',
     mode: 'intro',
     title: 'Welcome to TrackLit',
-    icon: <Sparkle size={28} color={theme.colors.primary} weight="fill" />,
+    icon: <Sparkle size={28} color={COLORS.orange} weight="fill" />,
     body: (
-      <View style={{ gap: theme.spacing.md }}>
-        <Text variant="body" color="muted" center>
+      <View style={{ gap: 14 }}>
+        <Text style={styles.bodyText}>
           Your complete track and field training companion.
         </Text>
-        <Text variant="body" color="muted" center>
+        <Text style={styles.bodyText}>
           TrackLit helps you track workouts, manage programs, and analyze performance to reach your
           athletic potential.
         </Text>
@@ -81,18 +102,18 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'alpha-info',
     mode: 'intro',
     title: 'Alpha Testing Information',
-    icon: <Info size={28} color={theme.colors.primary} weight="fill" />,
+    icon: <Info size={28} color={COLORS.orange} weight="fill" />,
     body: (
-      <View style={{ gap: theme.spacing.md }}>
-        <Text variant="body" color="muted" center>
+      <View style={{ gap: 14 }}>
+        <Text style={styles.bodyText}>
           Welcome to the TrackLit alpha test. This app is still in development and not finalized
           yet.
         </Text>
         <View style={styles.panel}>
-          <Text variant="caption" weight="medium" color="foreground" style={{ marginBottom: theme.spacing.sm }}>
+          <Text style={styles.panelLabel}>
             What to expect during alpha testing:
           </Text>
-          <View style={{ gap: theme.spacing.sm }}>
+          <View style={{ gap: 8 }}>
             <BulletRow>Some features may be incomplete or change during development.</BulletRow>
             <BulletRow>You might encounter occasional bugs or performance issues.</BulletRow>
             <BulletRow>Your feedback is extremely valuable to us at this stage.</BulletRow>
@@ -109,16 +130,16 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     showClaimSpikes: true,
     primaryCtaLabel: 'Finish',
     body: (
-      <View style={{ gap: theme.spacing.md }}>
-        <Text variant="body" color="muted" center>
+      <View style={{ gap: 14 }}>
+        <Text style={styles.bodyText}>
           Spikes are your in-app currency that you earn automatically by training and engaging with
           TrackLit.
         </Text>
         <View style={styles.panel}>
-          <Text variant="caption" weight="medium" color="foreground" style={{ marginBottom: theme.spacing.sm }}>
+          <Text style={styles.panelLabel}>
             Earn Spikes by:
           </Text>
-          <View style={{ gap: theme.spacing.sm }}>
+          <View style={{ gap: 8 }}>
             <BulletRow>Completing training sessions</BulletRow>
             <BulletRow>Daily login streaks</BulletRow>
             <BulletRow>Achieving personal records</BulletRow>
@@ -127,10 +148,10 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
           </View>
         </View>
         <View style={[styles.panel, styles.panelAmber]}>
-          <Text variant="caption" weight="medium" color="foreground" style={{ marginBottom: theme.spacing.sm }}>
+          <Text style={styles.panelLabel}>
             Use Spikes to unlock:
           </Text>
-          <View style={{ gap: theme.spacing.sm }}>
+          <View style={{ gap: 8 }}>
             <BulletRow>Pro tier features (1,000 Spikes)</BulletRow>
             <BulletRow>Advanced analytics</BulletRow>
             <BulletRow>Custom workout plans</BulletRow>

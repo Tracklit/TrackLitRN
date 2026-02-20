@@ -11,12 +11,10 @@ import {
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { GoogleLogo, AppleLogo } from 'phosphor-react-native';
 
 import { Text } from '../components/ui/Text';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import theme from '../utils/theme';
 import { LoginForm } from './auth/LoginForm';
 import { RegisterForm } from './auth/RegisterForm';
 import { ForgotPasswordForm } from './auth/ForgotPasswordForm';
@@ -26,6 +24,21 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 import { googleSignInStatusCodes, useGoogleAuthRequest, handleGoogleResponse } from '@/lib/googleSignIn';
+
+const COLORS = {
+  bg: '#0E0F14',
+  surface: '#161823',
+  card: '#1C1F2B',
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8C0FF',
+  textMuted: '#8A90B5',
+  border: 'rgba(255,255,255,0.08)',
+  tabBg: 'rgba(255,255,255,0.04)',
+  tabActive: 'rgba(255,122,0,0.15)',
+  divider: 'rgba(255,255,255,0.06)',
+};
 
 export const AuthScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -40,7 +53,6 @@ export const AuthScreen: React.FC = () => {
   const { loginWithToken } = useAuth();
   const { request: googleRequest, response: googleResponse, promptAsync: googlePromptAsync } = useGoogleAuthRequest();
 
-  // Handle deep links for reset password (tracklitmobile://auth?resetToken=...)
   useEffect(() => {
     const handleUrl = async (url: string | null) => {
       if (!url) return;
@@ -52,7 +64,6 @@ export const AuthScreen: React.FC = () => {
           setActiveTab('reset-password');
         }
       } catch {
-        // ignore invalid URLs
       }
     };
 
@@ -61,7 +72,6 @@ export const AuthScreen: React.FC = () => {
     return () => sub.remove();
   }, []);
 
-  // Pre-verify reset token when present
   useEffect(() => {
     const verify = async () => {
       if (!resetToken) return;
@@ -199,236 +209,204 @@ export const AuthScreen: React.FC = () => {
   };
 
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={styles.container}
-    >
+    <View style={[styles.root, { backgroundColor: COLORS.bg }]}>
       <KeyboardAwareScreenScrollView
         style={{ paddingTop: insets.top }}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
         extraScrollHeight={80}
       >
-          {/* Header */}
-          <View style={styles.header}>
-            <Image
-              source={require('../../assets/tracklit-logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Text variant="h2" weight="bold" color="primary">
-              Welcome to TrackLit
-            </Text>
-            <Text variant="body" color="muted" style={{ marginTop: 8, textAlign: 'center' }}>
-              Log in or Register to get started
-            </Text>
+        <View style={styles.header}>
+          <Image
+            source={require('../../assets/tracklit-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.welcomeTitle}>Welcome to TrackLit</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Log in or register to get started
+          </Text>
+        </View>
+
+        {showTabs && (
+          <View style={styles.tabs}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'login' && styles.tabActive]}
+              onPress={() => setActiveTab('login')}
+            >
+              <Text style={[styles.tabText, activeTab === 'login' && styles.tabTextActive]}>
+                Login
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'register' && styles.tabActive]}
+              onPress={() => setActiveTab('register')}
+            >
+              <Text style={[styles.tabText, activeTab === 'register' && styles.tabTextActive]}>
+                Register
+              </Text>
+            </TouchableOpacity>
           </View>
+        )}
 
-          {/* Auth Card */}
-          <Card style={styles.authCard}>
-            {/* Tabs (only for login/register) */}
-            {showTabs && (
-              <View style={styles.tabs}>
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    activeTab === 'login' && styles.activeTab
-                  ]}
-                  onPress={() => setActiveTab('login')}
-                  data-testid="tab-login"
-                >
-                  <Text 
-                    variant="body" 
-                    weight="medium"
-                    style={[
-                      styles.tabText,
-                      activeTab === 'login' && styles.activeTabText
-                    ]}
-                  >
-                    Login
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    activeTab === 'register' && styles.activeTab
-                  ]}
-                  onPress={() => setActiveTab('register')}
-                  data-testid="tab-register"
-                >
-                  <Text 
-                    variant="body" 
-                    weight="medium"
-                    style={[
-                      styles.tabText,
-                      activeTab === 'register' && styles.activeTabText
-                    ]}
-                  >
-                    Register
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
+        <View style={styles.formArea}>
+          {activeTab === 'login' && (
+            <LoginForm
+              onSwitchToRegister={() => setActiveTab('register')}
+              onForgotPassword={() => setActiveTab('forgot-password')}
+            />
+          )}
+          {activeTab === 'register' && (
+            <RegisterForm onSwitchToLogin={() => setActiveTab('login')} />
+          )}
+          {activeTab === 'forgot-password' && (
+            <ForgotPasswordForm
+              onBackToLogin={() => setActiveTab('login')}
+            />
+          )}
+          {activeTab === 'reset-password' && (
+            <ResetPasswordForm
+              resetToken={resetToken}
+              isVerifyingToken={isVerifyingToken}
+              onBackToLogin={() => setActiveTab('login')}
+            />
+          )}
+        </View>
 
-            {/* Form Content */}
-            <View style={styles.formContainer}>
-              {activeTab === 'login' && (
-                <LoginForm
-                  onSwitchToRegister={() => setActiveTab('register')}
-                  onForgotPassword={() => setActiveTab('forgot-password')}
-                />
-              )}
-              {activeTab === 'register' && (
-                <RegisterForm onSwitchToLogin={() => setActiveTab('login')} />
-              )}
-              {activeTab === 'forgot-password' && (
-                <ForgotPasswordForm
-                  onBackToLogin={() => setActiveTab('login')}
-                />
-              )}
-              {activeTab === 'reset-password' && (
-                <ResetPasswordForm
-                  resetToken={resetToken}
-                  isVerifyingToken={isVerifyingToken}
-                  onBackToLogin={() => setActiveTab('login')}
-                />
-              )}
+        {showTabs && (
+          <>
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
             </View>
 
-            {/* Only show social divider for login/register */}
-            {showTabs && (
-              <>
-                <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <Text variant="small" color="muted" style={styles.dividerText}>
-                    or
-                  </Text>
-                  <View style={styles.dividerLine} />
-                </View>
+            <TouchableOpacity
+              style={styles.socialBtn}
+              onPress={handleGoogleSignIn}
+              disabled={!googleRequest || isGoogleLoading}
+              activeOpacity={0.7}
+            >
+              <GoogleLogo size={18} color={COLORS.textPrimary} weight="bold" />
+              <Text style={styles.socialBtnText}>
+                {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
+              </Text>
+            </TouchableOpacity>
 
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onPress={handleGoogleSignIn}
-                  loading={isGoogleLoading}
-                  disabled={!googleRequest}
-                  style={styles.googleButton}
-                >
-                  <FontAwesome5 name="google" size={16} color={theme.colors.primary} />
-                  <Text variant="body" weight="semiBold" color="foreground" style={styles.googleButtonText}>
-                    Continue with Google
-                  </Text>
-                </Button>
-
-                {Platform.OS === 'ios' && isAppleAvailable && (
-                  <View style={styles.appleButtonWrapper}>
-                    <AppleAuthentication.AppleAuthenticationButton
-                      buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                      cornerRadius={12}
-                      style={styles.appleButton}
-                      onPress={handleAppleSignIn}
-                    />
-                    {isAppleLoading && (
-                      <Text variant="small" color="muted" style={styles.appleLoadingText}>
-                        Connecting to Apple...
-                      </Text>
-                    )}
-                  </View>
-                )}
-              </>
+            {Platform.OS === 'ios' && isAppleAvailable && (
+              <TouchableOpacity
+                style={[styles.socialBtn, styles.appleSocialBtn]}
+                onPress={handleAppleSignIn}
+                disabled={isAppleLoading}
+                activeOpacity={0.7}
+              >
+                <AppleLogo size={18} color={COLORS.textPrimary} weight="fill" />
+                <Text style={styles.socialBtnText}>
+                  {isAppleLoading ? 'Connecting...' : 'Continue with Apple'}
+                </Text>
+              </TouchableOpacity>
             )}
-          </Card>
+          </>
+        )}
       </KeyboardAwareScreenScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  keyboardView: {
+  root: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl * 2,
+    paddingHorizontal: 24,
   },
   header: {
     alignItems: 'center',
-    marginTop: theme.spacing.xl * 2,
-    marginBottom: theme.spacing.xl * 2,
+    marginTop: 48,
+    marginBottom: 36,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: theme.spacing.lg,
+    width: 100,
+    height: 100,
+    marginBottom: 20,
     borderRadius: 24,
   },
-  authCard: {
-    marginBottom: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.xl,
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    letterSpacing: -0.5,
+  },
+  welcomeSubtitle: {
+    fontSize: 15,
+    color: COLORS.textMuted,
+    marginTop: 8,
   },
   tabs: {
     flexDirection: 'row',
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.muted,
-    padding: theme.spacing.xs,
-    marginBottom: theme.spacing.xl,
+    backgroundColor: COLORS.tabBg,
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 24,
+    borderWidth: 0.5,
+    borderColor: COLORS.border,
   },
   tab: {
     flex: 1,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    paddingVertical: 10,
     alignItems: 'center',
+    borderRadius: 11,
   },
-  activeTab: {
-    backgroundColor: theme.colors.background,
+  tabActive: {
+    backgroundColor: COLORS.tabActive,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
   },
   tabText: {
-    color: theme.colors.textMuted,
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.textMuted,
   },
-  activeTabText: {
-    color: theme.colors.foreground,
+  tabTextActive: {
+    color: COLORS.orange,
   },
-  formContainer: {
-    flex: 1,
+  formArea: {
+    marginBottom: 8,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.md,
+    marginVertical: 20,
+    gap: 12,
   },
   dividerLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: theme.colors.border,
+    height: 0.5,
+    backgroundColor: COLORS.divider,
   },
   dividerText: {
-    textAlign: 'center',
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontWeight: '500',
   },
-  googleButton: {
-    width: '100%',
-  },
-  googleButtonText: {
-    marginLeft: theme.spacing.sm,
-  },
-  appleButtonWrapper: {
-    marginTop: theme.spacing.md,
+  socialBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: COLORS.card,
+    borderWidth: 0.5,
+    borderColor: COLORS.border,
+    marginBottom: 12,
   },
-  appleButton: {
-    width: '100%',
-    height: 52,
+  appleSocialBtn: {
+    backgroundColor: '#1a1a1a',
   },
-  appleLoadingText: {
-    marginTop: theme.spacing.xs,
+  socialBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
   },
 });

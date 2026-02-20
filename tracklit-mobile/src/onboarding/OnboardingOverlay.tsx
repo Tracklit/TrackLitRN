@@ -12,14 +12,11 @@ import { useMutation } from '@tanstack/react-query';
 import { CheckCircle, Gift, CurrencyDollar, ArrowRight, ArrowLeft } from 'phosphor-react-native';
 
 import { LinearGradient } from '@/components/LinearGradient';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import theme from '@/utils/theme';
 import type { OnboardingStep } from '@/onboarding/steps';
 
 type Props = {
@@ -31,6 +28,25 @@ type ClaimResponse = {
   spikes?: number;
   bonus?: number;
   error?: string;
+};
+
+const COLORS = {
+  bg: '#0E0F14',
+  surface: '#161823',
+  card: '#1C1F2B',
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8C0FF',
+  textMuted: '#8A90B5',
+  border: 'rgba(255,255,255,0.08)',
+  glass: 'rgba(255,255,255,0.05)',
+  success: '#22c55e',
+  successBg: 'rgba(34,197,94,0.08)',
+  successBorder: 'rgba(34,197,94,0.15)',
+  amberBg: 'rgba(245,158,11,0.08)',
+  amberBorder: 'rgba(245,158,11,0.15)',
+  dotInactive: 'rgba(255,255,255,0.15)',
 };
 
 const isAlreadyClaimedError = (err: any) => {
@@ -160,8 +176,8 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     if (claimedSpikes) {
       return (
         <View style={styles.claimedRow} testID="onboarding-claimed">
-          <CheckCircle size={18} color={theme.colors.success} weight="fill" />
-          <Text variant="caption" color="success" weight="medium">
+          <CheckCircle size={18} color={COLORS.success} weight="fill" />
+          <Text style={styles.claimedText}>
             Welcome bonus claimed{claimedBonus ? ` (+${claimedBonus})` : ''}.
           </Text>
         </View>
@@ -171,58 +187,56 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     return (
       <View style={styles.claimBlock}>
         <View style={styles.claimHeader}>
-          <Gift size={18} color={theme.colors.success} weight="fill" />
+          <Gift size={20} color={COLORS.success} weight="fill" />
           <View style={{ flex: 1 }}>
-            <Text variant="caption" color="foreground" weight="semiBold">
-              Welcome Bonus Available
-            </Text>
-            <Text variant="small" color="muted">
-              Claim your first 100 Spikes.
-            </Text>
+            <Text style={styles.claimTitle}>Welcome Bonus Available</Text>
+            <Text style={styles.claimSubtext}>Claim your first 100 Spikes.</Text>
           </View>
-          <CurrencyDollar size={18} color="#f59e0b" weight="fill" />
+          <CurrencyDollar size={20} color="#f59e0b" weight="fill" />
         </View>
 
         {claimError ? (
-          <Text variant="small" color="warning" style={{ marginTop: theme.spacing.sm }}>
-            {claimError}
-          </Text>
+          <Text style={styles.claimError}>{claimError}</Text>
         ) : null}
 
-        <Button
+        <TouchableOpacity
           testID="onboarding-claim"
+          style={styles.claimBtn}
           onPress={handleClaimSpikes}
-          loading={claimMutation.isPending}
-          style={styles.claimButton}
+          activeOpacity={0.8}
+          disabled={claimMutation.isPending}
         >
-          Claim 100 Spikes
-        </Button>
+          <LinearGradient
+            colors={[COLORS.orange, COLORS.orangeLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.claimBtnInner}
+          >
+            <Text style={styles.claimBtnText}>
+              {claimMutation.isPending ? 'Claiming...' : 'Claim 100 Spikes'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     );
   };
 
-  const renderPage = ({ item, index }: { item: OnboardingStep; index: number }) => (
+  const renderPage = ({ item }: { item: OnboardingStep; index: number }) => (
     <View style={[styles.pageContainer, { width: SCREEN_WIDTH }]}>
       <View style={styles.pageContent}>
-        <Card style={styles.introCard} contentStyle={styles.cardContentNoFlex}>
-          <View style={styles.iconWrap}>{item.icon}</View>
-          <Text variant="h3" weight="bold" color="foreground" center>
-            {item.title}
-          </Text>
-          <View style={styles.bodyWrap}>{item.body}</View>
-          {renderClaimBlock(item)}
-        </Card>
+        <View style={styles.iconWrap}>{item.icon}</View>
+        <Text style={styles.stepTitle}>{item.title}</Text>
+        <View style={styles.bodyWrap}>{item.body}</View>
+        {renderClaimBlock(item)}
       </View>
     </View>
   );
 
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
+    <View
       style={[
         styles.fullScreen,
-        { paddingTop: insets.top + theme.spacing.lg, paddingBottom: insets.bottom + theme.spacing.lg },
+        { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16, backgroundColor: COLORS.bg },
       ]}
     >
       <FlatList
@@ -249,68 +263,63 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
       />
 
       <View style={styles.footerArea}>
-        <Text variant="small" color="muted" center>
+        <Text style={styles.stepCounter}>
           Step {currentStepIndex + 1} of {totalSteps}
         </Text>
         <StepDots total={totalSteps} current={currentStepIndex} onDotPress={handleDotPress} />
 
         <View style={styles.footerButtons}>
           {canGoBack ? (
-            <Button
+            <TouchableOpacity
               testID="onboarding-back"
-              variant="ghost"
-              size="sm"
               onPress={back}
-              style={styles.footerButton}
+              style={styles.footerSideBtn}
+              activeOpacity={0.7}
             >
-              <View style={styles.inlineIconRow}>
-                <ArrowLeft size={14} color={theme.colors.primary} weight="fill" />
-                <Text variant="caption" color="accent" weight="medium">
-                  Back
-                </Text>
-              </View>
-            </Button>
+              <ArrowLeft size={14} color={COLORS.orange} weight="bold" />
+              <Text style={styles.footerSideBtnText}>Back</Text>
+            </TouchableOpacity>
           ) : (
             <View style={{ flex: 1 }} />
           )}
 
-          <Button
+          <TouchableOpacity
             testID="onboarding-skip"
-            variant="ghost"
-            size="sm"
             onPress={skip}
-            style={styles.footerButton}
+            style={styles.footerSideBtn}
+            activeOpacity={0.7}
           >
-            <Text variant="caption" color="accent" weight="medium">
-              Skip
-            </Text>
-          </Button>
+            <Text style={styles.footerSkipText}>Skip</Text>
+          </TouchableOpacity>
 
-          <Button
+          <TouchableOpacity
             testID="onboarding-next"
-            size="sm"
             onPress={isLastStep ? complete : next}
             disabled={claimMutation.isPending}
-            style={styles.footerButtonPrimary}
+            style={styles.footerPrimaryBtn}
+            activeOpacity={0.8}
           >
-            <View style={styles.inlineIconRow}>
-              <Text variant="caption" color="primary-foreground" weight="medium">
-                {primaryLabel}
-              </Text>
+            <LinearGradient
+              colors={[COLORS.orange, COLORS.orangeLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.footerPrimaryBtnInner}
+            >
+              <Text style={styles.footerPrimaryBtnText}>{primaryLabel}</Text>
               {!isLastStep ? (
-                <ArrowRight size={14} color={theme.colors.primaryForeground} weight="fill" />
+                <ArrowRight size={14} color={COLORS.textPrimary} weight="bold" />
               ) : null}
-            </View>
-          </Button>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </View>
 
       {claimMutation.isPending ? (
         <View style={styles.loadingOverlay} pointerEvents="none">
-          <ActivityIndicator size="large" color={theme.colors.foreground} />
+          <ActivityIndicator size="large" color={COLORS.textPrimary} />
         </View>
       ) : null}
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -325,59 +334,93 @@ const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 28,
   },
   pageContent: {
     alignItems: 'center',
   },
-  introCard: {
-    width: '100%',
-    maxWidth: 520,
-    marginBottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1,
-    borderRadius: 16,
-  },
   iconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignSelf: 'center',
-    marginBottom: theme.spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    marginBottom: 20,
+    backgroundColor: COLORS.glass,
+    borderWidth: 0.5,
+    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  stepTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    letterSpacing: -0.3,
+    marginBottom: 16,
+  },
   bodyWrap: {
-    marginTop: theme.spacing.md,
-    gap: theme.spacing.md,
+    width: '100%',
+    maxWidth: 400,
+    gap: 14,
   },
   footerArea: {
-    paddingHorizontal: theme.spacing.xl,
-    gap: theme.spacing.sm,
+    paddingHorizontal: 24,
+    gap: 10,
+  },
+  stepCounter: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   footerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
+    gap: 10,
+    marginTop: 6,
   },
-  footerButton: {
+  footerSideBtn: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: COLORS.glass,
   },
-  footerButtonPrimary: {
+  footerSideBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.orange,
+  },
+  footerSkipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+  },
+  footerPrimaryBtn: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  footerPrimaryBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  footerPrimaryBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
-    marginTop: theme.spacing.xs,
   },
   dot: {
     width: 8,
@@ -385,47 +428,74 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dotActive: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: COLORS.orange,
   },
   dotInactive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-  },
-  inlineIconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
+    backgroundColor: COLORS.dotInactive,
   },
   claimBlock: {
-    marginTop: theme.spacing.lg,
-    padding: theme.spacing.md,
-    borderRadius: 12,
-    backgroundColor: 'rgba(22, 163, 74, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(22, 163, 74, 0.12)',
-    gap: theme.spacing.sm,
+    marginTop: 20,
+    padding: 16,
+    borderRadius: 14,
+    backgroundColor: COLORS.successBg,
+    borderWidth: 0.5,
+    borderColor: COLORS.successBorder,
+    gap: 10,
+    width: '100%',
+    maxWidth: 400,
   },
   claimHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: 10,
   },
-  claimButton: {
-    marginTop: theme.spacing.sm,
+  claimTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  claimSubtext: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginTop: 1,
+  },
+  claimError: {
+    fontSize: 12,
+    color: '#f59e0b',
+  },
+  claimBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 2,
+  },
+  claimBtnInner: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  claimBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   claimedRow: {
-    marginTop: theme.spacing.lg,
+    marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.sm,
-    padding: theme.spacing.md,
-    borderRadius: 12,
-    backgroundColor: 'rgba(22, 163, 74, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(22, 163, 74, 0.12)',
+    gap: 8,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: COLORS.successBg,
+    borderWidth: 0.5,
+    borderColor: COLORS.successBorder,
+    width: '100%',
+    maxWidth: 400,
   },
-  cardContentNoFlex: {
-    flex: 0,
+  claimedText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.success,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

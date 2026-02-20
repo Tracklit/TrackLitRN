@@ -6,10 +6,16 @@ import {
   Alert,
 } from 'react-native';
 import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button';
 import { Text } from '../../components/ui/Text';
 import { useAuth } from '../../contexts/AuthContext';
-import theme from '../../utils/theme';
+import { LinearGradient } from '@/components/LinearGradient';
+
+const COLORS = {
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textMuted: '#8A90B5',
+};
 
 interface RegisterFormData {
   name: string;
@@ -37,7 +43,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
   const handleInputChange = (field: keyof RegisterFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
@@ -45,42 +50,35 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
   const validateForm = (): boolean => {
     const newErrors: Partial<RegisterFormData> = {};
-    
     if (!formData.name.trim()) {
       newErrors.name = 'Full name is required';
     }
-    
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email';
     }
-    
     if (!formData.username.trim()) {
       newErrors.username = 'Username is required';
     } else if (formData.username.length < 3) {
       newErrors.username = 'Username must be at least 3 characters';
     }
-    
     if (!formData.password.trim()) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-    
     if (!formData.confirmPassword.trim()) {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords don't match";
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleRegister = async () => {
     if (!validateForm()) return;
-
     setLoading(true);
     try {
       await register({
@@ -90,9 +88,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
         password: formData.password,
       });
     } catch (error: any) {
-      const message =
-        error?.message ||
-        'Unable to create account. Please try again.';
+      const message = error?.message || 'Unable to create account. Please try again.';
       Alert.alert('Registration Failed', message, [{ text: 'OK' }]);
     } finally {
       setLoading(false);
@@ -109,9 +105,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           placeholder="Enter your full name"
           error={errors.name}
           autoCapitalize="words"
-          data-testid="input-name"
         />
-
         <Input
           label="Email"
           value={formData.email}
@@ -121,9 +115,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           autoCapitalize="none"
           autoCorrect={false}
           error={errors.email}
-          data-testid="input-email"
         />
-
         <Input
           label="Username"
           value={formData.username}
@@ -132,9 +124,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           autoCapitalize="none"
           autoCorrect={false}
           error={errors.username}
-          data-testid="input-username"
         />
-
         <Input
           label="Password"
           value={formData.password}
@@ -142,9 +132,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           placeholder="Create a password"
           secureTextEntry
           error={errors.password}
-          data-testid="input-password"
         />
-
         <Input
           label="Confirm Password"
           value={formData.confirmPassword}
@@ -152,31 +140,26 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           placeholder="Confirm your password"
           secureTextEntry
           error={errors.confirmPassword}
-          data-testid="input-confirm-password"
         />
 
-        <Button
-          variant="default"
-          size="lg"
-          onPress={handleRegister}
-          loading={loading}
-          disabled={loading}
-          style={styles.registerButton}
-          data-testid="button-register"
-        >
-          {loading ? 'Creating account...' : 'Create Account'}
-        </Button>
+        <TouchableOpacity style={styles.primaryBtn} onPress={handleRegister} activeOpacity={0.8} disabled={loading}>
+          <LinearGradient
+            colors={[COLORS.orange, COLORS.orangeLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.primaryBtnInner}
+          >
+            <Text style={styles.primaryBtnText}>
+              {loading ? 'Creating account...' : 'Create Account'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
 
-      {/* Login link */}
       <View style={styles.loginPrompt}>
-        <Text variant="small" color="muted">
-          Already have an account?{' '}
-        </Text>
-        <TouchableOpacity onPress={onSwitchToLogin} data-testid="link-switch-to-login">
-          <Text variant="small" color="primary" weight="medium">
-            Log in
-          </Text>
+        <Text style={styles.mutedText}>Already have an account? </Text>
+        <TouchableOpacity onPress={onSwitchToLogin}>
+          <Text style={styles.linkText}>Log in</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -188,14 +171,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   form: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: 16,
   },
-  registerButton: {
-    marginTop: theme.spacing.md,
+  primaryBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  primaryBtnInner: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 14,
+  },
+  primaryBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   loginPrompt: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  mutedText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+  },
+  linkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.orange,
   },
 });
