@@ -12,7 +12,13 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import {
+  ArrowLeft,
+  CalendarBlank,
+  FloppyDisk,
+  Moon,
+  Eye,
+} from 'phosphor-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,19 +27,32 @@ import { format, parseISO, parse, isValid, addDays } from 'date-fns';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { env } from '@/config/env';
-import theme from '@/utils/theme';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type ProgramEditorRouteProp = RouteProp<RootStackParamList, 'ProgramEditor'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
+
+const C = {
+  bg: '#0E0F14',
+  surface: '#161823',
+  card: '#1C1F2B',
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8C0FF',
+  textMuted: '#8A90B5',
+  border: 'rgba(255,255,255,0.08)',
+  glass: 'rgba(255,255,255,0.05)',
+  rest: 'rgba(255,122,0,0.12)',
+  restBorder: 'rgba(255,122,0,0.3)',
+  today: 'rgba(99,102,241,0.15)',
+  todayBorder: 'rgba(99,102,241,0.4)',
+};
 
 interface ProgramSession {
   id?: number;
@@ -102,8 +121,6 @@ export const ProgramEditorScreen: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
-  const [level, setLevel] = useState('');
-  const [duration, setDuration] = useState('28');
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [sessionsByDay, setSessionsByDay] = useState<Record<number, ProgramSession>>({});
@@ -125,8 +142,6 @@ export const ProgramEditorScreen: React.FC = () => {
     setTitle(program.title ?? '');
     setDescription(program.description ?? '');
     setCategory(program.category ?? '');
-    setLevel(program.level ?? '');
-    setDuration(String(program.duration ?? 28));
 
     const sessions = program.sessions ?? [];
     const earliest = sessions
@@ -145,10 +160,12 @@ export const ProgramEditorScreen: React.FC = () => {
   }, [program]);
 
   const totalDays = useMemo(() => {
-    const parsed = parseInt(duration, 10);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-  }, [duration]);
+    const d = program?.duration;
+    return typeof d === 'number' && d > 0 ? d : Math.max(Object.keys(sessionsByDay).length, 7);
+  }, [program, sessionsByDay]);
   const totalWeeks = Math.max(1, Math.ceil(totalDays / 7));
+
+  const todayISO = format(new Date(), 'yyyy-MM-dd');
 
   const invalidateProgramQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['program', programId] });
@@ -166,7 +183,6 @@ export const ProgramEditorScreen: React.FC = () => {
           title: title.trim(),
           description: description.trim(),
           category: category.trim(),
-          level: level.trim(),
           duration: totalDays,
         },
       });
@@ -204,20 +220,15 @@ export const ProgramEditorScreen: React.FC = () => {
       if (!programId || payloadSessions.length === 0) return;
       return apiRequest(`/api/programs/${programId}/sessions/batch`, {
         method: 'PUT',
-        data: {
-          sessions: payloadSessions,
-        },
+        data: { sessions: payloadSessions },
       });
     },
-    onSuccess: () => {
-      invalidateProgramQueries();
-    },
+    onSuccess: () => invalidateProgramQueries(),
   });
 
   const saveSessionsIndividually = useCallback(
     async (payloadSessions: ProgramSession[]) => {
       if (!programId || payloadSessions.length === 0) return;
-
       await Promise.all(
         payloadSessions.map((session) => {
           const { id, ...sessionData } = session;
@@ -227,7 +238,6 @@ export const ProgramEditorScreen: React.FC = () => {
               data: sessionData,
             });
           }
-
           return apiRequest(`/api/programs/${programId}/sessions`, {
             method: 'POST',
             data: sessionData,
@@ -251,16 +261,11 @@ export const ProgramEditorScreen: React.FC = () => {
           const message = String(error?.message || '');
           const isKnownBatchRouteIssue =
             status === 400 && /invalid id parameters/i.test(message);
-
-          if (!isKnownBatchRouteIssue) {
-            throw error;
-          }
-
+          if (!isKnownBatchRouteIssue) throw error;
           await saveSessionsIndividually(payloadSessions);
           invalidateProgramQueries();
         }
       }
-
       Alert.alert('Saved', 'Program changes were saved successfully.');
     } catch (error: any) {
       Alert.alert('Save failed', error?.message || 'Unable to save program changes.');
@@ -302,60 +307,69 @@ export const ProgramEditorScreen: React.FC = () => {
     Linking.openURL(url).catch(() => undefined);
   };
 
+  const isSaving = updateProgramMutation.isPending || batchSaveMutation.isPending;
+
   if (programQuery.isLoading) {
     return (
-      <LinearGradient
-        colors={theme.gradient.background}
-        locations={theme.gradient.locations}
-        style={styles.container}
-      >
+      <View style={styles.container}>
         <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text variant="body" color="muted" style={styles.loadingText}>
-            Loading program...
-          </Text>
+          <ActivityIndicator size="large" color={C.orange} />
+          <Text style={styles.loadingText}>Loading program...</Text>
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
   if (programQuery.isError || !program) {
     return (
-      <LinearGradient
-        colors={theme.gradient.background}
-        locations={theme.gradient.locations}
-        style={styles.container}
-      >
+      <View style={styles.container}>
         <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
-          <Text variant="body" color="muted">
-            Unable to load program.
-          </Text>
-          <Button variant="outline" size="sm" onPress={() => programQuery.refetch()}>
-            Retry
-          </Button>
+          <Text style={styles.loadingText}>Unable to load program.</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => programQuery.refetch()}>
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
+  const editingDayDate = editingDay ? format(addDays(startDate, editingDay - 1), 'EEE, MMM d') : '';
+
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={styles.container}
-    >
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
+          <ArrowLeft size={20} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
-        <Text variant="h4" weight="bold" color="foreground" style={styles.headerTitle} numberOfLines={1}>
-          Program Editor
-        </Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>Program Editor</Text>
         <View style={styles.headerActions}>
-          {!isUploadedProgram && (
-            <Button variant="default" size="sm" onPress={handleSaveAll} loading={updateProgramMutation.isPending || batchSaveMutation.isPending}>
-              Save
-            </Button>
+          {isUploadedProgram ? (
+            <TouchableOpacity style={styles.webBtn} onPress={handleViewOnWeb}>
+              <Eye size={16} color={C.textPrimary} weight="fill" />
+              <Text style={styles.webBtnText}>View</Text>
+            </TouchableOpacity>
+          ) : isOwner ? (
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSaveAll} disabled={isSaving} activeOpacity={0.8}>
+              <LinearGradient
+                colors={[C.orange, C.orangeLight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.saveBtnGradient}
+              >
+                {isSaving ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <>
+                    <FloppyDisk size={14} color="white" weight="fill" />
+                    <Text style={styles.saveBtnText}>Save</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.readOnlyBadge}>
+              <Text style={styles.readOnlyText}>Read Only</Text>
+            </View>
           )}
         </View>
       </View>
@@ -367,135 +381,114 @@ export const ProgramEditorScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         extraScrollHeight={80}
       >
-        <Card style={styles.metaCard}>
-          <CardHeader>
-            <CardTitle>Program Details</CardTitle>
-          </CardHeader>
-          <CardContent style={styles.metaContent}>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Title</Text>
+        <View style={styles.detailsCard}>
+          <Text style={styles.sectionTitle}>Program Details</Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Title</Text>
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Program title"
+              placeholderTextColor={C.textMuted}
+              editable={isOwner && !isUploadedProgram}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Program description"
+              placeholderTextColor={C.textMuted}
+              multiline
+              editable={isOwner && !isUploadedProgram}
+            />
+          </View>
+          <View style={styles.metaRow}>
+            <View style={styles.metaColumn}>
+              <Text style={styles.inputLabel}>Category</Text>
               <TextInput
                 style={styles.input}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Program title"
-                placeholderTextColor={theme.colors.textMuted}
+                value={category}
+                onChangeText={setCategory}
+                placeholder="e.g. sprint"
+                placeholderTextColor={C.textMuted}
                 editable={isOwner && !isUploadedProgram}
               />
             </View>
-            <View style={styles.inputGroup}>
-              <Text variant="small" color="muted">Description</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Program description"
-                placeholderTextColor={theme.colors.textMuted}
-                multiline
-                editable={isOwner && !isUploadedProgram}
-              />
+            <View style={styles.metaColumn}>
+              <Text style={styles.inputLabel}>Start Date</Text>
+              <TouchableOpacity
+                style={styles.dateButton}
+                onPress={() => setShowDatePicker(true)}
+                disabled={!isOwner || isUploadedProgram}
+              >
+                <Text style={styles.dateText}>{format(startDate, 'MMM d, yyyy')}</Text>
+                <CalendarBlank size={14} color={C.textMuted} weight="fill" />
+              </TouchableOpacity>
             </View>
-            <View style={styles.metaRow}>
-              <View style={styles.metaColumn}>
-                <Text variant="small" color="muted">Category</Text>
-                <TextInput
-                  style={styles.input}
-                  value={category}
-                  onChangeText={setCategory}
-                  placeholder="e.g. sprint"
-                  placeholderTextColor={theme.colors.textMuted}
-                  editable={isOwner && !isUploadedProgram}
-                />
-              </View>
-              <View style={styles.metaColumn}>
-                <Text variant="small" color="muted">Level</Text>
-                <TextInput
-                  style={styles.input}
-                  value={level}
-                  onChangeText={setLevel}
-                  placeholder="e.g. intermediate"
-                  placeholderTextColor={theme.colors.textMuted}
-                  editable={isOwner && !isUploadedProgram}
-                />
-              </View>
-            </View>
-            <View style={styles.metaRow}>
-              <View style={styles.metaColumn}>
-                <Text variant="small" color="muted">Start Date</Text>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() => setShowDatePicker(true)}
-                  disabled={!isOwner || isUploadedProgram}
-                >
-                  <Text variant="small" color="foreground">
-                    {format(startDate, 'yyyy-MM-dd')}
-                  </Text>
-                  <FontAwesome5 name="calendar" size={12} color={theme.colors.textMuted} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.metaColumn}>
-                <Text variant="small" color="muted">Duration (days)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={duration}
-                  onChangeText={setDuration}
-                  keyboardType="number-pad"
-                  editable={isOwner && !isUploadedProgram}
-                />
-              </View>
-            </View>
-            {isUploadedProgram && (
-              <Button variant="outline" size="sm" onPress={handleViewOnWeb}>
-                View on web
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+          </View>
+        </View>
 
-        <Card style={styles.gridCard}>
-          <CardHeader style={styles.gridHeader}>
-            <CardTitle>Sessions</CardTitle>
-            {!isOwner && (
-              <Badge variant="outline" size="sm">Read only</Badge>
-            )}
-          </CardHeader>
-          <CardContent>
-            <View style={styles.dayHeaderRow}>
-              {DAY_LABELS.map((label) => (
-                <Text key={label} variant="small" color="muted" style={styles.dayHeaderText}>
-                  {label}
-                </Text>
-              ))}
-            </View>
-            {Array.from({ length: totalWeeks }).map((_, weekIndex) => (
-              <View key={`week-${weekIndex}`} style={styles.weekRow}>
-                {Array.from({ length: 7 }).map((__, dayIndex) => {
-                  const dayNumber = weekIndex * 7 + dayIndex + 1;
-                  if (dayNumber > totalDays) {
-                    return <View key={`empty-${dayNumber}`} style={styles.emptyCell} />;
-                  }
-                  const session = sessionsByDay[dayNumber];
-                  const dayDate = addDays(startDate, dayNumber - 1);
-                  return (
-                    <TouchableOpacity
-                      key={`day-${dayNumber}`}
-                      style={[styles.dayCell, session?.isRestDay && styles.restCell]}
-                      onPress={() => handleOpenDay(dayNumber)}
-                      disabled={!isOwner || isUploadedProgram}
-                    >
-                      <Text variant="caption" color="muted" style={styles.dateLabel}>
-                        {format(dayDate, 'MMM d')}
-                      </Text>
-                      <Text variant="small" color="foreground" numberOfLines={3}>
-                        {getSummary(session)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+        <View style={styles.sessionsCard}>
+          <View style={styles.sessionsHeader}>
+            <Text style={styles.sectionTitle}>Sessions</Text>
+            <Text style={styles.sessionCount}>{totalDays} days · {totalWeeks} weeks</Text>
+          </View>
+
+          <View style={styles.dayHeaderRow}>
+            {DAY_LABELS.map((label) => (
+              <View key={label} style={styles.dayHeaderCell}>
+                <Text style={styles.dayHeaderText}>{label}</Text>
               </View>
             ))}
-          </CardContent>
-        </Card>
+          </View>
+
+          {Array.from({ length: totalWeeks }).map((_, weekIndex) => (
+            <View key={`week-${weekIndex}`} style={styles.weekRow}>
+              {Array.from({ length: 7 }).map((__, dayIndex) => {
+                const dayNumber = weekIndex * 7 + dayIndex + 1;
+                if (dayNumber > totalDays) {
+                  return <View key={`empty-${dayNumber}`} style={styles.emptyCell} />;
+                }
+                const session = sessionsByDay[dayNumber];
+                const dayDate = addDays(startDate, dayNumber - 1);
+                const dayDateISO = formatISODate(dayDate);
+                const isToday = dayDateISO === todayISO;
+                const isRest = session?.isRestDay;
+                const hasContent = !!session && !isRest;
+
+                return (
+                  <TouchableOpacity
+                    key={`day-${dayNumber}`}
+                    style={[
+                      styles.dayCell,
+                      isRest && styles.restCell,
+                      isToday && styles.todayCell,
+                    ]}
+                    onPress={() => handleOpenDay(dayNumber)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.dateLabel, isToday && styles.todayDateLabel]}>
+                      {format(dayDate, 'MMM d')}
+                    </Text>
+                    {isRest ? (
+                      <Moon size={12} color={C.orange} weight="fill" style={{ marginTop: 2 }} />
+                    ) : null}
+                    <Text
+                      style={[styles.cellSummary, hasContent && styles.cellSummaryActive]}
+                      numberOfLines={3}
+                    >
+                      {getSummary(session)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+        </View>
       </KeyboardAwareScreenScrollView>
 
       {showDatePicker && (
@@ -513,9 +506,10 @@ export const ProgramEditorScreen: React.FC = () => {
       <Modal visible={editingDay !== null} transparent animationType="slide" onRequestClose={() => setEditingDay(null)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text variant="h4" weight="semiBold" color="foreground">
-              Day {editingDay}
-            </Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Day {editingDay}</Text>
+              <Text style={styles.modalSubtitle}>{editingDayDate}</Text>
+            </View>
             <KeyboardAwareScreenScrollView
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
@@ -524,170 +518,265 @@ export const ProgramEditorScreen: React.FC = () => {
               extraScrollHeight={80}
             >
               <View style={styles.modalFormContent}>
-                <View style={styles.inputGroup}>
-                  <Text variant="small" color="muted">Title</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={draftSession?.title ?? ''}
-                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), title: value }))}
-                    placeholder="Session title"
-                    placeholderTextColor={theme.colors.textMuted}
-                  />
-                </View>
                 <View style={styles.switchRow}>
-                  <Text variant="small" color="foreground">Rest day</Text>
+                  <Text style={styles.switchLabel}>Rest Day</Text>
                   <Switch
                     value={!!draftSession?.isRestDay}
                     onValueChange={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), isRestDay: value }))}
+                    trackColor={{ false: C.glass, true: C.orange }}
+                    thumbColor={draftSession?.isRestDay ? C.orangeLight : '#666'}
                   />
                 </View>
-                <View style={styles.inputGroup}>
-                  <Text variant="small" color="muted">Pre-Activation 1</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={draftSession?.preActivation1 ?? ''}
-                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation1: value }))}
-                    placeholder="Drills, activation"
-                    placeholderTextColor={theme.colors.textMuted}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text variant="small" color="muted">Pre-Activation 2</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={draftSession?.preActivation2 ?? ''}
-                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation2: value }))}
-                    placeholder="More activation work"
-                    placeholderTextColor={theme.colors.textMuted}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text variant="small" color="muted">Short Distance</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={draftSession?.shortDistanceWorkout ?? ''}
-                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), shortDistanceWorkout: value }))}
-                    placeholder="60/100m"
-                    placeholderTextColor={theme.colors.textMuted}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text variant="small" color="muted">Medium Distance</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={draftSession?.mediumDistanceWorkout ?? ''}
-                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), mediumDistanceWorkout: value }))}
-                    placeholder="200m"
-                    placeholderTextColor={theme.colors.textMuted}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text variant="small" color="muted">Long Distance</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={draftSession?.longDistanceWorkout ?? ''}
-                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), longDistanceWorkout: value }))}
-                    placeholder="400m"
-                    placeholderTextColor={theme.colors.textMuted}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text variant="small" color="muted">Extra Session</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={draftSession?.extraSession ?? ''}
-                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), extraSession: value }))}
-                    placeholder="Optional extras"
-                    placeholderTextColor={theme.colors.textMuted}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text variant="small" color="muted">Notes</Text>
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    value={draftSession?.notes ?? ''}
-                    onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), notes: value }))}
-                    placeholder="Session notes"
-                    placeholderTextColor={theme.colors.textMuted}
-                    multiline
-                  />
-                </View>
+
+                {!draftSession?.isRestDay && (
+                  <>
+                    <View style={styles.modalInputGroup}>
+                      <Text style={styles.modalInputLabel}>Title</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={draftSession?.title ?? ''}
+                        onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), title: value }))}
+                        placeholder="Session title"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+                    <View style={styles.modalInputGroup}>
+                      <Text style={styles.modalInputLabel}>Pre-Activation 1</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={draftSession?.preActivation1 ?? ''}
+                        onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation1: value }))}
+                        placeholder="Drills, activation"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+                    <View style={styles.modalInputGroup}>
+                      <Text style={styles.modalInputLabel}>Pre-Activation 2</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={draftSession?.preActivation2 ?? ''}
+                        onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation2: value }))}
+                        placeholder="More activation work"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+                    <View style={styles.modalInputGroup}>
+                      <Text style={styles.modalInputLabel}>Short Distance</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={draftSession?.shortDistanceWorkout ?? ''}
+                        onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), shortDistanceWorkout: value }))}
+                        placeholder="60/100m"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+                    <View style={styles.modalInputGroup}>
+                      <Text style={styles.modalInputLabel}>Medium Distance</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={draftSession?.mediumDistanceWorkout ?? ''}
+                        onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), mediumDistanceWorkout: value }))}
+                        placeholder="200m"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+                    <View style={styles.modalInputGroup}>
+                      <Text style={styles.modalInputLabel}>Long Distance</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={draftSession?.longDistanceWorkout ?? ''}
+                        onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), longDistanceWorkout: value }))}
+                        placeholder="400m"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+                    <View style={styles.modalInputGroup}>
+                      <Text style={styles.modalInputLabel}>Extra Session</Text>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={draftSession?.extraSession ?? ''}
+                        onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), extraSession: value }))}
+                        placeholder="Optional extras"
+                        placeholderTextColor={C.textMuted}
+                      />
+                    </View>
+                    <View style={styles.modalInputGroup}>
+                      <Text style={styles.modalInputLabel}>Notes</Text>
+                      <TextInput
+                        style={[styles.modalInput, styles.textArea]}
+                        value={draftSession?.notes ?? ''}
+                        onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), notes: value }))}
+                        placeholder="Session notes"
+                        placeholderTextColor={C.textMuted}
+                        multiline
+                      />
+                    </View>
+                  </>
+                )}
               </View>
             </KeyboardAwareScreenScrollView>
+
             <View style={styles.modalActions}>
-              <Button variant="outline" size="sm" onPress={() => setEditingDay(null)}>
-                Cancel
-              </Button>
-              <Button variant="default" size="sm" onPress={handleSaveDay}>
-                Save day
-              </Button>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditingDay(null)} activeOpacity={0.7}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveDayBtn} onPress={handleSaveDay} activeOpacity={0.8}>
+                <LinearGradient
+                  colors={[C.orange, C.orangeLight]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.saveDayBtnGradient}
+                >
+                  <Text style={styles.saveDayBtnText}>Save Day</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: C.bg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: C.border,
   },
   backButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.card,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '700',
+    color: C.textPrimary,
   },
   headerActions: {
-    minWidth: 70,
+    minWidth: 80,
     alignItems: 'flex-end',
+  },
+  saveBtn: {
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  saveBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  saveBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'white',
+  },
+  webBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
+  },
+  webBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.textPrimary,
+  },
+  readOnlyBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
+  },
+  readOnlyText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.orange,
   },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
   },
   loadingText: {
-    marginTop: theme.spacing.sm,
+    fontSize: 14,
+    color: C.textMuted,
+  },
+  retryBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
+  },
+  retryBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.textPrimary,
   },
   scrollContent: {
-    padding: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl * 2,
-    gap: theme.spacing.lg,
+    padding: 20,
+    paddingBottom: 60,
+    gap: 16,
   },
-  metaCard: {
-    borderRadius: theme.borderRadius.lg,
+  detailsCard: {
+    backgroundColor: C.card,
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 16,
+    gap: 12,
   },
-  metaContent: {
-    gap: theme.spacing.md,
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: C.textPrimary,
+    marginBottom: 4,
   },
   inputGroup: {
-    gap: theme.spacing.xs,
+    gap: 4,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: C.textMuted,
   },
   input: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: C.textPrimary,
+    backgroundColor: C.glass,
+    fontSize: 14,
   },
   textArea: {
     minHeight: 80,
@@ -695,92 +784,202 @@ const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
+    gap: 12,
   },
   metaColumn: {
     flex: 1,
-    gap: theme.spacing.xs,
+    gap: 4,
   },
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.card,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: C.glass,
   },
-  gridCard: {
-    borderRadius: theme.borderRadius.lg,
+  dateText: {
+    fontSize: 14,
+    color: C.textPrimary,
   },
-  gridHeader: {
+  sessionsCard: {
+    backgroundColor: C.card,
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 16,
+    gap: 12,
+  },
+  sessionsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  sessionCount: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: C.textMuted,
+  },
   dayHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.sm,
+  },
+  dayHeaderCell: {
+    width: '13%',
+    alignItems: 'center',
   },
   dayHeaderText: {
-    width: '13%',
-    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.textMuted,
   },
   weekRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.sm,
+    marginTop: 6,
   },
   dayCell: {
     width: '13%',
-    minHeight: 90,
-    padding: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
+    minHeight: 80,
+    padding: 4,
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    backgroundColor: C.surface,
+    alignItems: 'center',
   },
   restCell: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primary + '20',
+    backgroundColor: C.rest,
+    borderColor: C.restBorder,
+  },
+  todayCell: {
+    backgroundColor: C.today,
+    borderColor: C.todayBorder,
+    borderWidth: 1,
   },
   emptyCell: {
     width: '13%',
   },
   dateLabel: {
-    marginBottom: theme.spacing.xs,
+    fontSize: 9,
+    fontWeight: '500',
+    color: C.textMuted,
+    marginBottom: 2,
+  },
+  todayDateLabel: {
+    color: '#818CF8',
+    fontWeight: '700',
+  },
+  cellSummary: {
+    fontSize: 8,
+    color: C.textMuted,
+    textAlign: 'center',
+    lineHeight: 11,
+  },
+  cellSummaryActive: {
+    color: C.textSecondary,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
-    padding: theme.spacing.lg,
+    padding: 20,
   },
   modalCard: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    backgroundColor: C.card,
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 20,
+    gap: 12,
     maxHeight: '90%',
+  },
+  modalHeader: {
+    gap: 2,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: C.textMuted,
   },
   modalScroll: {
     flexShrink: 1,
   },
   modalFormContent: {
-    gap: theme.spacing.sm,
+    gap: 12,
   },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: C.glass,
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  switchLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.textPrimary,
+  },
+  modalInputGroup: {
+    gap: 4,
+  },
+  modalInputLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: C.textMuted,
+  },
+  modalInput: {
+    borderWidth: 0.5,
+    borderColor: C.border,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: C.textPrimary,
+    backgroundColor: C.glass,
+    fontSize: 14,
   },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
+    gap: 10,
+    marginTop: 4,
+  },
+  cancelBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
+  },
+  cancelBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.textMuted,
+  },
+  saveDayBtn: {
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  saveDayBtnGradient: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  saveDayBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'white',
   },
 });

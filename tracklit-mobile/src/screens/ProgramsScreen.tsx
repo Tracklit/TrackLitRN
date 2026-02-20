@@ -25,7 +25,6 @@ import {
   ClipboardText,
   ShoppingBag,
   Barbell,
-  CaretRight,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -145,10 +144,6 @@ export const ProgramsScreen: React.FC = () => {
   const handleContinuePurchasedProgram = async (purchase: PurchasedProgramItem) => {
     await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(purchase.id));
     navigation.navigate('MainTabs', { screen: 'Practice' } as never);
-  };
-
-  const handleViewDetails = (program: Program) => {
-    navigation.navigate('ProgramDetail', { id: program.id });
   };
 
   const handleCreateAction = () => {
@@ -283,7 +278,6 @@ export const ProgramsScreen: React.FC = () => {
             isError={myProgramsQuery.isError}
             isGuest={isGuest}
             onContinue={handleContinueProgram}
-            onViewDetails={handleViewDetails}
             viewMode={viewMode}
           />
         ) : activeTab === 'purchased' ? (
@@ -293,7 +287,6 @@ export const ProgramsScreen: React.FC = () => {
             isError={purchasedProgramsQuery.isError}
             isGuest={isGuest}
             onContinue={handleContinuePurchasedProgram}
-            onViewDetails={handleViewDetails}
             viewMode={viewMode}
           />
         ) : (
@@ -403,7 +396,6 @@ interface MyProgramsTabProps {
   isError: boolean;
   isGuest: boolean;
   onContinue: (program: Program) => void;
-  onViewDetails: (program: Program) => void;
   viewMode: 'cards' | 'list';
 }
 
@@ -413,7 +405,6 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   isError,
   isGuest,
   onContinue,
-  onViewDetails,
   viewMode,
 }) => {
   if (isGuest) {
@@ -461,7 +452,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
           key={program.id}
           program={program}
           onContinue={() => onContinue(program)}
-          onViewDetails={() => onViewDetails(program)}
+          buttonLabel="Edit Program"
         />
       ))}
     </View>
@@ -472,7 +463,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
           key={program.id}
           program={program}
           onContinue={() => onContinue(program)}
-          onViewDetails={() => onViewDetails(program)}
+          buttonLabel="Edit Program"
         />
       ))}
     </View>
@@ -485,7 +476,6 @@ interface PurchasedProgramsTabProps {
   isError: boolean;
   isGuest: boolean;
   onContinue: (purchase: PurchasedProgramItem) => void;
-  onViewDetails: (program: Program) => void;
   viewMode: 'cards' | 'list';
 }
 
@@ -495,7 +485,6 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   isError,
   isGuest,
   onContinue,
-  onViewDetails,
   viewMode,
 }) => {
   if (isGuest) {
@@ -546,7 +535,6 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
             purchase.isAssigned ? 'Assigned' : purchase.isCreated ? 'Created' : 'Purchased'
           }
           onContinue={() => onContinue(purchase)}
-          onViewDetails={() => onViewDetails(purchase.program)}
         />
       ))}
     </View>
@@ -565,7 +553,6 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
               : 'TrackLit'
           }
           onContinue={() => onContinue(purchase)}
-          onViewDetails={() => onViewDetails(purchase.program)}
           price={purchase.program?.price}
         />
       ))}
@@ -649,7 +636,7 @@ interface ProgramCardItemProps {
   subtitle?: string;
   price?: number;
   onContinue: () => void;
-  onViewDetails: () => void;
+  buttonLabel?: string;
 }
 
 const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
@@ -658,7 +645,7 @@ const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
   subtitle,
   price,
   onContinue,
-  onViewDetails,
+  buttonLabel = 'Continue',
 }) => {
   return (
     <View style={styles.programCard}>
@@ -701,12 +688,8 @@ const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
               end={{ x: 1, y: 0 }}
               style={styles.actionBtnGradient}
             >
-              <Text style={styles.actionBtnPrimaryText}>Continue</Text>
+              <Text style={styles.actionBtnPrimaryText}>{buttonLabel}</Text>
             </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtnOutline} onPress={onViewDetails} activeOpacity={0.7}>
-            <Text style={styles.actionBtnOutlineText}>Details</Text>
-            <CaretRight size={12} color={C.textMuted} weight="bold" />
           </TouchableOpacity>
         </View>
       </View>
@@ -718,14 +701,14 @@ interface ProgramListItemProps {
   program: Program;
   badgeLabel?: string;
   onContinue: () => void;
-  onViewDetails: () => void;
+  buttonLabel?: string;
 }
 
 const ProgramListItem: React.FC<ProgramListItemProps> = ({
   program,
   badgeLabel,
   onContinue,
-  onViewDetails,
+  buttonLabel = 'Continue',
 }) => {
   return (
     <View style={styles.listCard}>
@@ -743,14 +726,9 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
             {program.description || 'No description'}
           </Text>
         </View>
-        <View style={styles.listActions}>
-          <TouchableOpacity onPress={onViewDetails}>
-            <Text style={styles.listActionMuted}>Details</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onContinue}>
-            <Text style={styles.listActionPrimary}>Continue</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={onContinue}>
+          <Text style={styles.listActionPrimary}>{buttonLabel}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -950,23 +928,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: C.textPrimary,
   },
-  actionBtnOutline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: C.glass,
-    borderWidth: 0.5,
-    borderColor: C.border,
-  },
-  actionBtnOutlineText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.textMuted,
-  },
   listCard: {
     borderRadius: 12,
     backgroundColor: C.card,
@@ -993,15 +954,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: C.textPrimary,
-  },
-  listActions: {
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  listActionMuted: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: C.textMuted,
   },
   listActionPrimary: {
     fontSize: 12,
