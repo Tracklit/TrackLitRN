@@ -16,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { PencilSimpleLine, Heart, ChatCircle, PaperPlaneTilt } from 'phosphor-react-native';
+import { PencilSimpleLine, Heart, ChatCircle, ArrowLeft, Book } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
@@ -45,6 +45,9 @@ interface FeedItem {
   commentsCount: number;
   isLiked: boolean;
   isOwnPost: boolean;
+  isJournalEntry?: boolean;
+  journalTitle?: string | null;
+  journalNotes?: string | null;
 }
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -104,12 +107,15 @@ export const FeedScreen: React.FC = () => {
       name: 'Mia T.',
       username: 'mia_track',
       profileImageUrl: 'https://i.pravatar.cc/150?img=9',
-      content: 'Took an easy recovery day with stretching and foam rolling. Feeling fresh for tomorrow\'s tempo run. Remember — rest days are training days too!',
+      content: 'Took an easy recovery day with stretching and foam rolling. Feeling fresh for tomorrow\'s tempo run.',
       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       likesCount: 15,
       commentsCount: 2,
       isLiked: false,
       isOwnPost: false,
+      isJournalEntry: true,
+      journalTitle: 'Recovery Day Reflection',
+      journalNotes: 'Took an easy recovery day with stretching and foam rolling. Feeling fresh for tomorrow\'s tempo run. Remember — rest days are training days too!\n\nDid 20 minutes of yoga, 10 minutes foam rolling on quads and hamstrings, and 15 minutes of dynamic stretching. Legs feel much better after yesterday\'s hard session.\n\nMood: 8/10\nSleep: 7.5 hours',
     },
     {
       id: 1005,
@@ -169,12 +175,15 @@ export const FeedScreen: React.FC = () => {
       name: 'Quinn L.',
       username: 'dash_quinn',
       profileImageUrl: 'https://i.pravatar.cc/150?img=33',
-      content: 'Visualized my race plan for Saturday. Feeling confident about the 200m. Goal: sub-22 seconds. Mind and body aligned.',
+      content: 'Visualized my race plan for Saturday. Feeling confident about the 200m. Goal: sub-22 seconds.',
       createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
       likesCount: 27,
       commentsCount: 8,
       isLiked: true,
       isOwnPost: false,
+      isJournalEntry: true,
+      journalTitle: 'Pre-Competition Notes',
+      journalNotes: 'Visualized my race plan for Saturday. Feeling confident about the 200m. Goal: sub-22 seconds. Mind and body aligned.\n\nRace plan:\n- Explode out of blocks, stay low for 30m\n- Transition to upright by 50m\n- Hold form through the bend\n- Lean into finish\n\nVisualization: 3 reps of full race mentally\nFeeling: Calm and focused\nConfidence: 9/10',
     },
   ];
 
@@ -198,9 +207,6 @@ export const FeedScreen: React.FC = () => {
       apiRequest<{ liked: boolean }>(`/api/feed/posts/${postId}/like`, { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
-    },
-    onError: () => {
-      Alert.alert('Unable to like post', 'Please try again.');
     },
   });
 
@@ -254,14 +260,19 @@ export const FeedScreen: React.FC = () => {
     /unauthorized|401|login required/i.test(feedError.message ?? '');
 
   const [localLikes, setLocalLikes] = useState<Record<number, boolean>>({});
+  const [journalModalVisible, setJournalModalVisible] = useState(false);
+  const [selectedJournalPost, setSelectedJournalPost] = useState<FeedItem | null>(null);
 
   const handleLocalLike = (item: FeedItem) => {
     if (!canInteract) {
       Alert.alert('Login required', 'Sign in to like posts.');
       return;
     }
-    setLocalLikes(prev => ({ ...prev, [item.id]: !prev[item.id] }));
-    handleToggleLike(item.id);
+    const isCurrentlyLiked = localLikes[item.id] !== undefined ? localLikes[item.id] : item.isLiked;
+    setLocalLikes(prev => ({ ...prev, [item.id]: !isCurrentlyLiked }));
+    if (item.id < 1000) {
+      handleToggleLike(item.id);
+    }
   };
 
   const renderItem = ({ item }: { item: FeedItem }) => {
@@ -301,6 +312,21 @@ export const FeedScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         )}
+        {item.isJournalEntry && (
+          <TouchableOpacity
+            style={styles.journalLink}
+            onPress={() => {
+              setSelectedJournalPost(item);
+              setJournalModalVisible(true);
+            }}
+            activeOpacity={0.7}
+          >
+            <Book size={13} color="#FF9800" weight="fill" />
+            <Text variant="small" color="primary" weight="medium">
+              View full journal entry
+            </Text>
+          </TouchableOpacity>
+        )}
         <View style={styles.postFooter}>
           <TouchableOpacity
             style={styles.socialButton}
@@ -336,8 +362,15 @@ export const FeedScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <View style={{ paddingTop: insets.top }}>
+      <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.md }]}>
         <InlineRefreshHeader visible={isRefreshing} />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <ArrowLeft size={22} color="#e2e8f0" weight="bold" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.filterRow}>
@@ -444,9 +477,20 @@ export const FeedScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}
             extraScrollHeight={80}
           >
-            <Text variant="h4" weight="semiBold" color="foreground" style={styles.modalTitle}>
-              Share an update
-            </Text>
+            <View style={styles.composerHeader}>
+              <TouchableOpacity onPress={() => setIsComposerOpen(false)}>
+                <Text variant="body" color="muted">Cancel</Text>
+              </TouchableOpacity>
+              <Text variant="body" weight="semiBold" color="foreground">New Post</Text>
+              <TouchableOpacity
+                onPress={handleCreatePost}
+                disabled={createPostMutation.isPending || !composerText.trim()}
+              >
+                <Text variant="body" weight="bold" color={composerText.trim() ? 'primary' : 'muted'}>
+                  {createPostMutation.isPending ? 'Posting...' : 'Post'}
+                </Text>
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={styles.modalInput}
               placeholder="What's on your mind?"
@@ -454,26 +498,99 @@ export const FeedScreen: React.FC = () => {
               multiline
               value={composerText}
               onChangeText={setComposerText}
+              autoFocus
             />
-            <View style={styles.modalActions}>
-              <Button
-                variant="ghost"
-                onPress={() => setIsComposerOpen(false)}
-                style={styles.modalButton}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="default"
-                loading={createPostMutation.isPending}
-                onPress={handleCreatePost}
-                style={styles.modalButton}
-              >
-                Post
-              </Button>
-            </View>
+            <TouchableOpacity
+              style={styles.journalToggle}
+              onPress={() => {
+                if (!composerText.trim()) {
+                  Alert.alert('Write something first', 'Add your journal entry text before posting.');
+                  return;
+                }
+                const journalPost: FeedItem = {
+                  id: Date.now(),
+                  userId: user?.id ? Number(user.id) : 0,
+                  name: user?.name || user?.username || 'You',
+                  username: user?.username || '',
+                  profileImageUrl: null,
+                  content: composerText.trim().split('\n')[0],
+                  createdAt: new Date().toISOString(),
+                  likesCount: 0,
+                  commentsCount: 0,
+                  isLiked: false,
+                  isOwnPost: true,
+                  isJournalEntry: true,
+                  journalTitle: 'Journal Entry',
+                  journalNotes: composerText.trim(),
+                };
+                const currentData = feedQuery.data || PLACEHOLDER_FEED;
+                queryClient.setQueryData(['feed', filter], [journalPost, ...currentData]);
+                queryClient.invalidateQueries({ queryKey: ['community-activities'] });
+                setComposerText('');
+                setIsComposerOpen(false);
+                apiRequest('/api/journal', {
+                  method: 'POST',
+                  data: {
+                    title: 'Journal Entry',
+                    notes: composerText.trim(),
+                    type: 'general',
+                    date: new Date().toISOString().split('T')[0],
+                    moodRating: 5,
+                    isPublic: true,
+                  },
+                }).catch(() => {});
+              }}
+            >
+              <Book size={16} color="#FF9800" weight="fill" />
+              <Text variant="small" color="primary" weight="medium">
+                Post as Journal Entry
+              </Text>
+            </TouchableOpacity>
           </KeyboardAwareScreenScrollView>
         </View>
+      </Modal>
+
+      <Modal
+        transparent
+        visible={journalModalVisible}
+        animationType="slide"
+        onRequestClose={() => setJournalModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.journalModalBackdrop}
+          activeOpacity={1}
+          onPress={() => setJournalModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={[styles.journalModalContent, { paddingBottom: insets.bottom + theme.spacing.lg }]}
+            activeOpacity={1}
+          >
+            <View style={styles.journalModalHandle} />
+            {selectedJournalPost && (
+              <>
+                <View style={styles.journalModalHeader}>
+                  {selectedJournalPost.profileImageUrl ? (
+                    <Image source={{ uri: selectedJournalPost.profileImageUrl }} style={styles.journalModalAvatar} />
+                  ) : (
+                    <Avatar fallback={(selectedJournalPost.name?.[0] || '?').toUpperCase()} size="md" />
+                  )}
+                  <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
+                    <Text variant="body" weight="bold" color="foreground">
+                      {selectedJournalPost.journalTitle || 'Journal Entry'}
+                    </Text>
+                    <Text variant="small" color="muted">
+                      {selectedJournalPost.name} · {formatDistanceToNow(new Date(selectedJournalPost.createdAt), { addSuffix: true })}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.journalModalDivider} />
+                <Text variant="body" color="secondary" style={styles.journalModalBody}>
+                  {selectedJournalPost.journalNotes || selectedJournalPost.content || ''}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </LinearGradient>
   );
@@ -482,6 +599,18 @@ export const FeedScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  topBar: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingBottom: theme.spacing.sm,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   filterRow: {
     flexDirection: 'row',
@@ -523,6 +652,13 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
     marginLeft: 48,
     lineHeight: 21,
+  },
+  journalLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+    marginLeft: 48,
   },
   postFooter: {
     flexDirection: 'row',
@@ -581,25 +717,62 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
-  modalTitle: {
-    textAlign: 'center',
+  composerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   modalInput: {
     minHeight: 120,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 12,
     padding: theme.spacing.md,
     color: theme.colors.foreground,
     textAlignVertical: 'top',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    fontSize: 16,
+    lineHeight: 22,
   },
-  modalActions: {
+  journalToggle: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: theme.spacing.md,
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: theme.spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
-  modalButton: {
-    minWidth: 120,
+  journalModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  journalModalContent: {
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: theme.spacing.lg,
+    maxHeight: '80%',
+  },
+  journalModalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignSelf: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  journalModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  journalModalAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  journalModalDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginVertical: theme.spacing.lg,
+  },
+  journalModalBody: {
+    lineHeight: 22,
   },
 });
