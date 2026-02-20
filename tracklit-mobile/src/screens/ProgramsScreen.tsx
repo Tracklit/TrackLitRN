@@ -143,7 +143,7 @@ export const ProgramsScreen: React.FC = () => {
 
   const handleContinuePurchasedProgram = async (purchase: PurchasedProgramItem) => {
     await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(purchase.id));
-    navigation.navigate('ProgramEditor', { id: purchase.programId });
+    navigation.navigate('MainTabs', { screen: 'Practice' } as never);
   };
 
   const handleCreateAction = () => {
@@ -256,7 +256,7 @@ export const ProgramsScreen: React.FC = () => {
         <View style={styles.tabs}>
           {([
             { key: 'my-programs', label: 'My Programs' },
-            { key: 'purchased', label: 'Assigned' },
+            { key: 'purchased', label: 'Purchased' },
             { key: 'workout-library', label: 'Library' },
           ] as const).map((tab) => (
             <TouchableOpacity
@@ -535,7 +535,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
             purchase.isAssigned ? 'Assigned' : purchase.isCreated ? 'Created' : 'Purchased'
           }
           onContinue={() => onContinue(purchase)}
-          buttonLabel="View Program"
+          buttonLabel="Assign"
         />
       ))}
     </View>
@@ -555,7 +555,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
           }
           onContinue={() => onContinue(purchase)}
           price={purchase.program?.price}
-          buttonLabel="View Program"
+          buttonLabel="Assign"
         />
       ))}
     </View>
