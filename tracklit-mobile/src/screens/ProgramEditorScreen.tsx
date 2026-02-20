@@ -204,11 +204,24 @@ export const ProgramEditorScreen: React.FC = () => {
       const dayNumber = Number(dayKey);
       const session = sessionsByDay[dayNumber];
       const dateValue = formatISODate(addDays(startDate, dayNumber - 1));
-      return {
-        ...session,
+      const cleaned: ProgramSession = {
         dayNumber,
         date: dateValue,
+        title: session.title ?? null,
+        description: session.description ?? null,
+        preActivation1: session.preActivation1 ?? null,
+        preActivation2: session.preActivation2 ?? null,
+        shortDistanceWorkout: session.shortDistanceWorkout ?? null,
+        mediumDistanceWorkout: session.mediumDistanceWorkout ?? null,
+        longDistanceWorkout: session.longDistanceWorkout ?? null,
+        extraSession: session.extraSession ?? null,
+        notes: session.notes ?? null,
+        isRestDay: session.isRestDay ?? false,
       };
+      if (session.id != null) {
+        cleaned.id = session.id;
+      }
+      return cleaned;
     }).filter((session) => {
       if (session.isRestDay) return true;
       return Boolean(
@@ -239,50 +252,85 @@ export const ProgramEditorScreen: React.FC = () => {
   const saveSessionsIndividually = useCallback(
     async (payloadSessions: ProgramSession[]) => {
       if (!programId || payloadSessions.length === 0) return;
-      await Promise.all(
+      const results = await Promise.allSettled(
         payloadSessions.map((session) => {
-          const { id, ...sessionData } = session;
-          if (typeof id === 'number') {
+          const { id, programId: _pid, ...sessionData } = session;
+          if (id != null) {
+            console.warn('[ProgramEditor] PUT session:', { id, dayNumber: session.dayNumber });
             return apiRequest(`/api/programs/${programId}/sessions/${id}`, {
               method: 'PUT',
               data: sessionData,
             });
           }
+          console.warn('[ProgramEditor] POST new session:', { dayNumber: session.dayNumber });
           return apiRequest(`/api/programs/${programId}/sessions`, {
             method: 'POST',
             data: sessionData,
           });
         })
       );
+      const failures = results.filter((r) => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.warn('[ProgramEditor] Individual save failures:', failures.length,
+          failures.map((f: any) => f.reason?.message).join('; '));
+        if (failures.length === results.length) {
+          throw new Error('All session saves failed');
+        }
+      }
     },
     [programId]
   );
 
   const handleSaveAll = useCallback(async (silent = false) => {
     if (isUploadedProgram) return;
+    const errors: string[] = [];
     try {
       if (isOwner) {
-        await updateProgramMutation.mutateAsync();
+        try {
+          console.warn('[ProgramEditor] Updating program metadata...');
+          await updateProgramMutation.mutateAsync();
+        } catch (metaErr: any) {
+          console.warn('[ProgramEditor] Metadata update failed (non-blocking):', metaErr?.message);
+          errors.push('Program details: ' + (metaErr?.message || 'unknown error'));
+        }
       }
       const payloadSessions = buildSessionPayload();
+      console.warn('[ProgramEditor] Session payload:', {
+        count: payloadSessions.length,
+        sample: payloadSessions.slice(0, 2).map((s) => ({
+          id: s.id,
+          dayNumber: s.dayNumber,
+          date: s.date,
+          title: s.title,
+          isRestDay: s.isRestDay,
+          idType: typeof s.id,
+        })),
+      });
       if (payloadSessions.length > 0) {
         let batchWorked = false;
         try {
           await batchSaveMutation.mutateAsync(payloadSessions);
           batchWorked = true;
+          console.warn('[ProgramEditor] Batch save succeeded');
         } catch (batchError: any) {
-          console.warn('[ProgramEditor] Batch save failed, falling back to individual saves:', batchError?.message);
+          console.warn('[ProgramEditor] Batch save failed:', batchError?.message, 'status:', batchError?.status);
         }
         if (!batchWorked) {
+          console.warn('[ProgramEditor] Falling back to individual saves...');
           await saveSessionsIndividually(payloadSessions);
+          console.warn('[ProgramEditor] Individual saves completed');
         }
-        invalidateProgramQueries();
       }
+      invalidateProgramQueries();
       if (!silent) {
-        Alert.alert('Saved!', 'Your sessions have been saved successfully.');
+        if (errors.length > 0) {
+          Alert.alert('Partially Saved', 'Sessions saved but some details could not be updated.');
+        } else {
+          Alert.alert('Saved!', 'Your sessions have been saved successfully.');
+        }
       }
     } catch (error: any) {
-      console.warn('[ProgramEditor] Save failed:', error?.message);
+      console.warn('[ProgramEditor] Save failed:', error?.message, JSON.stringify(error).slice(0, 500));
       if (!silent) {
         Alert.alert('Save failed', error?.message || 'Unable to save program changes.');
       }
