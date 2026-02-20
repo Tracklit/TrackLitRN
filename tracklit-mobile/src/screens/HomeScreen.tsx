@@ -155,11 +155,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         console.warn('[Home] Resolved via direct match:', { programId: directMatch.programId });
         return String(directMatch.programId);
       }
-      console.warn('[Home] No match found for selectedProgramId:', selectedProgramId);
-      return null;
+      console.warn('[Home] No match found for selectedProgramId:', selectedProgramId, 'falling back to first purchase');
     }
-    console.warn('[Home] No selection, using first purchase:', { programId: purchases[0].programId });
-    return String(purchases[0].programId);
+    const fallback = purchases[0];
+    console.warn('[Home] Using fallback program:', { purchaseId: fallback.id, programId: fallback.programId, title: fallback.program?.title });
+    return String(fallback.programId);
+  }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
+
+  useEffect(() => {
+    if (!selectionLoaded) return;
+    const purchases = purchasedProgramsQuery.data;
+    if (!purchases || purchases.length === 0) return;
+    if (!selectedProgramId) return;
+    const hasMatch = purchases.some(
+      (p) => String(p.id) === String(selectedProgramId) || String(p.programId) === String(selectedProgramId)
+    );
+    if (!hasMatch) {
+      const fallbackId = String(purchases[0].id);
+      console.warn('[Home] Correcting stale selection to:', fallbackId);
+      AsyncStorage.setItem(PROGRAM_SELECTION_KEY, fallbackId);
+      setSelectedProgramId(fallbackId);
+    }
   }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
 
   const todaySessionQuery = useQuery({
@@ -223,6 +239,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       if (!todaySession) {
         const incomplete = programData.sessions.filter((s: any) => !s.completed_at);
         todaySession = incomplete.length > 0 ? incomplete[0] : programData.sessions[0];
+        console.warn('[Home] Fallback session used:', {
+          reason: incomplete.length > 0 ? 'first incomplete' : 'first session',
+          dayNumber: todaySession?.dayNumber,
+          title: todaySession?.title,
+        });
       }
 
       const sessionTitle = todaySession.title || todaySession.preActivation1 || todaySession.columnB || 'Training Session';

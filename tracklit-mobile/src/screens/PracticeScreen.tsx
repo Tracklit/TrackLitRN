@@ -82,7 +82,7 @@ export const PracticeScreen: React.FC = () => {
 
   const programs = purchasedProgramsQuery.data ?? [];
   const programIdsKey = useMemo(
-    () => programs.map((assignment) => String(assignment.id)).join('|'),
+    () => programs.map((assignment) => `${assignment.id}:${assignment.programId}:${assignment.program?.title || ''}`).join('|'),
     [programs]
   );
 
@@ -98,8 +98,19 @@ export const PracticeScreen: React.FC = () => {
     let isCancelled = false;
     const loadSelection = async () => {
       const savedId = await AsyncStorage.getItem(PROGRAM_SELECTION_KEY);
+      console.warn('[Practice] Loading selection. savedId:', savedId, 'programs:', programs.map(p => ({
+        purchaseId: p.id,
+        programId: p.programId,
+        title: p.program?.title,
+      })));
       const matched = programs.find((assignment) => String(assignment.id) === savedId);
       const nextProgram = matched ?? programs[0];
+      console.warn('[Practice] Resolved program:', {
+        matchedByStorage: !!matched,
+        purchaseId: nextProgram.id,
+        programId: nextProgram.programId,
+        title: nextProgram.program?.title,
+      });
       if (!isCancelled) {
         setSelectedProgram((previous) => {
           if (previous && String(previous.id) === String(nextProgram.id)) {
@@ -117,7 +128,7 @@ export const PracticeScreen: React.FC = () => {
     return () => {
       isCancelled = true;
     };
-  }, [programIdsKey, programs]);
+  }, [programIdsKey]);
 
   useEffect(() => {
     if (!selectedProgram) {

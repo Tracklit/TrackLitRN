@@ -43,11 +43,18 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   const animValue = useRef(new Animated.Value(0)).current;
 
   const sortedPrograms = useMemo(() => {
-    return [...programs].sort((a, b) => {
+    const sorted = [...programs].sort((a, b) => {
       const titleA = (a.program?.title || '').toLowerCase();
       const titleB = (b.program?.title || '').toLowerCase();
       return titleA.localeCompare(titleB);
     });
+    console.warn('[Dropdown] Sorted programs:', sorted.map((p, i) => ({
+      index: i,
+      purchaseId: p.id,
+      programId: p.programId,
+      title: p.program?.title,
+    })));
+    return sorted;
   }, [programs]);
 
   const selectedTitle = useMemo(() => {
@@ -70,6 +77,11 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   });
 
   const handleSelect = (assignment: PurchasedProgramItem) => {
+    console.warn('[Dropdown] User tapped program:', {
+      purchaseId: assignment.id,
+      programId: assignment.programId,
+      title: assignment.program?.title,
+    });
     onSelect(assignment);
     setIsOpen(false);
   };
@@ -107,11 +119,11 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
             </View>
           ) : sortedPrograms.length > 0 ? (
             <View style={styles.programList}>
-              {sortedPrograms.map((assignment) => {
+              {sortedPrograms.map((assignment, idx) => {
                 const isSelected = String(selectedProgramId) === String(assignment.id);
                 return (
                   <TouchableOpacity
-                    key={assignment.id}
+                    key={`${assignment.id}-${assignment.programId}-${idx}`}
                     style={[styles.programRow, isSelected && styles.programRowSelected]}
                     onPress={() => handleSelect(assignment)}
                     activeOpacity={0.7}

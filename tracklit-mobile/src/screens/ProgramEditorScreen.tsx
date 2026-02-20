@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Animated as RNAnimated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -184,20 +185,18 @@ export const ProgramEditorScreen: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['today-session'] });
   }, [programId]);
 
-  const updateProgramMutation = useMutation({
-    mutationFn: async () => {
-      if (!programId) return;
-      return apiRequest(`/api/programs/${programId}`, {
-        method: 'PUT',
-        data: {
-          title: title.trim(),
-          description: description.trim(),
-          category: category.trim(),
-          duration: totalDays,
-        },
-      });
-    },
-  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastOpacity = useRef(new RNAnimated.Value(0)).current;
+
+  const showToast = useCallback((message: string) => {
+    setToastMessage(message);
+    RNAnimated.sequence([
+      RNAnimated.timing(toastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      RNAnimated.delay(2000),
+      RNAnimated.timing(toastOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start(() => setToastMessage(null));
+  }, [toastOpacity]);
 
   const buildSessionPayload = useCallback(() => {
     return Object.keys(sessionsByDay).map((dayKey) => {
@@ -238,111 +237,130 @@ export const ProgramEditorScreen: React.FC = () => {
     });
   }, [sessionsByDay, startDate]);
 
-  const batchSaveMutation = useMutation({
-    mutationFn: async (payloadSessions: ProgramSession[]) => {
-      if (!programId || payloadSessions.length === 0) return;
-      return apiRequest(`/api/programs/${programId}/sessions/batch`, {
-        method: 'PUT',
-        data: { sessions: payloadSessions },
-      });
-    },
-    onSuccess: () => invalidateProgramQueries(),
-  });
-
-  const saveSessionsIndividually = useCallback(
-    async (payloadSessions: ProgramSession[]) => {
-      if (!programId || payloadSessions.length === 0) return;
-      const results = await Promise.allSettled(
-        payloadSessions.map((session) => {
-          const { id, programId: _pid, ...sessionData } = session;
-          if (id != null) {
-            console.warn('[ProgramEditor] PUT session:', { id, dayNumber: session.dayNumber });
-            return apiRequest(`/api/programs/${programId}/sessions/${id}`, {
-              method: 'PUT',
-              data: sessionData,
-            });
-          }
-          console.warn('[ProgramEditor] POST new session:', { dayNumber: session.dayNumber });
-          return apiRequest(`/api/programs/${programId}/sessions`, {
-            method: 'POST',
-            data: sessionData,
-          });
-        })
-      );
-      const failures = results.filter((r) => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn('[ProgramEditor] Individual save failures:', failures.length,
-          failures.map((f: any) => f.reason?.message).join('; '));
-        if (failures.length === results.length) {
-          throw new Error('All session saves failed');
-        }
-      }
-    },
-    [programId]
-  );
-
   const handleSaveAll = useCallback(async (silent = false) => {
     if (isUploadedProgram) return;
-    const errors: string[] = [];
+    setIsSaving(true);
     try {
-      if (isOwner) {
-        try {
-          console.warn('[ProgramEditor] Updating program metadata...');
-          await updateProgramMutation.mutateAsync();
-        } catch (metaErr: any) {
-          console.warn('[ProgramEditor] Metadata update failed (non-blocking):', metaErr?.message);
-          errors.push('Program details: ' + (metaErr?.message || 'unknown error'));
-        }
-      }
       const payloadSessions = buildSessionPayload();
-      console.warn('[ProgramEditor] Session payload:', {
-        count: payloadSessions.length,
+      console.warn('[ProgramEditor] Saving program with sessions:', {
+        programId,
+        isOwner,
+        sessionCount: payloadSessions.length,
         sample: payloadSessions.slice(0, 2).map((s) => ({
           id: s.id,
           dayNumber: s.dayNumber,
           date: s.date,
           title: s.title,
-          isRestDay: s.isRestDay,
-          idType: typeof s.id,
         })),
       });
-      if (payloadSessions.length > 0) {
-        let batchWorked = false;
-        try {
-          await batchSaveMutation.mutateAsync(payloadSessions);
-          batchWorked = true;
-          console.warn('[ProgramEditor] Batch save succeeded');
-        } catch (batchError: any) {
-          console.warn('[ProgramEditor] Batch save failed:', batchError?.message, 'status:', batchError?.status);
-        }
-        if (!batchWorked) {
-          console.warn('[ProgramEditor] Falling back to individual saves...');
-          await saveSessionsIndividually(payloadSessions);
-          console.warn('[ProgramEditor] Individual saves completed');
-        }
+
+      const programPayload: Record<string, any> = {
+        sessions: payloadSessions,
+      };
+      if (isOwner) {
+        programPayload.title = title.trim();
+        programPayload.description = description.trim();
+        programPayload.category = category.trim();
+        programPayload.duration = totalDays;
       }
+
+      await apiRequest(`/api/programs/${programId}`, {
+        method: 'PUT',
+        data: programPayload,
+      });
+
+      console.warn('[ProgramEditor] Program + sessions saved via PUT');
       invalidateProgramQueries();
       if (!silent) {
-        if (errors.length > 0) {
-          Alert.alert('Partially Saved', 'Sessions saved but some details could not be updated.');
-        } else {
-          Alert.alert('Saved!', 'Your sessions have been saved successfully.');
+        showToast('Sessions saved successfully');
+      }
+    } catch (putError: any) {
+      console.warn('[ProgramEditor] PUT with sessions failed:', putError?.message, 'status:', putError?.status);
+
+      try {
+        if (isOwner) {
+          await apiRequest(`/api/programs/${programId}`, {
+            method: 'PUT',
+            data: {
+              title: title.trim(),
+              description: description.trim(),
+              category: category.trim(),
+              duration: totalDays,
+            },
+          });
+        }
+
+        const payloadSessions = buildSessionPayload();
+        if (payloadSessions.length > 0) {
+          try {
+            await apiRequest(`/api/programs/${programId}/sessions/batch`, {
+              method: 'PUT',
+              data: { sessions: payloadSessions },
+            });
+            console.warn('[ProgramEditor] Batch endpoint succeeded');
+          } catch (batchErr: any) {
+            console.warn('[ProgramEditor] Batch failed too:', batchErr?.message);
+            try {
+              await apiRequest(`/api/programs/${programId}/sessions/batch`, {
+                method: 'POST',
+                data: { sessions: payloadSessions },
+              });
+              console.warn('[ProgramEditor] Batch POST succeeded');
+            } catch (batchPostErr: any) {
+              console.warn('[ProgramEditor] Batch POST also failed:', batchPostErr?.message);
+              const results = await Promise.allSettled(
+                payloadSessions.map((session) => {
+                  const { id, ...sessionData } = session;
+                  if (id != null) {
+                    return apiRequest(`/api/programs/${programId}/sessions/${id}`, {
+                      method: 'PUT',
+                      data: sessionData,
+                    });
+                  }
+                  return apiRequest(`/api/programs/${programId}/sessions`, {
+                    method: 'POST',
+                    data: sessionData,
+                  });
+                })
+              );
+              const failures = results.filter((r) => r.status === 'rejected');
+              console.warn('[ProgramEditor] Individual results:', {
+                total: results.length,
+                succeeded: results.length - failures.length,
+                failed: failures.length,
+                errors: failures.slice(0, 3).map((f: any) => f.reason?.message),
+              });
+              if (failures.length === results.length) {
+                throw new Error('Unable to save sessions. The server may not support this operation.');
+              }
+            }
+          }
+        }
+
+        invalidateProgramQueries();
+        if (!silent) {
+          showToast('Sessions saved successfully');
+        }
+      } catch (fallbackError: any) {
+        console.warn('[ProgramEditor] All save strategies failed:', fallbackError?.message);
+        if (!silent) {
+          Alert.alert('Save failed', fallbackError?.message || 'Unable to save program changes.');
         }
       }
-    } catch (error: any) {
-      console.warn('[ProgramEditor] Save failed:', error?.message, JSON.stringify(error).slice(0, 500));
-      if (!silent) {
-        Alert.alert('Save failed', error?.message || 'Unable to save program changes.');
-      }
+    } finally {
+      setIsSaving(false);
     }
   }, [
     isOwner,
     isUploadedProgram,
-    updateProgramMutation,
+    programId,
+    title,
+    description,
+    category,
+    totalDays,
     buildSessionPayload,
-    batchSaveMutation,
-    saveSessionsIndividually,
     invalidateProgramQueries,
+    showToast,
   ]);
 
   const handleOpenDay = (dayNumber: number) => {
@@ -403,7 +421,6 @@ export const ProgramEditorScreen: React.FC = () => {
     }
   };
 
-  const isSaving = updateProgramMutation.isPending || batchSaveMutation.isPending;
 
   if (programQuery.isLoading) {
     return (
@@ -436,7 +453,7 @@ export const ProgramEditorScreen: React.FC = () => {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => {
           const sessions = buildSessionPayload();
-          if (sessions.length > 0 && !isUploadedProgram && isOwner) {
+          if (sessions.length > 0 && !isUploadedProgram) {
             handleSaveAll(true).finally(() => navigation.goBack());
           } else {
             navigation.goBack();
@@ -745,6 +762,15 @@ export const ProgramEditorScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {toastMessage && (
+        <RNAnimated.View style={[styles.toastContainer, { opacity: toastOpacity }]} pointerEvents="none">
+          <View style={styles.toast}>
+            <FloppyDisk size={14} color="white" weight="fill" />
+            <Text style={styles.toastText}>{toastMessage}</Text>
+          </View>
+        </RNAnimated.View>
+      )}
     </View>
   );
 };
@@ -1105,6 +1131,33 @@ const styles = StyleSheet.create({
   saveDayBtnText: {
     fontSize: 13,
     fontWeight: '700',
+    color: 'white',
+  },
+  toastContainer: {
+    position: 'absolute',
+    bottom: 48,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  toast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(34,197,94,0.92)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  toastText: {
+    fontSize: 13,
+    fontWeight: '600',
     color: 'white',
   },
 });
