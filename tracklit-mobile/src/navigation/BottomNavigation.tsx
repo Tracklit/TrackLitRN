@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -6,6 +6,9 @@ import {
   Text,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery } from '@tanstack/react-query';
 import {
   House,
   CalendarBlank,
@@ -15,6 +18,7 @@ import {
 } from 'phosphor-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
+import { apiRequest } from '@/lib/api';
 import theme from '@/utils/theme';
 
 type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Tools';
@@ -64,6 +68,7 @@ interface NavItemComponentProps {
   isActive: boolean;
   onPress: () => void;
   onLongPress: () => void;
+  showBadge?: boolean;
 }
 
 const NavItemComponent: React.FC<NavItemComponentProps> = ({
@@ -71,6 +76,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
   isActive,
   onPress,
   onLongPress,
+  showBadge,
 }) => {
   const contentColor = isActive ? theme.colors.accent : theme.colors.textSecondary;
   const IconComp = item.IconComponent;
@@ -88,6 +94,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
           color={contentColor}
           weight="fill"
         />
+        {showBadge && <View style={styles.badge} />}
       </View>
       <Text style={[
         styles.navLabel,
@@ -99,6 +106,10 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
   );
 };
 
+interface FeedPostSummary {
+  createdAt: string;
+}
+
 export const BottomNavigation: React.FC<BottomTabBarProps> = ({
   state,
   navigation,
@@ -107,6 +118,48 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
   const parent = navigation.getParent();
   const parentState = parent?.getState();
   const parentRoute = parentState?.routes[parentState.index ?? 0];
+
+  const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
+  const isFeedActive = state.routeNames[state.index] === 'Feed';
+
+  const feedCheckQuery = useQuery({
+    queryKey: ['feed-badge-check'],
+    queryFn: async () => {
+      try {
+        const data = await apiRequest<FeedPostSummary[]>('/api/feed?filter=all');
+        return data && data.length > 0 ? data : [];
+      } catch {
+        return [];
+      }
+    },
+    refetchInterval: 30000,
+    staleTime: 15000,
+  });
+
+  useEffect(() => {
+    const checkNew = async () => {
+      const posts = feedCheckQuery.data;
+      if (!posts || posts.length === 0) {
+        setHasNewFeedPosts(false);
+        return;
+      }
+      const lastSeen = await AsyncStorage.getItem('feed_last_seen');
+      if (!lastSeen) {
+        setHasNewFeedPosts(true);
+        return;
+      }
+      const lastSeenTime = Number(lastSeen);
+      const latestPostTime = Math.max(...posts.map(p => new Date(p.createdAt).getTime()));
+      setHasNewFeedPosts(latestPostTime > lastSeenTime);
+    };
+    checkNew();
+  }, [feedCheckQuery.data]);
+
+  useEffect(() => {
+    if (isFeedActive) {
+      setHasNewFeedPosts(false);
+    }
+  }, [isFeedActive]);
 
   if (parentRoute?.name && parentRoute.name !== 'MainTabs') {
     return null;
@@ -150,6 +203,7 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
               isActive={isActive}
               onPress={handlePress}
               onLongPress={handleLongPress}
+              showBadge={item.routeName === 'Feed' && hasNewFeedPosts && !isActive}
             />
           );
         })}
@@ -186,6 +240,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
+    position: 'relative' as const,
+  },
+  badge: {
+    position: 'absolute' as const,
+    top: -2,
+    right: -6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ef4444',
   },
   navLabel: {
     fontSize: 8,

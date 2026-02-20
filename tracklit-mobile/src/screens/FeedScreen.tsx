@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -192,13 +193,18 @@ export const FeedScreen: React.FC = () => {
     queryFn: async () => {
       try {
         const data = await apiRequest<FeedItem[]>(`/api/feed?filter=${filter}`);
-        return data && data.length > 0 ? data : PLACEHOLDER_FEED;
+        if (data && data.length > 0) {
+          const realIds = new Set(data.map(p => p.id));
+          const extras = PLACEHOLDER_FEED.filter(p => !realIds.has(p.id));
+          return [...data, ...extras];
+        }
+        return PLACEHOLDER_FEED;
       } catch {
         return PLACEHOLDER_FEED;
       }
     },
     initialData: PLACEHOLDER_FEED,
-    staleTime: 60000,
+    staleTime: 30000,
     retry: false,
   });
 
@@ -262,6 +268,14 @@ export const FeedScreen: React.FC = () => {
   const [localLikes, setLocalLikes] = useState<Record<number, boolean>>({});
   const [journalModalVisible, setJournalModalVisible] = useState(false);
   const [selectedJournalPost, setSelectedJournalPost] = useState<FeedItem | null>(null);
+
+  useEffect(() => {
+    const items = feedQuery.data ?? [];
+    if (items.length > 0) {
+      const latestTime = Math.max(...items.map(i => new Date(i.createdAt).getTime()));
+      AsyncStorage.setItem('feed_last_seen', String(latestTime));
+    }
+  }, [feedQuery.data]);
 
   const handleLocalLike = (item: FeedItem) => {
     if (!canInteract) {
