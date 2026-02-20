@@ -398,6 +398,24 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
+  const autoSavePhoto = useCallback(async (newAvatar: string | null | undefined, newAction: string | null | undefined) => {
+    try {
+      const raw = await AsyncStorage.getItem(storageKey);
+      const existing: ProfileData = raw ? JSON.parse(raw) : {};
+      const data: ProfileData = {
+        ...existing,
+        avatarUri: newAvatar !== undefined ? newAvatar : existing.avatarUri,
+        actionShotUri: newAction !== undefined ? newAction : existing.actionShotUri,
+        pb: editPB,
+        sb: editSB,
+        event: editEvent,
+      };
+      await AsyncStorage.setItem(storageKey, JSON.stringify(data));
+    } catch {}
+    editSnapshot.current = null;
+    setIsEditing(false);
+  }, [storageKey, editPB, editSB, editEvent]);
+
   const showNativePhotoSheet = (type: 'avatar' | 'action') => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -408,14 +426,26 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
           title: type === 'avatar' ? 'Profile Photo' : 'Action Shot',
         },
         async (buttonIndex) => {
+          let uri: string | null = null;
           if (buttonIndex === 0) {
-            const uri = await takePhoto();
-            if (uri) { if (type === 'avatar') setAvatarUri(uri); else setActionShotUri(uri); }
+            uri = await takePhoto();
           } else if (buttonIndex === 1) {
-            const uri = await pickImage();
-            if (uri) { if (type === 'avatar') setAvatarUri(uri); else setActionShotUri(uri); }
+            uri = await pickImage();
           } else if (buttonIndex === 2) {
-            if (type === 'avatar') setAvatarUri(null); else setActionShotUri(null);
+            if (type === 'avatar') { setAvatarUri(null); autoSavePhoto(null, undefined); }
+            else { setActionShotUri(null); autoSavePhoto(undefined, null); }
+            return;
+          } else {
+            editSnapshot.current = null;
+            setIsEditing(false);
+            return;
+          }
+          if (uri) {
+            if (type === 'avatar') { setAvatarUri(uri); autoSavePhoto(uri, undefined); }
+            else { setActionShotUri(uri); autoSavePhoto(undefined, uri); }
+          } else {
+            editSnapshot.current = null;
+            setIsEditing(false);
           }
         }
       );
