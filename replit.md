@@ -94,6 +94,8 @@ migrations/          - Database migrations
 - 2026-02-20: Profile edit mode: avatar upload (camera/library/remove), Action Shot upload for athlete card image, editable PB/SB via modal input, editable event text, all data persisted to AsyncStorage per user, save/cancel buttons, unsaved changes warning on back navigation
 - 2026-02-20: Drawer: added "My Profile" link (UserCircle icon) that navigates to PublicProfileScreen with own user data, disabled for guests
 - 2026-02-20: Design spec: one screen serves both own profile and public profile views (like Instagram)
+- 2026-02-20: Account Settings: full redesign with dark AAA theme (#0E0F14), stripped to essentials (Full Name, Username, Email, Change Password modal, Athlete/Coach toggle, Private Profile, Push Notifications, Show Ticker toggles), Phosphor icons, orange accent gradient save button, gear icon in PublicProfileScreen header
+- 2026-02-20: Drawer: renamed "Profile Settings" to "Account Settings", now navigates to Settings screen (not old ProfileScreen tab)
 - 2026-02-14: Removed main node_modules and backend server workflow — mobile app now connects to Azure production API directly, fixing persistent Nix environment rebuild timeouts
 - 2026-02-14: Improved API error handling to detect HTML responses and show "Server unavailable" message
 - 2026-02-13: Switched all icons from FontAwesome5 to Phosphor (filled weight)

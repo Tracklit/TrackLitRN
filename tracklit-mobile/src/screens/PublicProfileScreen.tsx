@@ -45,6 +45,7 @@ import {
   Trash,
   X,
   FloppyDisk,
+  Gear,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -558,6 +559,16 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                     <Text style={styles.currencyText}>Edit</Text>
                   </TouchableOpacity>
                 )}
+                {isOwnProfile && !isEditing && (
+                  <TouchableOpacity
+                    style={styles.gearBtn}
+                    onPress={() => navigation.navigate('Settings')}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Gear size={18} color={COLORS.textSecondary} weight="fill" />
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
@@ -1059,6 +1070,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 16,
+  },
+  gearBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   coinBadge: {
     backgroundColor: 'rgba(255,215,0,0.12)',

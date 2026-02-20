@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,516 +6,748 @@ import {
   TouchableOpacity,
   Alert,
   Switch,
-  Linking,
+  ScrollView,
   Modal,
-  FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowLeft,
+  Lock,
+  Eye,
+  EyeSlash,
+  SignOut,
+  EnvelopeSimple,
+  Bell,
+  Newspaper,
+  UsersThree,
+  ShieldCheck,
+  CaretRight,
+  FloppyDisk,
+} from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { DateField } from '@/components/profile/fields/DateField';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { setToken } from '@/lib/tokenStorage';
-import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
-import { countries as countryList } from '@/lib/countries';
-import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
+
+const COLORS = {
+  bg: '#0E0F14',
+  surface: '#161823',
+  card: '#1C1F2B',
+  glass: 'rgba(255,255,255,0.05)',
+  gradStart: '#4B00FF',
+  gradMid: '#7F00FF',
+  gradEnd: '#00D4FF',
+  orange: '#FF7A00',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8C0FF',
+  textMuted: '#8A90B5',
+  border: 'rgba(255,255,255,0.08)',
+  destructive: '#ef4444',
+};
 
 export const SettingsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, logout, refreshUser, setUserAndPersist } = useAuth();
+  const queryClient = useQueryClient();
   const isGuest = user?.id === 'guest';
-
-  const contentBottomPadding = useMemo(
-    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
-    [insets.bottom],
-  );
+  const isCoach = user?.isCoach === true;
 
   const [username, setUsername] = useState(user?.username || '');
-  const [country, setCountry] = useState(user?.country || '');
-  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
-  const [countryQuery, setCountryQuery] = useState('');
-  const [dob, setDob] = useState(user?.dateOfBirth ? String(user.dateOfBirth).slice(0, 10) : '');
-  const [clubId, setClubId] = useState(
-    user?.defaultClubId !== null && user?.defaultClubId !== undefined ? String(user.defaultClubId) : '',
-  );
+  const [email, setEmail] = useState(user?.email || '');
+  const [fullName, setFullName] = useState(user?.name || '');
   const [isPrivate, setIsPrivate] = useState(!!user?.isPrivate);
-  const [showActivityFeed, setShowActivityFeed] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [showTicker, setShowTicker] = useState(true);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
+    setUsername(user?.username || '');
+    setEmail(user?.email || '');
+    setFullName(user?.name || '');
+    setIsPrivate(!!user?.isPrivate);
+  }, [user?.username, user?.email, user?.name, user?.isPrivate]);
+
+  useEffect(() => {
+    AsyncStorage.getItem('push_notifications').then(val => {
+      if (val === 'false') setPushNotifications(false);
+    });
     AsyncStorage.getItem('carousel_hidden').then(val => {
-      if (val === 'true') setShowActivityFeed(false);
+      if (val === 'true') setShowTicker(false);
     });
   }, []);
 
-  // Keep local state in sync with latest user
-  React.useEffect(() => {
-    setUsername(user?.username || '');
-    setCountry(user?.country || '');
-    setDob(user?.dateOfBirth ? String(user.dateOfBirth).slice(0, 10) : '');
-    setClubId(user?.defaultClubId !== null && user?.defaultClubId !== undefined ? String(user.defaultClubId) : '');
-    setIsPrivate(!!user?.isPrivate);
-  }, [user?.username, user?.country, user?.dateOfBirth, user?.defaultClubId, user?.isPrivate]);
+  useEffect(() => {
+    const changed =
+      username !== (user?.username || '') ||
+      email !== (user?.email || '') ||
+      fullName !== (user?.name || '') ||
+      isPrivate !== !!user?.isPrivate;
+    setHasChanges(changed);
+  }, [username, email, fullName, isPrivate, user]);
 
-  const filteredCountries = useMemo(() => {
-    const q = countryQuery.trim().toLowerCase();
-    if (!q) return countryList;
-    return countryList.filter((c) => c.toLowerCase().includes(q));
-  }, [countryQuery]);
+  const coachStatusMutation = useMutation({
+    mutationFn: async (value: boolean) => {
+      return apiRequest('/api/user/coach-status', {
+        method: 'PATCH',
+        data: { isCoach: value },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      refreshUser();
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Unable to update status.');
+    },
+  });
 
   const updateSettingsMutation = useMutation({
-    mutationFn: async (payload: {
-      username?: string;
-      country?: string | null;
-      dateOfBirth?: string | null;
-      defaultClubId?: number | null;
-      isPrivate?: boolean;
-    }) => apiRequest('/api/user', { method: 'PATCH', data: payload }),
+    mutationFn: async (payload: any) =>
+      apiRequest('/api/user', { method: 'PATCH', data: payload }),
     onSuccess: async (data: any) => {
-      if (data?.token) {
-        await setToken(String(data.token));
-      }
-      // Keep UI state canonical without waiting for a refetch.
+      if (data?.token) await setToken(String(data.token));
       if (data && typeof data === 'object') {
         const nextUser = { ...(data as any) };
         delete nextUser.token;
         await setUserAndPersist(nextUser);
       }
       await refreshUser();
-      Alert.alert('Saved', 'Settings updated.');
+      setHasChanges(false);
+      Alert.alert('Saved', 'Account details updated.');
     },
     onError: (error: Error) => {
       Alert.alert('Error', error.message || 'Failed to update settings.');
     },
   });
 
-  const validateAndSave = () => {
+  const changePasswordMutation = useMutation({
+    mutationFn: async (payload: { currentPassword: string; newPassword: string }) =>
+      apiRequest('/api/user/change-password', { method: 'POST', data: payload }),
+    onSuccess: () => {
+      setShowPasswordModal(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      Alert.alert('Success', 'Password changed successfully.');
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Failed to change password.');
+    },
+  });
+
+  const handleSave = () => {
     if (isGuest) {
       Alert.alert('Login Required', 'Please sign in to update settings.');
       return;
     }
-
-    const clubIdRaw = clubId.trim();
-    let clubIdNum: number | null = null;
-    if (clubIdRaw) {
-      const parsed = Number(clubIdRaw);
-      if (!Number.isFinite(parsed) || parsed <= 0) {
-        Alert.alert('Invalid club', 'Club ID must be a positive number.');
-        return;
-      }
-      clubIdNum = parsed;
-    }
-
     const usernameTrim = username.trim();
     if (usernameTrim && !/^[a-zA-Z0-9_]{3,30}$/.test(usernameTrim)) {
       Alert.alert('Invalid username', 'Username must be 3-30 characters (letters, numbers, underscores).');
       return;
     }
-
     updateSettingsMutation.mutate({
       username: usernameTrim || undefined,
-      country: country.trim() || null,
-      dateOfBirth: dob || null,
-      defaultClubId: clubIdNum,
+      name: fullName.trim() || undefined,
+      email: email.trim() || undefined,
       isPrivate,
     });
   };
 
-  return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={styles.container}
-    >
-      <KeyboardAwareScreenScrollView
-        style={{ paddingTop: insets.top }}
-        contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]}
-        showsVerticalScrollIndicator={false}
-        extraScrollHeight={80}
-      >
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-          >
-            <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
-          </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text variant="h3" weight="bold" color="foreground">
-              Settings
-            </Text>
-          </View>
-          <View style={styles.backButton} />
-        </View>
+  const handleChangePassword = () => {
+    if (!currentPassword.trim()) {
+      Alert.alert('Required', 'Enter your current password.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      Alert.alert('Too Short', 'New password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Mismatch', 'New passwords do not match.');
+      return;
+    }
+    changePasswordMutation.mutate({ currentPassword, newPassword });
+  };
 
-        {/* Account */}
-        <Card style={styles.card}>
-          <CardHeader>
-            <CardTitle>Account</CardTitle>
-          </CardHeader>
-          <CardContent style={styles.cardContent}>
-            <Text variant="body" color="foreground" weight="semiBold">
-              Username
-            </Text>
+  const handleTogglePush = (val: boolean) => {
+    setPushNotifications(val);
+    AsyncStorage.setItem('push_notifications', val ? 'true' : 'false');
+  };
+
+  const handleToggleTicker = (val: boolean) => {
+    setShowTicker(val);
+    AsyncStorage.setItem('carousel_hidden', val ? 'false' : 'true');
+  };
+
+  const renderSectionHeader = (title: string) => (
+    <View style={styles.sectionHeader}>
+      <View style={styles.sectionLine} />
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionLine} />
+    </View>
+  );
+
+  const renderToggleRow = (
+    label: string,
+    subtitle: string,
+    value: boolean,
+    onToggle: (v: boolean) => void,
+    icon: React.ReactNode,
+  ) => (
+    <View style={styles.settingRow}>
+      <View style={styles.settingIconWrap}>{icon}</View>
+      <View style={styles.settingTextWrap}>
+        <Text style={styles.settingLabel}>{label}</Text>
+        <Text style={styles.settingSubtext}>{subtitle}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onToggle}
+        thumbColor={value ? COLORS.orange : '#555'}
+        trackColor={{ true: 'rgba(255,122,0,0.4)', false: 'rgba(255,255,255,0.1)' }}
+      />
+    </View>
+  );
+
+  return (
+    <View style={[styles.root, { backgroundColor: COLORS.bg }]}>
+      <View style={[styles.headerBar, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.headerLeft}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <ArrowLeft size={20} color={COLORS.textPrimary} weight="bold" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Account Settings</Text>
+        {hasChanges ? (
+          <TouchableOpacity onPress={handleSave} style={styles.headerSaveBtn}>
+            <FloppyDisk size={18} color={COLORS.orange} weight="fill" />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
+      </View>
+
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 32 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {renderSectionHeader('ACCOUNT DETAILS')}
+
+        <View style={styles.card}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Full Name</Text>
+            <TextInput
+              style={styles.input}
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Your full name"
+              placeholderTextColor={COLORS.textMuted}
+              autoCapitalize="words"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Username</Text>
             <TextInput
               style={styles.input}
               value={username}
               onChangeText={setUsername}
               placeholder="your_username"
-              placeholderTextColor={theme.colors.textMuted}
+              placeholderTextColor={COLORS.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               maxLength={30}
             />
-            <Text variant="small" color="muted" style={styles.helperText}>
-              3-30 characters. Letters, numbers, and underscores only.
-            </Text>
-          </CardContent>
-        </Card>
+            <Text style={styles.inputHint}>3-30 characters. Letters, numbers, underscores.</Text>
+          </View>
 
-        {/* Privacy */}
-        <Card style={styles.card}>
-          <CardHeader>
-            <CardTitle>Privacy</CardTitle>
-          </CardHeader>
-          <CardContent style={styles.cardContent}>
-            <View style={styles.switchRow}>
-              <View style={{ flex: 1 }}>
-                <Text variant="body" weight="semiBold" color="foreground">
-                  Private profile
-                </Text>
-                <Text variant="small" color="muted" style={styles.helperText}>
-                  When enabled, your profile is hidden from public discovery.
-                </Text>
-              </View>
-              <Switch
-                value={isPrivate}
-                onValueChange={setIsPrivate}
-                thumbColor={isPrivate ? theme.colors.primary : theme.colors.textMuted}
-                trackColor={{ true: theme.colors.primary + '66', false: theme.colors.muted }}
-              />
-            </View>
-
-            <Text variant="body" color="foreground" weight="semiBold" style={styles.fieldLabel}>
-              Country
-            </Text>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => {
-                setCountryQuery('');
-                setCountryPickerOpen(true);
-              }}
-              disabled={isGuest}
-              activeOpacity={0.85}
-            >
-              <Text variant="body" color={country ? 'foreground' : 'muted'}>
-                {country || 'Select your country'}
-              </Text>
-              <FontAwesome5 name="chevron-down" size={14} color={theme.colors.textMuted} solid />
-            </TouchableOpacity>
-
-            <DateField
-              label="Date of birth"
-              value={dob || undefined}
-              onChange={(val) => setDob(val || '')}
-              maximumDate={new Date()}
-            />
-
-            <Text variant="body" color="foreground" weight="semiBold" style={styles.fieldLabel}>
-              Club (default)
-            </Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Email</Text>
             <TextInput
               style={styles.input}
-              value={clubId}
-              onChangeText={setClubId}
-              placeholder="Club ID (optional)"
-              placeholderTextColor={theme.colors.textMuted}
-              keyboardType="number-pad"
-            />
-            <Text variant="small" color="muted" style={styles.helperText}>
-              Note: the backend requires you to be a member of the club to set it as default.
-            </Text>
-
-            <Button
-              variant="default"
-              onPress={validateAndSave}
-              loading={updateSettingsMutation.isPending}
-              disabled={isGuest}
-              style={styles.fullWidthButton}
-            >
-              Save settings
-            </Button>
-
-            {isGuest && (
-              <Text variant="small" color="muted" style={[styles.helperText, { textAlign: 'center' }]}>
-                Sign in to update settings.
-              </Text>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Notifications */}
-        <Card style={styles.card}>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Text variant="body" color="muted" style={styles.helperText}>
-              Push notification settings will be available in a future update.
-            </Text>
-          </CardContent>
-        </Card>
-
-        {/* Display */}
-        <Card style={styles.card}>
-          <CardHeader>
-            <CardTitle>Display</CardTitle>
-          </CardHeader>
-          <CardContent style={styles.cardContent}>
-            <View style={styles.switchRow}>
-              <View style={{ flex: 1 }}>
-                <Text variant="body" weight="semiBold" color="foreground">
-                  Show activity feed
-                </Text>
-                <Text variant="small" color="muted" style={styles.helperText}>
-                  Show the activity carousel on the home screen.
-                </Text>
-              </View>
-              <Switch
-                value={showActivityFeed}
-                onValueChange={(val) => {
-                  setShowActivityFeed(val);
-                  AsyncStorage.setItem('carousel_hidden', val ? 'false' : 'true');
-                }}
-                thumbColor={showActivityFeed ? theme.colors.primary : theme.colors.textMuted}
-                trackColor={{ true: theme.colors.primary + '66', false: theme.colors.muted }}
-              />
-            </View>
-          </CardContent>
-        </Card>
-
-        {/* Help */}
-        <Card style={styles.card}>
-          <CardHeader>
-            <CardTitle>Help & Support</CardTitle>
-          </CardHeader>
-          <CardContent style={styles.cardContent}>
-            <Button
-              variant="outline"
-              onPress={() => Linking.openURL('mailto:support@tracklitapp.com')}
-              style={styles.fullWidthButton}
-            >
-              Email Support
-            </Button>
-            <Button
-              variant="outline"
-              onPress={() => Linking.openURL('https://tracklitapp.com')}
-              style={styles.fullWidthButton}
-            >
-              Visit Website
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* About */}
-        <Card style={styles.card}>
-          <CardHeader>
-            <CardTitle>About</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Text variant="body" color="muted" style={styles.helperText}>
-              TrackLit Mobile v1.0.0
-            </Text>
-            <Text variant="small" color="muted" style={styles.helperText}>
-              AI coaching, workout tracking, programs, meets, community, and tools.
-            </Text>
-          </CardContent>
-        </Card>
-
-        {/* Account */}
-        <Button
-          variant="outline"
-          onPress={logout}
-          style={[styles.fullWidthButton, styles.logoutButton]}
-        >
-          <FontAwesome5 name="sign-out-alt" size={16} color={theme.colors.destructive} solid />
-          <Text variant="body" weight="medium" style={{ marginLeft: theme.spacing.sm, color: theme.colors.destructive }}>
-            Sign Out
-          </Text>
-        </Button>
-      </KeyboardAwareScreenScrollView>
-
-      <Modal
-        visible={countryPickerOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setCountryPickerOpen(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text variant="h4" weight="semiBold" color="foreground">
-                Select Country
-              </Text>
-              <TouchableOpacity onPress={() => setCountryPickerOpen(false)} style={styles.modalClose}>
-                <FontAwesome5 name="times" size={18} color={theme.colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={styles.searchInput}
-              value={countryQuery}
-              onChangeText={setCountryQuery}
-              placeholder="Search..."
-              placeholderTextColor={theme.colors.textMuted}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="your@email.com"
+              placeholderTextColor={COLORS.textMuted}
               autoCapitalize="none"
-              autoCorrect={false}
-            />
-
-            <FlatList
-              data={filteredCountries}
-              keyExtractor={(item) => item}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.countryRow}
-                  onPress={() => {
-                    setCountry(item);
-                    setCountryPickerOpen(false);
-                  }}
-                >
-                  <Text variant="body" color="foreground">
-                    {item}
-                  </Text>
-                  {item === country && (
-                    <FontAwesome5 name="check" size={14} color={theme.colors.primary} solid />
-                  )}
-                </TouchableOpacity>
-              )}
+              keyboardType="email-address"
             />
           </View>
+
+          <TouchableOpacity
+            style={styles.actionRow}
+            onPress={() => setShowPasswordModal(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.settingIconWrap}>
+              <Lock size={18} color={COLORS.orange} weight="fill" />
+            </View>
+            <Text style={styles.actionRowText}>Change Password</Text>
+            <CaretRight size={16} color={COLORS.textMuted} weight="bold" />
+          </TouchableOpacity>
+
+          {hasChanges && (
+            <TouchableOpacity
+              style={styles.saveBtn}
+              onPress={handleSave}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[COLORS.orange, '#FF9D00']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.saveBtnInner}
+              >
+                <FloppyDisk size={16} color="white" weight="fill" />
+                <Text style={styles.saveBtnText}>Save Changes</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {renderSectionHeader('ROLE')}
+
+        <View style={styles.card}>
+          {renderToggleRow(
+            isCoach ? 'Coach' : 'Athlete',
+            isCoach ? 'You have coaching tools enabled' : 'Switch to Coach to manage athletes',
+            isCoach,
+            (val) => {
+              if (isGuest) return;
+              coachStatusMutation.mutate(val);
+            },
+            <UsersThree size={18} color={COLORS.gradEnd} weight="fill" />,
+          )}
+        </View>
+
+        {renderSectionHeader('PRIVACY')}
+
+        <View style={styles.card}>
+          {renderToggleRow(
+            'Private Profile',
+            'Hide your profile from public discovery',
+            isPrivate,
+            (val) => {
+              if (isGuest) return;
+              setIsPrivate(val);
+              updateSettingsMutation.mutate({ isPrivate: val });
+            },
+            <ShieldCheck size={18} color={COLORS.gradMid} weight="fill" />,
+          )}
+        </View>
+
+        {renderSectionHeader('PREFERENCES')}
+
+        <View style={styles.card}>
+          {renderToggleRow(
+            'Push Notifications',
+            'Receive alerts for messages and updates',
+            pushNotifications,
+            handleTogglePush,
+            <Bell size={18} color={COLORS.orange} weight="fill" />,
+          )}
+          <View style={styles.rowDivider} />
+          {renderToggleRow(
+            'Show Ticker on Home',
+            'Display the activity carousel on home screen',
+            showTicker,
+            handleToggleTicker,
+            <Newspaper size={18} color={COLORS.gradEnd} weight="fill" />,
+          )}
+        </View>
+
+        {renderSectionHeader('SUPPORT')}
+
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.actionRow} activeOpacity={0.7}>
+            <View style={styles.settingIconWrap}>
+              <EnvelopeSimple size={18} color={COLORS.textSecondary} weight="fill" />
+            </View>
+            <Text style={styles.actionRowText}>Email Support</Text>
+            <CaretRight size={16} color={COLORS.textMuted} weight="bold" />
+          </TouchableOpacity>
+          <View style={styles.rowDivider} />
+          <View style={styles.versionRow}>
+            <Text style={styles.versionText}>TrackLit Mobile v1.0.0</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={logout}
+          activeOpacity={0.8}
+        >
+          <SignOut size={18} color={COLORS.destructive} weight="fill" />
+          <Text style={styles.logoutText}>Sign Out</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      <Modal
+        visible={showPasswordModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPasswordModal(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowPasswordModal(false)}
+          >
+            <View style={styles.modalSheet} onStartShouldSetResponder={() => true}>
+              <Text style={styles.modalTitle}>Change Password</Text>
+
+              <View style={styles.pwInputWrap}>
+                <TextInput
+                  style={styles.pwInput}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  placeholder="Current password"
+                  placeholderTextColor={COLORS.textMuted}
+                  secureTextEntry={!showCurrentPw}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity onPress={() => setShowCurrentPw(!showCurrentPw)} style={styles.pwEye}>
+                  {showCurrentPw ? <EyeSlash size={18} color={COLORS.textMuted} /> : <Eye size={18} color={COLORS.textMuted} />}
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.pwInputWrap}>
+                <TextInput
+                  style={styles.pwInput}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="New password (min 6 chars)"
+                  placeholderTextColor={COLORS.textMuted}
+                  secureTextEntry={!showNewPw}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity onPress={() => setShowNewPw(!showNewPw)} style={styles.pwEye}>
+                  {showNewPw ? <EyeSlash size={18} color={COLORS.textMuted} /> : <Eye size={18} color={COLORS.textMuted} />}
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.pwInputWrap}>
+                <TextInput
+                  style={styles.pwInput}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirm new password"
+                  placeholderTextColor={COLORS.textMuted}
+                  secureTextEntry={!showNewPw}
+                  autoCapitalize="none"
+                  returnKeyType="done"
+                  onSubmitEditing={handleChangePassword}
+                />
+              </View>
+
+              <View style={styles.modalBtns}>
+                <TouchableOpacity
+                  style={styles.modalCancelBtn}
+                  onPress={() => {
+                    setShowPasswordModal(false);
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  }}
+                >
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalSaveBtn}
+                  onPress={handleChangePassword}
+                >
+                  <LinearGradient
+                    colors={[COLORS.orange, '#FF9D00']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.modalSaveBtnInner}
+                  >
+                    <Text style={styles.modalSaveText}>
+                      {changePasswordMutation.isPending ? 'Saving...' : 'Change Password'}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
-  },
-  headerRow: {
+  root: { flex: 1 },
+  flex: { flex: 1 },
+
+  headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  backButton: {
+  headerLeft: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  card: {
-    marginBottom: 0,
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
   },
-  cardContent: {
-    gap: theme.spacing.md,
+  headerSaveBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  switchRow: {
+
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 10,
+    marginTop: 24,
+    marginBottom: 12,
   },
-  fieldLabel: {
-    marginTop: theme.spacing.sm,
+  sectionLine: {
+    flex: 1,
+    height: 0.5,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textMuted,
+    letterSpacing: 1.5,
+  },
+
+  card: {
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 0.5,
+    borderColor: COLORS.border,
+  },
+
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    letterSpacing: 0.5,
+    marginBottom: 6,
+    textTransform: 'uppercase',
   },
   input: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    borderColor: COLORS.border,
   },
-  selectInput: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.card,
+  inputHint: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 4,
+  },
+
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing.md,
+    paddingVertical: 12,
   },
-  helperText: {
-    lineHeight: 20,
+  actionRowText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
   },
-  fullWidthButton: {
-    width: '100%',
+
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
   },
-  logoutButton: {
-    borderColor: theme.colors.destructive,
+  settingIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: COLORS.glass,
+    alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
+    marginRight: 12,
+  },
+  settingTextWrap: {
+    flex: 1,
+    marginRight: 8,
+  },
+  settingLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  settingSubtext: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginTop: 1,
+  },
+
+  rowDivider: {
+    height: 0.5,
+    backgroundColor: COLORS.border,
+    marginVertical: 4,
+  },
+
+  versionRow: {
+    paddingVertical: 8,
     alignItems: 'center',
   },
+  versionText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+  },
+
+  saveBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  saveBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  saveBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    marginTop: 24,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.3)',
+    backgroundColor: 'rgba(239,68,68,0.08)',
+  },
+  logoutText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.destructive,
+  },
+
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: theme.colors.backgroundSolid,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
-    padding: theme.spacing.lg,
-    maxHeight: '85%',
-    gap: theme.spacing.md,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalClose: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
+    paddingHorizontal: 20,
   },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+  modalSheet: {
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    padding: 24,
   },
-  countryRow: {
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  pwInputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 12,
+  },
+  pwInput: {
+    flex: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: COLORS.textPrimary,
+  },
+  pwEye: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  modalBtns: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  modalCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+  },
+  modalSaveBtn: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  modalSaveBtnInner: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  modalSaveText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
 });

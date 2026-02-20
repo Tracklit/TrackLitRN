@@ -521,10 +521,10 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             navigateIntoAppStack({ screen: 'Spikes' }),
         },
         {
-          label: 'Profile Settings',
+          label: 'Account Settings',
           IconComponent: Gear,
           onPress: () =>
-            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Profile' } }),
+            navigateIntoAppStack({ screen: 'Settings' }),
         },
         {
           label: 'My Subscriptions',
