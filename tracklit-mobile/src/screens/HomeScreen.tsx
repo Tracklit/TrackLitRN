@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   ScrollView,
@@ -105,11 +106,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const carouselRef = useRef<FlatList>(null);
   const userId = user?.id;
 
-  useEffect(() => {
-    AsyncStorage.getItem('carousel_hidden').then(val => {
-      if (val === 'true') setCarouselHidden(true);
-    });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem('carousel_hidden').then(val => {
+        setCarouselHidden(val === 'true');
+      });
+    }, [])
+  );
 
   const screenOpacity = useSharedValue(0);
   useEffect(() => {
