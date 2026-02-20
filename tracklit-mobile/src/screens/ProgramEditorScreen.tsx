@@ -286,7 +286,6 @@ export const ProgramEditorScreen: React.FC = () => {
   ]);
 
   const handleOpenDay = (dayNumber: number) => {
-    if (!isOwner || isUploadedProgram) return;
     const existing = sessionsByDay[dayNumber] ?? { dayNumber };
     setDraftSession({ ...existing });
     setEditingDay(dayNumber);
@@ -307,7 +306,6 @@ export const ProgramEditorScreen: React.FC = () => {
   };
 
   const handleDuplicateWeek = (weekIndex: number) => {
-    if (!isOwner || isUploadedProgram) return;
     const sourceDays: { offset: number; session: ProgramSession }[] = [];
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
       const slotIndex = weekIndex * 7 + dayIndex;
@@ -528,16 +526,14 @@ export const ProgramEditorScreen: React.FC = () => {
                   );
                 })}
               </View>
-              {isOwner && !isUploadedProgram && (
-                <TouchableOpacity
-                  style={styles.duplicateWeekBtn}
-                  onPress={() => handleDuplicateWeek(weekIndex)}
-                  activeOpacity={0.7}
-                >
-                  <CopySimple size={12} color={C.textMuted} weight="fill" />
-                  <Text style={styles.duplicateWeekText}>Duplicate Week {weekIndex + 1}</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={styles.duplicateWeekBtn}
+                onPress={() => handleDuplicateWeek(weekIndex)}
+                activeOpacity={0.7}
+              >
+                <CopySimple size={12} color={C.textMuted} weight="fill" />
+                <Text style={styles.duplicateWeekText}>Duplicate Week {weekIndex + 1}</Text>
+              </TouchableOpacity>
             </View>
           ))}
         </View>
