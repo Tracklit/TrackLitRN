@@ -26,7 +26,7 @@ The Tracklit mobile app is built using React Native (Expo SDK 54) with TypeScrip
 - **Stopwatch:** Enhanced accuracy using `Date.now()` and optional volume-up button control.
 - **Profile Screens:** A unified design for public and personal profiles, featuring a dark aesthetic, stadium hero backgrounds, gradient borders, glass summary panels, and editable personal bests/season bests.
 - **Onboarding & Authentication:** Redesigned with a dark AAA theme, orange accents, and social authentication options.
-- **Program Management:** Features for creating, editing, and assigning training programs with a calendar view, session editing, and program duplication.
+- **Program Management:** Features for creating, editing, and assigning training programs with a calendar view, session editing, program duplication, and day-swap reordering (long-press to select, tap to swap).
 - **Ticker/Feed:** Displays a horizontal carousel of notifications and messages with interactive elements like liking and saving to a journal.
 - **Chat:** Telegram-style chat interface with dark themes, merged group/DM views, and expressive icons.
 
