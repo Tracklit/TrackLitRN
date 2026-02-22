@@ -936,66 +936,80 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   );
 };
 
-const SKIP_KEYS = new Set([
-  'id', 'programId', 'workoutId', 'dayNumber', 'orderInDay', 'date',
-  'gymData', 'isRestDay', 'isCompleted', 'completedAt', 'completed_at',
-  'createdAt', 'updatedAt', 'title', 'totalDays', 'programTitle',
-  'columnA', 'sessionId',
-]);
-
-const FIELD_LABELS: Record<string, string> = {
-  preActivation1: 'PA1',
-  preActivation2: 'PA2',
-  columnB: 'PA1',
-  columnC: 'PA2',
-  shortDistanceWorkout: '60/100',
-  columnD: '60/100',
-  mediumDistanceWorkout: '200',
-  columnE: '200',
-  longDistanceWorkout: '400',
-  columnF: '400',
-  extraSession: 'Extra',
-  columnG: 'Extra',
-  notes: 'Notes',
-  description: 'Info',
-};
-
 const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: string[] }) => {
-  const rows: { label: string; value: string }[] = [];
-  const seenLabels = new Set<string>();
+  console.warn('[HomeWorkoutContent] FULL SESSION DATA:', JSON.stringify(session, null, 2));
 
-  for (const key of Object.keys(session)) {
-    if (SKIP_KEYS.has(key)) continue;
-    const raw = session[key];
-    if (raw === null || raw === undefined) continue;
-    const str = String(raw).replace(/^"|"$/g, '').trim();
-    if (!str || str === 'Training Session' || str === 'Day Training') continue;
+  const clean = (v: any) => {
+    if (v === null || v === undefined) return null;
+    const s = String(v).replace(/^"|"$/g, '').trim();
+    return s.length > 0 ? s : null;
+  };
 
-    const label = FIELD_LABELS[key] || key;
-    if (seenLabels.has(label)) continue;
-    seenLabels.add(label);
-    rows.push({ label, value: str });
-  }
+  const pa1 = clean(session.preActivation1) || clean(session.columnB);
+  const pa2 = clean(session.preActivation2) || clean(session.columnC);
+  const short = clean(session.shortDistanceWorkout) || clean(session.columnD);
+  const med = clean(session.mediumDistanceWorkout) || clean(session.columnE);
+  const long = clean(session.longDistanceWorkout) || clean(session.columnF);
+  const extra = clean(session.extraSession) || clean(session.columnG);
+  const notes = clean(session.notes);
+
+  const contentSections = [
+    { label: 'PA1', value: pa1 },
+    { label: 'PA2', value: pa2 },
+    { label: '60/100', value: short },
+    { label: '200', value: med },
+    { label: '400', value: long },
+    { label: 'Extra', value: extra },
+    { label: 'Notes', value: notes },
+  ];
 
   const hasGymData = gymData.length > 0;
-  if (hasGymData) {
-    const gymLabel = rows.find(r => r.value.match(/Gym\s*\d+/i));
-    const gymNum = gymLabel?.value.match(/Gym\s*(\d+)/i)?.[1];
-    rows.unshift({ label: gymNum ? `Gym ${gymNum}` : 'Gym', value: gymData.join(', ') });
-  }
+  const hasAnyContent = hasGymData || contentSections.some((s) => !!s.value);
 
-  if (rows.length === 0) return null;
+  const extractGymNumber = () => {
+    for (const field of [short, med, long, pa1, pa2, extra]) {
+      if (field) {
+        const match = field.match(/Gym\s*(\d+)/i);
+        if (match && match[1]) return match[1];
+      }
+    }
+    return null;
+  };
+
+  console.warn('[HomeWorkoutContent] hasAnyContent:', hasAnyContent, 'hasGymData:', hasGymData, 'sections:', contentSections.filter(s => !!s.value).map(s => s.label));
+
+  if (!hasAnyContent) {
+    return (
+      <View style={hwStyles.container}>
+        <RNText style={hwStyles.fallbackText}>
+          Day {session.dayNumber || '—'} — Scheduled
+        </RNText>
+      </View>
+    );
+  }
 
   return (
     <View style={hwStyles.container}>
-      {rows.map((row, i) => (
-        <View key={`${row.label}-${i}`} style={hwStyles.row}>
-          <RNText style={hwStyles.labelText}>{row.label}</RNText>
+      {hasGymData && (
+        <View style={hwStyles.row}>
+          <RNText style={hwStyles.labelText}>
+            {extractGymNumber() ? `Gym ${extractGymNumber()}` : 'Gym'}
+          </RNText>
           <RNText style={hwStyles.valueText} numberOfLines={3}>
-            {row.value}
+            {gymData.join(', ')}
           </RNText>
         </View>
-      ))}
+      )}
+      {contentSections.map((section) =>
+        section.value ? (
+          <View key={section.label} style={hwStyles.row}>
+            <RNText style={hwStyles.labelText}>{section.label}</RNText>
+            <RNText style={hwStyles.valueText} numberOfLines={3}>
+              {section.value}
+            </RNText>
+          </View>
+        ) : null
+      )}
     </View>
   );
 };
