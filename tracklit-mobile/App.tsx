@@ -582,6 +582,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         );
       })}
 
+      </ScrollView>
       <View style={styles.drawerFooter}>
         <TouchableOpacity
           onPress={() => logout()}
@@ -612,7 +613,6 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           </Text>
         )}
       </View>
-      </ScrollView>
     </View>
   );
 };
@@ -805,7 +805,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   drawerSection: {
-    paddingTop: theme.spacing.md,
+    marginTop: 10,
+    gap: 5,
   },
   drawerSectionLabel: {
     paddingHorizontal: theme.spacing.lg,
@@ -822,9 +823,12 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
   },
   drawerFooter: {
-    marginTop: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.sidebarBorder,
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255,255,255,0.06)',
     paddingTop: theme.spacing.sm,
   },
   drawerGuestNote: {
