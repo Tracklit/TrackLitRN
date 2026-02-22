@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { DocumentViewer } from '@/components/DocumentViewer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,7 +15,6 @@ import {
   CircleIcon as Circle,
   CheckCircle,
   Timer,
-  Plus,
 } from 'phosphor-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
@@ -71,7 +69,6 @@ export const PracticeScreen: React.FC = () => {
 
   const [showTargetTimes, setShowTargetTimes] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<PurchasedProgramItem | null>(null);
-  const [daysToShow, setDaysToShow] = useState(7);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [workoutCards, setWorkoutCards] = useState<any[]>([]);
   const [docViewerUrl, setDocViewerUrl] = useState<string | null>(null);
@@ -134,70 +131,57 @@ export const PracticeScreen: React.FC = () => {
       return;
     }
 
-    const today = new Date();
-    const cards: any[] = [];
-
     const sessionsToUse = programSessions ?? [];
 
-    let startDate: Date | null = null;
-    if (sessionsToUse.length > 0) {
-      const MONTH_MAP: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
-      const dateKeys = sessionsToUse
-        .map((s: any) => s.date)
-        .filter(Boolean)
-        .map((d: string) => {
-          const isoMatch = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
-          if (isoMatch) return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
-          const shortMatch = d.match(/^([A-Za-z]{3})-(\d{1,2})$/);
-          if (shortMatch) {
-            const mon = shortMatch[1][0].toUpperCase() + shortMatch[1].slice(1).toLowerCase();
-            const monthIdx = MONTH_MAP[mon];
-            if (monthIdx !== undefined) return new Date(new Date().getFullYear(), monthIdx, parseInt(shortMatch[2]));
+    const sortedSessions = [...sessionsToUse].sort((a: any, b: any) => {
+      if (a.dayNumber != null && b.dayNumber != null) return a.dayNumber - b.dayNumber;
+      if (a.date && b.date) return a.date.localeCompare(b.date);
+      return 0;
+    });
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const cards = sortedSessions.map((session: any, idx: number) => {
+      const sessionDate = parseSessionDateForCard(session.date);
+      const dateString = sessionDate
+        ? sessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : session.date || `Day ${session.dayNumber || idx + 1}`;
+      const dayOfWeek = sessionDate
+        ? sessionDate.toLocaleDateString('en-US', { weekday: 'long' })
+        : `Day ${session.dayNumber || idx + 1}`;
+
+      let isToday = false;
+      if (session.date) {
+        const normalized = session.date.trim();
+        if (normalized.startsWith(todayStr)) {
+          isToday = true;
+        } else {
+          const parsed = parseSessionDateForCard(normalized);
+          if (parsed) {
+            const parsedStr = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+            isToday = parsedStr === todayStr;
           }
-          return null;
-        })
-        .filter(Boolean) as Date[];
-      if (dateKeys.length > 0) {
-        dateKeys.sort((a, b) => a.getTime() - b.getTime());
-        startDate = dateKeys[0];
-      }
-    }
-
-    for (let i = 0; i < daysToShow; i += 1) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-
-      let sessionForDate = findSessionForDate(sessionsToUse, date);
-
-      if (!sessionForDate && startDate && sessionsToUse.length > 0) {
-        const daysSinceStart = Math.round((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        if (daysSinceStart >= 1) {
-          sessionForDate = sessionsToUse.find((s: any) => s.dayNumber === daysSinceStart) || null;
         }
       }
 
-      cards.push({
-        id: `${date.getTime()}-${i}`,
-        date,
-        dateString: date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        }),
-        dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'long' }),
-        sessionData: sessionForDate,
-        isToday: i === 0,
-        index: i,
-      });
-    }
+      return {
+        id: `session-${session.id || session.dayNumber || idx}`,
+        date: sessionDate || today,
+        dateString,
+        dayOfWeek,
+        sessionData: session,
+        isToday,
+        index: idx,
+      };
+    });
 
     setWorkoutCards(cards);
     setIsLoadingCards(false);
-  }, [selectedProgram, programSessions, isLoadingProgramSessions, daysToShow]);
+  }, [selectedProgram, programSessions, isLoadingProgramSessions]);
 
   const handleSelectProgram = async (assignment: PurchasedProgramItem) => {
     setSelectedProgram(assignment);
-    setDaysToShow(7);
     setWorkoutCards([]);
     setIsLoadingCards(true);
     setDocViewerUrl(null);
@@ -218,30 +202,6 @@ export const PracticeScreen: React.FC = () => {
       setDocAutoOpened(true);
     }
   }, [selectedProgram, docAutoOpened]);
-
-  const handleAddDay = useCallback(async (targetDate: Date) => {
-    if (!selectedProgramId) return;
-    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const dateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
-    const sessionsCount = programSessions?.length ?? 0;
-    const newDayNumber = sessionsCount + 1;
-
-    try {
-      await apiRequest(`/api/programs/${selectedProgramId}/sessions`, {
-        method: 'POST',
-        data: {
-          dayNumber: newDayNumber,
-          date: dateStr,
-          title: `Day ${newDayNumber}`,
-        },
-      });
-      await queryClient.invalidateQueries({ queryKey: ['program-sessions', selectedProgramId] });
-      await refetchSessions();
-    } catch (err) {
-      console.warn('[Practice] Failed to add day:', err);
-      Alert.alert('Error', 'Could not add session. Please try again.');
-    }
-  }, [selectedProgramId, programSessions, queryClient, refetchSessions]);
 
   const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
     await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
@@ -351,14 +311,8 @@ export const PracticeScreen: React.FC = () => {
                       card={card}
                       programId={selectedProgramId}
                       onFinish={(date: string) => navigation.navigate('JournalEntry', { date })}
-                      onAddDay={handleAddDay}
                     />
                   ))}
-                  <View style={styles.loadMoreContainer}>
-                    <Button variant="default" onPress={() => setDaysToShow((prev) => prev + 7)}>
-                      Load More Days
-                    </Button>
-                  </View>
                 </View>
               )}
 
@@ -427,44 +381,21 @@ export const PracticeScreen: React.FC = () => {
   );
 };
 
-const formatSessionDateKey = (date: Date) => {
-  const month = date.toLocaleDateString('en-US', { month: 'short' });
-  const day = date.getDate();
-  return `${month}-${day}`;
-};
+const MONTH_MAP: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
 
-const normalizeSessionDateKey = (rawDate?: string | null) => {
+const parseSessionDateForCard = (rawDate?: string | null): Date | null => {
   if (!rawDate) return null;
-
   const trimmed = rawDate.trim();
-  if (!trimmed) return null;
-
-  const shortFormatMatch = trimmed.match(/^([A-Za-z]{3})-(\d{1,2})$/);
-  if (shortFormatMatch) {
-    const [, month, day] = shortFormatMatch;
-    const normalizedMonth = month[0].toUpperCase() + month.slice(1).toLowerCase();
-    return `${normalizedMonth}-${parseInt(day, 10)}`;
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+  const shortMatch = trimmed.match(/^([A-Za-z]{3})-(\d{1,2})$/);
+  if (shortMatch) {
+    const mon = shortMatch[1][0].toUpperCase() + shortMatch[1].slice(1).toLowerCase();
+    const monthIdx = MONTH_MAP[mon];
+    if (monthIdx !== undefined) return new Date(new Date().getFullYear(), monthIdx, parseInt(shortMatch[2]));
   }
-
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    const parsed = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
-    return formatSessionDateKey(parsed);
-  }
-
-  const parsedDate = new Date(trimmed);
-  if (!Number.isNaN(parsedDate.getTime())) {
-    return formatSessionDateKey(parsedDate);
-  }
-
-  return null;
-};
-
-const findSessionForDate = (sessions: any[], targetDate: Date) => {
-  if (!sessions || sessions.length === 0) return null;
-  const targetDateString = formatSessionDateKey(targetDate);
-  return sessions.find((session) => normalizeSessionDateKey(session?.date) === targetDateString) || null;
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
 const useGymData = (programId: number | string | null, dayNumber?: number, sessionId?: number) => {
@@ -487,32 +418,24 @@ const SessionCard = ({
   card,
   programId,
   onFinish,
-  onAddDay,
 }: {
   card: any;
   programId: number | string | null;
   onFinish: (date: string) => void;
-  onAddDay: (date: Date) => void;
 }) => {
   const sessionId = card.sessionData?.id;
   const dayNumber = card.sessionData?.dayNumber;
   const { data } = useGymData(programId, dayNumber, sessionId);
   const gymData = data?.gymData ?? [];
   const finishDate = card.date ? card.date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+  const isRestDay = card.sessionData?.isRestDay;
 
-  const hasSession = !!card.sessionData;
-
-  if (hasSession) {
+  if (isRestDay) {
     return (
-      <LinearGradient
-        colors={theme.gradients.webPurple.colors}
-        start={theme.gradients.webPurple.start}
-        end={theme.gradients.webPurple.end}
-        style={[styles.workoutCard, card.isToday && styles.workoutCardToday]}
-      >
+      <View style={[styles.restDayCard, card.isToday && styles.workoutCardToday]}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.cardHeaderLeft}>
-            <Text variant="small" weight="medium" color="primary-foreground">
+            <Text variant="small" weight="medium" color="muted">
               {card.dayOfWeek}
             </Text>
             {card.isToday && (
@@ -523,28 +446,27 @@ const SessionCard = ({
               </View>
             )}
           </View>
-          <View style={styles.cardHeaderRight}>
-            <TouchableOpacity style={styles.finishButton} onPress={() => onFinish(finishDate)}>
-              <Text variant="small" color="primary-foreground">
-                Finish
-              </Text>
-            </TouchableOpacity>
-            <Text variant="small" color="primary-foreground" style={styles.dateText}>
-              {card.dateString}
-            </Text>
-          </View>
+          <Text variant="small" color="muted" style={styles.dateText}>
+            {card.dateString}
+          </Text>
         </View>
-
-        <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} />
-      </LinearGradient>
+        <View style={styles.restDay}>
+          <Text variant="body" weight="semiBold" color="muted">Rest Day</Text>
+        </View>
+      </View>
     );
   }
 
   return (
-    <View style={[styles.emptyDayCard, card.isToday && styles.emptyDayCardToday]}>
+    <LinearGradient
+      colors={theme.gradients.webPurple.colors}
+      start={theme.gradients.webPurple.start}
+      end={theme.gradients.webPurple.end}
+      style={[styles.workoutCard, card.isToday && styles.workoutCardToday]}
+    >
       <View style={styles.cardHeaderRow}>
         <View style={styles.cardHeaderLeft}>
-          <Text variant="small" weight="medium" color="muted">
+          <Text variant="small" weight="medium" color="primary-foreground">
             {card.dayOfWeek}
           </Text>
           {card.isToday && (
@@ -555,20 +477,20 @@ const SessionCard = ({
             </View>
           )}
         </View>
-        <Text variant="small" color="muted" style={styles.dateText}>
-          {card.dateString}
-        </Text>
+        <View style={styles.cardHeaderRight}>
+          <TouchableOpacity style={styles.finishButton} onPress={() => onFinish(finishDate)}>
+            <Text variant="small" color="primary-foreground">
+              Finish
+            </Text>
+          </TouchableOpacity>
+          <Text variant="small" color="primary-foreground" style={styles.dateText}>
+            {card.dateString}
+          </Text>
+        </View>
       </View>
-      <TouchableOpacity
-        style={styles.addDayButton}
-        onPress={() => onAddDay(card.date)}
-      >
-        <Plus size={16} color={theme.colors.primary} weight="bold" />
-        <Text variant="small" weight="semiBold" color="primary">
-          Add Day
-        </Text>
-      </TouchableOpacity>
-    </View>
+
+      <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} />
+    </LinearGradient>
   );
 };
 
@@ -745,10 +667,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.spacing.lg,
   },
-  loadMoreContainer: {
-    alignItems: 'center',
-    marginTop: theme.spacing.md,
-  },
   emptyGradientCard: {
     marginTop: theme.spacing.xl,
     borderRadius: 12,
@@ -778,16 +696,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#facc15',
   },
-  emptyDayCard: {
+  restDayCard: {
     padding: theme.spacing.xl,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
-    borderStyle: 'dashed',
     backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  emptyDayCardToday: {
-    borderColor: 'rgba(250,204,21,0.3)',
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -818,13 +732,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     opacity: 0.8,
-  },
-  addDayButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.md,
   },
   cardSections: {
     gap: theme.spacing.sm,

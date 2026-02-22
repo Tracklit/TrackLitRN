@@ -19,6 +19,7 @@ import {
   Moon,
   Eye,
   CopySimple,
+  ArrowsDownUp,
 } from 'phosphor-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as WebBrowser from 'expo-web-browser';
@@ -100,19 +101,6 @@ const parseSessionDate = (value?: string | null): Date | null => {
 
 const formatISODate = (date: Date) => format(date, 'yyyy-MM-dd');
 
-const getSummary = (session?: ProgramSession) => {
-  if (!session) return 'Add session';
-  if (session.isRestDay) return 'Rest day';
-  return (
-    session.shortDistanceWorkout ||
-    session.mediumDistanceWorkout ||
-    session.longDistanceWorkout ||
-    session.preActivation1 ||
-    session.title ||
-    'Edit session'
-  );
-};
-
 export const ProgramEditorScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -128,6 +116,7 @@ export const ProgramEditorScreen: React.FC = () => {
   const [sessionsByDay, setSessionsByDay] = useState<Record<number, ProgramSession>>({});
   const [editingDay, setEditingDay] = useState<number | null>(null);
   const [draftSession, setDraftSession] = useState<ProgramSession | null>(null);
+  const [selectedDayForSwap, setSelectedDayForSwap] = useState<number | null>(null);
   const hasInitialized = useRef(false);
 
   const programQuery = useQuery({
@@ -423,6 +412,38 @@ export const ProgramEditorScreen: React.FC = () => {
     Alert.alert('Week duplicated', `Week ${weekIndex + 1} sessions copied to week ${weekIndex + 2}.`);
   };
 
+  const handleDayPress = (dayNumber: number) => {
+    if (selectedDayForSwap === null) {
+      handleOpenDay(dayNumber);
+    } else if (selectedDayForSwap === dayNumber) {
+      setSelectedDayForSwap(null);
+    } else {
+      setSessionsByDay((prev) => {
+        const next = { ...prev };
+        const sourceSession = prev[selectedDayForSwap];
+        const targetSession = prev[dayNumber];
+
+        if (sourceSession && targetSession) {
+          next[dayNumber] = { ...sourceSession, dayNumber };
+          next[selectedDayForSwap] = { ...targetSession, dayNumber: selectedDayForSwap };
+        } else if (sourceSession) {
+          next[dayNumber] = { ...sourceSession, dayNumber };
+          delete next[selectedDayForSwap];
+        } else if (targetSession) {
+          next[selectedDayForSwap] = { ...targetSession, dayNumber: selectedDayForSwap };
+          delete next[dayNumber];
+        }
+
+        return next;
+      });
+      setSelectedDayForSwap(null);
+    }
+  };
+
+  const handleDayLongPress = (dayNumber: number) => {
+    setSelectedDayForSwap(dayNumber);
+  };
+
   const handleViewOnWeb = async () => {
     if (!programId) return;
     if (program?.programFileUrl) {
@@ -564,6 +585,20 @@ export const ProgramEditorScreen: React.FC = () => {
             <Text style={styles.sessionCount}>{totalDays} days · {totalWeeks} weeks</Text>
           </View>
 
+          {selectedDayForSwap !== null && (
+            <View style={styles.swapBanner}>
+              <ArrowsDownUp size={14} color={C.orange} weight="bold" />
+              <Text style={styles.swapBannerText}>
+                Day {selectedDayForSwap} selected — tap another day to swap
+              </Text>
+              <TouchableOpacity onPress={() => setSelectedDayForSwap(null)}>
+                <Text style={styles.swapCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <Text style={styles.swapHint}>Long-press a day to move it</Text>
+
           <View style={styles.dayHeaderRow}>
             {DAY_LABELS.map((label) => (
               <View key={label} style={styles.dayHeaderCell}>
@@ -590,6 +625,9 @@ export const ProgramEditorScreen: React.FC = () => {
                   const isRest = session?.isRestDay;
                   const hasContent = !!session && !isRest;
 
+                  const isSelected = selectedDayForSwap === dayNumber;
+                  const isSwapTarget = selectedDayForSwap !== null && selectedDayForSwap !== dayNumber;
+
                   return (
                     <TouchableOpacity
                       key={`day-${dayNumber}`}
@@ -597,22 +635,72 @@ export const ProgramEditorScreen: React.FC = () => {
                         styles.dayCell,
                         isRest && styles.restCell,
                         isToday && styles.todayCell,
+                        isSelected && styles.selectedCell,
+                        isSwapTarget && styles.swapTargetCell,
                       ]}
-                      onPress={() => handleOpenDay(dayNumber)}
+                      onPress={() => handleDayPress(dayNumber)}
+                      onLongPress={() => handleDayLongPress(dayNumber)}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.dateLabel, isToday && styles.todayDateLabel]}>
-                        {format(dayDate, 'MMM d')}
-                      </Text>
+                      <View style={styles.cellHeader}>
+                        <Text style={[styles.dateLabel, isToday && styles.todayDateLabel]}>
+                          {format(dayDate, 'MMM d')}
+                        </Text>
+                        {isSelected && (
+                          <ArrowsDownUp size={10} color={C.orange} weight="bold" />
+                        )}
+                      </View>
                       {isRest ? (
                         <Moon size={12} color={C.orange} weight="fill" style={{ marginTop: 2 }} />
                       ) : null}
-                      <Text
-                        style={[styles.cellSummary, hasContent && styles.cellSummaryActive]}
-                        numberOfLines={3}
-                      >
-                        {getSummary(session)}
-                      </Text>
+                      {hasContent ? (
+                        <View style={styles.cellContent}>
+                          {session?.title && (
+                            <Text style={styles.cellTitle} numberOfLines={1}>
+                              {session.title}
+                            </Text>
+                          )}
+                          {session?.preActivation1 && (
+                            <Text style={styles.cellField} numberOfLines={1}>
+                              PA1: {session.preActivation1}
+                            </Text>
+                          )}
+                          {session?.preActivation2 && (
+                            <Text style={styles.cellField} numberOfLines={1}>
+                              PA2: {session.preActivation2}
+                            </Text>
+                          )}
+                          {session?.shortDistanceWorkout && (
+                            <Text style={styles.cellField} numberOfLines={1}>
+                              60/100: {session.shortDistanceWorkout}
+                            </Text>
+                          )}
+                          {session?.mediumDistanceWorkout && (
+                            <Text style={styles.cellField} numberOfLines={1}>
+                              200: {session.mediumDistanceWorkout}
+                            </Text>
+                          )}
+                          {session?.longDistanceWorkout && (
+                            <Text style={styles.cellField} numberOfLines={1}>
+                              400: {session.longDistanceWorkout}
+                            </Text>
+                          )}
+                          {session?.extraSession && (
+                            <Text style={styles.cellField} numberOfLines={1}>
+                              Extra: {session.extraSession}
+                            </Text>
+                          )}
+                          {session?.notes && (
+                            <Text style={[styles.cellField, styles.cellNotes]} numberOfLines={1}>
+                              {session.notes}
+                            </Text>
+                          )}
+                        </View>
+                      ) : (
+                        <Text style={styles.cellSummary}>
+                          {isRest ? '' : 'Add session'}
+                        </Text>
+                      )}
                     </TouchableOpacity>
                   );
                 })}
@@ -991,13 +1079,12 @@ const styles = StyleSheet.create({
   },
   dayCell: {
     width: '13%',
-    minHeight: 80,
-    padding: 4,
+    minHeight: 100,
+    padding: 3,
     borderRadius: 8,
     borderWidth: 0.5,
     borderColor: C.border,
     backgroundColor: C.surface,
-    alignItems: 'center',
   },
   restCell: {
     backgroundColor: C.rest,
@@ -1008,27 +1095,86 @@ const styles = StyleSheet.create({
     borderColor: C.todayBorder,
     borderWidth: 1,
   },
+  selectedCell: {
+    borderColor: C.orange,
+    borderWidth: 2,
+    backgroundColor: 'rgba(255,122,0,0.12)',
+  },
+  swapTargetCell: {
+    borderStyle: 'dashed' as any,
+    borderColor: 'rgba(255,122,0,0.4)',
+  },
   emptyCell: {
     width: '13%',
+  },
+  cellHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 1,
   },
   dateLabel: {
     fontSize: 9,
     fontWeight: '500',
     color: C.textMuted,
-    marginBottom: 2,
   },
   todayDateLabel: {
     color: '#818CF8',
     fontWeight: '700',
+  },
+  cellContent: {
+    gap: 1,
+    flex: 1,
+  },
+  cellTitle: {
+    fontSize: 7,
+    fontWeight: '700',
+    color: C.textPrimary,
+    lineHeight: 10,
+  },
+  cellField: {
+    fontSize: 6,
+    color: C.textSecondary,
+    lineHeight: 9,
+  },
+  cellNotes: {
+    fontStyle: 'italic',
+    color: C.textMuted,
   },
   cellSummary: {
     fontSize: 8,
     color: C.textMuted,
     textAlign: 'center',
     lineHeight: 11,
+    marginTop: 4,
   },
-  cellSummaryActive: {
-    color: C.textSecondary,
+  swapBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.3)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  swapBannerText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '500',
+    color: C.orange,
+  },
+  swapCancelText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.textMuted,
+  },
+  swapHint: {
+    fontSize: 10,
+    color: C.textMuted,
+    textAlign: 'center',
+    marginBottom: 4,
   },
   duplicateWeekBtn: {
     flexDirection: 'row',
