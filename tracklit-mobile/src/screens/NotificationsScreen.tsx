@@ -303,13 +303,11 @@ export const NotificationsScreen: React.FC = () => {
                       <View style={styles.dividerLine} />
                     </View>
                   )}
+                  {index > 0 && !showDivider && <View style={styles.itemSeparator} />}
                   <TouchableOpacity
                     onPress={() => handleNotificationPress(n)}
-                    activeOpacity={0.7}
-                    style={[
-                      styles.itemCard,
-                      !n.isRead && styles.itemCardUnread,
-                    ]}
+                    activeOpacity={0.6}
+                    style={styles.itemRow}
                   >
                     <View style={[styles.itemIcon, { backgroundColor: `${color}15` }]}>
                       <Icon size={16} color={color} weight="fill" />
@@ -407,7 +405,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   list: {
-    gap: 6,
+    gap: 0,
   },
   dividerRow: {
     flexDirection: 'row',
@@ -427,18 +425,16 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  itemCard: {
+  itemSeparator: {
+    height: 0.5,
+    backgroundColor: C.divider,
+    marginLeft: 56,
+  },
+  itemRow: {
     flexDirection: 'row',
     gap: 12,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: C.card,
-    borderWidth: 0.5,
-    borderColor: C.border,
-  },
-  itemCardUnread: {
-    borderColor: C.borderUnread,
-    backgroundColor: C.cardUnread,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
   },
   itemIcon: {
     width: 32,
