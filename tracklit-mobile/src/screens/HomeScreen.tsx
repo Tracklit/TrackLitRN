@@ -751,34 +751,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     {todaySession.description}
                   </Text>
                 )}
-
-                <View style={styles.practiceStatsRow}>
-                  <View style={styles.practiceStat}>
-                    <Text style={styles.practiceStatValue}>
-                      {todaySession.completedCount}
-                      <Text style={styles.practiceStatUnit}>/{todaySession.totalDays}</Text>
-                    </Text>
-                    <Text style={styles.practiceStatLabel}>Completed</Text>
-                  </View>
-                  <View style={styles.practiceStat}>
-                    <Text style={styles.practiceStatValue}>
-                      {todaySession.totalDays > 0 ? Math.round((todaySession.completedCount / todaySession.totalDays) * 100) : 0}
-                      <Text style={styles.practiceStatUnit}>%</Text>
-                    </Text>
-                    <Text style={styles.practiceStatLabel}>Progress</Text>
-                  </View>
-                </View>
-                <View style={styles.practiceProgressTrack}>
-                  <View
-                    style={[
-                      styles.practiceProgressFill,
-                      { width: `${todaySession.totalDays > 0 ? Math.max(2, (todaySession.completedCount / todaySession.totalDays) * 100) : 2}%` },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.practiceProgramName} numberOfLines={1}>
-                  {todaySession.programTitle}
-                </Text>
               </>
             ) : (
               <Text style={styles.practiceNoSession}>
@@ -954,8 +926,19 @@ const HomeWorkoutContent = ({ session }: { session: any }) => {
     { label: 'Notes', value: session.notes },
   ];
 
-  const hasContent = contentSections.some((s) => !!s.value);
-  if (!hasContent) return null;
+  const hasWorkoutFields = contentSections.some((s) => !!s.value);
+
+  if (!hasWorkoutFields && !session.description) return null;
+
+  if (!hasWorkoutFields && session.description) {
+    return (
+      <View style={styles.workoutContentContainer}>
+        <Text style={styles.workoutSectionValue} numberOfLines={4}>
+          {String(session.description).replace(/^"|"$/g, '')}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.workoutContentContainer}>
@@ -1205,44 +1188,6 @@ const styles = StyleSheet.create({
   practiceFireIcon: {
     fontSize: 22,
   },
-  practiceStatsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.lg,
-  },
-  practiceStat: {
-    flex: 1,
-    alignItems: 'flex-start' as const,
-  },
-  practiceStatValue: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '800' as const,
-  },
-  practiceStatUnit: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
-  practiceStatLabel: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 11,
-    fontWeight: '500' as const,
-    marginTop: 2,
-  },
-  practiceProgressTrack: {
-    height: 6,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 3,
-    overflow: 'hidden' as const,
-    marginBottom: theme.spacing.md,
-  },
-  practiceProgressFill: {
-    height: '100%' as any,
-    backgroundColor: '#f97316',
-    borderRadius: 3,
-    minWidth: 6,
-  },
   practiceDayLabel: {
     color: 'rgba(255,255,255,0.7)',
     fontSize: 11,
@@ -1261,13 +1206,6 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
     lineHeight: 18,
     marginBottom: 8,
-  },
-  practiceProgramName: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 11,
-    fontWeight: '600' as const,
-    letterSpacing: 0.3,
-    marginTop: 4,
   },
   practiceNoSession: {
     color: 'rgba(255,255,255,0.55)',
