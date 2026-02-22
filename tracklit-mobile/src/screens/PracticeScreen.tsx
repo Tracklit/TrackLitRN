@@ -132,7 +132,6 @@ export const PracticeScreen: React.FC = () => {
     }
 
     const sessionsToUse = programSessions ?? [];
-    const totalDays = Math.max(programDuration, 1);
 
     const sessionsByDay: Record<number, any> = {};
     sessionsToUse.forEach((session: any) => {
@@ -141,53 +140,51 @@ export const PracticeScreen: React.FC = () => {
       }
     });
 
-    let startDate: Date | null = null;
+    let programStartDate: Date | null = null;
     const datesFromSessions = sessionsToUse
       .map((s: any) => parseSessionDateForCard(s.date))
       .filter(Boolean) as Date[];
     if (datesFromSessions.length > 0) {
       datesFromSessions.sort((a, b) => a.getTime() - b.getTime());
-      startDate = datesFromSessions[0];
+      programStartDate = datesFromSessions[0];
     }
 
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+    const FORWARD_DAYS = 60;
+    const totalDays = Math.max(programDuration, 1);
+
     const cards: any[] = [];
-    for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
-      const session = sessionsByDay[dayNum] || null;
+    for (let offset = 0; offset < FORWARD_DAYS; offset++) {
+      const dayDate = new Date(today);
+      dayDate.setDate(today.getDate() + offset);
 
-      let dayDate: Date | null = null;
-      if (session?.date) {
-        dayDate = parseSessionDateForCard(session.date);
-      }
-      if (!dayDate && startDate) {
-        dayDate = new Date(startDate);
-        dayDate.setDate(startDate.getDate() + dayNum - 1);
+      let dayNum: number | null = null;
+      if (programStartDate) {
+        const diff = Math.round((dayDate.getTime() - programStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        if (diff >= 1 && diff <= totalDays) {
+          dayNum = diff;
+        }
       }
 
-      const dateString = dayDate
-        ? dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        : '';
-      const dayOfWeek = dayDate
-        ? dayDate.toLocaleDateString('en-US', { weekday: 'long' })
-        : '';
+      const session = dayNum != null ? sessionsByDay[dayNum] || null : null;
 
-      let isToday = false;
-      if (dayDate) {
-        const dayStr = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
-        isToday = dayStr === todayStr;
-      }
+      const dateString = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const dayOfWeek = dayDate.toLocaleDateString('en-US', { weekday: 'long' });
+      const dayStr = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
+      const isToday = dayStr === todayStr;
 
       cards.push({
-        id: `day-${dayNum}`,
+        id: `cal-${offset}`,
         dayNumber: dayNum,
-        date: dayDate || today,
+        date: dayDate,
         dateString,
         dayOfWeek,
         sessionData: session,
         isToday,
-        index: dayNum - 1,
+        index: offset,
       });
     }
 
@@ -446,9 +443,9 @@ const SessionCard = ({
   const hasSession = !!card.sessionData;
   const isRestDay = card.sessionData?.isRestDay;
 
-  const headerLabel = card.dayOfWeek
-    ? `${card.dayOfWeek} · Day ${card.dayNumber}`
-    : `Day ${card.dayNumber}`;
+  const headerLabel = card.dayNumber
+    ? (card.dayOfWeek ? `${card.dayOfWeek} · Day ${card.dayNumber}` : `Day ${card.dayNumber}`)
+    : (card.dayOfWeek || '');
 
   if (!hasSession) {
     return (
@@ -550,12 +547,12 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
   const sessionDescription = sessionData.description && sessionData.description !== 'Training Session' ? sessionData.description : null;
 
   const contentSections = [
-    { label: 'Pre-Activation 1', value: sessionData.preActivation1, icon: 'check' },
-    { label: 'Pre-Activation 2', value: sessionData.preActivation2, icon: 'check' },
-    { label: '60m/100m Sprint', value: sessionData.shortDistanceWorkout, icon: 'circle' },
-    { label: '200m Sprint', value: sessionData.mediumDistanceWorkout, icon: 'circle' },
-    { label: '400m Sprint', value: sessionData.longDistanceWorkout, icon: 'circle' },
-    { label: 'Extra Session', value: sessionData.extraSession, icon: 'circle' },
+    { label: 'PA1', value: sessionData.preActivation1 },
+    { label: 'PA2', value: sessionData.preActivation2 },
+    { label: '60/100', value: sessionData.shortDistanceWorkout },
+    { label: '200', value: sessionData.mediumDistanceWorkout },
+    { label: '400', value: sessionData.longDistanceWorkout },
+    { label: 'Extra', value: sessionData.extraSession },
   ];
 
   const hasAnyContent = hasGymData || contentSections.some((s) => !!s.value) || sessionTitle || sessionData.notes;
@@ -563,70 +560,39 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
   return (
     <View style={styles.cardSections}>
       {sessionTitle && (
-        <View style={styles.sessionTitleRow}>
-          <ClipboardText size={14} color="white" weight="fill" />
-          <Text variant="body" weight="bold" color="primary-foreground">
-            {sessionTitle}
-          </Text>
-        </View>
+        <Text variant="body" weight="bold" color="primary-foreground" style={{ marginBottom: 6 }}>
+          {sessionTitle}
+        </Text>
       )}
       {sessionDescription && (
         <Text variant="small" color="primary-foreground" style={styles.sessionDescription}>
           {sessionDescription}
         </Text>
       )}
-      {hasGymData && (
-        <View style={styles.cardSection}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIcon}>
-              <Circle size={10} color="white" weight="fill" />
-            </View>
-            <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.sectionTitle}>
-              {gymNumber ? `Gym ${gymNumber}` : 'Gym Exercises'}
-            </Text>
+      <View style={styles.solidBlock}>
+        {hasGymData && (
+          <View style={styles.solidBlockRow}>
+            <Text style={styles.solidBlockLabel}>{gymNumber ? `Gym ${gymNumber}` : 'Gym'}</Text>
+            <Text style={styles.solidBlockValue}>{gymData.join(', ')}</Text>
           </View>
-          {gymData.map((exercise, idx) => (
-            <Text key={`${exercise}-${idx}`} variant="small" color="primary-foreground" style={styles.sectionText}>
-              {exercise}
-            </Text>
-          ))}
-        </View>
-      )}
-      {contentSections.map((section) =>
-        section.value ? (
-          <View key={section.label} style={styles.cardSection}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIcon}>
-                {section.icon === 'check'
-                  ? <CheckCircle size={10} color="white" weight="fill" />
-                  : <Circle size={10} color="white" weight="fill" />
-                }
-              </View>
-              <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.sectionTitle}>
-                {section.label}
+        )}
+        {contentSections.map((section) =>
+          section.value ? (
+            <View key={section.label} style={styles.solidBlockRow}>
+              <Text style={styles.solidBlockLabel}>{section.label}</Text>
+              <Text style={styles.solidBlockValue}>
+                {String(section.value).replace(/^"|"$/g, '')}
               </Text>
             </View>
-            <Text variant="small" color="primary-foreground" style={styles.sectionText}>
-              {String(section.value).replace(/^"|"$/g, '')}
-            </Text>
+          ) : null
+        )}
+        {sessionData.notes && (
+          <View style={styles.solidBlockRow}>
+            <Text style={styles.solidBlockLabel}>Notes</Text>
+            <Text style={styles.solidBlockValue}>{sessionData.notes}</Text>
           </View>
-        ) : null
-      )}
-      {sessionData.notes && (
-        <View style={styles.cardSection}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIcon}>
-              <ClipboardText size={10} color="white" weight="fill" />
-            </View>
-            <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.sectionTitle}>
-              Notes
-            </Text>
-          </View>
-          <Text variant="small" color="primary-foreground" style={styles.sectionText}>
-            {sessionData.notes}
-          </Text>
-        </View>
-      )}
+        )}
+      </View>
       {!hasAnyContent && (
         <View style={styles.sessionPlaceholder}>
           <Text variant="small" weight="medium" color="primary-foreground">
@@ -765,42 +731,38 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   cardSections: {
-    gap: theme.spacing.sm,
+    gap: 4,
   },
-  cardSection: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.sm,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.xs,
-  },
-  sectionIcon: {
-    width: 20,
-    height: 20,
+  solidBlock: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: 12,
+    gap: 8,
   },
-  sectionTitle: {
-  },
-  sectionText: {
-    lineHeight: 18,
-    opacity: 0.85,
-  },
-  sessionTitleRow: {
+  solidBlockRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.xs,
+    gap: 8,
+  },
+  solidBlockLabel: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11,
+    fontWeight: '700' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+    width: 50,
+    flexShrink: 0,
+    paddingTop: 1,
+  },
+  solidBlockValue: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 13,
+    fontWeight: '500' as const,
+    lineHeight: 18,
+    flex: 1,
   },
   sessionDescription: {
     opacity: 0.85,
-    marginBottom: theme.spacing.xs,
+    marginBottom: 4,
   },
   sessionPlaceholder: {
     alignItems: 'center',

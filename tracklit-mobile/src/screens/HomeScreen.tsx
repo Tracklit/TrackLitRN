@@ -258,12 +258,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         totalDays,
         completedCount,
         programTitle: programData.title || 'Program',
-        preActivation1: todaySession.preActivation1,
-        preActivation2: todaySession.preActivation2,
-        shortDistanceWorkout: todaySession.shortDistanceWorkout,
-        mediumDistanceWorkout: todaySession.mediumDistanceWorkout,
-        longDistanceWorkout: todaySession.longDistanceWorkout,
-        extraSession: todaySession.extraSession,
+        preActivation1: todaySession.preActivation1 || todaySession.columnB || null,
+        preActivation2: todaySession.preActivation2 || todaySession.columnC || null,
+        shortDistanceWorkout: todaySession.shortDistanceWorkout || todaySession.columnD || null,
+        mediumDistanceWorkout: todaySession.mediumDistanceWorkout || todaySession.columnE || null,
+        longDistanceWorkout: todaySession.longDistanceWorkout || todaySession.columnF || null,
+        extraSession: todaySession.extraSession || todaySession.columnG || null,
         notes: todaySession.notes,
         sessionId: todaySession.id,
         programId: resolvedProgramId,
@@ -966,15 +966,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
 const HomeWorkoutContent = ({ session }: { session: any }) => {
   const contentSections = [
-    { label: 'Pre-Activation 1', value: session.preActivation1 },
-    { label: 'Pre-Activation 2', value: session.preActivation2 },
-    { label: '60m/100m Sprint', value: session.shortDistanceWorkout },
-    { label: '200m Sprint', value: session.mediumDistanceWorkout },
-    { label: '400m Sprint', value: session.longDistanceWorkout },
-    { label: 'Extra Session', value: session.extraSession },
+    { label: 'PA1', value: session.preActivation1 },
+    { label: 'PA2', value: session.preActivation2 },
+    { label: '60/100', value: session.shortDistanceWorkout },
+    { label: '200', value: session.mediumDistanceWorkout },
+    { label: '400', value: session.longDistanceWorkout },
+    { label: 'Extra', value: session.extraSession },
+    { label: 'Notes', value: session.notes },
   ];
 
-  const hasContent = contentSections.some((s) => !!s.value) || !!session.notes;
+  const hasContent = contentSections.some((s) => !!s.value);
   if (!hasContent) return null;
 
   return (
@@ -988,12 +989,6 @@ const HomeWorkoutContent = ({ session }: { session: any }) => {
             </Text>
           </View>
         ) : null
-      )}
-      {session.notes && (
-        <View style={styles.workoutSection}>
-          <Text style={styles.workoutSectionLabel}>Notes</Text>
-          <Text style={styles.workoutSectionValue}>{session.notes}</Text>
-        </View>
       )}
     </View>
   );
@@ -1302,28 +1297,33 @@ const styles = StyleSheet.create({
     fontStyle: 'italic' as const,
   },
   workoutContentContainer: {
-    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+    padding: 12,
+    gap: 8,
     marginTop: 8,
     marginBottom: 8,
   },
   workoutSection: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: 10,
-    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 8,
   },
   workoutSectionLabel: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.5)',
     fontSize: 10,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
-    marginBottom: 3,
+    width: 44,
+    flexShrink: 0,
+    paddingTop: 1,
   },
   workoutSectionValue: {
-    color: 'rgba(255,255,255,0.9)',
+    color: 'rgba(255,255,255,0.95)',
     fontSize: 12,
     fontWeight: '500' as const,
     lineHeight: 16,
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
