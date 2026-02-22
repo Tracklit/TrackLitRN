@@ -969,10 +969,6 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
   const hasGymData = gymData.length > 0;
   const sessionDescription = desc && desc !== 'Training Session' ? desc : null;
 
-  const hasAnyContent = hasGymData || visibleSections.length > 0 || sessionDescription;
-
-  if (!hasAnyContent) return null;
-
   const extractGymNumber = () => {
     for (const field of [short, med, long, pa1, pa2, extra]) {
       if (field) {
@@ -983,10 +979,13 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
     return null;
   };
 
+  const sessionTitle = session.title && session.title !== 'Day Training' ? session.title : null;
+  const hasWorkoutContent = hasGymData || visibleSections.length > 0;
+
   return (
     <View style={styles.workoutContentContainer}>
       {sessionDescription && (
-        <Text style={[styles.workoutSectionValue, { marginBottom: 4 }]} numberOfLines={3}>
+        <Text style={[styles.workoutSectionValue, { marginBottom: hasWorkoutContent ? 4 : 0 }]} numberOfLines={3}>
           {sessionDescription}
         </Text>
       )}
@@ -1008,6 +1007,11 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
           </Text>
         </View>
       ))}
+      {!hasWorkoutContent && !sessionDescription && (
+        <Text style={[styles.workoutSectionValue, { opacity: 0.7 }]}>
+          {sessionTitle || `Day ${session.dayNumber || '—'}`} — Scheduled
+        </Text>
+      )}
     </View>
   );
 };
