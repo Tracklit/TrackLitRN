@@ -17,23 +17,10 @@ import {
   CheckCircle,
   Timer,
   Plus,
-  DotsSixVertical,
 } from 'phosphor-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  runOnJS,
-} from 'react-native-reanimated';
-import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-} from 'react-native-gesture-handler';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
@@ -73,8 +60,6 @@ interface PurchasedProgramItem {
   assignerName?: string;
 }
 
-const CARD_GAP = theme.spacing.lg;
-const CARD_ESTIMATED_HEIGHT = 160;
 
 export const PracticeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -91,10 +76,6 @@ export const PracticeScreen: React.FC = () => {
   const [workoutCards, setWorkoutCards] = useState<any[]>([]);
   const [docViewerUrl, setDocViewerUrl] = useState<string | null>(null);
   const [docAutoOpened, setDocAutoOpened] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const [dragCurrentIndex, setDragCurrentIndex] = useState<number | null>(null);
-  const [dragSourceIndex, setDragSourceIndex] = useState<number | null>(null);
-  const [cardHeights, setCardHeights] = useState<Record<number, number>>({});
 
   const purchasedProgramsQuery = useQuery({
     queryKey: ['purchased-programs'],
@@ -262,65 +243,11 @@ export const PracticeScreen: React.FC = () => {
     }
   }, [selectedProgramId, programSessions, queryClient, refetchSessions]);
 
-  const handleSwapDays = useCallback(async (fromIndex: number, toIndex: number) => {
-    if (!selectedProgramId) return;
-    const fromCard = workoutCards[fromIndex];
-    const toCard = workoutCards[toIndex];
-    if (!fromCard || !toCard) return;
-
-    const fromSession = fromCard.sessionData;
-    const toSession = toCard.sessionData;
-    if (!fromSession && !toSession) return;
-
-    const newCards = [...workoutCards];
-    newCards[fromIndex] = { ...newCards[fromIndex], sessionData: toSession || null };
-    newCards[toIndex] = { ...newCards[toIndex], sessionData: fromSession || null };
-    setWorkoutCards(newCards);
-
-    try {
-      const fromDateStr = fromCard.date.toISOString().split('T')[0];
-      const toDateStr = toCard.date.toISOString().split('T')[0];
-
-      const updates = [];
-      if (fromSession?.id) {
-        updates.push(
-          apiRequest(`/api/programs/${selectedProgramId}/sessions/${fromSession.id}`, {
-            method: 'PUT',
-            data: { ...fromSession, date: toDateStr, dayNumber: toSession?.dayNumber ?? fromSession.dayNumber },
-          })
-        );
-      }
-      if (toSession?.id) {
-        updates.push(
-          apiRequest(`/api/programs/${selectedProgramId}/sessions/${toSession.id}`, {
-            method: 'PUT',
-            data: { ...toSession, date: fromDateStr, dayNumber: fromSession?.dayNumber ?? toSession.dayNumber },
-          })
-        );
-      }
-      if (updates.length > 0) {
-        await Promise.all(updates);
-        await queryClient.invalidateQueries({ queryKey: ['program-sessions', selectedProgramId] });
-      }
-    } catch (err) {
-      console.warn('[Practice] Swap failed:', err);
-      setWorkoutCards(workoutCards);
-    }
-  }, [selectedProgramId, workoutCards, queryClient]);
-
   const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
     await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
   });
 
-  const onCardLayout = useCallback((index: number, height: number) => {
-    setCardHeights((prev) => {
-      if (prev[index] === height) return prev;
-      return { ...prev, [index]: height };
-    });
-  }, []);
-
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
       <LinearGradient
         colors={theme.gradient.background}
         locations={theme.gradient.locations}
@@ -333,7 +260,6 @@ export const PracticeScreen: React.FC = () => {
             { paddingTop: insets.top, paddingBottom: contentBottomPadding },
           ]}
           showsVerticalScrollIndicator={false}
-          scrollEnabled={!dragActive}
           refreshControl={
             <RefreshControl
               tintColor="#fff"
@@ -419,23 +345,13 @@ export const PracticeScreen: React.FC = () => {
 
               {!isLoadingCards && !isLoadingProgramSessions && workoutCards.length > 0 && (
                 <View style={styles.cardsList}>
-                  {workoutCards.map((card, idx) => (
-                    <DraggableCard
+                  {workoutCards.map((card) => (
+                    <SessionCard
                       key={card.id}
                       card={card}
-                      index={idx}
-                      totalCards={workoutCards.length}
                       programId={selectedProgramId}
                       onFinish={(date: string) => navigation.navigate('JournalEntry', { date })}
                       onAddDay={handleAddDay}
-                      onSwap={handleSwapDays}
-                      onDragStart={(i: number) => { setDragActive(true); setDragSourceIndex(i); setDragCurrentIndex(i); }}
-                      onDragEnd={() => { setDragActive(false); setDragSourceIndex(null); setDragCurrentIndex(null); }}
-                      onDragUpdate={(targetIdx: number) => setDragCurrentIndex(targetIdx)}
-                      dragSourceIndex={dragSourceIndex}
-                      dragCurrentIndex={dragCurrentIndex}
-                      cardHeights={cardHeights}
-                      onLayout={onCardLayout}
                     />
                   ))}
                   <View style={styles.loadMoreContainer}>
@@ -508,7 +424,6 @@ export const PracticeScreen: React.FC = () => {
         <TargetTimesDrawer visible={showTargetTimes} onClose={() => setShowTargetTimes(false)} />
 
       </LinearGradient>
-    </GestureHandlerRootView>
   );
 };
 
@@ -568,145 +483,17 @@ const useGymData = (programId: number | string | null, dayNumber?: number, sessi
   });
 };
 
-const DraggableCard = ({
+const SessionCard = ({
   card,
-  index,
-  totalCards,
   programId,
   onFinish,
   onAddDay,
-  onSwap,
-  onDragStart,
-  onDragEnd,
-  onDragUpdate,
-  dragSourceIndex,
-  dragCurrentIndex,
-  cardHeights,
-  onLayout,
 }: {
   card: any;
-  index: number;
-  totalCards: number;
   programId: number | string | null;
   onFinish: (date: string) => void;
   onAddDay: (date: Date) => void;
-  onSwap: (from: number, to: number) => void;
-  onDragStart: (index: number) => void;
-  onDragEnd: () => void;
-  onDragUpdate: (targetIdx: number) => void;
-  dragSourceIndex: number | null;
-  dragCurrentIndex: number | null;
-  cardHeights: Record<number, number>;
-  onLayout: (index: number, height: number) => void;
 }) => {
-  const translateY = useSharedValue(0);
-  const shiftY = useSharedValue(0);
-  const scale = useSharedValue(1);
-  const zIndex = useSharedValue(0);
-  const opacity = useSharedValue(1);
-  const isActive = useSharedValue(false);
-  const startY = useSharedValue(0);
-
-  const isBeingShifted = dragSourceIndex !== null && dragSourceIndex !== index;
-
-  useEffect(() => {
-    if (!isBeingShifted || dragSourceIndex === null || dragCurrentIndex === null) {
-      shiftY.value = withSpring(0, { damping: 20, stiffness: 200 });
-      return;
-    }
-    const sourceHeight = (cardHeights[dragSourceIndex] || CARD_ESTIMATED_HEIGHT) + CARD_GAP;
-
-    if (dragSourceIndex < index && dragCurrentIndex >= index) {
-      shiftY.value = withSpring(-sourceHeight, { damping: 20, stiffness: 200 });
-    } else if (dragSourceIndex > index && dragCurrentIndex <= index) {
-      shiftY.value = withSpring(sourceHeight, { damping: 20, stiffness: 200 });
-    } else {
-      shiftY.value = withSpring(0, { damping: 20, stiffness: 200 });
-    }
-  }, [dragSourceIndex, dragCurrentIndex, isBeingShifted, cardHeights, index]);
-
-  const getTargetIndex = useCallback((currentTranslateY: number) => {
-    let accumulated = 0;
-    if (currentTranslateY > 0) {
-      for (let i = index + 1; i < totalCards; i++) {
-        const h = (cardHeights[i] || CARD_ESTIMATED_HEIGHT) + CARD_GAP;
-        accumulated += h;
-        if (currentTranslateY < accumulated - h / 2) {
-          return i;
-        }
-      }
-      return totalCards - 1;
-    } else {
-      for (let i = index - 1; i >= 0; i--) {
-        const h = (cardHeights[i] || CARD_ESTIMATED_HEIGHT) + CARD_GAP;
-        accumulated -= h;
-        if (currentTranslateY > accumulated + h / 2) {
-          return i;
-        }
-      }
-      return 0;
-    }
-  }, [index, totalCards, cardHeights]);
-
-  const handleDragMove = useCallback((translationY: number) => {
-    const targetIdx = getTargetIndex(translationY);
-    onDragUpdate(targetIdx);
-  }, [getTargetIndex, onDragUpdate]);
-
-  const handleDragFinish = useCallback((translationY: number) => {
-    const targetIdx = getTargetIndex(translationY);
-    if (targetIdx !== index) {
-      onSwap(index, targetIdx);
-    }
-    onDragEnd();
-  }, [getTargetIndex, index, onSwap, onDragEnd]);
-
-  const panGesture = Gesture.Pan()
-    .activateAfterLongPress(400)
-    .onStart(() => {
-      startY.value = translateY.value;
-      isActive.value = true;
-      scale.value = withSpring(1.04, { damping: 15 });
-      zIndex.value = 100;
-      opacity.value = 0.92;
-      runOnJS(onDragStart)(index);
-    })
-    .onUpdate((e) => {
-      if (isActive.value) {
-        translateY.value = startY.value + e.translationY;
-        runOnJS(handleDragMove)(translateY.value);
-      }
-    })
-    .onEnd(() => {
-      if (isActive.value) {
-        runOnJS(handleDragFinish)(translateY.value);
-        isActive.value = false;
-        translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
-        scale.value = withSpring(1, { damping: 15 });
-        zIndex.value = 0;
-        opacity.value = withTiming(1, { duration: 150 });
-      }
-    })
-    .onFinalize(() => {
-      if (isActive.value) {
-        isActive.value = false;
-        translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
-        scale.value = withSpring(1, { damping: 15 });
-        zIndex.value = 0;
-        opacity.value = withTiming(1, { duration: 150 });
-        runOnJS(onDragEnd)();
-      }
-    });
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value + shiftY.value },
-      { scale: scale.value },
-    ],
-    zIndex: zIndex.value,
-    opacity: opacity.value,
-  }));
-
   const sessionId = card.sessionData?.id;
   const dayNumber = card.sessionData?.dayNumber;
   const { data } = useGymData(programId, dayNumber, sessionId);
@@ -715,80 +502,73 @@ const DraggableCard = ({
 
   const hasSession = !!card.sessionData;
 
-  return (
-    <GestureDetector gesture={panGesture}>
-      <Animated.View
-        style={animatedStyle}
-        onLayout={(e) => onLayout(index, e.nativeEvent.layout.height)}
+  if (hasSession) {
+    return (
+      <LinearGradient
+        colors={theme.gradients.webPurple.colors}
+        start={theme.gradients.webPurple.start}
+        end={theme.gradients.webPurple.end}
+        style={[styles.workoutCard, card.isToday && styles.workoutCardToday]}
       >
-        {hasSession ? (
-          <LinearGradient
-            colors={theme.gradients.webPurple.colors}
-            start={theme.gradients.webPurple.start}
-            end={theme.gradients.webPurple.end}
-            style={[styles.workoutCard, card.isToday && styles.workoutCardToday]}
-          >
-            <View style={styles.cardHeaderRow}>
-              <View style={styles.cardHeaderLeft}>
-                <DotsSixVertical size={18} color="rgba(255,255,255,0.5)" weight="bold" />
-                <Text variant="small" weight="medium" color="primary-foreground">
-                  {card.dayOfWeek}
-                </Text>
-                {card.isToday && (
-                  <View style={styles.todayBadge}>
-                    <Text variant="small" weight="semiBold" color="foreground">
-                      Today
-                    </Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.cardHeaderRight}>
-                <TouchableOpacity style={styles.finishButton} onPress={() => onFinish(finishDate)}>
-                  <Text variant="small" color="primary-foreground">
-                    Finish
-                  </Text>
-                </TouchableOpacity>
-                <Text variant="small" color="primary-foreground" style={styles.dateText}>
-                  {card.dateString}
+        <View style={styles.cardHeaderRow}>
+          <View style={styles.cardHeaderLeft}>
+            <Text variant="small" weight="medium" color="primary-foreground">
+              {card.dayOfWeek}
+            </Text>
+            {card.isToday && (
+              <View style={styles.todayBadge}>
+                <Text variant="small" weight="semiBold" color="foreground">
+                  Today
                 </Text>
               </View>
-            </View>
-
-            <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} />
-          </LinearGradient>
-        ) : (
-          <View style={[styles.emptyDayCard, card.isToday && styles.emptyDayCardToday]}>
-            <View style={styles.cardHeaderRow}>
-              <View style={styles.cardHeaderLeft}>
-                <DotsSixVertical size={18} color="rgba(255,255,255,0.3)" weight="bold" />
-                <Text variant="small" weight="medium" color="muted">
-                  {card.dayOfWeek}
-                </Text>
-                {card.isToday && (
-                  <View style={styles.todayBadge}>
-                    <Text variant="small" weight="semiBold" color="foreground">
-                      Today
-                    </Text>
-                  </View>
-                )}
-              </View>
-              <Text variant="small" color="muted" style={styles.dateText}>
-                {card.dateString}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.addDayButton}
-              onPress={() => onAddDay(card.date)}
-            >
-              <Plus size={16} color={theme.colors.primary} weight="bold" />
-              <Text variant="small" weight="semiBold" color="primary">
-                Add Day
+            )}
+          </View>
+          <View style={styles.cardHeaderRight}>
+            <TouchableOpacity style={styles.finishButton} onPress={() => onFinish(finishDate)}>
+              <Text variant="small" color="primary-foreground">
+                Finish
               </Text>
             </TouchableOpacity>
+            <Text variant="small" color="primary-foreground" style={styles.dateText}>
+              {card.dateString}
+            </Text>
           </View>
-        )}
-      </Animated.View>
-    </GestureDetector>
+        </View>
+
+        <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} />
+      </LinearGradient>
+    );
+  }
+
+  return (
+    <View style={[styles.emptyDayCard, card.isToday && styles.emptyDayCardToday]}>
+      <View style={styles.cardHeaderRow}>
+        <View style={styles.cardHeaderLeft}>
+          <Text variant="small" weight="medium" color="muted">
+            {card.dayOfWeek}
+          </Text>
+          {card.isToday && (
+            <View style={styles.todayBadge}>
+              <Text variant="small" weight="semiBold" color="foreground">
+                Today
+              </Text>
+            </View>
+          )}
+        </View>
+        <Text variant="small" color="muted" style={styles.dateText}>
+          {card.dateString}
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={styles.addDayButton}
+        onPress={() => onAddDay(card.date)}
+      >
+        <Plus size={16} color={theme.colors.primary} weight="bold" />
+        <Text variant="small" weight="semiBold" color="primary">
+          Add Day
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -959,7 +739,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Courier',
   },
   cardsList: {
-    gap: CARD_GAP,
+    gap: theme.spacing.lg,
   },
   loadingState: {
     alignItems: 'center',

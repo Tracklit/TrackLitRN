@@ -251,7 +251,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       const dayNum = todaySession.dayNumber || 1;
       const totalDays = programData.sessions.length;
       const completedCount = programData.sessions.filter((s: any) => s.completed_at).length;
-      return { title: sessionTitle, description: desc, dayNumber: dayNum, totalDays, completedCount, programTitle: programData.title || 'Program' };
+      return {
+        title: sessionTitle,
+        description: desc,
+        dayNumber: dayNum,
+        totalDays,
+        completedCount,
+        programTitle: programData.title || 'Program',
+        preActivation1: todaySession.preActivation1,
+        preActivation2: todaySession.preActivation2,
+        shortDistanceWorkout: todaySession.shortDistanceWorkout,
+        mediumDistanceWorkout: todaySession.mediumDistanceWorkout,
+        longDistanceWorkout: todaySession.longDistanceWorkout,
+        extraSession: todaySession.extraSession,
+        notes: todaySession.notes,
+        sessionId: todaySession.id,
+        programId: resolvedProgramId,
+      };
     },
     enabled: !!resolvedProgramId,
     staleTime: 0,
@@ -748,11 +764,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 <Text style={styles.practiceSessionTitle} numberOfLines={2}>
                   {todaySession.title}
                 </Text>
-                {!!todaySession.description && (
-                  <Text style={styles.practiceSessionDesc} numberOfLines={2}>
+
+                <HomeWorkoutContent session={todaySession} />
+
+                {!todaySession.preActivation1 && !todaySession.shortDistanceWorkout && !todaySession.mediumDistanceWorkout && !todaySession.longDistanceWorkout && !todaySession.extraSession && !todaySession.notes && !!todaySession.description && (
+                  <Text style={styles.practiceSessionDesc} numberOfLines={3}>
                     {todaySession.description}
                   </Text>
                 )}
+
                 <View style={styles.practiceStatsRow}>
                   <View style={styles.practiceStat}>
                     <Text style={styles.practiceStatValue}>
@@ -941,6 +961,41 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         </TouchableOpacity>
       </Modal>
     </LinearGradient>
+  );
+};
+
+const HomeWorkoutContent = ({ session }: { session: any }) => {
+  const contentSections = [
+    { label: 'Pre-Activation 1', value: session.preActivation1 },
+    { label: 'Pre-Activation 2', value: session.preActivation2 },
+    { label: '60m/100m Sprint', value: session.shortDistanceWorkout },
+    { label: '200m Sprint', value: session.mediumDistanceWorkout },
+    { label: '400m Sprint', value: session.longDistanceWorkout },
+    { label: 'Extra Session', value: session.extraSession },
+  ];
+
+  const hasContent = contentSections.some((s) => !!s.value) || !!session.notes;
+  if (!hasContent) return null;
+
+  return (
+    <View style={styles.workoutContentContainer}>
+      {contentSections.map((section) =>
+        section.value ? (
+          <View key={section.label} style={styles.workoutSection}>
+            <Text style={styles.workoutSectionLabel}>{section.label}</Text>
+            <Text style={styles.workoutSectionValue} numberOfLines={3}>
+              {String(section.value).replace(/^"|"$/g, '')}
+            </Text>
+          </View>
+        ) : null
+      )}
+      {session.notes && (
+        <View style={styles.workoutSection}>
+          <Text style={styles.workoutSectionLabel}>Notes</Text>
+          <Text style={styles.workoutSectionValue}>{session.notes}</Text>
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -1245,6 +1300,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500' as const,
     fontStyle: 'italic' as const,
+  },
+  workoutContentContainer: {
+    gap: 6,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  workoutSection: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: 10,
+    borderRadius: 8,
+  },
+  workoutSectionLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 10,
+    fontWeight: '600' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+    marginBottom: 3,
+  },
+  workoutSectionValue: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 12,
+    fontWeight: '500' as const,
+    lineHeight: 16,
   },
   modalOverlay: {
     flex: 1,
