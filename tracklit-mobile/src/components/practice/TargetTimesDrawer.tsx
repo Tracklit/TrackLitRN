@@ -17,9 +17,8 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { X } from 'phosphor-react-native';
+import { X, Timer, Target, MapPin, Gauge } from 'phosphor-react-native';
 
-import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
 import theme from '@/utils/theme';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
@@ -28,6 +27,29 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const DRAWER_WIDTH = Math.min(SCREEN_WIDTH * 0.85, 420);
 const ANIM_DURATION = 280;
 const easeOut = Easing.bezier(0.33, 1, 0.68, 1);
+
+const COLORS = {
+  bg: '#0E0F14',
+  card: '#1C1F2B',
+  cardBorder: 'rgba(255,255,255,0.06)',
+  accent: '#FF7A00',
+  accentMuted: 'rgba(255,122,0,0.15)',
+  accentBorder: 'rgba(255,122,0,0.3)',
+  surface: 'rgba(255,255,255,0.04)',
+  surfaceBorder: 'rgba(255,255,255,0.08)',
+  textPrimary: '#FFFFFF',
+  textSecondary: 'rgba(255,255,255,0.6)',
+  textMuted: 'rgba(255,255,255,0.35)',
+  inputBg: 'rgba(255,255,255,0.05)',
+  inputBorder: 'rgba(255,255,255,0.1)',
+  inputFocusBorder: 'rgba(255,122,0,0.4)',
+  tableHeaderBg: 'rgba(255,122,0,0.08)',
+  tableRowEven: 'rgba(28,31,43,0.9)',
+  tableRowOdd: 'rgba(14,15,20,0.9)',
+  drawerBorder: 'rgba(255,122,0,0.12)',
+  switchTrack: 'rgba(255,255,255,0.12)',
+  switchActive: '#FF7A00',
+};
 
 const STORAGE_KEYS = {
   adjustForTrackType: 'tracklit_adjustForTrackType',
@@ -188,15 +210,16 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
         <Animated.View style={[styles.backdrop, backdropStyle]} />
       </TouchableWithoutFeedback>
       <Animated.View style={[styles.drawer, drawerStyle]}>
-        <LinearGradient
-          colors={theme.gradients.webPurpleDeep.colors}
-          start={theme.gradients.webPurpleDeep.start}
-          end={theme.gradients.webPurpleDeep.end}
-          style={[styles.drawerContent, { paddingTop: insets.top + theme.spacing.md }]}
-        >
-          <TouchableOpacity style={[styles.closeButton, { top: insets.top + theme.spacing.md }]} onPress={onClose}>
-            <X size={16} color="rgba(255,255,255,0.85)" weight="bold" />
-          </TouchableOpacity>
+        <View style={[styles.drawerContent, { paddingTop: insets.top + 16 }]}>
+          <View style={styles.drawerHeader}>
+            <View style={styles.drawerTitleRow}>
+              <Timer size={20} color={COLORS.accent} weight="fill" />
+              <Text style={styles.drawerTitle}>Target Times</Text>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <X size={14} color={COLORS.textSecondary} weight="bold" />
+            </TouchableOpacity>
+          </View>
 
           <KeyboardAwareScreenScrollView
             keyboardShouldPersistTaps="handled"
@@ -205,36 +228,38 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
             contentContainerStyle={styles.scrollContent}
             extraScrollHeight={80}
           >
-            <Text variant="small" weight="semiBold" color="primary-foreground">
-              Track Type
-            </Text>
-            <View style={styles.toggleRow}>
-              {(['outdoor', 'indoor'] as TrackType[]).map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[styles.toggleButton, currentTrackType === type && styles.toggleButtonActive]}
-                  onPress={() => {
-                    setCurrentTrackType(type);
-                    saveString(STORAGE_KEYS.currentTrackType, type);
-                  }}
-                >
-                  <Text
-                    variant="caption"
-                    weight="medium"
-                    color={currentTrackType === type ? 'primary-foreground' : 'primary-foreground'}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <MapPin size={14} color={COLORS.accent} weight="fill" />
+                <Text style={styles.sectionTitle}>Track Type</Text>
+              </View>
+              <View style={styles.toggleRow}>
+                {(['outdoor', 'indoor'] as TrackType[]).map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[styles.toggleButton, currentTrackType === type && styles.toggleButtonActive]}
+                    onPress={() => {
+                      setCurrentTrackType(type);
+                      saveString(STORAGE_KEYS.currentTrackType, type);
+                    }}
                   >
-                    {type === 'outdoor' ? 'Outdoor' : 'Indoor'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.toggleText,
+                        currentTrackType === type && styles.toggleTextActive,
+                      ]}
+                    >
+                      {type === 'outdoor' ? 'Outdoor' : 'Indoor'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
             <View style={styles.inlineRow}>
-              <View>
-                <Text variant="small" weight="semiBold" color="primary-foreground">
-                  Adjust for Track Type
-                </Text>
-                <Text variant="caption" color="primary-foreground" style={styles.mutedText}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.inlineLabel}>Adjust for Track Type</Text>
+                <Text style={styles.inlineHint}>
                   Apply track-specific timing adjustments
                 </Text>
               </View>
@@ -250,119 +275,131 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
               </TouchableOpacity>
             </View>
 
-            <Text variant="small" weight="semiBold" color="primary-foreground">
-              Timing Method
-            </Text>
-            <View style={styles.toggleRow}>
-              {(['reaction', 'firstFoot', 'onMovement'] as TimingMethod[]).map((method) => (
-                <TouchableOpacity
-                  key={method}
-                  style={[styles.toggleButton, timingMethod === method && styles.toggleButtonActive]}
-                  onPress={() => {
-                    setTimingMethod(method);
-                    saveString(STORAGE_KEYS.timingMethod, method);
-                  }}
-                >
-                  <Text variant="caption" weight="medium" color="primary-foreground">
-                    {method === 'reaction' ? 'Reaction' : method === 'firstFoot' ? 'First Foot' : 'On Movement'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text variant="small" weight="semiBold" color="primary-foreground">
-              Goal Times
-            </Text>
-            <View style={styles.inputGroup}>
-              {[
-                { label: '100m', value: goal100m, setter: setGoal100m, key: STORAGE_KEYS.goal100m },
-                { label: '200m', value: goal200m, setter: setGoal200m, key: STORAGE_KEYS.goal200m },
-                { label: '400m', value: goal400m, setter: setGoal400m, key: STORAGE_KEYS.goal400m },
-                { label: 'Hurdles', value: goalHurdles100, setter: setGoalHurdles100, key: STORAGE_KEYS.goalHurdles100 },
-                { label: '400H', value: goalHurdles400, setter: setGoalHurdles400, key: STORAGE_KEYS.goalHurdles400 },
-              ].map((item) => (
-                <View key={item.label} style={styles.inputRow}>
-                  <Text variant="caption" color="primary-foreground" style={styles.inputLabel}>
-                    {item.label}
-                  </Text>
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    value={item.value}
-                    onChangeText={(text) => {
-                      const normalized = text.replace(',', '.');
-                      item.setter(normalized);
-                      saveString(item.key, normalized);
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Gauge size={14} color={COLORS.accent} weight="fill" />
+                <Text style={styles.sectionTitle}>Timing Method</Text>
+              </View>
+              <View style={styles.toggleRow}>
+                {(['reaction', 'firstFoot', 'onMovement'] as TimingMethod[]).map((method) => (
+                  <TouchableOpacity
+                    key={method}
+                    style={[styles.toggleButton, timingMethod === method && styles.toggleButtonActive]}
+                    onPress={() => {
+                      setTimingMethod(method);
+                      saveString(STORAGE_KEYS.timingMethod, method);
                     }}
-                  />
-                  <Text variant="caption" color="primary-foreground" style={styles.inputUnit}>
-                    sec
-                  </Text>
-                </View>
-              ))}
+                  >
+                    <Text
+                      style={[
+                        styles.toggleText,
+                        timingMethod === method && styles.toggleTextActive,
+                      ]}
+                    >
+                      {method === 'reaction' ? 'Reaction' : method === 'firstFoot' ? 'First Foot' : 'Movement'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
-            <Text variant="small" weight="semiBold" color="primary-foreground">
-              Target Times
-            </Text>
-            <View style={styles.tableContainer}>
-              {calculateTargetTimes.distances.length === 0 ? (
-                <Text variant="caption" color="primary-foreground">
-                  No goal times set in your profile.
-                </Text>
-              ) : (
-                <View style={styles.tableWrapper}>
-                  <View style={styles.tableFrozenColumn}>
-                    <View style={styles.tableHeaderCell}>
-                      <Text variant="caption" weight="bold" color="primary-foreground">
-                        Dist
-                      </Text>
-                    </View>
-                    {calculateTargetTimes.distances.map((distance, index) => (
-                      <View
-                        key={`dist-${distance}`}
-                        style={[styles.tableCell, index % 2 === 0 ? styles.tableRowDark : styles.tableRowLight]}
-                      >
-                        <Text variant="caption" weight="semiBold" color="primary-foreground">
-                          {distance}
-                        </Text>
-                      </View>
-                    ))}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Target size={14} color={COLORS.accent} weight="fill" />
+                <Text style={styles.sectionTitle}>Goal Times</Text>
+              </View>
+              <View style={styles.inputGroup}>
+                {[
+                  { label: '100m', value: goal100m, setter: setGoal100m, key: STORAGE_KEYS.goal100m },
+                  { label: '200m', value: goal200m, setter: setGoal200m, key: STORAGE_KEYS.goal200m },
+                  { label: '400m', value: goal400m, setter: setGoal400m, key: STORAGE_KEYS.goal400m },
+                  { label: 'Hurdles', value: goalHurdles100, setter: setGoalHurdles100, key: STORAGE_KEYS.goalHurdles100 },
+                  { label: '400H', value: goalHurdles400, setter: setGoalHurdles400, key: STORAGE_KEYS.goalHurdles400 },
+                ].map((item, idx) => (
+                  <View key={item.label} style={[styles.inputRow, idx > 0 && styles.inputRowBorder]}>
+                    <Text style={styles.inputLabel}>{item.label}</Text>
+                    <TextInput
+                      style={styles.input}
+                      keyboardType="numeric"
+                      value={item.value}
+                      placeholderTextColor={COLORS.textMuted}
+                      onChangeText={(text) => {
+                        const normalized = text.replace(',', '.');
+                        item.setter(normalized);
+                        saveString(item.key, normalized);
+                      }}
+                    />
+                    <Text style={styles.inputUnit}>sec</Text>
                   </View>
-                  <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false}>
-                    <View style={styles.tableScrollable}>
-                      {calculateTargetTimes.percentages.map((percentage) => (
-                        <View key={`col-${percentage}`} style={styles.tableColumn}>
-                          <View style={styles.tableHeaderCell}>
-                            <Text variant="caption" weight="bold" color="primary-foreground">
-                              {percentage}%
-                            </Text>
-                          </View>
-                          {calculateTargetTimes.distances.map((distance, index) => (
-                            <View
-                              key={`${distance}-${percentage}`}
-                              style={[styles.tableCell, index % 2 === 0 ? styles.tableRowDark : styles.tableRowLight]}
-                            >
-                              <Text variant="caption" color="primary-foreground">
-                                {calculateTargetTimes.getTime(distance, percentage)}
-                              </Text>
-                            </View>
-                          ))}
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Timer size={14} color={COLORS.accent} weight="fill" />
+                <Text style={styles.sectionTitle}>Calculated Targets</Text>
+              </View>
+              <View style={styles.tableContainer}>
+                {calculateTargetTimes.distances.length === 0 ? (
+                  <View style={styles.tableEmpty}>
+                    <Text style={styles.tableEmptyText}>
+                      Enter goal times above to see targets
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.tableWrapper}>
+                    <View style={styles.tableFrozenColumn}>
+                      <View style={styles.tableHeaderCell}>
+                        <Text style={styles.tableHeaderText}>Dist</Text>
+                      </View>
+                      {calculateTargetTimes.distances.map((distance, index) => (
+                        <View
+                          key={`dist-${distance}`}
+                          style={[styles.tableCell, index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}
+                        >
+                          <Text style={styles.tableCellDistText}>{distance}</Text>
                         </View>
                       ))}
                     </View>
-                  </ScrollView>
-                </View>
-              )}
+                    <ScrollView
+                      keyboardShouldPersistTaps="handled"
+                      keyboardDismissMode="on-drag"
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                    >
+                      <View style={styles.tableScrollable}>
+                        {calculateTargetTimes.percentages.map((percentage) => (
+                          <View key={`col-${percentage}`} style={styles.tableColumn}>
+                            <View style={styles.tableHeaderCell}>
+                              <Text style={[styles.tableHeaderText, percentage === 100 && styles.tableHeaderAccent]}>
+                                {percentage}%
+                              </Text>
+                            </View>
+                            {calculateTargetTimes.distances.map((distance, index) => (
+                              <View
+                                key={`${distance}-${percentage}`}
+                                style={[styles.tableCell, index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}
+                              >
+                                <Text style={[styles.tableCellText, percentage === 100 && styles.tableCellAccent]}>
+                                  {calculateTargetTimes.getTime(distance, percentage)}
+                                </Text>
+                              </View>
+                            ))}
+                          </View>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
             </View>
 
-            <Text variant="caption" color="primary-foreground" style={styles.mutedText}>
+            <Text style={styles.footnote}>
               Times are estimates based on selected track type and timing method.
             </Text>
           </KeyboardAwareScreenScrollView>
-        </LinearGradient>
+        </View>
       </Animated.View>
     </View>
   );
@@ -376,7 +413,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
   },
   drawer: {
     width: DRAWER_WIDTH,
@@ -385,60 +422,117 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderLeftWidth: 1,
-    borderLeftColor: 'rgba(168, 85, 247, 0.3)',
+    borderLeftColor: COLORS.drawerBorder,
   },
   drawerContent: {
     flex: 1,
-    padding: theme.spacing.xl,
+    backgroundColor: COLORS.bg,
+    paddingHorizontal: 20,
+  },
+  drawerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.surfaceBorder,
+  },
+  drawerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  drawerTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   closeButton: {
-    position: 'absolute',
-    top: theme.spacing.lg,
-    right: theme.spacing.lg,
-    zIndex: 2,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   scrollContent: {
-    paddingTop: theme.spacing.xxxl,
-    paddingBottom: theme.spacing.xxl,
-    gap: theme.spacing.lg,
+    paddingTop: 8,
+    paddingBottom: 40,
+    gap: 20,
+  },
+  section: {
+    gap: 10,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionTitle: {
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
   },
   toggleRow: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   toggleButton: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: COLORS.surfaceBorder,
   },
   toggleButtonActive: {
-    backgroundColor: 'rgba(124, 58, 237, 0.9)',
-    borderColor: 'rgba(124, 58, 237, 1)',
+    backgroundColor: COLORS.accentMuted,
+    borderColor: COLORS.accentBorder,
+  },
+  toggleText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  toggleTextActive: {
+    color: COLORS.accent,
   },
   inlineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  inlineLabel: {
+    color: COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  inlineHint: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    marginTop: 2,
   },
   switch: {
     width: 44,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: COLORS.switchTrack,
     padding: 3,
   },
   switchActive: {
-    backgroundColor: 'rgba(124, 58, 237, 1)',
+    backgroundColor: COLORS.switchActive,
   },
   switchKnob: {
     width: 18,
@@ -451,39 +545,61 @@ const styles = StyleSheet.create({
     transform: [{ translateX: 18 }],
   },
   inputGroup: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: COLORS.cardBorder,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  inputRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surfaceBorder,
   },
   inputLabel: {
     width: 56,
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-    borderRadius: theme.borderRadius.sm,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    color: 'white',
-    fontSize: theme.typography.sizes.sm,
+    borderColor: COLORS.inputBorder,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '500',
+    backgroundColor: COLORS.inputBg,
   },
   inputUnit: {
-    opacity: 0.7,
+    color: COLORS.textMuted,
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 8,
+    width: 24,
   },
   tableContainer: {
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: theme.borderRadius.md,
+    borderColor: COLORS.cardBorder,
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: COLORS.card,
+  },
+  tableEmpty: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  tableEmptyText: {
+    color: COLORS.textMuted,
+    fontSize: 13,
   },
   tableWrapper: {
     flexDirection: 'row',
@@ -491,7 +607,7 @@ const styles = StyleSheet.create({
   tableFrozenColumn: {
     width: 56,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(255,255,255,0.15)',
+    borderRightColor: COLORS.surfaceBorder,
   },
   tableScrollable: {
     flexDirection: 'row',
@@ -500,21 +616,48 @@ const styles = StyleSheet.create({
     width: 52,
   },
   tableHeaderCell: {
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: 8,
     alignItems: 'center',
-    backgroundColor: 'rgba(124, 58, 237, 0.4)',
+    backgroundColor: COLORS.tableHeaderBg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.surfaceBorder,
+  },
+  tableHeaderText: {
+    color: COLORS.textSecondary,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  tableHeaderAccent: {
+    color: COLORS.accent,
   },
   tableCell: {
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: 7,
     alignItems: 'center',
   },
-  tableRowDark: {
-    backgroundColor: 'rgba(17, 24, 39, 0.8)',
+  tableRowEven: {
+    backgroundColor: COLORS.tableRowEven,
   },
-  tableRowLight: {
-    backgroundColor: 'rgba(88, 28, 135, 0.3)',
+  tableRowOdd: {
+    backgroundColor: COLORS.tableRowOdd,
   },
-  mutedText: {
-    opacity: 0.7,
+  tableCellDistText: {
+    color: COLORS.textPrimary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  tableCellText: {
+    color: COLORS.textSecondary,
+    fontSize: 11,
+  },
+  tableCellAccent: {
+    color: COLORS.accent,
+    fontWeight: '600',
+  },
+  footnote: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 16,
   },
 });
