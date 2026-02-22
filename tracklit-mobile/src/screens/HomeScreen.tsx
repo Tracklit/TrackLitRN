@@ -740,11 +740,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               <View style={styles.practiceLabelPill}>
                 <Text style={styles.practiceLabelText}>TODAY'S SESSION</Text>
               </View>
-              {todaySession && (
-                <Text style={styles.practiceDayLabel}>
-                  Day {todaySession.dayNumber}/{todaySession.totalDays}
-                </Text>
-              )}
             </View>
 
             {todaySession ? (
@@ -1264,12 +1259,6 @@ const styles = StyleSheet.create({
   },
   practiceFireIcon: {
     fontSize: 22,
-  },
-  practiceDayLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 11,
-    fontWeight: '600' as const,
-    letterSpacing: 0.5,
   },
   practiceSessionTitle: {
     color: '#ffffff',
