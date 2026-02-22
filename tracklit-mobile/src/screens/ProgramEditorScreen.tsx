@@ -12,7 +12,7 @@ import {
   Animated as RNAnimated,
   Vibration,
 } from 'react-native';
-import { TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
+import { LongPressGestureHandler, State as GHState } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
@@ -658,8 +658,16 @@ export const ProgramEditorScreen: React.FC = () => {
                   const isDragSource = dragSourceDay === dayNumber;
 
                   return (
-                    <GHTouchableOpacity
+                    <LongPressGestureHandler
                       key={`day-${dayNumber}`}
+                      onHandlerStateChange={(e) => {
+                        if (e.nativeEvent.state === GHState.ACTIVE) {
+                          handleDragStart(dayNumber);
+                        }
+                      }}
+                      minDurationMs={300}
+                    >
+                    <TouchableOpacity
                       style={[
                         styles.dayCell,
                         isRest && styles.restCell,
@@ -667,8 +675,6 @@ export const ProgramEditorScreen: React.FC = () => {
                         isDragSource && styles.dragSourceCell,
                       ]}
                       onPress={() => handleCellTap(dayNumber)}
-                      onLongPress={() => handleDragStart(dayNumber)}
-                      delayLongPress={300}
                       activeOpacity={0.7}
                     >
                       <View style={styles.cellHeader}>
@@ -730,7 +736,8 @@ export const ProgramEditorScreen: React.FC = () => {
                           {isRest ? '' : 'Add session'}
                         </Text>
                       )}
-                    </GHTouchableOpacity>
+                    </TouchableOpacity>
+                    </LongPressGestureHandler>
                   );
                 })}
               </View>

@@ -916,6 +916,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 };
 
 const HomeWorkoutContent = ({ session }: { session: any }) => {
+  console.warn('[HomeWorkoutContent] Received session keys:', Object.keys(session));
+  console.warn('[HomeWorkoutContent] Session fields:', {
+    pa1: session.preActivation1,
+    pa2: session.preActivation2,
+    short: session.shortDistanceWorkout,
+    med: session.mediumDistanceWorkout,
+    long: session.longDistanceWorkout,
+    extra: session.extraSession,
+    notes: session.notes,
+    desc: session.description,
+    title: session.title,
+  });
+
   const contentSections = [
     { label: 'PA1', value: session.preActivation1 },
     { label: 'PA2', value: session.preActivation2 },
@@ -926,11 +939,24 @@ const HomeWorkoutContent = ({ session }: { session: any }) => {
     { label: 'Notes', value: session.notes },
   ];
 
-  const hasWorkoutFields = contentSections.some((s) => !!s.value);
+  const visibleSections = contentSections.filter((s) => !!s.value);
 
-  if (!hasWorkoutFields && !session.description) return null;
+  if (visibleSections.length > 0) {
+    return (
+      <View style={styles.workoutContentContainer}>
+        {visibleSections.map((section) => (
+          <View key={section.label} style={styles.workoutSection}>
+            <Text style={styles.workoutSectionLabel}>{section.label}</Text>
+            <Text style={styles.workoutSectionValue} numberOfLines={3}>
+              {String(section.value).replace(/^"|"$/g, '')}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  }
 
-  if (!hasWorkoutFields && session.description) {
+  if (session.description && session.description !== 'Training Session') {
     return (
       <View style={styles.workoutContentContainer}>
         <Text style={styles.workoutSectionValue} numberOfLines={4}>
@@ -940,20 +966,7 @@ const HomeWorkoutContent = ({ session }: { session: any }) => {
     );
   }
 
-  return (
-    <View style={styles.workoutContentContainer}>
-      {contentSections.map((section) =>
-        section.value ? (
-          <View key={section.label} style={styles.workoutSection}>
-            <Text style={styles.workoutSectionLabel}>{section.label}</Text>
-            <Text style={styles.workoutSectionValue} numberOfLines={3}>
-              {String(section.value).replace(/^"|"$/g, '')}
-            </Text>
-          </View>
-        ) : null
-      )}
-    </View>
-  );
+  return null;
 };
 
 const styles = StyleSheet.create({
