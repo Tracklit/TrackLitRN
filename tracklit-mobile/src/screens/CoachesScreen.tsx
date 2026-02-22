@@ -15,6 +15,7 @@ import { WebButton } from '@/components/web/Button';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
+import { SkeletonListRows } from '@/components/Skeleton';
 import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -215,8 +216,7 @@ export const CoachesScreen: React.FC = () => {
         </Text>
       ) : coachesQuery.isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text variant="body" color="muted">Loading coaches...</Text>
+          <SkeletonListRows count={4} />
         </View>
       ) : coachesQuery.isError ? (
         <Text variant="body" color="muted" style={{ textAlign: 'center' }}>

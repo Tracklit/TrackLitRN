@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
+import { SkeletonListRows } from '@/components/Skeleton';
 import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -166,7 +167,7 @@ export const SubscriptionsScreen: React.FC = () => {
           {isGuest ? (
             <Text variant="body" color="muted">Sign in to manage subscriptions.</Text>
           ) : mySubsQuery.isLoading ? (
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <SkeletonListRows count={2} hasAvatar={false} />
           ) : mySubscriptions.length === 0 ? (
             <WebCard tone="muted" padding={theme.spacing.md}>
               <Text variant="body" color="muted">No subscriptions yet.</Text>
@@ -208,7 +209,7 @@ export const SubscriptionsScreen: React.FC = () => {
           {isGuest ? (
             <Text variant="body" color="muted">Sign in to manage subscribers.</Text>
           ) : mySubscribersQuery.isLoading ? (
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <SkeletonListRows count={2} hasAvatar={false} />
           ) : mySubscribers.length === 0 ? (
             <WebCard tone="muted" padding={theme.spacing.md}>
               <Text variant="body" color="muted">No subscribers yet.</Text>
@@ -239,7 +240,7 @@ export const SubscriptionsScreen: React.FC = () => {
           {isGuest ? (
             <Text variant="body" color="muted">Sign in to edit your offering.</Text>
           ) : myOfferingQuery.isLoading ? (
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <SkeletonListRows count={2} hasAvatar={false} />
           ) : (
             <WebCard tone="muted" padding={theme.spacing.md}>
               <Text variant="body" weight="semiBold" color="foreground" style={{ marginBottom: theme.spacing.xs }}>

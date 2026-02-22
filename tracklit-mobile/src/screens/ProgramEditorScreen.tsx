@@ -32,6 +32,7 @@ import { format, parseISO, parse, isValid, addDays, getDay } from 'date-fns';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
+import { SkeletonProgramList } from '@/components/Skeleton';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/contexts/AuthContext';
@@ -477,8 +478,7 @@ export const ProgramEditorScreen: React.FC = () => {
     return (
       <View style={styles.container}>
         <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
-          <ActivityIndicator size="large" color={C.orange} />
-          <Text style={styles.loadingText}>Loading program...</Text>
+          <SkeletonProgramList count={3} />
         </View>
       </View>
     );

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
+import { SkeletonListRows } from '@/components/Skeleton';
 import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -235,8 +236,7 @@ export const AthletesScreen: React.FC = () => {
         </Text>
       ) : athletesQuery.isLoading && page === 1 ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text variant="body" color="muted">Loading athletes...</Text>
+          <SkeletonListRows count={4} />
         </View>
       ) : athletesQuery.isError ? (
         <Text variant="body" color="muted" style={{ textAlign: 'center' }}>

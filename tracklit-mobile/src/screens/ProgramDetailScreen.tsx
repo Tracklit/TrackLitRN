@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
@@ -15,6 +14,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
+import { SkeletonBlock } from '@/components/Skeleton';
 import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -118,10 +118,7 @@ export const ProgramDetailScreen: React.FC = () => {
         style={styles.container}
       >
         <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text variant="body" color="muted" style={styles.loadingText}>
-            Loading program...
-          </Text>
+          <SkeletonBlock />
         </View>
       </LinearGradient>
     );

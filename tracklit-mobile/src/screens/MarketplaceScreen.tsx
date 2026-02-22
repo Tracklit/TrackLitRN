@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   TextInput,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
+import { SkeletonGrid } from '@/components/Skeleton';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
@@ -181,10 +181,7 @@ export const MarketplaceScreen: React.FC = () => {
 
             {listingsQuery.isLoading ? (
               <View style={styles.emptyState}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
-                <Text variant="body" color="muted" style={styles.emptyDescription}>
-                  Loading marketplace...
-                </Text>
+                <SkeletonGrid count={4} />
               </View>
             ) : listingsQuery.isError ? (
               <View style={styles.emptyState}>

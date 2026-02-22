@@ -4,7 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +23,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 
 import { Text } from '@/components/ui/Text';
+import { SkeletonNotificationList } from '@/components/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
@@ -266,10 +266,7 @@ export const NotificationsScreen: React.FC = () => {
             <Text style={styles.emptyText}>Sign in to view notifications.</Text>
           </View>
         ) : notificationsQuery.isLoading ? (
-          <View style={styles.emptyContainer}>
-            <ActivityIndicator size="large" color={C.orange} />
-            <Text style={styles.emptyText}>Loading notifications…</Text>
-          </View>
+          <SkeletonNotificationList count={6} />
         ) : notificationsQuery.isError ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>

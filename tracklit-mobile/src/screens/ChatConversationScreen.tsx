@@ -34,6 +34,7 @@ import { launchImageLibrary, type Asset } from 'react-native-image-picker';
 
 import { Text } from '../components/ui/Text';
 import { Avatar } from '../components/ui/Avatar';
+import { SkeletonMessageList } from '@/components/Skeleton';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/queryClient';
@@ -368,8 +369,7 @@ export const ChatConversationScreen: React.FC = () => {
         >
           {messagesQuery.isLoading ? (
             <View style={styles.centerState}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text variant="body" color="muted" style={{ marginTop: 12 }}>Loading messages...</Text>
+              <SkeletonMessageList count={5} />
             </View>
           ) : messagesQuery.isError ? (
             <View style={styles.centerState}>

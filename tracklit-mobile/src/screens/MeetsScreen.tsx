@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +22,7 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
+import { SkeletonListRows } from '@/components/Skeleton';
 import theme from '../utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -175,10 +175,7 @@ export const MeetsScreen: React.FC = () => {
           </View>
         ) : meetsQuery.isLoading ? (
           <View style={styles.emptyState}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text variant="body" color="muted" style={styles.emptyText}>
-              Loading competitions...
-            </Text>
+            <SkeletonListRows count={4} hasAvatar={false} />
           </View>
         ) : meetsQuery.isError ? (
           <View style={styles.emptyState}>

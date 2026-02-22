@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
   Modal,
   TextInput,
 } from 'react-native';
@@ -29,6 +28,7 @@ import {
 
 import { Text } from '../components/ui/Text';
 import { Avatar } from '../components/ui/Avatar';
+import { SkeletonChatList } from '@/components/Skeleton';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
@@ -313,10 +313,7 @@ export const ChatScreen: React.FC = () => {
           </View>
         ) : isLoading ? (
           <View style={styles.emptyState}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text variant="body" color="muted" style={styles.emptyText}>
-              Loading messages...
-            </Text>
+            <SkeletonChatList count={6} />
           </View>
         ) : hasError ? (
           <View style={styles.emptyState}>
@@ -442,7 +439,7 @@ export const ChatScreen: React.FC = () => {
           >
             {friendsQuery.isLoading ? (
               <View style={styles.center}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <SkeletonChatList count={6} />
               </View>
             ) : filteredFriends.length === 0 ? (
               <View style={styles.emptyState}>

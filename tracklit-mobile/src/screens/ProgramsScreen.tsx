@@ -4,7 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
   TextInput,
   Modal,
   Alert,
@@ -33,6 +32,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
+import { SkeletonProgramList } from '@/components/Skeleton';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
@@ -495,8 +495,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   if (isLoading) {
     return (
       <View style={styles.emptyState}>
-        <ActivityIndicator size="large" color={C.orange} />
-        <Text style={styles.emptyDescription}>Loading your programs...</Text>
+        <SkeletonProgramList count={3} />
       </View>
     );
   }
@@ -579,8 +578,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   if (isLoading) {
     return (
       <View style={styles.emptyState}>
-        <ActivityIndicator size="large" color={C.orange} />
-        <Text style={styles.emptyDescription}>Loading purchased programs...</Text>
+        <SkeletonProgramList count={3} />
       </View>
     );
   }
@@ -665,8 +663,7 @@ const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoadin
   if (isLoading) {
     return (
       <View style={styles.emptyState}>
-        <ActivityIndicator size="large" color={C.orange} />
-        <Text style={styles.emptyDescription}>Loading workout library...</Text>
+        <SkeletonProgramList count={3} />
       </View>
     );
   }

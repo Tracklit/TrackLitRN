@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   TextInput,
   Alert,
   ScrollView,
@@ -26,6 +25,7 @@ import {
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
+import { SkeletonListRows } from '@/components/Skeleton';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
@@ -255,7 +255,7 @@ export const ConnectionsScreen: React.FC = () => {
       >
         {isLoading ? (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <SkeletonListRows count={5} />
           </View>
         ) : isGuest ? (
           <View style={styles.center}>

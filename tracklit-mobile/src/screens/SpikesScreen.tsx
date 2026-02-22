@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Coins,
@@ -25,6 +25,7 @@ import { WebButton } from '@/components/web/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
+import { SkeletonBlock } from '@/components/Skeleton';
 import theme from '@/utils/theme';
 type TabKey = 'achievements' | 'rewards' | 'premium' | 'history';
 
@@ -188,9 +189,7 @@ export const SpikesScreen: React.FC = () => {
             )}
 
             {streakQuery.isLoading ? (
-              <WebCard tone="muted" padding={theme.spacing.md} style={styles.loadingCard}>
-                <ActivityIndicator size="large" color={theme.colors.textMuted} />
-              </WebCard>
+              <SkeletonBlock />
             ) : (
             <WebCard tone="muted" padding={theme.spacing.md}>
                 <Text variant="body" weight="semiBold" color="foreground" style={{ marginBottom: theme.spacing.sm }}>
@@ -319,9 +318,7 @@ export const SpikesScreen: React.FC = () => {
 
         <WebTabsContent value="achievements">
           {achievementsQuery.isLoading ? (
-            <View style={styles.centeredBlock}>
-              <ActivityIndicator size="large" color={theme.colors.textMuted} />
-                  </View>
+            <SkeletonBlock />
           ) : achievements.length > 0 ? (
             <View style={{ gap: theme.spacing.md }}>
               <WebCard tone="muted" padding={theme.spacing.lg}>
@@ -522,9 +519,7 @@ export const SpikesScreen: React.FC = () => {
 
         <WebTabsContent value="history">
           {transactionsQuery.isLoading ? (
-            <View style={styles.centeredBlock}>
-              <ActivityIndicator size="large" color={theme.colors.textMuted} />
-            </View>
+            <SkeletonBlock />
           ) : (
             <WebCard tone="muted" padding={theme.spacing.lg}>
                   <Text variant="body" weight="semiBold" color="foreground">
