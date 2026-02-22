@@ -26,7 +26,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd tracklit-mobile && bash -c 'fuser -k 8081/tcp 2>/dev/null; sleep 2; npx expo start --tunnel --port 8081 -c'"
+args = "cd tracklit-mobile && npx expo start --tunnel --port 8081 -c"
 
 [[ports]]
 localPort = 5000
