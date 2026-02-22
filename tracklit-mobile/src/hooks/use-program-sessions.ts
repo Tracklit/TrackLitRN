@@ -113,25 +113,7 @@ export const useProgramSessions = (programId: number | string | null) => {
       const programData = await apiRequest<ProgramResponse>(`/api/programs/${normalizedId}`);
       const rawSessions = programData.sessions && Array.isArray(programData.sessions)
         ? programData.sessions : [];
-      if (rawSessions.length > 0) {
-        const sample = rawSessions[0];
-        console.warn('[useProgramSessions] Raw session[0] keys:', Object.keys(sample));
-        console.warn('[useProgramSessions] Raw session[0] data:', JSON.stringify(sample).substring(0, 500));
-      }
       const sessions = parseSpreadsheetData(rawSessions);
-      if (sessions.length > 0) {
-        console.warn('[useProgramSessions] Parsed session[0]:', {
-          pa1: sessions[0].preActivation1,
-          pa2: sessions[0].preActivation2,
-          short: sessions[0].shortDistanceWorkout,
-          med: sessions[0].mediumDistanceWorkout,
-          long: sessions[0].longDistanceWorkout,
-          extra: sessions[0].extraSession,
-          notes: sessions[0].notes,
-          title: sessions[0].title,
-          desc: sessions[0].description,
-        });
-      }
       const maxDay = sessions.reduce((max, s) => Math.max(max, s.dayNumber || 0), 0);
       const duration = Math.max(programData.duration || 0, maxDay, sessions.length);
       return { sessions, duration };
