@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated as RNAnimated,
+  Vibration,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -436,6 +437,7 @@ export const ProgramEditorScreen: React.FC = () => {
   }, []);
 
   const handleDragStart = useCallback((dayNumber: number) => {
+    Vibration.vibrate(50);
     dragSourceRef.current = dayNumber;
     setDragSourceDay(dayNumber);
     setIsDragging(true);
@@ -544,6 +546,7 @@ export const ProgramEditorScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         extraScrollHeight={80}
+        scrollEnabled={!isDragging}
       >
         <View style={styles.detailsCard}>
           <Text style={styles.sectionTitle}>Program Details</Text>
@@ -610,7 +613,7 @@ export const ProgramEditorScreen: React.FC = () => {
             </View>
           )}
 
-          <Text style={styles.swapHint}>Hold and drag a day to reorder</Text>
+          <Text style={styles.swapHint}>Long-press a day to select it, then tap another day to swap</Text>
 
           <View style={styles.dayHeaderRow}>
             {DAY_LABELS.map((label) => (

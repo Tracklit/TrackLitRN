@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -52,6 +52,7 @@ import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { apiRequest } from '@/lib/api';
 import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
 
+import { useProgramSessions } from '@/hooks/use-program-sessions';
 import theme from '../utils/theme';
 
 interface HomeScreenProps {
@@ -178,103 +179,81 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     }
   }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
 
-  const todaySessionQuery = useQuery({
-    queryKey: ['today-session', resolvedProgramId],
-    queryFn: async () => {
-      if (!resolvedProgramId) return null;
-      const programData = await apiRequest<{ sessions?: any[]; title?: string; duration?: number }>(`/api/programs/${resolvedProgramId}`);
-      console.warn('[Home] todaySessionQuery fetched program:', {
-        id: resolvedProgramId,
-        title: programData?.title,
-        sessionCount: programData?.sessions?.length ?? 0,
-      });
-      if (!programData?.sessions?.length) return null;
+  const { programSessions, programDuration } = useProgramSessions(resolvedProgramId);
 
-      const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const today = new Date();
-      const todayKey = `${MONTHS[today.getMonth()]}-${today.getDate()}`;
+  const todaySession = useMemo(() => {
+    if (!programSessions || programSessions.length === 0) return null;
 
-      const normalizeDate = (raw?: string | null): string | null => {
-        if (!raw) return null;
-        const t = raw.trim();
-        if (!t) return null;
-        const shortMatch = t.match(/^([A-Za-z]{3})-(\d{1,2})$/);
-        if (shortMatch) return `${shortMatch[1][0].toUpperCase()}${shortMatch[1].slice(1).toLowerCase()}-${parseInt(shortMatch[2], 10)}`;
-        const isoMatch = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (isoMatch) return `${MONTHS[parseInt(isoMatch[2], 10) - 1]}-${parseInt(isoMatch[3], 10)}`;
-        try { const d = new Date(t); if (!isNaN(d.getTime())) return `${MONTHS[d.getMonth()]}-${d.getDate()}`; } catch {}
-        return null;
-      };
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const today = new Date();
+    const todayKey = `${MONTHS[today.getMonth()]}-${today.getDate()}`;
 
-      let todaySession = programData.sessions.find((s: any) => {
-        const dateKey = normalizeDate(s.date || s.columnA);
-        return dateKey === todayKey;
-      });
+    let matched = programSessions.find((s: any) => {
+      const dateKey = s.date;
+      return dateKey === todayKey;
+    });
 
-      if (!todaySession) {
-        const parsedDates = programData.sessions
-          .map((s: any) => s.date || s.columnA)
-          .filter(Boolean)
-          .map((d: string) => {
-            const isoM = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
-            if (isoM) return new Date(parseInt(isoM[1]), parseInt(isoM[2]) - 1, parseInt(isoM[3]));
-            const shortM = d.match(/^([A-Za-z]{3})-(\d{1,2})$/);
-            if (shortM) {
-              const monIdx = MONTHS.indexOf(shortM[1][0].toUpperCase() + shortM[1].slice(1).toLowerCase());
-              if (monIdx >= 0) return new Date(today.getFullYear(), monIdx, parseInt(shortM[2]));
-            }
-            return null;
-          })
-          .filter(Boolean) as Date[];
-        if (parsedDates.length > 0) {
-          parsedDates.sort((a, b) => a.getTime() - b.getTime());
-          const programStart = parsedDates[0];
-          const daysSinceStart = Math.round((today.getTime() - programStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-          if (daysSinceStart >= 1) {
-            todaySession = programData.sessions.find((s: any) => s.dayNumber === daysSinceStart);
+    if (!matched) {
+      const parsedDates = programSessions
+        .map((s: any) => s.date)
+        .filter(Boolean)
+        .map((d: string) => {
+          const isoM = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (isoM) return new Date(parseInt(isoM[1]), parseInt(isoM[2]) - 1, parseInt(isoM[3]));
+          const shortM = d.match(/^([A-Za-z]{3})-(\d{1,2})$/);
+          if (shortM) {
+            const monIdx = MONTHS.indexOf(shortM[1][0].toUpperCase() + shortM[1].slice(1).toLowerCase());
+            if (monIdx >= 0) return new Date(today.getFullYear(), monIdx, parseInt(shortM[2]));
           }
+          return null;
+        })
+        .filter(Boolean) as Date[];
+      if (parsedDates.length > 0) {
+        parsedDates.sort((a, b) => a.getTime() - b.getTime());
+        const programStart = parsedDates[0];
+        const daysSinceStart = Math.round((today.getTime() - programStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        if (daysSinceStart >= 1) {
+          matched = programSessions.find((s: any) => s.dayNumber === daysSinceStart);
         }
       }
+    }
 
-      if (!todaySession) {
-        const incomplete = programData.sessions.filter((s: any) => !s.completed_at);
-        todaySession = incomplete.length > 0 ? incomplete[0] : programData.sessions[0];
-        console.warn('[Home] Fallback session used:', {
-          reason: incomplete.length > 0 ? 'first incomplete' : 'first session',
-          dayNumber: todaySession?.dayNumber,
-          title: todaySession?.title,
-        });
-      }
+    if (!matched) {
+      const incomplete = programSessions.filter((s: any) => !s.completed_at);
+      matched = incomplete.length > 0 ? incomplete[0] : programSessions[0];
+    }
 
-      const sessionTitle = todaySession.title || todaySession.preActivation1 || todaySession.columnB || 'Training Session';
-      const desc = todaySession.shortDistanceWorkout || todaySession.columnD || todaySession.description || '';
-      const dayNum = todaySession.dayNumber || 1;
-      const totalDays = programData.sessions.length;
-      const completedCount = programData.sessions.filter((s: any) => s.completed_at).length;
-      return {
-        title: sessionTitle,
-        description: desc,
-        dayNumber: dayNum,
-        totalDays,
-        completedCount,
-        programTitle: programData.title || 'Program',
-        preActivation1: todaySession.preActivation1 || todaySession.columnB || null,
-        preActivation2: todaySession.preActivation2 || todaySession.columnC || null,
-        shortDistanceWorkout: todaySession.shortDistanceWorkout || todaySession.columnD || null,
-        mediumDistanceWorkout: todaySession.mediumDistanceWorkout || todaySession.columnE || null,
-        longDistanceWorkout: todaySession.longDistanceWorkout || todaySession.columnF || null,
-        extraSession: todaySession.extraSession || todaySession.columnG || null,
-        notes: todaySession.notes,
-        sessionId: todaySession.id,
-        programId: resolvedProgramId,
-      };
-    },
-    enabled: !!resolvedProgramId,
-    staleTime: 0,
-    retry: 1,
-  });
+    if (!matched) return null;
 
-  const todaySession = todaySessionQuery.data;
+    const totalDays = programSessions.length;
+    const completedCount = programSessions.filter((s: any) => s.completed_at).length;
+
+    console.warn('[Home] Today session resolved:', {
+      dayNumber: matched.dayNumber,
+      title: matched.title,
+      pa1: matched.preActivation1,
+      short: matched.shortDistanceWorkout,
+      notes: matched.notes,
+    });
+
+    return {
+      title: matched.title || matched.preActivation1 || 'Training Session',
+      description: matched.shortDistanceWorkout || matched.description || '',
+      dayNumber: matched.dayNumber || 1,
+      totalDays,
+      completedCount,
+      programTitle: 'Program',
+      preActivation1: matched.preActivation1 || null,
+      preActivation2: matched.preActivation2 || null,
+      shortDistanceWorkout: matched.shortDistanceWorkout || null,
+      mediumDistanceWorkout: matched.mediumDistanceWorkout || null,
+      longDistanceWorkout: matched.longDistanceWorkout || null,
+      extraSession: matched.extraSession || null,
+      notes: matched.notes || null,
+      sessionId: matched.id,
+      programId: resolvedProgramId,
+    };
+  }, [programSessions, resolvedProgramId]);
 
   const screenOpacity = useSharedValue(0);
   useEffect(() => {
