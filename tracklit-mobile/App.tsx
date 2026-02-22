@@ -562,6 +562,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
       {sections.map((section) => {
         const filteredItems = section.items.filter((item) => {
+          if (item.comingSoon) return false;
           if (item.requiresCoach && !isCoach) return false;
           if (item.requiresAdmin && !isAdmin) return false;
           return true;
@@ -832,8 +833,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   menuRowTouchable: {
-    marginHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
   },
   menuRow: {
     flexDirection: 'row',
@@ -841,8 +840,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
-    marginHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
     backgroundColor: 'transparent',
   },
   menuRowLeft: {
