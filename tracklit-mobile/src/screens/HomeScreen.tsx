@@ -229,6 +229,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   });
   const todayGymData = todayGymQuery.data?.gymData ?? [];
 
+  const todaySessionDetailQuery = useQuery({
+    queryKey: ['session-detail-home', todaySessionId.sessionId],
+    queryFn: async () => {
+      if (!todaySessionId.sessionId) return null;
+      return apiRequest<any>(`/api/sessions/${todaySessionId.sessionId}`);
+    },
+    enabled: !!todaySessionId.sessionId,
+    staleTime: 0,
+  });
+
   const todaySession = useMemo(() => {
     if (!programSessions || programSessions.length === 0) return null;
 
@@ -274,14 +284,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     if (!matched) return null;
 
     const totalDays = programSessions.length;
+    const detail = todaySessionDetailQuery.data;
 
     return {
       ...matched,
+      ...(detail || {}),
       dayNumber: matched.dayNumber || 1,
       totalDays,
       programId: resolvedProgramId,
     };
-  }, [programSessions, resolvedProgramId]);
+  }, [programSessions, resolvedProgramId, todaySessionDetailQuery.data]);
 
   const screenOpacity = useSharedValue(0);
   useEffect(() => {
