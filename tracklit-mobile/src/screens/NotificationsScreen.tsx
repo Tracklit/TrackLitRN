@@ -14,7 +14,6 @@ import {
   UserPlus,
   CheckCircle,
   Trophy,
-  CheckSquare,
   ChatDots,
   Barbell,
   MegaphoneSimple,
@@ -253,8 +252,7 @@ export const NotificationsScreen: React.FC = () => {
           onPress={() => markAllReadMutation.mutate()}
           disabled={markAllReadMutation.isPending || notifications.length === 0}
         >
-          <CheckSquare size={16} color={C.orange} weight="fill" />
-          <Text style={styles.markAllText}>Read all</Text>
+          <Text style={styles.markAllText}>Mark all as read</Text>
         </TouchableOpacity>
       </View>
 
@@ -376,13 +374,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   markAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
     paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    backgroundColor: C.orangeDim,
   },
   markAllText: {
     fontSize: 11,
