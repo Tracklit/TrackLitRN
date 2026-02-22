@@ -267,9 +267,7 @@ export const PracticeScreen: React.FC = () => {
                     </Text>
                   </ScrollView>
                 </View>
-              ) : (
-                <>
-              {selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl && (
+              ) : selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl ? (
                 docViewerUrl ? (
                   <DocumentViewer
                     url={docViewerUrl}
@@ -298,8 +296,8 @@ export const PracticeScreen: React.FC = () => {
                     </CardContent>
                   </Card>
                 )
-              )}
-
+              ) : (
+                <>
               {(isLoadingCards || isLoadingProgramSessions) && (
                 <View style={styles.cardsList}>
                   <View style={styles.loadingState}>
@@ -321,8 +319,7 @@ export const PracticeScreen: React.FC = () => {
                 </View>
               )}
 
-              {!isLoadingCards && !isLoadingProgramSessions && programSessions.length === 0
-                && !selectedProgram.program?.isUploadedProgram && (
+              {!isLoadingCards && !isLoadingProgramSessions && programSessions.length === 0 && (
                 <View style={styles.cardsList}>
                   <LinearGradient
                     colors={['#1e40af', '#c084fc']}

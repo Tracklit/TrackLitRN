@@ -160,12 +160,11 @@ export const ProgramCreateScreen: React.FC = () => {
         fields: { title: title.trim(), description: description.trim(), visibility, price: priceNum, priceType, duration },
       });
     },
-    onSuccess: (program: { id?: number | string }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
       queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
       Alert.alert('Uploaded', 'Your program document was uploaded successfully.');
-      if (program?.id !== undefined) navigation.replace('ProgramDetail', { id: program.id });
-      else navigation.goBack();
+      navigation.navigate('MainTabs', { screen: 'Programs' } as never);
     },
     onError: (error: Error) => {
       Alert.alert('Unable to upload program', error.message || 'Please try again.');
@@ -422,8 +421,6 @@ export const ProgramCreateScreen: React.FC = () => {
               <Text style={styles.helperText}>Supported formats: PDF, DOC, DOCX (max 10MB)</Text>
               <Text style={styles.sectionLabel}>Visibility</Text>
               {renderVisibilityPills(visibility, setVisibility, ensurePricing)}
-              <Text style={styles.sectionLabel}>Duration</Text>
-              {renderDurationPills()}
               {renderPricingSection()}
               {renderGradientBtn('Upload Program', () => uploadProgramMutation.mutate(), uploadProgramMutation.isPending, <CloudArrowUp size={16} color="white" weight="fill" />)}
             </View>
