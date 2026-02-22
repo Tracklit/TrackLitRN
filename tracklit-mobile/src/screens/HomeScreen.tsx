@@ -936,83 +936,66 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   );
 };
 
-const firstVal = (...values: any[]): string | null => {
-  for (const v of values) {
-    if (v !== undefined && v !== null && v !== '' && v !== '""') {
-      const s = String(v).replace(/^"|"$/g, '').trim();
-      if (s.length > 0) return s;
-    }
-  }
-  return null;
+const SKIP_KEYS = new Set([
+  'id', 'programId', 'workoutId', 'dayNumber', 'orderInDay', 'date',
+  'gymData', 'isRestDay', 'isCompleted', 'completedAt', 'completed_at',
+  'createdAt', 'updatedAt', 'title', 'totalDays', 'programTitle',
+  'columnA', 'sessionId',
+]);
+
+const FIELD_LABELS: Record<string, string> = {
+  preActivation1: 'PA1',
+  preActivation2: 'PA2',
+  columnB: 'PA1',
+  columnC: 'PA2',
+  shortDistanceWorkout: '60/100',
+  columnD: '60/100',
+  mediumDistanceWorkout: '200',
+  columnE: '200',
+  longDistanceWorkout: '400',
+  columnF: '400',
+  extraSession: 'Extra',
+  columnG: 'Extra',
+  notes: 'Notes',
+  description: 'Info',
 };
 
 const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: string[] }) => {
-  const pa1 = firstVal(session.preActivation1, session.columnB);
-  const pa2 = firstVal(session.preActivation2, session.columnC);
-  const short = firstVal(session.shortDistanceWorkout, session.columnD);
-  const med = firstVal(session.mediumDistanceWorkout, session.columnE);
-  const long = firstVal(session.longDistanceWorkout, session.columnF);
-  const extra = firstVal(session.extraSession, session.columnG);
-  const notes = firstVal(session.notes);
-  const desc = firstVal(session.description);
+  const rows: { label: string; value: string }[] = [];
+  const seenLabels = new Set<string>();
 
-  const contentSections = [
-    { label: 'PA1', value: pa1 },
-    { label: 'PA2', value: pa2 },
-    { label: '60/100', value: short },
-    { label: '200', value: med },
-    { label: '400', value: long },
-    { label: 'Extra', value: extra },
-    { label: 'Notes', value: notes },
-  ];
+  for (const key of Object.keys(session)) {
+    if (SKIP_KEYS.has(key)) continue;
+    const raw = session[key];
+    if (raw === null || raw === undefined) continue;
+    const str = String(raw).replace(/^"|"$/g, '').trim();
+    if (!str || str === 'Training Session' || str === 'Day Training') continue;
 
-  const visibleSections = contentSections.filter((s) => !!s.value);
+    const label = FIELD_LABELS[key] || key;
+    if (seenLabels.has(label)) continue;
+    seenLabels.add(label);
+    rows.push({ label, value: str });
+  }
+
   const hasGymData = gymData.length > 0;
-  const sessionDescription = desc && desc !== 'Training Session' ? desc : null;
+  if (hasGymData) {
+    const gymLabel = rows.find(r => r.value.match(/Gym\s*\d+/i));
+    const gymNum = gymLabel?.value.match(/Gym\s*(\d+)/i)?.[1];
+    rows.unshift({ label: gymNum ? `Gym ${gymNum}` : 'Gym', value: gymData.join(', ') });
+  }
 
-  const extractGymNumber = () => {
-    for (const field of [short, med, long, pa1, pa2, extra]) {
-      if (field) {
-        const match = field.match(/Gym\s*(\d+)/i);
-        if (match && match[1]) return match[1];
-      }
-    }
-    return null;
-  };
-
-  const sessionTitle = session.title && session.title !== 'Day Training' ? session.title : null;
-  const hasWorkoutContent = hasGymData || visibleSections.length > 0;
+  if (rows.length === 0) return null;
 
   return (
     <View style={hwStyles.container}>
-      {sessionDescription ? (
-        <RNText style={[hwStyles.valueText, { marginBottom: hasWorkoutContent ? 4 : 0 }]} numberOfLines={3}>
-          {sessionDescription}
-        </RNText>
-      ) : null}
-      {hasGymData ? (
-        <View style={hwStyles.row}>
-          <RNText style={hwStyles.labelText}>
-            {extractGymNumber() ? `Gym ${extractGymNumber()}` : 'Gym'}
-          </RNText>
+      {rows.map((row, i) => (
+        <View key={`${row.label}-${i}`} style={hwStyles.row}>
+          <RNText style={hwStyles.labelText}>{row.label}</RNText>
           <RNText style={hwStyles.valueText} numberOfLines={3}>
-            {gymData.join(', ')}
-          </RNText>
-        </View>
-      ) : null}
-      {visibleSections.map((section) => (
-        <View key={section.label} style={hwStyles.row}>
-          <RNText style={hwStyles.labelText}>{section.label}</RNText>
-          <RNText style={hwStyles.valueText} numberOfLines={3}>
-            {section.value}
+            {row.value}
           </RNText>
         </View>
       ))}
-      {!hasWorkoutContent && !sessionDescription ? (
-        <RNText style={hwStyles.fallbackText}>
-          {sessionTitle || `Day ${session.dayNumber || '—'}`} — Scheduled
-        </RNText>
-      ) : null}
     </View>
   );
 };
