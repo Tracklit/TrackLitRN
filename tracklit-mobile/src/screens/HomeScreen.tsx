@@ -937,38 +937,30 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 };
 
 const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: string[] }) => {
-  console.warn('[HomeWorkoutContent] FULL SESSION DATA:', JSON.stringify(session, null, 2));
-
-  const clean = (v: any) => {
-    if (v === null || v === undefined) return null;
-    const s = String(v).replace(/^"|"$/g, '').trim();
-    return s.length > 0 ? s : null;
-  };
-
-  const pa1 = clean(session.preActivation1) || clean(session.columnB);
-  const pa2 = clean(session.preActivation2) || clean(session.columnC);
-  const short = clean(session.shortDistanceWorkout) || clean(session.columnD);
-  const med = clean(session.mediumDistanceWorkout) || clean(session.columnE);
-  const long = clean(session.longDistanceWorkout) || clean(session.columnF);
-  const extra = clean(session.extraSession) || clean(session.columnG);
-  const notes = clean(session.notes);
+  if (!session) return null;
 
   const contentSections = [
-    { label: 'PA1', value: pa1 },
-    { label: 'PA2', value: pa2 },
-    { label: '60/100', value: short },
-    { label: '200', value: med },
-    { label: '400', value: long },
-    { label: 'Extra', value: extra },
-    { label: 'Notes', value: notes },
+    { label: 'PA1', value: session.preActivation1 },
+    { label: 'PA2', value: session.preActivation2 },
+    { label: '60/100', value: session.shortDistanceWorkout },
+    { label: '200', value: session.mediumDistanceWorkout },
+    { label: '400', value: session.longDistanceWorkout },
+    { label: 'Extra', value: session.extraSession },
   ];
 
   const hasGymData = gymData.length > 0;
-  const hasAnyContent = hasGymData || contentSections.some((s) => !!s.value);
+  const sessionTitle = session.title && session.title !== 'Day Training' ? session.title : null;
+  const sessionDescription = session.description && session.description !== 'Training Session' ? session.description : null;
+  const hasAnyContent = hasGymData || contentSections.some((s) => !!s.value) || sessionTitle || session.notes;
 
   const extractGymNumber = () => {
-    for (const field of [short, med, long, pa1, pa2, extra]) {
-      if (field) {
+    const fields = [
+      session.shortDistanceWorkout, session.mediumDistanceWorkout,
+      session.longDistanceWorkout, session.preActivation1,
+      session.preActivation2, session.extraSession,
+    ];
+    for (const field of fields) {
+      if (field && typeof field === 'string') {
         const match = field.match(/Gym\s*(\d+)/i);
         if (match && match[1]) return match[1];
       }
@@ -976,20 +968,15 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
     return null;
   };
 
-  console.warn('[HomeWorkoutContent] hasAnyContent:', hasAnyContent, 'hasGymData:', hasGymData, 'sections:', contentSections.filter(s => !!s.value).map(s => s.label));
-
-  if (!hasAnyContent) {
-    return (
-      <View style={hwStyles.container}>
-        <RNText style={hwStyles.fallbackText}>
-          Day {session.dayNumber || '—'} — Scheduled
-        </RNText>
-      </View>
-    );
-  }
+  if (!hasAnyContent) return null;
 
   return (
     <View style={hwStyles.container}>
+      {sessionDescription && (
+        <RNText style={hwStyles.descriptionText} numberOfLines={3}>
+          {sessionDescription}
+        </RNText>
+      )}
       {hasGymData && (
         <View style={hwStyles.row}>
           <RNText style={hwStyles.labelText}>
@@ -1005,10 +992,18 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
           <View key={section.label} style={hwStyles.row}>
             <RNText style={hwStyles.labelText}>{section.label}</RNText>
             <RNText style={hwStyles.valueText} numberOfLines={3}>
-              {section.value}
+              {String(section.value).replace(/^"|"$/g, '')}
             </RNText>
           </View>
         ) : null
+      )}
+      {session.notes && (
+        <View style={hwStyles.row}>
+          <RNText style={hwStyles.labelText}>Notes</RNText>
+          <RNText style={hwStyles.valueText} numberOfLines={3}>
+            {session.notes}
+          </RNText>
+        </View>
       )}
     </View>
   );
@@ -1042,6 +1037,13 @@ const hwStyles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 16,
     flexShrink: 1,
+  },
+  descriptionText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+    marginBottom: 2,
   },
   fallbackText: {
     color: 'rgba(255,255,255,0.7)',
