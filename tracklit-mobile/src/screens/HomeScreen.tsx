@@ -127,7 +127,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const purchasedProgramsQuery = useQuery({
     queryKey: ['purchased-programs-home'],
-    queryFn: () => apiRequest<Array<{ id: number | string; programId: number | string; program?: { title?: string } }>>('/api/purchased-programs'),
+    queryFn: () => apiRequest<Array<{ id: number | string; programId: number | string; program?: { title?: string; isTextBased?: boolean; textContent?: string } }>>('/api/purchased-programs'),
     enabled: !!userId && userId !== 'guest',
     staleTime: 120000,
   });
@@ -163,6 +163,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     console.warn('[Home] Using fallback program:', { purchaseId: fallback.id, programId: fallback.programId, title: fallback.program?.title });
     return String(fallback.programId);
   }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
+
+  const selectedPurchase = useMemo(() => {
+    const purchases = purchasedProgramsQuery.data;
+    if (!purchases || !selectedProgramId) return null;
+    return purchases.find((p) => String(p.id) === String(selectedProgramId) || String(p.programId) === String(selectedProgramId)) ?? null;
+  }, [selectedProgramId, purchasedProgramsQuery.data]);
+
+  const isTextBasedProgram = selectedPurchase?.program?.isTextBased === true;
 
   useEffect(() => {
     if (!selectionLoaded) return;
@@ -738,11 +746,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           >
             <View style={styles.practiceTopRow}>
               <View style={styles.practiceLabelPill}>
-                <Text style={styles.practiceLabelText}>TODAY'S SESSION</Text>
+                <Text style={styles.practiceLabelText}>{isTextBasedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}</Text>
               </View>
             </View>
 
-            {todaySession ? (
+            {isTextBasedProgram ? (
+              <Text style={styles.practiceTapPrompt}>
+                Tap to open your program
+              </Text>
+            ) : todaySession ? (
               <>
                 <Text style={styles.practiceSessionTitle} numberOfLines={2}>
                   {todaySession.title && todaySession.title !== 'Day Training' ? todaySession.title : `Day ${todaySession.dayNumber} Session`}
@@ -1278,6 +1290,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500' as const,
     fontStyle: 'italic' as const,
+  },
+  practiceTapPrompt: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700' as const,
+    marginTop: 8,
+    letterSpacing: 0.2,
   },
   workoutContentContainer: {
     backgroundColor: 'rgba(255,255,255,0.1)',

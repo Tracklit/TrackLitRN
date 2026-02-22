@@ -253,29 +253,22 @@ export const PracticeScreen: React.FC = () => {
 
           {selectedProgram ? (
             <View style={styles.contentContainer}>
-              {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent && (
-                <Card style={styles.textProgramCard}>
-                  <CardContent>
-                    <View style={styles.programHeaderRow}>
-                      <ClipboardText size={16} color={theme.colors.primary} weight="fill" />
-                      <Text variant="small" weight="semiBold" color="foreground">
-                        Program Content
-                      </Text>
-                    </View>
-                    <View style={styles.textProgramContent}>
-                      <Text variant="small" color="foreground" style={styles.monoText}>
-                        {selectedProgram.program.textContent}
-                      </Text>
-                    </View>
-                    <View style={styles.programNote}>
-                      <Text variant="small" color="muted">
-                        This is a text-based program. Scroll through the content above to find your sessions.
-                      </Text>
-                    </View>
-                  </CardContent>
-                </Card>
-              )}
-
+              {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent ? (
+                <View style={styles.textProgramFullContainer}>
+                  <View style={styles.textProgramHeader}>
+                    <ClipboardText size={18} color="#FF7A00" weight="fill" />
+                    <Text variant="body" weight="bold" color="foreground">
+                      {selectedProgram.program?.title || 'Program Content'}
+                    </Text>
+                  </View>
+                  <ScrollView style={styles.textProgramScrollArea} showsVerticalScrollIndicator={true}>
+                    <Text variant="small" color="foreground" style={styles.monoText}>
+                      {selectedProgram.program.textContent}
+                    </Text>
+                  </ScrollView>
+                </View>
+              ) : (
+                <>
               {selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl && (
                 docViewerUrl ? (
                   <DocumentViewer
@@ -329,7 +322,6 @@ export const PracticeScreen: React.FC = () => {
               )}
 
               {!isLoadingCards && !isLoadingProgramSessions && programSessions.length === 0
-                && !selectedProgram.program?.isTextBased
                 && !selectedProgram.program?.isUploadedProgram && (
                 <View style={styles.cardsList}>
                   <LinearGradient
@@ -346,6 +338,8 @@ export const PracticeScreen: React.FC = () => {
                     </Text>
                   </LinearGradient>
                 </View>
+              )}
+                </>
               )}
             </View>
           ) : (
@@ -628,6 +622,27 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.webCardBorder,
     marginBottom: theme.spacing.lg,
   },
+  textProgramFullContainer: {
+    flex: 1,
+    backgroundColor: '#1C1F2B',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    overflow: 'hidden',
+  },
+  textProgramHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  textProgramScrollArea: {
+    flex: 1,
+    padding: 16,
+  },
   programHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -649,6 +664,7 @@ const styles = StyleSheet.create({
   },
   monoText: {
     fontFamily: 'Courier',
+    lineHeight: 20,
   },
   cardsList: {
     gap: theme.spacing.lg,
