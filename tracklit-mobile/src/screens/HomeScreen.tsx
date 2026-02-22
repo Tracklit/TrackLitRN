@@ -229,16 +229,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   });
   const todayGymData = todayGymQuery.data?.gymData ?? [];
 
-  const todaySessionDetailQuery = useQuery({
-    queryKey: ['session-detail-home', todaySessionId.sessionId],
-    queryFn: async () => {
-      if (!todaySessionId.sessionId) return null;
-      return apiRequest<any>(`/api/sessions/${todaySessionId.sessionId}`);
-    },
-    enabled: !!todaySessionId.sessionId,
-    staleTime: 0,
-  });
-
   const todaySession = useMemo(() => {
     if (!programSessions || programSessions.length === 0) return null;
 
@@ -284,16 +274,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     if (!matched) return null;
 
     const totalDays = programSessions.length;
-    const detail = todaySessionDetailQuery.data;
 
     return {
       ...matched,
-      ...(detail || {}),
       dayNumber: matched.dayNumber || 1,
       totalDays,
       programId: resolvedProgramId,
     };
-  }, [programSessions, resolvedProgramId, todaySessionDetailQuery.data]);
+  }, [programSessions, resolvedProgramId]);
 
   const screenOpacity = useSharedValue(0);
   useEffect(() => {
@@ -961,9 +949,8 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
   ];
 
   const hasGymData = gymData.length > 0;
-  const sessionTitle = session.title && session.title !== 'Day Training' ? session.title : null;
   const sessionDescription = session.description && session.description !== 'Training Session' ? session.description : null;
-  const hasAnyContent = hasGymData || contentSections.some((s) => !!s.value) || sessionTitle || session.notes;
+  const hasWorkoutData = hasGymData || contentSections.some((s) => !!s.value) || session.notes || sessionDescription;
 
   const extractGymNumber = () => {
     const fields = [
@@ -980,7 +967,7 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
     return null;
   };
 
-  if (!hasAnyContent) return null;
+  if (!hasWorkoutData) return null;
 
   return (
     <View style={hwStyles.container}>
