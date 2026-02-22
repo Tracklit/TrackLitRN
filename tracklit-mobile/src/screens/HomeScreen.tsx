@@ -273,31 +273,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     if (!matched) return null;
 
     const totalDays = programSessions.length;
-    const completedCount = programSessions.filter((s: any) => s.completed_at).length;
-
-    console.warn('[Home] Today session resolved:', {
-      dayNumber: matched.dayNumber,
-      title: matched.title,
-      pa1: matched.preActivation1,
-      short: matched.shortDistanceWorkout,
-      notes: matched.notes,
-    });
 
     return {
-      title: matched.title || matched.preActivation1 || 'Training Session',
-      description: matched.shortDistanceWorkout || matched.description || '',
+      ...matched,
       dayNumber: matched.dayNumber || 1,
       totalDays,
-      completedCount,
-      programTitle: 'Program',
-      preActivation1: matched.preActivation1 || null,
-      preActivation2: matched.preActivation2 || null,
-      shortDistanceWorkout: matched.shortDistanceWorkout || null,
-      mediumDistanceWorkout: matched.mediumDistanceWorkout || null,
-      longDistanceWorkout: matched.longDistanceWorkout || null,
-      extraSession: matched.extraSession || null,
-      notes: matched.notes || null,
-      sessionId: matched.id,
       programId: resolvedProgramId,
     };
   }, [programSessions, resolvedProgramId]);
@@ -788,7 +768,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             {todaySession ? (
               <>
                 <Text style={styles.practiceSessionTitle} numberOfLines={2}>
-                  {todaySession.title}
+                  {todaySession.title && todaySession.title !== 'Day Training' ? todaySession.title : `Day ${todaySession.dayNumber} Session`}
                 </Text>
                 <HomeWorkoutContent session={todaySession} gymData={todayGymData} />
               </>
@@ -955,29 +935,47 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   );
 };
 
+const firstVal = (...values: any[]): string | null => {
+  for (const v of values) {
+    if (v !== undefined && v !== null && v !== '' && v !== '""') {
+      const s = String(v).replace(/^"|"$/g, '').trim();
+      if (s.length > 0) return s;
+    }
+  }
+  return null;
+};
+
 const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: string[] }) => {
+  const pa1 = firstVal(session.preActivation1, session.columnB);
+  const pa2 = firstVal(session.preActivation2, session.columnC);
+  const short = firstVal(session.shortDistanceWorkout, session.columnD);
+  const med = firstVal(session.mediumDistanceWorkout, session.columnE);
+  const long = firstVal(session.longDistanceWorkout, session.columnF);
+  const extra = firstVal(session.extraSession, session.columnG);
+  const notes = firstVal(session.notes);
+  const desc = firstVal(session.description);
+
   const contentSections = [
-    { label: 'PA1', value: session.preActivation1 },
-    { label: 'PA2', value: session.preActivation2 },
-    { label: '60/100', value: session.shortDistanceWorkout },
-    { label: '200', value: session.mediumDistanceWorkout },
-    { label: '400', value: session.longDistanceWorkout },
-    { label: 'Extra', value: session.extraSession },
-    { label: 'Notes', value: session.notes },
+    { label: 'PA1', value: pa1 },
+    { label: 'PA2', value: pa2 },
+    { label: '60/100', value: short },
+    { label: '200', value: med },
+    { label: '400', value: long },
+    { label: 'Extra', value: extra },
+    { label: 'Notes', value: notes },
   ];
 
   const visibleSections = contentSections.filter((s) => !!s.value);
   const hasGymData = gymData.length > 0;
-  const sessionDescription = session.description && session.description !== 'Training Session' ? session.description : null;
+  const sessionDescription = desc && desc !== 'Training Session' ? desc : null;
+
+  const hasAnyContent = hasGymData || visibleSections.length > 0 || sessionDescription;
+
+  if (!hasAnyContent) return null;
 
   const extractGymNumber = () => {
-    const fields = [
-      session.shortDistanceWorkout, session.mediumDistanceWorkout,
-      session.longDistanceWorkout, session.preActivation1,
-      session.preActivation2, session.extraSession,
-    ];
-    for (const field of fields) {
-      if (field && typeof field === 'string') {
+    for (const field of [short, med, long, pa1, pa2, extra]) {
+      if (field) {
         const match = field.match(/Gym\s*(\d+)/i);
         if (match && match[1]) return match[1];
       }
@@ -985,13 +983,11 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
     return null;
   };
 
-  const hasAnyContent = hasGymData || visibleSections.length > 0 || sessionDescription;
-
   return (
     <View style={styles.workoutContentContainer}>
       {sessionDescription && (
         <Text style={[styles.workoutSectionValue, { marginBottom: 4 }]} numberOfLines={3}>
-          {String(sessionDescription).replace(/^"|"$/g, '')}
+          {sessionDescription}
         </Text>
       )}
       {hasGymData && (
@@ -1008,20 +1004,10 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
         <View key={section.label} style={styles.workoutSection}>
           <Text style={styles.workoutSectionLabel}>{section.label}</Text>
           <Text style={styles.workoutSectionValue} numberOfLines={3}>
-            {String(section.value).replace(/^"|"$/g, '')}
+            {section.value}
           </Text>
         </View>
       ))}
-      {!hasAnyContent && (
-        <View style={{ alignItems: 'center', paddingVertical: 8 }}>
-          <Text style={[styles.workoutSectionValue, { textAlign: 'center', opacity: 0.7 }]}>
-            Day {session.dayNumber || '—'} Session
-          </Text>
-          <Text style={[styles.workoutSectionLabel, { width: 'auto', textAlign: 'center', marginTop: 4 }]}>
-            No workout details added yet
-          </Text>
-        </View>
-      )}
     </View>
   );
 };
