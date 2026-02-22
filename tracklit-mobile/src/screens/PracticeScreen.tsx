@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { DocumentViewer } from '@/components/DocumentViewer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,10 +16,24 @@ import {
   CircleIcon as Circle,
   CheckCircle,
   Timer,
+  Plus,
+  DotsSixVertical,
 } from 'phosphor-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  runOnJS,
+} from 'react-native-reanimated';
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
@@ -58,6 +73,9 @@ interface PurchasedProgramItem {
   assignerName?: string;
 }
 
+const CARD_GAP = theme.spacing.lg;
+const CARD_ESTIMATED_HEIGHT = 160;
+
 export const PracticeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -73,6 +91,10 @@ export const PracticeScreen: React.FC = () => {
   const [workoutCards, setWorkoutCards] = useState<any[]>([]);
   const [docViewerUrl, setDocViewerUrl] = useState<string | null>(null);
   const [docAutoOpened, setDocAutoOpened] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [dragCurrentIndex, setDragCurrentIndex] = useState<number | null>(null);
+  const [dragSourceIndex, setDragSourceIndex] = useState<number | null>(null);
+  const [cardHeights, setCardHeights] = useState<Record<number, number>>({});
 
   const purchasedProgramsQuery = useQuery({
     queryKey: ['purchased-programs'],
@@ -87,7 +109,7 @@ export const PracticeScreen: React.FC = () => {
   );
 
   const selectedProgramId = selectedProgram?.programId ? String(selectedProgram.programId) : null;
-  const { programSessions, isLoading: isLoadingProgramSessions } = useProgramSessions(selectedProgramId);
+  const { programSessions, isLoading: isLoadingProgramSessions, refetch: refetchSessions } = useProgramSessions(selectedProgramId);
 
   useEffect(() => {
     if (!programs.length) {
@@ -98,19 +120,8 @@ export const PracticeScreen: React.FC = () => {
     let isCancelled = false;
     const loadSelection = async () => {
       const savedId = await AsyncStorage.getItem(PROGRAM_SELECTION_KEY);
-      console.warn('[Practice] Loading selection. savedId:', savedId, 'programs:', programs.map(p => ({
-        purchaseId: p.id,
-        programId: p.programId,
-        title: p.program?.title,
-      })));
       const matched = programs.find((assignment) => String(assignment.id) === savedId);
       const nextProgram = matched ?? programs[0];
-      console.warn('[Practice] Resolved program:', {
-        matchedByStorage: !!matched,
-        purchaseId: nextProgram.id,
-        programId: nextProgram.programId,
-        title: nextProgram.program?.title,
-      });
       if (!isCancelled) {
         setSelectedProgram((previous) => {
           if (previous && String(previous.id) === String(nextProgram.id)) {
@@ -146,12 +157,6 @@ export const PracticeScreen: React.FC = () => {
     const cards: any[] = [];
 
     const sessionsToUse = programSessions ?? [];
-    console.warn('[Practice] Building cards:', {
-      programTitle: selectedProgram.program?.title,
-      programId: selectedProgram.programId,
-      sessionCount: sessionsToUse.length,
-      sampleDates: sessionsToUse.slice(0, 3).map((s: any) => ({ date: s.date, dayNumber: s.dayNumber, title: s.title })),
-    });
 
     let startDate: Date | null = null;
     if (sessionsToUse.length > 0) {
@@ -190,17 +195,6 @@ export const PracticeScreen: React.FC = () => {
         }
       }
 
-      if (i === 0) {
-        console.warn('[Practice] Today card match:', {
-          todayKey: formatSessionDateKey(date),
-          matched: !!sessionForDate,
-          sessionTitle: sessionForDate?.title,
-          sessionDate: sessionForDate?.date,
-          sessionDayNumber: sessionForDate?.dayNumber,
-          allSessionDates: sessionsToUse.map((s: any) => normalizeSessionDateKey(s?.date)),
-        });
-      }
-
       cards.push({
         id: `${date.getTime()}-${i}`,
         date,
@@ -212,6 +206,7 @@ export const PracticeScreen: React.FC = () => {
         dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'long' }),
         sessionData: sessionForDate,
         isToday: i === 0,
+        index: i,
       });
     }
 
@@ -220,11 +215,6 @@ export const PracticeScreen: React.FC = () => {
   }, [selectedProgram, programSessions, isLoadingProgramSessions, daysToShow]);
 
   const handleSelectProgram = async (assignment: PurchasedProgramItem) => {
-    console.warn('[Practice] Selected program:', {
-      purchaseId: assignment.id,
-      programId: assignment.programId,
-      title: assignment.program?.title,
-    });
     setSelectedProgram(assignment);
     setDaysToShow(7);
     setWorkoutCards([]);
@@ -248,186 +238,277 @@ export const PracticeScreen: React.FC = () => {
     }
   }, [selectedProgram, docAutoOpened]);
 
+  const handleAddDay = useCallback(async (targetDate: Date) => {
+    if (!selectedProgramId) return;
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const dateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+    const sessionsCount = programSessions?.length ?? 0;
+    const newDayNumber = sessionsCount + 1;
+
+    try {
+      await apiRequest(`/api/programs/${selectedProgramId}/sessions`, {
+        method: 'POST',
+        data: {
+          dayNumber: newDayNumber,
+          date: dateStr,
+          title: `Day ${newDayNumber}`,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: ['program-sessions', selectedProgramId] });
+      await refetchSessions();
+    } catch (err) {
+      console.warn('[Practice] Failed to add day:', err);
+      Alert.alert('Error', 'Could not add session. Please try again.');
+    }
+  }, [selectedProgramId, programSessions, queryClient, refetchSessions]);
+
+  const handleSwapDays = useCallback(async (fromIndex: number, toIndex: number) => {
+    if (!selectedProgramId) return;
+    const fromCard = workoutCards[fromIndex];
+    const toCard = workoutCards[toIndex];
+    if (!fromCard || !toCard) return;
+
+    const fromSession = fromCard.sessionData;
+    const toSession = toCard.sessionData;
+    if (!fromSession && !toSession) return;
+
+    const newCards = [...workoutCards];
+    newCards[fromIndex] = { ...newCards[fromIndex], sessionData: toSession || null };
+    newCards[toIndex] = { ...newCards[toIndex], sessionData: fromSession || null };
+    setWorkoutCards(newCards);
+
+    try {
+      const fromDateStr = fromCard.date.toISOString().split('T')[0];
+      const toDateStr = toCard.date.toISOString().split('T')[0];
+
+      const updates = [];
+      if (fromSession?.id) {
+        updates.push(
+          apiRequest(`/api/programs/${selectedProgramId}/sessions/${fromSession.id}`, {
+            method: 'PUT',
+            data: { ...fromSession, date: toDateStr, dayNumber: toSession?.dayNumber ?? fromSession.dayNumber },
+          })
+        );
+      }
+      if (toSession?.id) {
+        updates.push(
+          apiRequest(`/api/programs/${selectedProgramId}/sessions/${toSession.id}`, {
+            method: 'PUT',
+            data: { ...toSession, date: fromDateStr, dayNumber: fromSession?.dayNumber ?? toSession.dayNumber },
+          })
+        );
+      }
+      if (updates.length > 0) {
+        await Promise.all(updates);
+        await queryClient.invalidateQueries({ queryKey: ['program-sessions', selectedProgramId] });
+      }
+    } catch (err) {
+      console.warn('[Practice] Swap failed:', err);
+      setWorkoutCards(workoutCards);
+    }
+  }, [selectedProgramId, workoutCards, queryClient]);
+
   const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
     await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
   });
 
+  const onCardLayout = useCallback((index: number, height: number) => {
+    setCardHeights((prev) => {
+      if (prev[index] === height) return prev;
+      return { ...prev, [index]: height };
+    });
+  }, []);
+
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={styles.container}
-    >
-      <ScrollView
-        contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingTop: insets.top, paddingBottom: contentBottomPadding },
-        ]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            tintColor="#fff"
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-          />
-        }
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <LinearGradient
+        colors={theme.gradient.background}
+        locations={theme.gradient.locations}
+        style={styles.container}
       >
-        <InlineRefreshHeader visible={isRefreshing} />
+        <ScrollView
+          contentInsetAdjustmentBehavior="never"
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: insets.top, paddingBottom: contentBottomPadding },
+          ]}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={!dragActive}
+          refreshControl={
+            <RefreshControl
+              tintColor="#fff"
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+            />
+          }
+        >
+          <InlineRefreshHeader visible={isRefreshing} />
 
-        <View style={styles.programsRow}>
-          <ProgramPickerDropdown
-            programs={purchasedProgramsQuery.data ?? []}
-            selectedProgramId={selectedProgram?.id ?? null}
-            onSelect={handleSelectProgram}
-            isLoading={purchasedProgramsQuery.isLoading}
-          />
-        </View>
+          <View style={styles.programsRow}>
+            <ProgramPickerDropdown
+              programs={purchasedProgramsQuery.data ?? []}
+              selectedProgramId={selectedProgram?.id ?? null}
+              onSelect={handleSelectProgram}
+              isLoading={purchasedProgramsQuery.isLoading}
+            />
+          </View>
 
-        {selectedProgram ? (
-          <View style={styles.contentContainer}>
-            {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent && (
-              <Card style={styles.textProgramCard}>
-                <CardContent>
-                  <View style={styles.programHeaderRow}>
-                    <ClipboardText size={16} color={theme.colors.primary} weight="fill" />
-                    <Text variant="small" weight="semiBold" color="foreground">
-                      Program Content
-                    </Text>
-                  </View>
-                  <View style={styles.textProgramContent}>
-                    <Text variant="small" color="foreground" style={styles.monoText}>
-                      {selectedProgram.program.textContent}
-                    </Text>
-                  </View>
-                  <View style={styles.programNote}>
-                    <Text variant="small" color="muted">
-                      This is a text-based program. Scroll through the content above to find your sessions.
-                    </Text>
-                  </View>
-                </CardContent>
-              </Card>
-            )}
-
-            {selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl && (
-              docViewerUrl ? (
-                <DocumentViewer
-                  url={docViewerUrl}
-                  title={selectedProgram.program?.title || 'Program Document'}
-                  onClose={() => setDocViewerUrl(null)}
-                />
-              ) : (
-                <Card style={styles.collapsedDocCard}>
-                  <CardContent style={styles.collapsedDocContent}>
-                    <View style={styles.collapsedDocLeft}>
-                      <Upload size={16} color={theme.colors.primary} weight="fill" />
+          {selectedProgram ? (
+            <View style={styles.contentContainer}>
+              {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent && (
+                <Card style={styles.textProgramCard}>
+                  <CardContent>
+                    <View style={styles.programHeaderRow}>
+                      <ClipboardText size={16} color={theme.colors.primary} weight="fill" />
                       <Text variant="small" weight="semiBold" color="foreground">
-                        Assigned Program
+                        Program Content
                       </Text>
                     </View>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onPress={() => setDocViewerUrl(selectedProgram.program.programFileUrl!)}
-                      style={styles.collapsedDocOpenBtn}
-                    >
-                      <Text variant="small" weight="bold" color="primary-foreground">
-                        Open
+                    <View style={styles.textProgramContent}>
+                      <Text variant="small" color="foreground" style={styles.monoText}>
+                        {selectedProgram.program.textContent}
                       </Text>
-                    </Button>
+                    </View>
+                    <View style={styles.programNote}>
+                      <Text variant="small" color="muted">
+                        This is a text-based program. Scroll through the content above to find your sessions.
+                      </Text>
+                    </View>
                   </CardContent>
                 </Card>
-              )
-            )}
+              )}
 
-            {(isLoadingCards || isLoadingProgramSessions) && (
-              <View style={styles.cardsList}>
-                <View style={styles.loadingState}>
-                  <Text variant="body" color="muted">Loading sessions...</Text>
-                </View>
-              </View>
-            )}
-
-            {!isLoadingCards && !isLoadingProgramSessions && workoutCards.length > 0 && (
-              <View style={styles.cardsList}>
-                {workoutCards.map((card) => (
-                  <WorkoutCard
-                    key={card.id}
-                    card={card}
-                    programId={selectedProgramId}
-                    onFinish={(date: string) => navigation.navigate('JournalEntry', { date })}
+              {selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl && (
+                docViewerUrl ? (
+                  <DocumentViewer
+                    url={docViewerUrl}
+                    title={selectedProgram.program?.title || 'Program Document'}
+                    onClose={() => setDocViewerUrl(null)}
                   />
-                ))}
-                <View style={styles.loadMoreContainer}>
-                  <Button variant="default" onPress={() => setDaysToShow((prev) => prev + 7)}>
-                    Load More Days
-                  </Button>
+                ) : (
+                  <Card style={styles.collapsedDocCard}>
+                    <CardContent style={styles.collapsedDocContent}>
+                      <View style={styles.collapsedDocLeft}>
+                        <Upload size={16} color={theme.colors.primary} weight="fill" />
+                        <Text variant="small" weight="semiBold" color="foreground">
+                          Assigned Program
+                        </Text>
+                      </View>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onPress={() => setDocViewerUrl(selectedProgram.program.programFileUrl!)}
+                        style={styles.collapsedDocOpenBtn}
+                      >
+                        <Text variant="small" weight="bold" color="primary-foreground">
+                          Open
+                        </Text>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )
+              )}
+
+              {(isLoadingCards || isLoadingProgramSessions) && (
+                <View style={styles.cardsList}>
+                  <View style={styles.loadingState}>
+                    <Text variant="body" color="muted">Loading sessions...</Text>
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
 
-            {!isLoadingCards && !isLoadingProgramSessions && programSessions.length === 0
-              && !selectedProgram.program?.isTextBased
-              && !selectedProgram.program?.isUploadedProgram && (
-              <View style={styles.cardsList}>
-                <LinearGradient
-                  colors={['#1e40af', '#c084fc']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.emptyGradientCard}
-                >
-                  <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
-                    No workout sessions available
-                  </Text>
-                  <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
-                    Check back later or contact your coach for program updates.
-                  </Text>
-                </LinearGradient>
-              </View>
-            )}
-          </View>
-        ) : (
-          <LinearGradient
-            colors={['#1e40af', '#c084fc']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.emptyGradientCard}
-          >
-            <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
-              No training program assigned
-            </Text>
-            <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
-              Contact your coach to get a program assigned to your account.
-            </Text>
-            <Button variant="outline" onPress={() => navigation.navigate('Programs' as any)} style={styles.emptyButton}>
-              <Text variant="small" weight="medium" color="primary-foreground">
-                View Available Programs
+              {!isLoadingCards && !isLoadingProgramSessions && workoutCards.length > 0 && (
+                <View style={styles.cardsList}>
+                  {workoutCards.map((card, idx) => (
+                    <DraggableCard
+                      key={card.id}
+                      card={card}
+                      index={idx}
+                      totalCards={workoutCards.length}
+                      programId={selectedProgramId}
+                      onFinish={(date: string) => navigation.navigate('JournalEntry', { date })}
+                      onAddDay={handleAddDay}
+                      onSwap={handleSwapDays}
+                      onDragStart={(i: number) => { setDragActive(true); setDragSourceIndex(i); setDragCurrentIndex(i); }}
+                      onDragEnd={() => { setDragActive(false); setDragSourceIndex(null); setDragCurrentIndex(null); }}
+                      onDragUpdate={(targetIdx: number) => setDragCurrentIndex(targetIdx)}
+                      dragSourceIndex={dragSourceIndex}
+                      dragCurrentIndex={dragCurrentIndex}
+                      cardHeights={cardHeights}
+                      onLayout={onCardLayout}
+                    />
+                  ))}
+                  <View style={styles.loadMoreContainer}>
+                    <Button variant="default" onPress={() => setDaysToShow((prev) => prev + 7)}>
+                      Load More Days
+                    </Button>
+                  </View>
+                </View>
+              )}
+
+              {!isLoadingCards && !isLoadingProgramSessions && programSessions.length === 0
+                && !selectedProgram.program?.isTextBased
+                && !selectedProgram.program?.isUploadedProgram && (
+                <View style={styles.cardsList}>
+                  <LinearGradient
+                    colors={['#1e40af', '#c084fc']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.emptyGradientCard}
+                  >
+                    <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
+                      No workout sessions available
+                    </Text>
+                    <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
+                      Check back later or contact your coach for program updates.
+                    </Text>
+                  </LinearGradient>
+                </View>
+              )}
+            </View>
+          ) : (
+            <LinearGradient
+              colors={['#1e40af', '#c084fc']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.emptyGradientCard}
+            >
+              <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
+                No training program assigned
               </Text>
-            </Button>
-          </LinearGradient>
-        )}
-      </ScrollView>
+              <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
+                Contact your coach to get a program assigned to your account.
+              </Text>
+              <Button variant="outline" onPress={() => navigation.navigate('Programs' as any)} style={styles.emptyButton}>
+                <Text variant="small" weight="medium" color="primary-foreground">
+                  View Available Programs
+                </Text>
+              </Button>
+            </LinearGradient>
+          )}
+        </ScrollView>
 
-      <TouchableOpacity
-        style={[styles.targetTimesButton, { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg }]}
-        onPress={() => setShowTargetTimes(true)}
-      >
-        <LinearGradient
-          colors={theme.gradients.webPurple.colors}
-          start={theme.gradients.webPurple.start}
-          end={theme.gradients.webPurple.end}
-          style={styles.targetTimesButtonInner}
+        <TouchableOpacity
+          style={[styles.targetTimesButton, { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg }]}
+          onPress={() => setShowTargetTimes(true)}
         >
-          <Timer size={20} color="white" weight="fill" />
-          <Text variant="small" weight="bold" color="primary-foreground">
-            %
-          </Text>
-        </LinearGradient>
-      </TouchableOpacity>
+          <LinearGradient
+            colors={theme.gradients.webPurple.colors}
+            start={theme.gradients.webPurple.start}
+            end={theme.gradients.webPurple.end}
+            style={styles.targetTimesButtonInner}
+          >
+            <Timer size={20} color="white" weight="fill" />
+            <Text variant="small" weight="bold" color="primary-foreground">
+              %
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-      <TargetTimesDrawer visible={showTargetTimes} onClose={() => setShowTargetTimes(false)} />
+        <TargetTimesDrawer visible={showTargetTimes} onClose={() => setShowTargetTimes(false)} />
 
-    </LinearGradient>
+      </LinearGradient>
+    </GestureHandlerRootView>
   );
 };
 
@@ -487,70 +568,233 @@ const useGymData = (programId: number | string | null, dayNumber?: number, sessi
   });
 };
 
-const WorkoutCard = ({
+const DraggableCard = ({
   card,
+  index,
+  totalCards,
   programId,
   onFinish,
+  onAddDay,
+  onSwap,
+  onDragStart,
+  onDragEnd,
+  onDragUpdate,
+  dragSourceIndex,
+  dragCurrentIndex,
+  cardHeights,
+  onLayout,
 }: {
   card: any;
+  index: number;
+  totalCards: number;
   programId: number | string | null;
   onFinish: (date: string) => void;
+  onAddDay: (date: Date) => void;
+  onSwap: (from: number, to: number) => void;
+  onDragStart: (index: number) => void;
+  onDragEnd: () => void;
+  onDragUpdate: (targetIdx: number) => void;
+  dragSourceIndex: number | null;
+  dragCurrentIndex: number | null;
+  cardHeights: Record<number, number>;
+  onLayout: (index: number, height: number) => void;
 }) => {
+  const translateY = useSharedValue(0);
+  const shiftY = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const zIndex = useSharedValue(0);
+  const opacity = useSharedValue(1);
+  const isActive = useSharedValue(false);
+  const startY = useSharedValue(0);
+
+  const isBeingShifted = dragSourceIndex !== null && dragSourceIndex !== index;
+
+  useEffect(() => {
+    if (!isBeingShifted || dragSourceIndex === null || dragCurrentIndex === null) {
+      shiftY.value = withSpring(0, { damping: 20, stiffness: 200 });
+      return;
+    }
+    const sourceHeight = (cardHeights[dragSourceIndex] || CARD_ESTIMATED_HEIGHT) + CARD_GAP;
+
+    if (dragSourceIndex < index && dragCurrentIndex >= index) {
+      shiftY.value = withSpring(-sourceHeight, { damping: 20, stiffness: 200 });
+    } else if (dragSourceIndex > index && dragCurrentIndex <= index) {
+      shiftY.value = withSpring(sourceHeight, { damping: 20, stiffness: 200 });
+    } else {
+      shiftY.value = withSpring(0, { damping: 20, stiffness: 200 });
+    }
+  }, [dragSourceIndex, dragCurrentIndex, isBeingShifted, cardHeights, index]);
+
+  const getTargetIndex = useCallback((currentTranslateY: number) => {
+    let accumulated = 0;
+    if (currentTranslateY > 0) {
+      for (let i = index + 1; i < totalCards; i++) {
+        const h = (cardHeights[i] || CARD_ESTIMATED_HEIGHT) + CARD_GAP;
+        accumulated += h;
+        if (currentTranslateY < accumulated - h / 2) {
+          return i;
+        }
+      }
+      return totalCards - 1;
+    } else {
+      for (let i = index - 1; i >= 0; i--) {
+        const h = (cardHeights[i] || CARD_ESTIMATED_HEIGHT) + CARD_GAP;
+        accumulated -= h;
+        if (currentTranslateY > accumulated + h / 2) {
+          return i;
+        }
+      }
+      return 0;
+    }
+  }, [index, totalCards, cardHeights]);
+
+  const handleDragMove = useCallback((translationY: number) => {
+    const targetIdx = getTargetIndex(translationY);
+    onDragUpdate(targetIdx);
+  }, [getTargetIndex, onDragUpdate]);
+
+  const handleDragFinish = useCallback((translationY: number) => {
+    const targetIdx = getTargetIndex(translationY);
+    if (targetIdx !== index) {
+      onSwap(index, targetIdx);
+    }
+    onDragEnd();
+  }, [getTargetIndex, index, onSwap, onDragEnd]);
+
+  const panGesture = Gesture.Pan()
+    .activateAfterLongPress(400)
+    .onStart(() => {
+      startY.value = translateY.value;
+      isActive.value = true;
+      scale.value = withSpring(1.04, { damping: 15 });
+      zIndex.value = 100;
+      opacity.value = 0.92;
+      runOnJS(onDragStart)(index);
+    })
+    .onUpdate((e) => {
+      if (isActive.value) {
+        translateY.value = startY.value + e.translationY;
+        runOnJS(handleDragMove)(translateY.value);
+      }
+    })
+    .onEnd(() => {
+      if (isActive.value) {
+        runOnJS(handleDragFinish)(translateY.value);
+        isActive.value = false;
+        translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
+        scale.value = withSpring(1, { damping: 15 });
+        zIndex.value = 0;
+        opacity.value = withTiming(1, { duration: 150 });
+      }
+    })
+    .onFinalize(() => {
+      if (isActive.value) {
+        isActive.value = false;
+        translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
+        scale.value = withSpring(1, { damping: 15 });
+        zIndex.value = 0;
+        opacity.value = withTiming(1, { duration: 150 });
+        runOnJS(onDragEnd)();
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value + shiftY.value },
+      { scale: scale.value },
+    ],
+    zIndex: zIndex.value,
+    opacity: opacity.value,
+  }));
+
   const sessionId = card.sessionData?.id;
   const dayNumber = card.sessionData?.dayNumber;
   const { data } = useGymData(programId, dayNumber, sessionId);
   const gymData = data?.gymData ?? [];
   const finishDate = card.date ? card.date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
+  const hasSession = !!card.sessionData;
+
   return (
-    <LinearGradient
-      colors={theme.gradients.webPurple.colors}
-      start={theme.gradients.webPurple.start}
-      end={theme.gradients.webPurple.end}
-      style={[styles.workoutCard, card.isToday && styles.workoutCardToday]}
-    >
-      <View style={styles.cardHeaderRow}>
-        <View style={styles.cardHeaderLeft}>
-          <Text variant="small" weight="medium" color="primary-foreground">
-            {card.dayOfWeek}
-          </Text>
-          {card.isToday && (
-            <View style={styles.todayBadge}>
-              <Text variant="small" weight="semiBold" color="foreground">
-                Today
+    <GestureDetector gesture={panGesture}>
+      <Animated.View
+        style={animatedStyle}
+        onLayout={(e) => onLayout(index, e.nativeEvent.layout.height)}
+      >
+        {hasSession ? (
+          <LinearGradient
+            colors={theme.gradients.webPurple.colors}
+            start={theme.gradients.webPurple.start}
+            end={theme.gradients.webPurple.end}
+            style={[styles.workoutCard, card.isToday && styles.workoutCardToday]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardHeaderLeft}>
+                <DotsSixVertical size={18} color="rgba(255,255,255,0.5)" weight="bold" />
+                <Text variant="small" weight="medium" color="primary-foreground">
+                  {card.dayOfWeek}
+                </Text>
+                {card.isToday && (
+                  <View style={styles.todayBadge}>
+                    <Text variant="small" weight="semiBold" color="foreground">
+                      Today
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.cardHeaderRight}>
+                <TouchableOpacity style={styles.finishButton} onPress={() => onFinish(finishDate)}>
+                  <Text variant="small" color="primary-foreground">
+                    Finish
+                  </Text>
+                </TouchableOpacity>
+                <Text variant="small" color="primary-foreground" style={styles.dateText}>
+                  {card.dateString}
+                </Text>
+              </View>
+            </View>
+
+            <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} />
+          </LinearGradient>
+        ) : (
+          <View style={[styles.emptyDayCard, card.isToday && styles.emptyDayCardToday]}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardHeaderLeft}>
+                <DotsSixVertical size={18} color="rgba(255,255,255,0.3)" weight="bold" />
+                <Text variant="small" weight="medium" color="muted">
+                  {card.dayOfWeek}
+                </Text>
+                {card.isToday && (
+                  <View style={styles.todayBadge}>
+                    <Text variant="small" weight="semiBold" color="foreground">
+                      Today
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Text variant="small" color="muted" style={styles.dateText}>
+                {card.dateString}
               </Text>
             </View>
-          )}
-        </View>
-        <View style={styles.cardHeaderRight}>
-          <TouchableOpacity style={styles.finishButton} onPress={() => onFinish(finishDate)}>
-            <Text variant="small" color="primary-foreground">
-              Finish
-            </Text>
-          </TouchableOpacity>
-          <Text variant="small" color="primary-foreground" style={styles.dateText}>
-            {card.dateString}
-          </Text>
-        </View>
-      </View>
-
-      <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} />
-    </LinearGradient>
+            <TouchableOpacity
+              style={styles.addDayButton}
+              onPress={() => onAddDay(card.date)}
+            >
+              <Plus size={16} color={theme.colors.primary} weight="bold" />
+              <Text variant="small" weight="semiBold" color="primary">
+                Add Day
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </Animated.View>
+    </GestureDetector>
   );
 };
 
 const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymData: string[] }) => {
   if (!sessionData) {
-    return (
-      <View style={styles.restDay}>
-        <Text variant="small" weight="medium" color="primary-foreground">
-          Rest Day
-        </Text>
-        <Text variant="caption" color="primary-foreground" style={styles.restDayText}>
-          Take time to recover and prepare for your next training session.
-        </Text>
-      </View>
-    );
+    return null;
   }
 
   const extractGymNumber = () => {
@@ -576,18 +820,19 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
   const gymNumber = extractGymNumber();
   const hasGymData = gymData.length > 0;
 
-  const sections = [
-    { label: 'Pre-Activation', value: sessionData.preActivation1 },
-    { label: '60m/100m Sprint', value: sessionData.shortDistanceWorkout },
-    { label: '200m Sprint', value: sessionData.mediumDistanceWorkout },
-    { label: '400m Sprint', value: sessionData.longDistanceWorkout },
-    { label: 'Extra Session', value: sessionData.extraSession },
+  const sessionTitle = sessionData.title && sessionData.title !== 'Day Training' ? sessionData.title : null;
+  const sessionDescription = sessionData.description && sessionData.description !== 'Training Session' ? sessionData.description : null;
+
+  const contentSections = [
+    { label: 'Pre-Activation 1', value: sessionData.preActivation1, icon: 'check' },
+    { label: 'Pre-Activation 2', value: sessionData.preActivation2, icon: 'check' },
+    { label: '60m/100m Sprint', value: sessionData.shortDistanceWorkout, icon: 'circle' },
+    { label: '200m Sprint', value: sessionData.mediumDistanceWorkout, icon: 'circle' },
+    { label: '400m Sprint', value: sessionData.longDistanceWorkout, icon: 'circle' },
+    { label: 'Extra Session', value: sessionData.extraSession, icon: 'circle' },
   ];
 
-  const hasWorkoutFields = hasGymData || sections.some((s) => !!s.value);
-  const sessionTitle = sessionData.title && sessionData.title !== 'Day Training' ? sessionData.title : null;
-  const sessionNotes = sessionData.notes;
-  const sessionDescription = sessionData.description && sessionData.description !== 'Training Session' ? sessionData.description : null;
+  const hasAnyContent = hasGymData || contentSections.some((s) => !!s.value) || sessionTitle || sessionData.notes;
 
   return (
     <View style={styles.cardSections}>
@@ -614,22 +859,22 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
               {gymNumber ? `Gym ${gymNumber}` : 'Gym Exercises'}
             </Text>
           </View>
-          {gymData.map((exercise, index) => (
-            <Text key={`${exercise}-${index}`} variant="small" color="primary-foreground" style={styles.sectionText}>
+          {gymData.map((exercise, idx) => (
+            <Text key={`${exercise}-${idx}`} variant="small" color="primary-foreground" style={styles.sectionText}>
               {exercise}
             </Text>
           ))}
         </View>
       )}
-      {sections.map((section) =>
-        !hasGymData && section.value ? (
+      {contentSections.map((section) =>
+        section.value ? (
           <View key={section.label} style={styles.cardSection}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionIcon}>
-                {section.label === 'Pre-Activation'
-                ? <CheckCircle size={10} color="white" weight="fill" />
-                : <Circle size={10} color="white" weight="fill" />
-              }
+                {section.icon === 'check'
+                  ? <CheckCircle size={10} color="white" weight="fill" />
+                  : <Circle size={10} color="white" weight="fill" />
+                }
               </View>
               <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.sectionTitle}>
                 {section.label}
@@ -641,7 +886,7 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
           </View>
         ) : null
       )}
-      {sessionNotes && (
+      {sessionData.notes && (
         <View style={styles.cardSection}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIcon}>
@@ -652,11 +897,11 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
             </Text>
           </View>
           <Text variant="small" color="primary-foreground" style={styles.sectionText}>
-            {sessionNotes}
+            {sessionData.notes}
           </Text>
         </View>
       )}
-      {!hasWorkoutFields && !sessionTitle && !sessionNotes && (
+      {!hasAnyContent && (
         <View style={styles.sessionPlaceholder}>
           <Text variant="small" weight="medium" color="primary-foreground">
             Day {sessionData.dayNumber || '—'} Session
@@ -714,7 +959,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Courier',
   },
   cardsList: {
-    gap: theme.spacing.lg,
+    gap: CARD_GAP,
   },
   loadingState: {
     alignItems: 'center',
@@ -753,6 +998,17 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#facc15',
   },
+  emptyDayCard: {
+    padding: theme.spacing.xl,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  emptyDayCardToday: {
+    borderColor: 'rgba(250,204,21,0.3)',
+  },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -783,6 +1039,13 @@ const styles = StyleSheet.create({
   dateText: {
     opacity: 0.8,
   },
+  addDayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
+  },
   cardSections: {
     gap: theme.spacing.sm,
   },
@@ -812,8 +1075,8 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   sessionTitleRow: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.spacing.sm,
     marginBottom: theme.spacing.xs,
   },
@@ -822,15 +1085,15 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   sessionPlaceholder: {
-    alignItems: 'center' as const,
+    alignItems: 'center',
     paddingVertical: theme.spacing.md,
   },
   restDay: {
-    alignItems: 'center' as const,
+    alignItems: 'center',
     paddingVertical: theme.spacing.lg,
   },
   restDayText: {
-    textAlign: 'center' as const,
+    textAlign: 'center',
     marginTop: theme.spacing.sm,
     opacity: 0.8,
   },
