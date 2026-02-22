@@ -190,6 +190,17 @@ export const PracticeScreen: React.FC = () => {
         }
       }
 
+      if (i === 0) {
+        console.warn('[Practice] Today card match:', {
+          todayKey: formatSessionDateKey(date),
+          matched: !!sessionForDate,
+          sessionTitle: sessionForDate?.title,
+          sessionDate: sessionForDate?.date,
+          sessionDayNumber: sessionForDate?.dayNumber,
+          allSessionDates: sessionsToUse.map((s: any) => normalizeSessionDateKey(s?.date)),
+        });
+      }
+
       cards.push({
         id: `${date.getTime()}-${i}`,
         date,
@@ -573,8 +584,26 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
     { label: 'Extra Session', value: sessionData.extraSession },
   ];
 
+  const hasWorkoutFields = hasGymData || sections.some((s) => !!s.value);
+  const sessionTitle = sessionData.title && sessionData.title !== 'Day Training' ? sessionData.title : null;
+  const sessionNotes = sessionData.notes;
+  const sessionDescription = sessionData.description && sessionData.description !== 'Training Session' ? sessionData.description : null;
+
   return (
     <View style={styles.cardSections}>
+      {sessionTitle && (
+        <View style={styles.sessionTitleRow}>
+          <ClipboardText size={14} color="white" weight="fill" />
+          <Text variant="body" weight="bold" color="primary-foreground">
+            {sessionTitle}
+          </Text>
+        </View>
+      )}
+      {sessionDescription && (
+        <Text variant="small" color="primary-foreground" style={styles.sessionDescription}>
+          {sessionDescription}
+        </Text>
+      )}
       {hasGymData && (
         <View style={styles.cardSection}>
           <View style={styles.sectionHeader}>
@@ -611,6 +640,31 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
             </Text>
           </View>
         ) : null
+      )}
+      {sessionNotes && (
+        <View style={styles.cardSection}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIcon}>
+              <ClipboardText size={10} color="white" weight="fill" />
+            </View>
+            <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.sectionTitle}>
+              Notes
+            </Text>
+          </View>
+          <Text variant="small" color="primary-foreground" style={styles.sectionText}>
+            {sessionNotes}
+          </Text>
+        </View>
+      )}
+      {!hasWorkoutFields && !sessionTitle && !sessionNotes && (
+        <View style={styles.sessionPlaceholder}>
+          <Text variant="small" weight="medium" color="primary-foreground">
+            Day {sessionData.dayNumber || '—'} Session
+          </Text>
+          <Text variant="caption" color="primary-foreground" style={{ opacity: 0.7, marginTop: 4 }}>
+            No workout details added yet
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -757,12 +811,26 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     opacity: 0.85,
   },
+  sessionTitleRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+  },
+  sessionDescription: {
+    opacity: 0.85,
+    marginBottom: theme.spacing.xs,
+  },
+  sessionPlaceholder: {
+    alignItems: 'center' as const,
+    paddingVertical: theme.spacing.md,
+  },
   restDay: {
-    alignItems: 'center',
+    alignItems: 'center' as const,
     paddingVertical: theme.spacing.lg,
   },
   restDayText: {
-    textAlign: 'center',
+    textAlign: 'center' as const,
     marginTop: theme.spacing.sm,
     opacity: 0.8,
   },
