@@ -182,37 +182,56 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const { programSessions, programDuration } = useProgramSessions(resolvedProgramId);
 
-  const todaySessionId = useMemo(() => {
-    if (!programSessions || programSessions.length === 0) return { sessionId: undefined, dayNumber: undefined };
+  const sessionsByDay = useMemo(() => {
+    const map: Record<number, any> = {};
+    if (programSessions) {
+      programSessions.forEach((session: any) => {
+        if (session.dayNumber != null) {
+          map[session.dayNumber] = session;
+        }
+      });
+    }
+    return map;
+  }, [programSessions]);
+
+  const todayDayNumber = useMemo(() => {
+    if (!programSessions || programSessions.length === 0) return null;
     const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const today = new Date();
-    const todayKey = `${MONTHS[today.getMonth()]}-${today.getDate()}`;
-    let matched = programSessions.find((s: any) => s.date === todayKey);
-    if (!matched) {
-      const parsedDates = programSessions
-        .map((s: any) => s.date).filter(Boolean)
-        .map((d: string) => {
-          const isoM = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
-          if (isoM) return new Date(parseInt(isoM[1]), parseInt(isoM[2]) - 1, parseInt(isoM[3]));
-          const shortM = d.match(/^([A-Za-z]{3})-(\d{1,2})$/);
-          if (shortM) {
-            const monIdx = MONTHS.indexOf(shortM[1][0].toUpperCase() + shortM[1].slice(1).toLowerCase());
-            if (monIdx >= 0) return new Date(today.getFullYear(), monIdx, parseInt(shortM[2]));
-          }
-          return null;
-        }).filter(Boolean) as Date[];
-      if (parsedDates.length > 0) {
-        parsedDates.sort((a, b) => a.getTime() - b.getTime());
-        const daysSinceStart = Math.round((today.getTime() - parsedDates[0].getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        if (daysSinceStart >= 1) matched = programSessions.find((s: any) => s.dayNumber === daysSinceStart);
-      }
-    }
-    if (!matched) {
-      const incomplete = programSessions.filter((s: any) => !s.completed_at);
-      matched = incomplete.length > 0 ? incomplete[0] : programSessions[0];
-    }
-    return { sessionId: matched?.id, dayNumber: matched?.dayNumber };
-  }, [programSessions]);
+    today.setHours(0, 0, 0, 0);
+
+    const datesFromSessions = programSessions
+      .map((s: any) => {
+        if (!s.date) return null;
+        const shortM = String(s.date).match(/^([A-Za-z]{3})-(\d{1,2})$/);
+        if (shortM) {
+          const monIdx = MONTHS.indexOf(shortM[1][0].toUpperCase() + shortM[1].slice(1).toLowerCase());
+          if (monIdx >= 0) return new Date(today.getFullYear(), monIdx, parseInt(shortM[2]));
+        }
+        const isoM = String(s.date).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoM) return new Date(parseInt(isoM[1]), parseInt(isoM[2]) - 1, parseInt(isoM[3]));
+        return null;
+      })
+      .filter(Boolean) as Date[];
+
+    if (datesFromSessions.length === 0) return 1;
+    datesFromSessions.sort((a, b) => a.getTime() - b.getTime());
+    const programStartDate = datesFromSessions[0];
+    const diff = Math.round((today.getTime() - programStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const totalDays = Math.max(...Object.keys(sessionsByDay).map(Number), programSessions.length);
+    if (diff >= 1 && diff <= totalDays) return diff;
+    return 1;
+  }, [programSessions, sessionsByDay]);
+
+  const todaySessionId = useMemo(() => {
+    if (!todayDayNumber) return { sessionId: undefined, dayNumber: undefined };
+    const session = sessionsByDay[todayDayNumber];
+    if (session) return { sessionId: session.id, dayNumber: todayDayNumber };
+    if (!programSessions || programSessions.length === 0) return { sessionId: undefined, dayNumber: undefined };
+    const incomplete = programSessions.filter((s: any) => !s.completed_at);
+    const fallback = incomplete.length > 0 ? incomplete[incomplete.length - 1] : programSessions[programSessions.length - 1];
+    return { sessionId: fallback?.id, dayNumber: fallback?.dayNumber };
+  }, [todayDayNumber, sessionsByDay, programSessions]);
 
   const todayGymQuery = useQuery({
     queryKey: ['gym-data-home', resolvedProgramId, todaySessionId.dayNumber, todaySessionId.sessionId],
@@ -230,58 +249,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const todayGymData = todayGymQuery.data?.gymData ?? [];
 
   const todaySession = useMemo(() => {
-    if (!programSessions || programSessions.length === 0) return null;
+    if (!todayDayNumber || !programSessions || programSessions.length === 0) return null;
 
-    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const today = new Date();
-    const todayKey = `${MONTHS[today.getMonth()]}-${today.getDate()}`;
-
-    let matched = programSessions.find((s: any) => {
-      const dateKey = s.date;
-      return dateKey === todayKey;
-    });
-
-    if (!matched) {
-      const parsedDates = programSessions
-        .map((s: any) => s.date)
-        .filter(Boolean)
-        .map((d: string) => {
-          const isoM = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
-          if (isoM) return new Date(parseInt(isoM[1]), parseInt(isoM[2]) - 1, parseInt(isoM[3]));
-          const shortM = d.match(/^([A-Za-z]{3})-(\d{1,2})$/);
-          if (shortM) {
-            const monIdx = MONTHS.indexOf(shortM[1][0].toUpperCase() + shortM[1].slice(1).toLowerCase());
-            if (monIdx >= 0) return new Date(today.getFullYear(), monIdx, parseInt(shortM[2]));
-          }
-          return null;
-        })
-        .filter(Boolean) as Date[];
-      if (parsedDates.length > 0) {
-        parsedDates.sort((a, b) => a.getTime() - b.getTime());
-        const programStart = parsedDates[0];
-        const daysSinceStart = Math.round((today.getTime() - programStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        if (daysSinceStart >= 1) {
-          matched = programSessions.find((s: any) => s.dayNumber === daysSinceStart);
-        }
-      }
-    }
-
-    if (!matched) {
-      const incomplete = programSessions.filter((s: any) => !s.completed_at);
-      matched = incomplete.length > 0 ? incomplete[0] : programSessions[0];
-    }
-
+    const matched = sessionsByDay[todayDayNumber];
     if (!matched) return null;
 
-    const totalDays = programSessions.length;
+    const totalDays = Math.max(...Object.keys(sessionsByDay).map(Number), programSessions.length);
 
     return {
       ...matched,
-      dayNumber: matched.dayNumber || 1,
+      dayNumber: matched.dayNumber || todayDayNumber,
       totalDays,
       programId: resolvedProgramId,
     };
-  }, [programSessions, resolvedProgramId]);
+  }, [todayDayNumber, sessionsByDay, programSessions, resolvedProgramId]);
 
   const screenOpacity = useSharedValue(0);
   useEffect(() => {

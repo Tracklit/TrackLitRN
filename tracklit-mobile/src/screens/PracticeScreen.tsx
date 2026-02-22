@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
-  Text as RNText,
 } from 'react-native';
 import { DocumentViewer } from '@/components/DocumentViewer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -604,12 +603,6 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
           </Text>
         </View>
       )}
-      <RNText style={{ color: '#FF7A00', fontSize: 8, marginTop: 4 }}>
-        CAROUSEL-DEBUG: {Object.keys(sessionData).filter(k => {
-          const v = sessionData[k];
-          return v !== null && v !== undefined && v !== '';
-        }).map(k => `${k}=${JSON.stringify(sessionData[k]).substring(0, 25)}`).join(' | ')}
-      </RNText>
     </View>
   );
 };
