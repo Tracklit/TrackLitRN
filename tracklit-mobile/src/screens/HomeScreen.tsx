@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
   Image,
+  Text as RNText,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
@@ -983,38 +984,75 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
   const hasWorkoutContent = hasGymData || visibleSections.length > 0;
 
   return (
-    <View style={styles.workoutContentContainer}>
-      {sessionDescription && (
-        <Text style={[styles.workoutSectionValue, { marginBottom: hasWorkoutContent ? 4 : 0 }]} numberOfLines={3}>
+    <View style={hwStyles.container}>
+      {sessionDescription ? (
+        <RNText style={[hwStyles.valueText, { marginBottom: hasWorkoutContent ? 4 : 0 }]} numberOfLines={3}>
           {sessionDescription}
-        </Text>
-      )}
-      {hasGymData && (
-        <View style={styles.workoutSection}>
-          <Text style={styles.workoutSectionLabel}>
+        </RNText>
+      ) : null}
+      {hasGymData ? (
+        <View style={hwStyles.row}>
+          <RNText style={hwStyles.labelText}>
             {extractGymNumber() ? `Gym ${extractGymNumber()}` : 'Gym'}
-          </Text>
-          <Text style={styles.workoutSectionValue} numberOfLines={3}>
+          </RNText>
+          <RNText style={hwStyles.valueText} numberOfLines={3}>
             {gymData.join(', ')}
-          </Text>
+          </RNText>
         </View>
-      )}
+      ) : null}
       {visibleSections.map((section) => (
-        <View key={section.label} style={styles.workoutSection}>
-          <Text style={styles.workoutSectionLabel}>{section.label}</Text>
-          <Text style={styles.workoutSectionValue} numberOfLines={3}>
+        <View key={section.label} style={hwStyles.row}>
+          <RNText style={hwStyles.labelText}>{section.label}</RNText>
+          <RNText style={hwStyles.valueText} numberOfLines={3}>
             {section.value}
-          </Text>
+          </RNText>
         </View>
       ))}
-      {!hasWorkoutContent && !sessionDescription && (
-        <Text style={[styles.workoutSectionValue, { opacity: 0.7 }]}>
+      {!hasWorkoutContent && !sessionDescription ? (
+        <RNText style={hwStyles.fallbackText}>
           {sessionTitle || `Day ${session.dayNumber || '—'}`} — Scheduled
-        </Text>
-      )}
+        </RNText>
+      ) : null}
     </View>
   );
 };
+
+const hwStyles = StyleSheet.create({
+  container: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+    padding: 12,
+    gap: 6,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  labelText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    width: 44,
+    paddingTop: 1,
+  },
+  valueText: {
+    color: 'rgba(255,255,255,0.95)',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+    flexShrink: 1,
+  },
+  fallbackText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
