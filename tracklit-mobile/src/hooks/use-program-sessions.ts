@@ -28,6 +28,7 @@ interface ProgramSession {
 
 interface ProgramResponse {
   sessions?: ProgramSession[];
+  duration?: number;
 }
 
 const EMPTY_SESSIONS: ProgramSession[] = [];
@@ -108,19 +109,22 @@ export const useProgramSessions = (programId: number | string | null) => {
   } = useQuery({
     queryKey: ['program-sessions', normalizedId],
     queryFn: async () => {
-      if (!normalizedId) return [];
+      if (!normalizedId) return { sessions: [] as ReturnType<typeof parseSpreadsheetData>, duration: 0 };
       const programData = await apiRequest<ProgramResponse>(`/api/programs/${normalizedId}`);
-      if (programData.sessions && Array.isArray(programData.sessions)) {
-        return parseSpreadsheetData(programData.sessions);
-      }
-      return [];
+      const sessions = programData.sessions && Array.isArray(programData.sessions)
+        ? parseSpreadsheetData(programData.sessions)
+        : [];
+      const maxDay = sessions.reduce((max, s) => Math.max(max, s.dayNumber || 0), 0);
+      const duration = Math.max(programData.duration || 0, maxDay, sessions.length);
+      return { sessions, duration };
     },
     enabled: !!normalizedId,
     staleTime: 0,
   });
 
   return {
-    programSessions: data ?? EMPTY_SESSIONS,
+    programSessions: data?.sessions ?? EMPTY_SESSIONS,
+    programDuration: data?.duration ?? 0,
     isLoading,
     error,
     refetch,

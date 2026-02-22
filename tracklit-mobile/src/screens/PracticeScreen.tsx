@@ -87,7 +87,7 @@ export const PracticeScreen: React.FC = () => {
   );
 
   const selectedProgramId = selectedProgram?.programId ? String(selectedProgram.programId) : null;
-  const { programSessions, isLoading: isLoadingProgramSessions, refetch: refetchSessions } = useProgramSessions(selectedProgramId);
+  const { programSessions, programDuration, isLoading: isLoadingProgramSessions, refetch: refetchSessions } = useProgramSessions(selectedProgramId);
 
   useEffect(() => {
     if (!programs.length) {
@@ -132,53 +132,68 @@ export const PracticeScreen: React.FC = () => {
     }
 
     const sessionsToUse = programSessions ?? [];
+    const totalDays = Math.max(programDuration, 1);
 
-    const sortedSessions = [...sessionsToUse].sort((a: any, b: any) => {
-      if (a.dayNumber != null && b.dayNumber != null) return a.dayNumber - b.dayNumber;
-      if (a.date && b.date) return a.date.localeCompare(b.date);
-      return 0;
+    const sessionsByDay: Record<number, any> = {};
+    sessionsToUse.forEach((session: any) => {
+      if (session.dayNumber != null) {
+        sessionsByDay[session.dayNumber] = session;
+      }
     });
+
+    let startDate: Date | null = null;
+    const datesFromSessions = sessionsToUse
+      .map((s: any) => parseSessionDateForCard(s.date))
+      .filter(Boolean) as Date[];
+    if (datesFromSessions.length > 0) {
+      datesFromSessions.sort((a, b) => a.getTime() - b.getTime());
+      startDate = datesFromSessions[0];
+    }
 
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    const cards = sortedSessions.map((session: any, idx: number) => {
-      const sessionDate = parseSessionDateForCard(session.date);
-      const dateString = sessionDate
-        ? sessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        : session.date || `Day ${session.dayNumber || idx + 1}`;
-      const dayOfWeek = sessionDate
-        ? sessionDate.toLocaleDateString('en-US', { weekday: 'long' })
-        : `Day ${session.dayNumber || idx + 1}`;
+    const cards: any[] = [];
+    for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
+      const session = sessionsByDay[dayNum] || null;
 
-      let isToday = false;
-      if (session.date) {
-        const normalized = session.date.trim();
-        if (normalized.startsWith(todayStr)) {
-          isToday = true;
-        } else {
-          const parsed = parseSessionDateForCard(normalized);
-          if (parsed) {
-            const parsedStr = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
-            isToday = parsedStr === todayStr;
-          }
-        }
+      let dayDate: Date | null = null;
+      if (session?.date) {
+        dayDate = parseSessionDateForCard(session.date);
+      }
+      if (!dayDate && startDate) {
+        dayDate = new Date(startDate);
+        dayDate.setDate(startDate.getDate() + dayNum - 1);
       }
 
-      return {
-        id: `session-${session.id || session.dayNumber || idx}`,
-        date: sessionDate || today,
+      const dateString = dayDate
+        ? dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+      const dayOfWeek = dayDate
+        ? dayDate.toLocaleDateString('en-US', { weekday: 'long' })
+        : '';
+
+      let isToday = false;
+      if (dayDate) {
+        const dayStr = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
+        isToday = dayStr === todayStr;
+      }
+
+      cards.push({
+        id: `day-${dayNum}`,
+        dayNumber: dayNum,
+        date: dayDate || today,
         dateString,
         dayOfWeek,
         sessionData: session,
         isToday,
-        index: idx,
-      };
-    });
+        index: dayNum - 1,
+      });
+    }
 
     setWorkoutCards(cards);
     setIsLoadingCards(false);
-  }, [selectedProgram, programSessions, isLoadingProgramSessions]);
+  }, [selectedProgram, programSessions, programDuration, isLoadingProgramSessions]);
 
   const handleSelectProgram = async (assignment: PurchasedProgramItem) => {
     setSelectedProgram(assignment);
@@ -424,31 +439,50 @@ const SessionCard = ({
   onFinish: (date: string) => void;
 }) => {
   const sessionId = card.sessionData?.id;
-  const dayNumber = card.sessionData?.dayNumber;
+  const dayNumber = card.sessionData?.dayNumber || card.dayNumber;
   const { data } = useGymData(programId, dayNumber, sessionId);
   const gymData = data?.gymData ?? [];
   const finishDate = card.date ? card.date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+  const hasSession = !!card.sessionData;
   const isRestDay = card.sessionData?.isRestDay;
 
-  if (isRestDay) {
+  const headerLabel = card.dayOfWeek
+    ? `${card.dayOfWeek} · Day ${card.dayNumber}`
+    : `Day ${card.dayNumber}`;
+
+  if (!hasSession) {
     return (
-      <View style={[styles.restDayCard, card.isToday && styles.workoutCardToday]}>
+      <View style={styles.emptyDayCard}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.cardHeaderLeft}>
             <Text variant="small" weight="medium" color="muted">
-              {card.dayOfWeek}
+              {headerLabel}
             </Text>
-            {card.isToday && (
-              <View style={styles.todayBadge}>
-                <Text variant="small" weight="semiBold" color="foreground">
-                  Today
-                </Text>
-              </View>
-            )}
           </View>
-          <Text variant="small" color="muted" style={styles.dateText}>
-            {card.dateString}
-          </Text>
+          {card.dateString ? (
+            <Text variant="small" color="muted" style={styles.dateText}>
+              {card.dateString}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+    );
+  }
+
+  if (isRestDay) {
+    return (
+      <View style={styles.restDayCard}>
+        <View style={styles.cardHeaderRow}>
+          <View style={styles.cardHeaderLeft}>
+            <Text variant="small" weight="medium" color="muted">
+              {headerLabel}
+            </Text>
+          </View>
+          {card.dateString ? (
+            <Text variant="small" color="muted" style={styles.dateText}>
+              {card.dateString}
+            </Text>
+          ) : null}
         </View>
         <View style={styles.restDay}>
           <Text variant="body" weight="semiBold" color="muted">Rest Day</Text>
@@ -458,39 +492,29 @@ const SessionCard = ({
   }
 
   return (
-    <LinearGradient
-      colors={theme.gradients.webPurple.colors}
-      start={theme.gradients.webPurple.start}
-      end={theme.gradients.webPurple.end}
-      style={[styles.workoutCard, card.isToday && styles.workoutCardToday]}
-    >
+    <View style={styles.workoutCard}>
       <View style={styles.cardHeaderRow}>
         <View style={styles.cardHeaderLeft}>
-          <Text variant="small" weight="medium" color="primary-foreground">
-            {card.dayOfWeek}
+          <Text variant="small" weight="medium" color="foreground">
+            {headerLabel}
           </Text>
-          {card.isToday && (
-            <View style={styles.todayBadge}>
-              <Text variant="small" weight="semiBold" color="foreground">
-                Today
-              </Text>
-            </View>
-          )}
         </View>
         <View style={styles.cardHeaderRight}>
           <TouchableOpacity style={styles.finishButton} onPress={() => onFinish(finishDate)}>
-            <Text variant="small" color="primary-foreground">
+            <Text variant="small" color="primary">
               Finish
             </Text>
           </TouchableOpacity>
-          <Text variant="small" color="primary-foreground" style={styles.dateText}>
-            {card.dateString}
-          </Text>
+          {card.dateString ? (
+            <Text variant="small" color="muted" style={styles.dateText}>
+              {card.dateString}
+            </Text>
+          ) : null}
         </View>
       </View>
 
       <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} />
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -690,18 +714,25 @@ const styles = StyleSheet.create({
   workoutCard: {
     padding: theme.spacing.xl,
     borderRadius: 12,
+    backgroundColor: '#1C1F2B',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
     ...theme.shadows.md,
   },
-  workoutCardToday: {
-    borderWidth: 2,
-    borderColor: '#facc15',
+  emptyDayCard: {
+    padding: theme.spacing.xl,
+    borderRadius: 12,
+    backgroundColor: '#161823',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    minHeight: 60,
   },
   restDayCard: {
     padding: theme.spacing.xl,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: 'rgba(255,122,0,0.15)',
+    backgroundColor: 'rgba(255,122,0,0.04)',
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -719,7 +750,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   todayBadge: {
-    backgroundColor: '#facc15',
+    backgroundColor: '#FF7A00',
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs / 2,
     borderRadius: theme.borderRadius.sm,

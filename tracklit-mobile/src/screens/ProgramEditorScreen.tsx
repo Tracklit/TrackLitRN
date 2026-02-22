@@ -116,7 +116,9 @@ export const ProgramEditorScreen: React.FC = () => {
   const [sessionsByDay, setSessionsByDay] = useState<Record<number, ProgramSession>>({});
   const [editingDay, setEditingDay] = useState<number | null>(null);
   const [draftSession, setDraftSession] = useState<ProgramSession | null>(null);
-  const [selectedDayForSwap, setSelectedDayForSwap] = useState<number | null>(null);
+  const [dragSourceDay, setDragSourceDay] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragSourceRef = useRef<number | null>(null);
   const hasInitialized = useRef(false);
 
   const programQuery = useQuery({
@@ -363,11 +365,11 @@ export const ProgramEditorScreen: React.FC = () => {
     showToast,
   ]);
 
-  const handleOpenDay = (dayNumber: number) => {
+  const handleOpenDay = useCallback((dayNumber: number) => {
     const existing = sessionsByDay[dayNumber] ?? { dayNumber };
     setDraftSession({ ...existing });
     setEditingDay(dayNumber);
-  };
+  }, [sessionsByDay]);
 
   const handleSaveDay = () => {
     if (editingDay === null || !draftSession) return;
@@ -412,37 +414,51 @@ export const ProgramEditorScreen: React.FC = () => {
     Alert.alert('Week duplicated', `Week ${weekIndex + 1} sessions copied to week ${weekIndex + 2}.`);
   };
 
-  const handleDayPress = (dayNumber: number) => {
-    if (selectedDayForSwap === null) {
-      handleOpenDay(dayNumber);
-    } else if (selectedDayForSwap === dayNumber) {
-      setSelectedDayForSwap(null);
+  const performSwap = useCallback((sourceDay: number, targetDay: number) => {
+    setSessionsByDay((prev) => {
+      const next = { ...prev };
+      const sourceSession = prev[sourceDay];
+      const targetSession = prev[targetDay];
+
+      if (sourceSession && targetSession) {
+        next[targetDay] = { ...sourceSession, dayNumber: targetDay };
+        next[sourceDay] = { ...targetSession, dayNumber: sourceDay };
+      } else if (sourceSession) {
+        next[targetDay] = { ...sourceSession, dayNumber: targetDay };
+        delete next[sourceDay];
+      } else if (targetSession) {
+        next[sourceDay] = { ...targetSession, dayNumber: sourceDay };
+        delete next[targetDay];
+      }
+
+      return next;
+    });
+  }, []);
+
+  const handleDragStart = useCallback((dayNumber: number) => {
+    dragSourceRef.current = dayNumber;
+    setDragSourceDay(dayNumber);
+    setIsDragging(true);
+  }, []);
+
+  const handleCellTap = useCallback((dayNumber: number) => {
+    if (isDragging && dragSourceRef.current !== null) {
+      if (dayNumber !== dragSourceRef.current) {
+        performSwap(dragSourceRef.current, dayNumber);
+      }
+      dragSourceRef.current = null;
+      setDragSourceDay(null);
+      setIsDragging(false);
     } else {
-      setSessionsByDay((prev) => {
-        const next = { ...prev };
-        const sourceSession = prev[selectedDayForSwap];
-        const targetSession = prev[dayNumber];
-
-        if (sourceSession && targetSession) {
-          next[dayNumber] = { ...sourceSession, dayNumber };
-          next[selectedDayForSwap] = { ...targetSession, dayNumber: selectedDayForSwap };
-        } else if (sourceSession) {
-          next[dayNumber] = { ...sourceSession, dayNumber };
-          delete next[selectedDayForSwap];
-        } else if (targetSession) {
-          next[selectedDayForSwap] = { ...targetSession, dayNumber: selectedDayForSwap };
-          delete next[dayNumber];
-        }
-
-        return next;
-      });
-      setSelectedDayForSwap(null);
+      handleOpenDay(dayNumber);
     }
-  };
+  }, [isDragging, performSwap, handleOpenDay]);
 
-  const handleDayLongPress = (dayNumber: number) => {
-    setSelectedDayForSwap(dayNumber);
-  };
+  const handleCancelDrag = useCallback(() => {
+    dragSourceRef.current = null;
+    setDragSourceDay(null);
+    setIsDragging(false);
+  }, []);
 
   const handleViewOnWeb = async () => {
     if (!programId) return;
@@ -585,19 +601,16 @@ export const ProgramEditorScreen: React.FC = () => {
             <Text style={styles.sessionCount}>{totalDays} days · {totalWeeks} weeks</Text>
           </View>
 
-          {selectedDayForSwap !== null && (
+          {isDragging && dragSourceDay !== null && (
             <View style={styles.swapBanner}>
               <ArrowsDownUp size={14} color={C.orange} weight="bold" />
               <Text style={styles.swapBannerText}>
-                Day {selectedDayForSwap} selected — tap another day to swap
+                Dragging Day {dragSourceDay} — drop on another day to swap
               </Text>
-              <TouchableOpacity onPress={() => setSelectedDayForSwap(null)}>
-                <Text style={styles.swapCancelText}>Cancel</Text>
-              </TouchableOpacity>
             </View>
           )}
 
-          <Text style={styles.swapHint}>Long-press a day to move it</Text>
+          <Text style={styles.swapHint}>Hold and drag a day to reorder</Text>
 
           <View style={styles.dayHeaderRow}>
             {DAY_LABELS.map((label) => (
@@ -607,6 +620,19 @@ export const ProgramEditorScreen: React.FC = () => {
             ))}
           </View>
 
+          {isDragging && (
+            <View style={styles.dragBanner}>
+              <ArrowsDownUp size={14} color={C.orange} weight="fill" />
+              <Text style={styles.dragBannerText}>
+                Day {dragSourceDay} selected — tap target day to swap
+              </Text>
+              <TouchableOpacity onPress={handleCancelDrag} style={styles.dragCancelBtn}>
+                <Text style={styles.dragCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View>
           {Array.from({ length: totalWeeks }).map((_, weekIndex) => (
             <View key={`week-${weekIndex}`}>
               <View style={styles.weekRow}>
@@ -625,8 +651,7 @@ export const ProgramEditorScreen: React.FC = () => {
                   const isRest = session?.isRestDay;
                   const hasContent = !!session && !isRest;
 
-                  const isSelected = selectedDayForSwap === dayNumber;
-                  const isSwapTarget = selectedDayForSwap !== null && selectedDayForSwap !== dayNumber;
+                  const isDragSource = dragSourceDay === dayNumber;
 
                   return (
                     <TouchableOpacity
@@ -635,18 +660,18 @@ export const ProgramEditorScreen: React.FC = () => {
                         styles.dayCell,
                         isRest && styles.restCell,
                         isToday && styles.todayCell,
-                        isSelected && styles.selectedCell,
-                        isSwapTarget && styles.swapTargetCell,
+                        isDragSource && styles.dragSourceCell,
                       ]}
-                      onPress={() => handleDayPress(dayNumber)}
-                      onLongPress={() => handleDayLongPress(dayNumber)}
+                      onPress={() => handleCellTap(dayNumber)}
+                      onLongPress={() => handleDragStart(dayNumber)}
+                      delayLongPress={400}
                       activeOpacity={0.7}
                     >
                       <View style={styles.cellHeader}>
                         <Text style={[styles.dateLabel, isToday && styles.todayDateLabel]}>
                           {format(dayDate, 'MMM d')}
                         </Text>
-                        {isSelected && (
+                        {isDragSource && (
                           <ArrowsDownUp size={10} color={C.orange} weight="bold" />
                         )}
                       </View>
@@ -715,6 +740,7 @@ export const ProgramEditorScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
           ))}
+          </View>
         </View>
       </KeyboardAwareScreenScrollView>
 
@@ -1072,6 +1098,35 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: C.textMuted,
   },
+  dragBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,122,0,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,122,0,0.3)',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+  },
+  dragBannerText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.orange,
+    flex: 1,
+  },
+  dragCancelBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  dragCancelText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.textSecondary,
+  },
   weekRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1095,14 +1150,11 @@ const styles = StyleSheet.create({
     borderColor: C.todayBorder,
     borderWidth: 1,
   },
-  selectedCell: {
+  dragSourceCell: {
     borderColor: C.orange,
     borderWidth: 2,
-    backgroundColor: 'rgba(255,122,0,0.12)',
-  },
-  swapTargetCell: {
-    borderStyle: 'dashed' as any,
-    borderColor: 'rgba(255,122,0,0.4)',
+    backgroundColor: 'rgba(255,122,0,0.15)',
+    opacity: 0.6,
   },
   emptyCell: {
     width: '13%',
