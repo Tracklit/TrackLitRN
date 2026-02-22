@@ -127,7 +127,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const purchasedProgramsQuery = useQuery({
     queryKey: ['purchased-programs-home'],
-    queryFn: () => apiRequest<Array<{ id: number | string; programId: number | string; program?: { title?: string; isTextBased?: boolean; textContent?: string } }>>('/api/purchased-programs'),
+    queryFn: () => apiRequest<Array<{ id: number | string; programId: number | string; program?: { title?: string; isTextBased?: boolean; textContent?: string; isUploadedProgram?: boolean; programFileUrl?: string } }>>('/api/purchased-programs'),
     enabled: !!userId && userId !== 'guest',
     staleTime: 120000,
   });
@@ -171,6 +171,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   }, [selectedProgramId, purchasedProgramsQuery.data]);
 
   const isTextBasedProgram = selectedPurchase?.program?.isTextBased === true;
+  const isUploadedProgram = selectedPurchase?.program?.isUploadedProgram === true;
 
   useEffect(() => {
     if (!selectionLoaded) return;
@@ -746,13 +747,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           >
             <View style={styles.practiceTopRow}>
               <View style={styles.practiceLabelPill}>
-                <Text style={styles.practiceLabelText}>{isTextBasedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}</Text>
+                <Text style={styles.practiceLabelText}>{isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}</Text>
               </View>
             </View>
 
             {isTextBasedProgram ? (
               <Text style={styles.practiceTapPrompt}>
                 Tap to open your program
+              </Text>
+            ) : isUploadedProgram ? (
+              <Text style={styles.practiceTapPrompt}>
+                Tap to open {selectedPurchase?.program?.title || 'your program'}
               </Text>
             ) : todaySession ? (
               <>

@@ -802,9 +802,15 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
   onDelete,
   buttonLabel = 'Continue',
 }) => {
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <View style={styles.listCard}>
-      <View style={styles.listContent}>
+      <TouchableOpacity
+        style={styles.listContent}
+        activeOpacity={0.8}
+        onPress={() => setExpanded((prev) => !prev)}
+      >
         <View style={styles.listMain}>
           <View style={styles.listTitleRow}>
             <Text style={[styles.listTitleText, { flex: 1 }]} numberOfLines={1}>{program.title}</Text>
@@ -813,20 +819,31 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
                 <Text style={styles.badgeText}>{badgeLabel}</Text>
               </View>
             )}
-            {onDelete && (
-              <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} activeOpacity={0.7}>
-                <Trash size={16} color="#ef4444" weight="fill" />
-              </TouchableOpacity>
-            )}
+            <CaretDown
+              size={14}
+              color={C.textMuted}
+              weight="bold"
+              style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }], marginLeft: 6 }}
+            />
           </View>
-          <Text style={styles.programSubtext} numberOfLines={1}>
+          <Text style={styles.programSubtext} numberOfLines={expanded ? undefined : 1}>
             {program.description || 'No description'}
           </Text>
         </View>
-        <TouchableOpacity onPress={onContinue}>
-          <Text style={styles.listActionPrimary}>{buttonLabel}</Text>
-        </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
+      {expanded && (
+        <View style={styles.listExpandedActions}>
+          <TouchableOpacity style={styles.listExpandedBtn} onPress={onContinue} activeOpacity={0.8}>
+            <Text style={styles.listActionPrimary}>{buttonLabel}</Text>
+          </TouchableOpacity>
+          {onDelete && (
+            <TouchableOpacity onPress={onDelete} style={styles.listExpandedDeleteBtn} activeOpacity={0.7}>
+              <Trash size={14} color="#ef4444" weight="fill" />
+              <Text style={styles.listDeleteText}>Remove</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </View>
   );
 };
@@ -1064,6 +1081,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: C.orange,
+  },
+  listExpandedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+    paddingTop: 4,
+    borderTopWidth: 0.5,
+    borderTopColor: C.border,
+  },
+  listExpandedBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  listExpandedDeleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  listDeleteText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ef4444',
   },
   emptyState: {
     alignItems: 'center',
