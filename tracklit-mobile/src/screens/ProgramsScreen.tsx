@@ -934,6 +934,8 @@ const styles = StyleSheet.create({
     color: C.orange,
   },
   programsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   listContainer: {
@@ -945,10 +947,12 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: C.border,
     overflow: 'hidden',
+    flexBasis: '48%',
+    flexGrow: 1,
   },
   programCardInner: {
-    padding: 16,
-    gap: 8,
+    padding: 12,
+    gap: 6,
   },
   programTitleRow: {
     flexDirection: 'row',
