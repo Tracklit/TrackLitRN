@@ -60,7 +60,7 @@ export const ConnectionsScreen: React.FC = () => {
   const qc = useQueryClient();
 
   const [search, setSearch] = useState('');
-  const [tab, setTab] = useState<'connections' | 'requests'>('requests');
+  const [tab, setTab] = useState<'connections' | 'requests'>('connections');
 
   const connectionsQuery = useQuery({
     queryKey: ['friends'],
@@ -200,6 +200,18 @@ export const ConnectionsScreen: React.FC = () => {
 
       <View style={styles.tabRow}>
         <TouchableOpacity
+          style={[styles.tab, tab === 'connections' && styles.tabActive]}
+          onPress={() => setTab('connections')}
+        >
+          <Text
+            variant="body"
+            weight={tab === 'connections' ? 'semiBold' : 'regular'}
+            color={tab === 'connections' ? 'primary' : 'muted'}
+          >
+            Connections
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, tab === 'requests' && styles.tabActive]}
           onPress={() => setTab('requests')}
         >
@@ -221,18 +233,6 @@ export const ConnectionsScreen: React.FC = () => {
               </Text>
             </View>
           )}
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'connections' && styles.tabActive]}
-          onPress={() => setTab('connections')}
-        >
-          <Text
-            variant="body"
-            weight={tab === 'connections' ? 'semiBold' : 'regular'}
-            color={tab === 'connections' ? 'primary' : 'muted'}
-          >
-            Connections
-          </Text>
         </TouchableOpacity>
       </View>
 

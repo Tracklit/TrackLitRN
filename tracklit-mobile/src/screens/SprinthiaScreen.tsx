@@ -16,7 +16,6 @@ import {
   Easing,
   Pressable,
 } from 'react-native';
-import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Mic, StopCircle, Volume2, VolumeX, Languages } from 'lucide-react-native';
@@ -506,9 +505,7 @@ export const SprinthiaScreen: React.FC = () => {
   });
 
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
+    <View
       style={styles.container}
     >
       <KeyboardAvoidingView
@@ -520,14 +517,6 @@ export const SprinthiaScreen: React.FC = () => {
         <View style={[styles.header, { paddingTop: insets.top }]}>
           <View style={styles.headerTopRow}>
             <View style={styles.titleGroup}>
-              <Text
-                weight="bold"
-                color="foreground"
-                style={styles.titleText}
-                numberOfLines={1}
-              >
-                Sprinthia AI Coach
-              </Text>
               <Image source={poweredByAria} style={styles.poweredBy} resizeMode="contain" />
             </View>
           </View>
@@ -567,7 +556,7 @@ export const SprinthiaScreen: React.FC = () => {
                 accessibilityRole="button"
                 accessibilityLabel="Open conversation history"
               >
-                <FontAwesome5 name="history" size={14} color="black" />
+                <FontAwesome5 name="history" size={14} color="#FF7A00" />
                 <Text weight="semiBold" color="foreground" style={styles.historyLabel}>
                   History
                 </Text>
@@ -631,8 +620,8 @@ export const SprinthiaScreen: React.FC = () => {
                 </Text>
                 <View style={styles.historyHeaderActions}>
                   <TouchableOpacity style={styles.newButton} onPress={handleNewConversation}>
-                    <FontAwesome5 name="plus" size={14} color="black" />
-                    <Text weight="semiBold" color="foreground">
+                    <FontAwesome5 name="plus" size={14} color="#FF7A00" />
+                    <Text weight="semiBold" color="foreground" style={{ color: '#FF7A00' }}>
                       New
                     </Text>
                   </TouchableOpacity>
@@ -882,13 +871,14 @@ export const SprinthiaScreen: React.FC = () => {
           )}
         </View>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0E0F14',
   },
   keyboardAvoid: {
     flex: 1,
@@ -897,7 +887,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: WHITE + '33',
+    borderBottomColor: 'rgba(255,122,0,0.15)',
+    backgroundColor: '#0E0F14',
     gap: theme.spacing.sm,
   },
   headerTopRow: {
@@ -956,19 +947,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: WHITE + '33',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   autoSpeakActive: {
     backgroundColor: '#22c55e',
     borderColor: '#22c55e',
   },
   autoSpeakInactive: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderColor: WHITE + '33',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   languageButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   historyButton: {
     flexDirection: 'row',
@@ -978,16 +969,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 0,
     borderRadius: 9,
-    backgroundColor: '#fcd34d',
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
   },
   historyLabel: {
-    color: 'black',
+    color: '#FF7A00',
     fontSize: 14,
   },
   remainingBadge: {
     borderWidth: 1,
-    borderColor: WHITE + '33',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     height: 44,
     paddingHorizontal: 12,
     paddingVertical: 0,
@@ -1013,10 +1006,10 @@ const styles = StyleSheet.create({
   },
   languageMenu: {
     width: 200,
-    backgroundColor: theme.colors.popover,
+    backgroundColor: '#1C1F2B',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: 'rgba(255,255,255,0.06)',
     overflow: 'hidden',
   },
   languageOption: {
@@ -1032,7 +1025,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   historyPanel: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#0E0F14',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: theme.spacing.lg,
@@ -1059,8 +1052,10 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#fcd34d',
+    backgroundColor: 'rgba(255,122,0,0.12)',
     borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
   },
   historyContent: {
     gap: theme.spacing.sm,
@@ -1072,11 +1067,11 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
+    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: '#1C1F2B',
   },
   historyRowActive: {
-    borderColor: theme.colors.primary,
+    borderColor: 'rgba(255,122,0,0.25)',
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   historyDate: {
@@ -1094,8 +1089,8 @@ const styles = StyleSheet.create({
   },
   greetingCard: {
     borderWidth: 1,
-    borderColor: WHITE + '33',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: '#1C1F2B',
     borderRadius: 16,
     padding: theme.spacing.md,
     gap: theme.spacing.sm,
@@ -1118,8 +1113,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: WHITE + '33',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: '#1C1F2B',
     paddingHorizontal: 12,
     paddingVertical: 12,
     minHeight: 52,
@@ -1128,8 +1123,8 @@ const styles = StyleSheet.create({
   suggestionChip: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: WHITE + '33',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: '#1C1F2B',
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
@@ -1157,14 +1152,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
   },
   userBubble: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderColor: WHITE + '66',
-    borderLeftColor: WHITE,
+    backgroundColor: 'rgba(255,122,0,0.08)',
+    borderColor: 'rgba(255,255,255,0.06)',
+    borderLeftColor: '#FF7A00',
   },
   aiBubble: {
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    borderColor: WHITE + '33',
-    borderLeftColor: WHITE,
+    backgroundColor: '#1C1F2B',
+    borderColor: 'rgba(255,255,255,0.06)',
+    borderLeftColor: 'rgba(255,255,255,0.2)',
   },
   messageFooter: {
     flexDirection: 'row',
@@ -1204,8 +1199,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: WHITE + '22',
-    backgroundColor: 'rgba(0,0,0,0.22)',
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(14,15,20,0.95)',
   },
   inputRow: {
     flexDirection: 'row',
@@ -1225,15 +1220,15 @@ const styles = StyleSheet.create({
     borderColor: '#ef4444',
   },
   micButtonInactive: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderColor: WHITE + '33',
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    borderColor: 'rgba(255,122,0,0.25)',
   },
   inputShell: {
     position: 'relative',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#1C1F2B',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: WHITE + '33',
+    borderColor: 'rgba(255,255,255,0.06)',
     paddingRight: 56,
     paddingLeft: 14,
     paddingVertical: 6,
@@ -1257,14 +1252,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonActive: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,122,0,0.2)',
     borderWidth: 1,
-    borderColor: WHITE + '55',
+    borderColor: 'rgba(255,122,0,0.4)',
   },
   sendButtonDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: WHITE + '22',
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   promptWarning: {
     marginTop: 8,

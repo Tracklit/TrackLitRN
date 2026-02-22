@@ -1,7 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Coins,
@@ -15,13 +13,11 @@ import {
   Clock,
   RefreshCw,
   CheckCircle,
-  ArrowLeft,
 } from 'lucide-react-native';
 import { formatDistanceToNow } from 'date-fns';
 
 import { Text } from '@/components/ui/Text';
 import { WebScreen } from '@/components/web/Screen';
-import { WebPageHeader } from '@/components/web/PageHeader';
 import { WebCard } from '@/components/web/Card';
 import { WebTabs, WebTabsList, WebTabsTrigger, WebTabsContent } from '@/components/web/Tabs';
 import { WebProgress } from '@/components/web/Progress';
@@ -30,10 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import theme from '@/utils/theme';
-import type { RootStackParamList } from '@/navigation/types';
-
 type TabKey = 'achievements' | 'rewards' | 'premium' | 'history';
-type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 interface LoginStreak {
   currentStreak: number;
@@ -58,12 +51,10 @@ interface UserAchievement {
   requirementValue?: number;
 }
 
-const AMBER = '#f59e0b';
-const PURPLE = '#a855f7';
+const ORANGE = '#FF7A00';
 const GREEN = '#16a34a';
 
 export const SpikesScreen: React.FC = () => {
-  const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated, refreshUser } = useAuth();
   const isGuest = user?.id === 'guest';
 
@@ -114,7 +105,7 @@ export const SpikesScreen: React.FC = () => {
       return (
         <View key={achievement.id} style={styles.achievementRow}>
           <View style={[styles.achievementIcon, achievement.isCompleted ? styles.achievementIconActive : styles.achievementIconMuted]}>
-            <Trophy size={16} color={achievement.isCompleted ? AMBER : theme.colors.textMuted} />
+            <Trophy size={16} color={achievement.isCompleted ? ORANGE : theme.colors.textMuted} />
           </View>
           <View style={{ flex: 1 }}>
             <View style={styles.achievementRowHeader}>
@@ -150,22 +141,12 @@ export const SpikesScreen: React.FC = () => {
   );
 
   return (
-    <WebScreen backgroundColor="#0b1220" contentStyle={{ paddingTop: theme.spacing.lg }}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={16} color={theme.colors.foreground} />
-        </TouchableOpacity>
-        <WebPageHeader
-          title="Spikes"
-          description="Your in-app currency for rewards and premium features - automatically earned!"
-        />
-      </View>
-
+    <WebScreen backgroundColor="#0E0F14" contentStyle={{ paddingTop: theme.spacing.lg }}>
       <View style={styles.grid}>
         <WebCard tone="muted" padding={theme.spacing.lg}>
           <View style={styles.cardHeader}>
             <View style={styles.titleRow}>
-              <Coins size={18} color={AMBER} />
+              <Coins size={18} color={ORANGE} />
               <Text variant="h4" weight="semiBold" color="foreground">
                 {spikesBalance} Spikes
               </Text>
@@ -179,7 +160,7 @@ export const SpikesScreen: React.FC = () => {
             <View>
               <View style={styles.progressRow}>
                 <View style={styles.inlineRow}>
-                  <Crown size={14} color={AMBER} />
+                  <Crown size={14} color={ORANGE} />
                   <Text variant="small" weight="medium" color="foreground">
                     Pro Tier Status
                   </Text>
@@ -217,7 +198,7 @@ export const SpikesScreen: React.FC = () => {
                 </Text>
                 <View style={styles.progressRow}>
                   <View style={styles.inlineRow}>
-                    <CalendarCheck size={16} color={AMBER} />
+                    <CalendarCheck size={16} color={ORANGE} />
                     <View>
                       <Text variant="small" weight="medium" color="foreground">
                         {streak.currentStreak}-day streak
@@ -259,7 +240,7 @@ export const SpikesScreen: React.FC = () => {
           </Text>
           <View style={{ gap: theme.spacing.md }}>
             <View style={styles.howRow}>
-              <Trophy size={16} color={AMBER} />
+              <Trophy size={16} color={ORANGE} />
               <View style={{ flex: 1 }}>
                 <Text variant="small" weight="medium" color="foreground">
                   Compete in Meets
@@ -270,7 +251,7 @@ export const SpikesScreen: React.FC = () => {
               </View>
             </View>
             <View style={styles.howRow}>
-              <Clock size={16} color={AMBER} />
+              <Clock size={16} color={ORANGE} />
               <View style={{ flex: 1 }}>
                 <Text variant="small" weight="medium" color="foreground">
                   Complete Training Sessions
@@ -281,7 +262,7 @@ export const SpikesScreen: React.FC = () => {
               </View>
             </View>
             <View style={styles.howRow}>
-              <MessageSquare size={16} color={AMBER} />
+              <MessageSquare size={16} color={ORANGE} />
               <View style={{ flex: 1 }}>
                 <Text variant="small" weight="medium" color="foreground">
                   Engage in Groups
@@ -292,7 +273,7 @@ export const SpikesScreen: React.FC = () => {
               </View>
             </View>
             <View style={styles.howRow}>
-              <CalendarCheck size={16} color={AMBER} />
+              <CalendarCheck size={16} color={ORANGE} />
               <View style={{ flex: 1 }}>
                 <Text variant="small" weight="medium" color="foreground">
                   Daily Login
@@ -303,7 +284,7 @@ export const SpikesScreen: React.FC = () => {
               </View>
             </View>
             <View style={styles.howRow}>
-              <Award size={16} color={AMBER} />
+              <Award size={16} color={ORANGE} />
               <View style={{ flex: 1 }}>
                 <Text variant="small" weight="medium" color="foreground">
                   Personal Records
@@ -314,7 +295,7 @@ export const SpikesScreen: React.FC = () => {
               </View>
             </View>
             <View style={styles.howRow}>
-              <RefreshCw size={16} color={AMBER} />
+              <RefreshCw size={16} color={ORANGE} />
               <View style={{ flex: 1 }}>
                 <Text variant="small" weight="medium" color="foreground">
                   Daily & Weekly Challenges
@@ -400,7 +381,7 @@ export const SpikesScreen: React.FC = () => {
           <View style={{ gap: theme.spacing.md }}>
             <WebCard tone="muted" padding={theme.spacing.lg}>
               <View style={styles.rewardTitleRow}>
-                <Crown size={18} color={AMBER} />
+                <Crown size={18} color={ORANGE} />
                 <Text variant="body" weight="semiBold" color="foreground">
                   Pro Tier
                 </Text>
@@ -426,7 +407,7 @@ export const SpikesScreen: React.FC = () => {
 
             <WebCard tone="muted" padding={theme.spacing.lg}>
               <View style={styles.rewardTitleRow}>
-                <Medal size={18} color={PURPLE} />
+                <Medal size={18} color="rgba(255,122,0,0.7)" />
                 <Text variant="body" weight="semiBold" color="foreground">
                   Star Tier
                 </Text>
@@ -518,19 +499,19 @@ export const SpikesScreen: React.FC = () => {
                 </Text>
                 <View style={styles.benefitsList}>
                   <View style={styles.benefitRow}>
-                    <CheckCircle size={14} color={PURPLE} />
+                    <CheckCircle size={14} color={ORANGE} />
                     <Text variant="small" color="muted">AI-powered performance coaching</Text>
                   </View>
                   <View style={styles.benefitRow}>
-                    <CheckCircle size={14} color={PURPLE} />
+                    <CheckCircle size={14} color={ORANGE} />
                     <Text variant="small" color="muted">Personalized nutrition guidance</Text>
                   </View>
                   <View style={styles.benefitRow}>
-                    <CheckCircle size={14} color={PURPLE} />
+                    <CheckCircle size={14} color={ORANGE} />
                     <Text variant="small" color="muted">Exclusive community features</Text>
                   </View>
                   <View style={styles.benefitRow}>
-                    <CheckCircle size={14} color={PURPLE} />
+                    <CheckCircle size={14} color={ORANGE} />
                     <Text variant="small" color="muted">Early access to new features</Text>
                   </View>
                 </View>
@@ -560,7 +541,7 @@ export const SpikesScreen: React.FC = () => {
                       <View key={transaction.id} style={styles.transactionRow}>
                         <View style={styles.transactionLeft}>
                           <View style={[styles.transactionIcon, isPositive ? styles.transactionPositive : styles.transactionNegative]}>
-                            <Coins size={14} color={isPositive ? '#15803d' : '#dc2626'} />
+                            <Coins size={14} color={isPositive ? '#FF7A00' : '#ef4444'} />
                           </View>
                           <View>
                             <Text variant="small" weight="medium" color="foreground">
@@ -598,17 +579,6 @@ export const SpikesScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#0f172a',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2937',
-  },
   grid: { gap: theme.spacing.md },
   cardHeader: { gap: theme.spacing.sm },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
@@ -621,11 +591,11 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
-  dotActive: { backgroundColor: AMBER },
-  dotInactive: { backgroundColor: '#1f2937' },
-  starCard: { backgroundColor: '#fef3c7', borderColor: '#fde68a' },
-  starTitle: { color: '#92400e' },
-  starCopy: { color: '#b45309' },
+  dotActive: { backgroundColor: '#FF7A00' },
+  dotInactive: { backgroundColor: '#1C1F2B' },
+  starCard: { backgroundColor: 'rgba(255,122,0,0.08)', borderColor: 'rgba(255,122,0,0.2)' },
+  starTitle: { color: '#FF7A00' },
+  starCopy: { color: 'rgba(255,122,0,0.7)' },
   loadingCard: { alignItems: 'center', justifyContent: 'center', minHeight: 150 },
   progressThin: { height: 6, marginTop: theme.spacing.sm },
   centeredBlock: { paddingVertical: theme.spacing.xl, alignItems: 'center' },
@@ -638,8 +608,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  achievementIconActive: { backgroundColor: '#fef3c7' },
-  achievementIconMuted: { backgroundColor: '#111827' },
+  achievementIconActive: { backgroundColor: 'rgba(255,122,0,0.08)' },
+  achievementIconMuted: { backgroundColor: '#1C1F2B' },
   achievementRowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   completedRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs, marginTop: theme.spacing.xs },
   progressBlock: { marginTop: theme.spacing.xs, gap: theme.spacing.xs },
@@ -657,7 +627,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   transactionLeft: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, flex: 1 },
   transactionIcon: {
@@ -667,8 +637,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  transactionPositive: { backgroundColor: '#dcfce7' },
-  transactionNegative: { backgroundColor: '#fee2e2' },
+  transactionPositive: { backgroundColor: 'rgba(255,122,0,0.12)' },
+  transactionNegative: { backgroundColor: 'rgba(239,68,68,0.12)' },
   emptyTransactions: { alignItems: 'center', gap: theme.spacing.sm, paddingVertical: theme.spacing.lg },
 });
 

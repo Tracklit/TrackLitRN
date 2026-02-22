@@ -279,8 +279,8 @@ export const PracticeScreen: React.FC = () => {
                     <CardContent style={styles.collapsedDocContent}>
                       <View style={styles.collapsedDocLeft}>
                         <Upload size={16} color={theme.colors.primary} weight="fill" />
-                        <Text variant="small" weight="semiBold" color="foreground">
-                          Assigned Program
+                        <Text variant="small" weight="semiBold" color="foreground" numberOfLines={1}>
+                          {selectedProgram.program?.title || 'Assigned Program'}
                         </Text>
                       </View>
                       <Button

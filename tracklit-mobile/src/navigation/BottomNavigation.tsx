@@ -14,7 +14,7 @@ import {
   CalendarBlank,
   BookOpen,
   Newspaper,
-  Wrench,
+  Timer,
 } from 'phosphor-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
@@ -59,7 +59,7 @@ const navItems: NavItem[] = [
     title: 'Tools',
     routeName: 'Tools',
     key: 'tools',
-    IconComponent: Wrench,
+    IconComponent: Timer,
   },
 ];
 
