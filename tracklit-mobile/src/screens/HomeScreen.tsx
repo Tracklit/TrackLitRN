@@ -772,6 +772,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                   {todaySession.title && todaySession.title !== 'Day Training' ? todaySession.title : `Day ${todaySession.dayNumber} Session`}
                 </Text>
                 <HomeWorkoutContent session={todaySession} gymData={todayGymData} />
+                <RNText style={{ color: '#FF7A00', fontSize: 9, marginTop: 4 }}>
+                  DEBUG: {Object.keys(todaySession).filter(k => {
+                    const v = todaySession[k];
+                    return v !== null && v !== undefined && v !== '';
+                  }).map(k => `${k}=${JSON.stringify(todaySession[k]).substring(0, 30)}`).join(' | ')}
+                </RNText>
               </>
             ) : (
               <Text style={styles.practiceNoSession}>

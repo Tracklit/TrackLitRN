@@ -113,7 +113,9 @@ export const useProgramSessions = (programId: number | string | null) => {
       const programData = await apiRequest<ProgramResponse>(`/api/programs/${normalizedId}`);
       const rawSessions = programData.sessions && Array.isArray(programData.sessions)
         ? programData.sessions : [];
+      console.warn('[useProgramSessions] RAW sessions from API:', JSON.stringify(rawSessions));
       const sessions = parseSpreadsheetData(rawSessions);
+      console.warn('[useProgramSessions] PARSED sessions:', JSON.stringify(sessions));
       const maxDay = sessions.reduce((max, s) => Math.max(max, s.dayNumber || 0), 0);
       const duration = Math.max(programData.duration || 0, maxDay, sessions.length);
       return { sessions, duration };
