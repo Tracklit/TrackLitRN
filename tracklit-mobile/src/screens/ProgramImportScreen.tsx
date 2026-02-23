@@ -117,9 +117,9 @@ export const ProgramImportScreen: React.FC = () => {
   const [visibility, setVisibility] = useState<Visibility>('private');
   const [priceType, setPriceType] = useState<PriceType>('spikes');
   const [price, setPrice] = useState('0');
-  const [importDuration, setImportDuration] = useState('30');
-  const [importCategory, setImportCategory] = useState('sprint');
-  const [importLevel, setImportLevel] = useState('intermediate');
+  const [importDuration, setImportDuration] = useState('');
+  const [importCategory, setImportCategory] = useState('');
+  const [importLevel, setImportLevel] = useState('');
 
   const handleLinkChange = useCallback((text: string) => {
     setLinkInput(text);
@@ -166,8 +166,8 @@ export const ProgramImportScreen: React.FC = () => {
       if (!isAuthenticated || isGuest) throw new Error('Login required');
       if (!title.trim()) throw new Error('Program title is required');
       if (!linkInput.trim()) throw new Error('Google Sheet URL is required');
-      const durationNum = Number(importDuration);
-      if (!Number.isFinite(durationNum) || durationNum <= 0) throw new Error('Duration must be at least 1 day');
+      const durationNum = importDuration.trim() ? Number(importDuration) : undefined;
+      if (durationNum !== undefined && (!Number.isFinite(durationNum) || durationNum <= 0)) throw new Error('Duration must be a positive number');
       return apiRequest<{ program: { id: number | string }; importedSessions: number }>(
         '/api/programs/import-sheet',
         {
@@ -176,10 +176,10 @@ export const ProgramImportScreen: React.FC = () => {
             title: title.trim(),
             description: description.trim(),
             googleSheetUrl: linkInput.trim(),
-            category: importCategory,
-            level: importLevel,
+            ...(importCategory ? { category: importCategory } : {}),
+            ...(importLevel ? { level: importLevel } : {}),
             visibility,
-            duration: durationNum,
+            ...(durationNum !== undefined ? { duration: durationNum } : {}),
           },
         },
       );

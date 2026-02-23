@@ -134,9 +134,16 @@ export const PracticeScreen: React.FC = () => {
     const sessionsToUse = programSessions ?? [];
 
     const sessionsByDay: Record<number, any> = {};
+    const sessionsByDateKey: Record<string, any> = {};
+    const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     sessionsToUse.forEach((session: any) => {
       if (session.dayNumber != null) {
         sessionsByDay[session.dayNumber] = session;
+      }
+      const parsed = parseSessionDateForCard(session.date);
+      if (parsed) {
+        const key = `${MONTH_ABBR[parsed.getMonth()]}-${parsed.getDate()}`;
+        sessionsByDateKey[key] = session;
       }
     });
 
@@ -169,12 +176,17 @@ export const PracticeScreen: React.FC = () => {
         }
       }
 
-      const session = dayNum != null ? sessionsByDay[dayNum] || null : null;
+      const dateKey = `${MONTH_ABBR[dayDate.getMonth()]}-${dayDate.getDate()}`;
+      const session = sessionsByDateKey[dateKey] ?? (dayNum != null ? sessionsByDay[dayNum] || null : null);
 
       const dateString = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const dayOfWeek = dayDate.toLocaleDateString('en-US', { weekday: 'long' });
       const dayStr = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
       const isToday = dayStr === todayStr;
+
+      if (session && dayNum == null) {
+        dayNum = session.dayNumber ?? null;
+      }
 
       cards.push({
         id: `cal-${offset}`,

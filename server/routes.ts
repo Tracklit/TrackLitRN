@@ -5192,7 +5192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category,
         level,
         visibility,
-        duration: parseInt(duration),
+        duration: duration ? parseInt(duration) : (sheetData?.totalSessions || 30),
         importedFromSheet: true,
         googleSheetUrl,
         googleSheetId: sheetId,
