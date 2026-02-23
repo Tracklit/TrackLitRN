@@ -5,8 +5,6 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Modal,
-  Pressable,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,24 +14,19 @@ import {
   ClipboardText,
   Keyboard,
   Robot,
-  Upload,
   BookOpen,
   Check,
-  Paperclip,
   PencilSimple,
-  CloudArrowUp,
   MagicWand,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
-import * as DocumentPicker from 'expo-document-picker';
 
 import { Text } from '@/components/ui/Text';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
-import { uploadProgramFile } from '@/lib/upload';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 
@@ -55,7 +48,7 @@ const C = {
 type Visibility = 'public' | 'private' | 'premium';
 type PriceType = 'spikes' | 'money';
 type DurationWeeks = 1 | 2 | 4 | 6 | 8 | 12;
-type CreateMethod = 'builder' | 'upload' | 'text' | 'sprinthia' | 'import';
+type CreateMethod = 'builder' | 'text' | 'sprinthia';
 
 type CreateProgramPayload = {
   title: string;
@@ -97,15 +90,6 @@ export const ProgramCreateScreen: React.FC = () => {
   const [price, setPrice] = useState('0');
   const [duration, setDuration] = useState<DurationWeeks>(4);
   const [textContent, setTextContent] = useState('');
-  const [uploadFile, setUploadFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importTitle, setImportTitle] = useState('');
-  const [importDescription, setImportDescription] = useState('');
-  const [importSheetUrl, setImportSheetUrl] = useState('');
-  const [importVisibility, setImportVisibility] = useState<Visibility>('private');
-  const [importDuration, setImportDuration] = useState('30');
-  const [importCategory, setImportCategory] = useState('sprint');
-  const [importLevel, setImportLevel] = useState('intermediate');
   const [sprinthiaData, setSprinthiaData] = useState<SprinthiaFormData>({
     totalLengthWeeks: 4,
     blocks: 2,
@@ -148,61 +132,6 @@ export const ProgramCreateScreen: React.FC = () => {
     },
   });
 
-  const uploadProgramMutation = useMutation({
-    mutationFn: async () => {
-      if (!isAuthenticated || isGuest) throw new Error('Login required');
-      if (!uploadFile) throw new Error('Select a file to upload');
-      if (!title.trim()) throw new Error('Program title is required');
-      const priceNum = Number(price);
-      if (!Number.isFinite(priceNum) || priceNum < 0) throw new Error('Price must be 0 or greater');
-      return uploadProgramFile({
-        file: uploadFile,
-        fields: { title: title.trim(), description: description.trim(), visibility, price: priceNum, priceType, duration },
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
-      Alert.alert('Uploaded', 'Your program document was uploaded successfully.');
-      navigation.navigate('MainTabs', { screen: 'Programs' } as never);
-    },
-    onError: (error: Error) => {
-      Alert.alert('Unable to upload program', error.message || 'Please try again.');
-    },
-  });
-
-  const importSheetMutation = useMutation({
-    mutationFn: async () => {
-      if (!isAuthenticated || isGuest) throw new Error('Login required');
-      if (!importTitle.trim()) throw new Error('Program title is required');
-      if (!importSheetUrl.trim()) throw new Error('Google Sheet URL is required');
-      const durationNum = Number(importDuration);
-      if (!Number.isFinite(durationNum) || durationNum <= 0) throw new Error('Duration must be at least 1 day');
-      return apiRequest<{ program: { id: number | string }; importedSessions: number }>(
-        '/api/programs/import-sheet',
-        {
-          method: 'POST',
-          data: {
-            title: importTitle.trim(), description: importDescription.trim(),
-            googleSheetUrl: importSheetUrl.trim(), category: importCategory,
-            level: importLevel, visibility: importVisibility, duration: durationNum,
-          },
-        },
-      );
-    },
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
-      Alert.alert('Imported', `Program imported successfully with ${response?.importedSessions ?? 0} sessions.`);
-      setShowImportModal(false);
-      if (response?.program?.id !== undefined) navigation.replace('ProgramDetail', { id: response.program.id });
-      else navigation.navigate('MainTabs', { screen: 'Programs' } as never);
-    },
-    onError: (error: Error) => {
-      Alert.alert('Import failed', error.message || 'Please try again.');
-    },
-  });
-
   const generateSprinthiaMutation = useMutation({
     mutationFn: async () => {
       if (!isAuthenticated || isGuest) throw new Error('Login required');
@@ -242,22 +171,11 @@ export const ProgramCreateScreen: React.FC = () => {
   const pillText = (selected: boolean): any => [styles.pillText, selected && styles.pillTextActive];
 
   const methods = [
-    { id: 'upload' as const, title: 'Upload Document', description: 'Share existing training documents.', Icon: FileArrowUp },
+    { id: 'import' as const, title: 'Import / Upload', description: 'PDF, Sheets, CSV or DOCX.', Icon: FileArrowUp },
     { id: 'builder' as const, title: 'Program Builder', description: 'Structured sessions & exercises.', Icon: ClipboardText },
     { id: 'text' as const, title: 'Text Based', description: 'Simple text-based program.', Icon: Keyboard },
     { id: 'sprinthia' as const, title: 'Sprinthia AI', description: 'Generate with AI assistance.', Icon: Robot },
-    { id: 'import' as const, title: 'Import Sheets', description: 'Connect Google Sheets.', Icon: Upload },
   ];
-
-  const pickUploadFile = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
-      if (result.canceled) return;
-      setUploadFile(result.assets[0]);
-    } catch {
-      Alert.alert('File selection failed', 'Unable to select a document.');
-    }
-  };
 
   const handleCreateBuilder = () => {
     const priceNum = Number(price);
@@ -364,8 +282,11 @@ export const ProgramCreateScreen: React.FC = () => {
                 style={styles.methodCard}
                 activeOpacity={0.85}
                 onPress={() => {
-                  if (item.id === 'import') setShowImportModal(true);
-                  else setSelectedMethod(item.id);
+                  if (item.id === 'import') {
+                    navigation.navigate('ProgramImport');
+                  } else {
+                    setSelectedMethod(item.id);
+                  }
                 }}
               >
                 <View style={styles.methodIcon}>
@@ -400,29 +321,6 @@ export const ProgramCreateScreen: React.FC = () => {
               {renderPricingSection()}
               {renderGradientBtn('Create Program', handleCreateBuilder, createProgramMutation.isPending, <Check size={16} color="white" weight="fill" />)}
               {(!isAuthenticated || isGuest) && <Text style={styles.helperText}>Sign in to create programs.</Text>}
-            </View>
-          </View>
-        )}
-
-        {selectedMethod === 'upload' && (
-          <View style={styles.formCard}>
-            <View style={styles.formCardHeader}>
-              <FileArrowUp size={16} color={C.orange} weight="fill" />
-              <Text style={styles.formCardTitle}>Upload Program Document</Text>
-            </View>
-            <Text style={styles.formCardSubtitle}>Share existing training documents in PDF or DOCX format.</Text>
-            <View style={styles.formFields}>
-              <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={title} onChangeText={setTitle} />
-              <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={C.textMuted} value={description} onChangeText={setDescription} multiline />
-              <TouchableOpacity style={styles.uploadPicker} onPress={pickUploadFile}>
-                <Paperclip size={16} color={C.textPrimary} weight="fill" />
-                <Text style={styles.uploadPickerText}>{uploadFile?.name ?? 'Choose file'}</Text>
-              </TouchableOpacity>
-              <Text style={styles.helperText}>Supported formats: PDF, DOC, DOCX (max 10MB)</Text>
-              <Text style={styles.sectionLabel}>Visibility</Text>
-              {renderVisibilityPills(visibility, setVisibility, ensurePricing)}
-              {renderPricingSection()}
-              {renderGradientBtn('Upload Program', () => uploadProgramMutation.mutate(), uploadProgramMutation.isPending, <CloudArrowUp size={16} color="white" weight="fill" />)}
             </View>
           </View>
         )}
@@ -532,33 +430,6 @@ export const ProgramCreateScreen: React.FC = () => {
             </View>
           </View>
         )}
-
-        <Modal visible={showImportModal} transparent animationType="fade" onRequestClose={() => setShowImportModal(false)}>
-          <Pressable style={styles.modalOverlay} onPress={() => setShowImportModal(false)}>
-            <Pressable style={styles.importModal} onPress={() => undefined}>
-              <KeyboardAwareScreenScrollView showsVerticalScrollIndicator={false} extraScrollHeight={80} contentContainerStyle={{ gap: 12 }}>
-                <Text style={styles.importModalTitle}>Import from Google Sheet</Text>
-                <Text style={styles.formCardSubtitle}>Provide a public Google Sheet URL and program details.</Text>
-                <View style={styles.formFields}>
-                  <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={importTitle} onChangeText={setImportTitle} />
-                  <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={C.textMuted} value={importDescription} onChangeText={setImportDescription} multiline />
-                  <TextInput style={styles.input} placeholder="Google Sheet URL" placeholderTextColor={C.textMuted} value={importSheetUrl} onChangeText={setImportSheetUrl} />
-                  <TextInput style={styles.input} placeholder="Category (sprint, distance, jumps...)" placeholderTextColor={C.textMuted} value={importCategory} onChangeText={setImportCategory} />
-                  <TextInput style={styles.input} placeholder="Level (beginner, intermediate, advanced)" placeholderTextColor={C.textMuted} value={importLevel} onChangeText={setImportLevel} />
-                  <Text style={styles.sectionLabel}>Visibility</Text>
-                  {renderVisibilityPills(importVisibility, setImportVisibility)}
-                  <TextInput style={styles.input} placeholder="Duration (days)" placeholderTextColor={C.textMuted} value={importDuration} onChangeText={setImportDuration} keyboardType="number-pad" />
-                </View>
-                <View style={styles.importActions}>
-                  <TouchableOpacity style={styles.outlineBtn} onPress={() => setShowImportModal(false)}>
-                    <Text style={styles.outlineBtnText}>Cancel</Text>
-                  </TouchableOpacity>
-                  {renderGradientBtn('Import Program', () => importSheetMutation.mutate(), importSheetMutation.isPending)}
-                </View>
-              </KeyboardAwareScreenScrollView>
-            </Pressable>
-          </Pressable>
-        </Modal>
       </KeyboardAwareScreenScrollView>
     </View>
   );
@@ -770,22 +641,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: C.textMuted,
   },
-  uploadPicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    borderStyle: 'dashed',
-    backgroundColor: C.glass,
-  },
-  uploadPickerText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: C.textSecondary,
-  },
   helperText: {
     fontSize: 12,
     color: C.textMuted,
@@ -808,30 +663,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginTop: 4,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  importModal: {
-    backgroundColor: C.card,
-    borderRadius: 16,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    padding: 20,
-    maxHeight: '80%',
-  },
-  importModalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: C.textPrimary,
-    textAlign: 'center',
-  },
-  importActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 8,
   },
 });

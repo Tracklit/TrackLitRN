@@ -31,6 +31,7 @@ export type RootStackParamList = {
   SprintTimePrediction: undefined;
   ProgramDetail: { id: number | string };
   ProgramCreate: undefined;
+  ProgramImport: undefined;
   ProgramEditor: { id: number | string };
   Meets: undefined;
   CreateMeet: undefined;

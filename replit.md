@@ -44,3 +44,13 @@ The Tracklit mobile app is built using React Native (Expo SDK 54) with TypeScrip
 - **React Native Volume Manager:** For controlling device volume (used in Stopwatch).
 - **React Native Reanimated:** For advanced animations.
 - **AsyncStorage:** For local data persistence.
+- **xlsx:** For parsing .xlsx/.xls spreadsheet files locally on mobile.
+- **expo-document-picker:** For selecting documents (PDF, DOCX, CSV, XLSX) from the device.
+
+## Program Import/Upload Architecture
+The app uses a unified **Import / Upload** screen (`ProgramImportScreen`) that auto-detects input type:
+- **Google Sheets URL** → Regex-detected, parsed via backend `/api/programs/import-sheet`
+- **PDF/DOC/DOCX files** → Uploaded as document programs via `/api/programs/upload`
+- **CSV/XLSX files** → Parsed locally using `lib/spreadsheetParser.ts` (column mapping: A=Date, B=Pre-Activation 1, C=Pre-Activation 2, D=Short Distance, E=Medium Distance, F=Long Distance, G=Extra Session)
+
+The `ProgramCreateScreen` offers 4 methods: Import/Upload (navigates to ProgramImportScreen), Program Builder, Text Based, and Sprinthia AI.
