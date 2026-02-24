@@ -126,13 +126,19 @@ export const CreateGroupScreen: React.FC = () => {
       if (!token) throw new Error('Missing auth token');
 
       const memberIds = selectedMembers.map((m) => m.id);
+      const members = selectedMembers.map((m) => ({
+        id: m.id,
+        name: m.name,
+        username: m.username,
+        profileImageUrl: m.profileImageUrl,
+      }));
+
+      const formData = new FormData();
+      formData.append('name', name.trim());
+      if (description.trim()) formData.append('description', description.trim());
+      formData.append('isPrivate', String(isPrivate));
 
       if (imageUri) {
-        const formData = new FormData();
-        formData.append('name', name.trim());
-        if (description.trim()) formData.append('description', description.trim());
-        formData.append('isPrivate', String(isPrivate));
-
         const uriParts = imageUri.split('.');
         const ext = uriParts[uriParts.length - 1] || 'jpg';
         formData.append('image', {
@@ -140,44 +146,44 @@ export const CreateGroupScreen: React.FC = () => {
           name: `group.${ext}`,
           type: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
         } as any);
+      }
 
-        if (memberIds.length > 0) {
-          formData.append('memberIds', JSON.stringify(memberIds));
+      if (members.length > 0) {
+        formData.append('members', JSON.stringify(members));
+      }
+
+      console.log('[CreateGroup] POST /api/chat/groups', {
+        name: name.trim(),
+        hasImage: !!imageUri,
+        memberCount: members.length,
+      });
+
+      const response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const responseText = await response.text();
+      console.log('[CreateGroup] Response:', response.status, responseText.substring(0, 500));
+
+      if (!response.ok) {
+        let errorMsg = 'Failed to create group';
+        try {
+          const json = JSON.parse(responseText);
+          errorMsg = json.message || json.error || json.details || errorMsg;
+        } catch {
+          if (responseText) errorMsg = responseText;
         }
+        throw new Error(errorMsg);
+      }
 
-        const response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (!response.ok) {
-          let errorMsg = 'Failed to create group';
-          try {
-            const json = await response.json();
-            errorMsg = json.message || json.error || errorMsg;
-          } catch {
-            try {
-              errorMsg = await response.text() || errorMsg;
-            } catch {}
-          }
-          throw new Error(errorMsg);
-        }
-        return response.json();
-      } else {
-        const body: Record<string, any> = {
-          name: name.trim(),
-          isPrivate,
-        };
-        if (description.trim()) body.description = description.trim();
-        if (memberIds.length > 0) body.memberIds = memberIds;
-
-        return apiRequest('/api/chat/groups', {
-          method: 'POST',
-          data: body,
-        });
+      try {
+        return JSON.parse(responseText);
+      } catch {
+        return { success: true };
       }
     },
     onSuccess: () => {
@@ -187,7 +193,15 @@ export const CreateGroupScreen: React.FC = () => {
       navigation.goBack();
     },
     onError: (error: Error) => {
-      Alert.alert('Create failed', error.message || 'Please try again.');
+      console.log('[CreateGroup] Error:', error.message);
+      const msg = error.message || 'Unknown error';
+      const isGeneric = msg === 'Request failed' || msg === 'Failed to create group';
+      Alert.alert(
+        'Create failed',
+        isGeneric
+          ? 'Unable to create group. Check your connection and try again.'
+          : msg,
+      );
     },
   });
 
