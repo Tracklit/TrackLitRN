@@ -6,7 +6,6 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  ScrollView,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,7 +15,6 @@ import {
   FileArrowUp,
   Paperclip,
   Check,
-  CloudArrowUp,
   Table,
   FilePdf,
   Warning,
@@ -26,12 +24,14 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 
 import { Text } from '@/components/ui/Text';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { uploadProgramFile } from '@/lib/upload';
+import { parseSpreadsheet, type ParsedSession } from '@/lib/spreadsheetParser';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 
@@ -236,24 +236,85 @@ export const ProgramImportScreen: React.FC = () => {
       if (!isAuthenticated || isGuest) throw new Error('Login required');
       if (!file) throw new Error('Select a spreadsheet file');
       if (!title.trim()) throw new Error('Program title is required');
-      return uploadProgramFile({
-        file,
-        fields: {
+
+      const ext = (file.name || '').split('.').pop()?.toLowerCase() || '';
+      let parsed;
+
+      if (ext === 'csv') {
+        const content = await FileSystem.readAsStringAsync(file.uri);
+        parsed = parseSpreadsheet(content, file.name);
+      } else {
+        const base64 = await FileSystem.readAsStringAsync(file.uri, { encoding: FileSystem.EncodingType.Base64 });
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        const lookup = new Uint8Array(256);
+        for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;
+        const clean = base64.replace(/[^A-Za-z0-9+/]/g, '');
+        const bufLen = (clean.length * 3) / 4 - (base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0);
+        const bytes = new Uint8Array(bufLen);
+        let p = 0;
+        for (let i = 0; i < clean.length; i += 4) {
+          const a = lookup[clean.charCodeAt(i)];
+          const b = lookup[clean.charCodeAt(i + 1)];
+          const c = lookup[clean.charCodeAt(i + 2)];
+          const d = lookup[clean.charCodeAt(i + 3)];
+          bytes[p++] = (a << 2) | (b >> 4);
+          if (p < bufLen) bytes[p++] = ((b & 15) << 4) | (c >> 2);
+          if (p < bufLen) bytes[p++] = ((c & 3) << 6) | d;
+        }
+        parsed = parseSpreadsheet(bytes.buffer as ArrayBuffer, file.name);
+      }
+
+      if (!parsed.sessions.length) throw new Error('No sessions found in the spreadsheet');
+
+      const durationInput = importDuration.trim() ? Number(importDuration) : undefined;
+      if (durationInput !== undefined && (!Number.isFinite(durationInput) || durationInput <= 0)) throw new Error('Duration must be a positive number');
+      const durationNum = durationInput ?? parsed.sessions.length;
+      const program = await apiRequest<{ id: number | string }>('/api/programs', {
+        method: 'POST',
+        data: {
           title: title.trim(),
-          description: description.trim(),
+          description: description.trim() || `Imported from ${file.name}`,
           visibility,
           price: 0,
           priceType: 'spikes',
-          duration: Number(importDuration) || 30,
-          parseAsSpreadsheet: true,
+          duration: durationNum,
+          importedFromSheet: true,
+          ...(importCategory ? { category: importCategory } : {}),
+          ...(importLevel ? { level: importLevel } : {}),
         },
       });
+
+      if (!program?.id) throw new Error('Failed to create program');
+
+      const sessionPayloads = parsed.sessions.map((s: ParsedSession) => ({
+        programId: program.id,
+        dayNumber: s.dayNumber,
+        date: s.date,
+        preActivation1: s.preActivation1,
+        preActivation2: s.preActivation2,
+        shortDistanceWorkout: s.shortDistanceWorkout,
+        mediumDistanceWorkout: s.mediumDistanceWorkout,
+        longDistanceWorkout: s.longDistanceWorkout,
+        extraSession: s.extraSession,
+        isRestDay: s.isRestDay,
+        title: s.title,
+        description: s.description,
+        gymData: s.gymData,
+      }));
+
+      await apiRequest(`/api/programs/${program.id}/sessions/batch`, {
+        method: 'PUT',
+        data: { sessions: sessionPayloads },
+      });
+
+      return { program, importedSessions: parsed.sessions.length };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
       queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
-      Alert.alert('Imported', 'Spreadsheet sessions imported.');
-      navigation.navigate('MainTabs', { screen: 'Programs' } as never);
+      Alert.alert('Imported', `Spreadsheet imported with ${result?.importedSessions ?? 0} sessions.`);
+      if (result?.program?.id !== undefined) navigation.replace('ProgramDetail', { id: result.program.id });
+      else navigation.navigate('MainTabs', { screen: 'Programs' } as never);
     },
     onError: (error: Error) => {
       Alert.alert('Import failed', error.message || 'Please try again.');
