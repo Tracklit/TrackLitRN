@@ -40,8 +40,8 @@ const C = {
   textMuted: 'rgba(255,255,255,0.4)',
   border: 'rgba(255,255,255,0.06)',
   iconBg: 'rgba(255,255,255,0.05)',
-  green: '#22c55e',
-  yellow: '#eab308',
+  connected: 'rgba(255,255,255,0.5)',
+  requested: 'rgba(255,255,255,0.35)',
 };
 
 interface Coach {
@@ -165,8 +165,8 @@ export const CoachesScreen: React.FC = () => {
     if (isCoached) {
       return (
         <View style={styles.statusBadge}>
-          <CheckCircle size={12} color={C.green} weight="fill" />
-          <Text style={[styles.statusText, { color: C.green }]}>Your Coach</Text>
+          <CheckCircle size={12} color={C.connected} weight="fill" />
+          <Text style={[styles.statusText, { color: C.connected }]}>Your Coach</Text>
         </View>
       );
     }
@@ -174,8 +174,8 @@ export const CoachesScreen: React.FC = () => {
     if (isPending) {
       return (
         <View style={styles.statusBadge}>
-          <Clock size={12} color={C.yellow} weight="fill" />
-          <Text style={[styles.statusText, { color: C.yellow }]}>Pending</Text>
+          <Clock size={12} color={C.requested} weight="fill" />
+          <Text style={[styles.statusText, { color: C.requested }]}>Requested</Text>
         </View>
       );
     }
