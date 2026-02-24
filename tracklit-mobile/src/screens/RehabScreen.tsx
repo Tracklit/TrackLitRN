@@ -1,27 +1,51 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import LinearGradient from 'react-native-linear-gradient';
-import { Heart, Bot, Sparkles, ArrowRight, Bone, Zap, Activity, MessageSquare, ArrowLeft } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Heart,
+  Lightning,
+  FirstAidKit,
+  Bone,
+  Robot,
+  Sparkle,
+  ArrowRight,
+  ChatCircleDots,
+  Info,
+} from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
-import { WebScreen } from '@/components/web/Screen';
-import { WebCard } from '@/components/web/Card';
-import { WebButton } from '@/components/web/Button';
+import { LinearGradient } from '@/components/LinearGradient';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
-import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
+
+const C = {
+  bg: '#0E0F14',
+  card: '#1C1F2B',
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8C0FF',
+  textMuted: '#8A90B5',
+  border: 'rgba(255,255,255,0.08)',
+  glass: 'rgba(255,255,255,0.05)',
+  red: '#ef4444',
+  blue: '#60a5fa',
+  purple: '#a855f7',
+};
 
 const rehabCategories = [
   {
     id: 'acute-muscle',
     title: 'Acute Muscle Injuries',
     description: 'Evidence-based recovery programs for sudden muscle injuries',
-    icon: <Heart size={28} color="#ef4444" />,
-    borderColor: '#fecaca',
+    iconColor: C.red,
+    IconComponent: Heart,
+    accentBorder: 'rgba(239,68,68,0.25)',
     subpages: [
       { id: 'hamstring', name: 'Hamstring' },
       { id: 'quad', name: 'Quadriceps' },
@@ -33,8 +57,9 @@ const rehabCategories = [
     id: 'chronic-injuries',
     title: 'Chronic Injuries',
     description: 'Long-term management for persistent and overuse injuries',
-    icon: <Zap size={28} color={theme.colors.primary} />,
-    borderColor: 'rgba(124, 58, 237, 0.5)',
+    iconColor: C.orange,
+    IconComponent: Lightning,
+    accentBorder: 'rgba(255,122,0,0.25)',
     subpages: [
       { id: 'foot', name: 'Foot' },
       { id: 'hamstring', name: 'Hamstring' },
@@ -48,8 +73,9 @@ const rehabCategories = [
     id: 'back-injuries',
     title: 'Back Injuries',
     description: 'Specialized programs for spinal and back-related issues',
-    icon: <Activity size={28} color="#60a5fa" />,
-    borderColor: '#bfdbfe',
+    iconColor: C.blue,
+    IconComponent: FirstAidKit,
+    accentBorder: 'rgba(96,165,250,0.25)',
     subpages: [
       { id: 'disc', name: 'Disc Issues' },
       { id: 'ligament', name: 'Ligament' },
@@ -60,8 +86,9 @@ const rehabCategories = [
     id: 'bone-breaks',
     title: 'Bone Breaks',
     description: 'Recovery protocols for fractures and bone injuries',
-    icon: <Bone size={28} color="#a855f7" />,
-    borderColor: '#e9d5ff',
+    iconColor: C.purple,
+    IconComponent: Bone,
+    accentBorder: 'rgba(168,85,247,0.25)',
     subpages: [
       { id: 'ankle', name: 'Ankle' },
       { id: 'knee', name: 'Knee' },
@@ -73,6 +100,7 @@ const rehabCategories = [
 ];
 
 export const RehabScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user } = useAuth();
 
@@ -97,177 +125,328 @@ export const RehabScreen: React.FC = () => {
   };
 
   return (
-    <WebScreen backgroundColor="#010a18" contentStyle={{ paddingTop: theme.spacing.xl }}>
-      <View style={styles.headerRow}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={16} color={theme.colors.foreground} />
+          <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
-      </View>
-      <View style={styles.hero}>
-        <View style={styles.heroTitleRow}>
-          <Heart size={32} color="#ef4444" />
-          <Text variant="h1" weight="bold" color="foreground">
-            Rehabilitation Center
-          </Text>
-        </View>
-        <Text variant="body" color="muted" center style={styles.heroCopy}>
-          Evidence-based recovery programs designed to get you back to peak performance safely and effectively
-        </Text>
+        <Text style={styles.headerTitle}>Rehabilitation</Text>
+        <View style={{ flex: 1 }} />
       </View>
 
-      <LinearGradient
-        colors={['rgba(88, 28, 135, 0.2)', 'rgba(30, 64, 175, 0.2)']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.aiCard}
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.aiHeaderRow}>
-          <View style={styles.aiTitleRow}>
-            <Bot size={20} color="#c084fc" />
-            <Text variant="h4" weight="semiBold" color="foreground">
-              AI Rehabilitation Consultant
-            </Text>
+        <View style={styles.hero}>
+          <View style={styles.heroIconRow}>
+            <View style={styles.heroIconCircle}>
+              <Heart size={24} color={C.red} weight="fill" />
+            </View>
+          </View>
+          <Text style={styles.heroTitle}>Rehabilitation Center</Text>
+          <Text style={styles.heroSubtitle}>
+            Evidence-based recovery programs designed to get you back to peak performance safely and effectively.
+          </Text>
+        </View>
+
+        <LinearGradient
+          colors={['rgba(168,85,247,0.12)', 'rgba(96,165,250,0.08)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.aiCard}
+        >
+          <View style={styles.aiHeaderRow}>
+            <Robot size={20} color={C.purple} weight="fill" />
+            <Text style={styles.aiTitle}>AI Rehabilitation Consultant</Text>
             <View style={styles.aiBadge}>
-              <Text variant="small" color="accent">
+              <Text style={styles.aiBadgeText}>
                 {isStarUser ? 'Star Feature' : '50 Spikes'}
               </Text>
             </View>
           </View>
-          <Text variant="small" color="muted">
-            Get personalized rehabilitation guidance from our AI specialist. Describe your injury, symptoms, and current status for a customized recovery program.
+          <Text style={styles.aiDescription}>
+            Get personalized rehabilitation guidance from our AI specialist. Describe your injury for a customized recovery program.
           </Text>
-        </View>
-          <WebButton
-          onPress={() => navigation.navigate('MainTabs', { screen: 'Sprinthia' } as never)}
-          style={styles.aiButton}
+          <TouchableOpacity
+            style={styles.aiButton}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Sprinthia' } as never)}
+            activeOpacity={0.8}
           >
-            <Sparkles size={16} color={theme.colors.primaryForeground} />
-            <Text variant="body" weight="bold" color="primary-foreground">
-            Start AI Consultation with Sprinthia
+            <LinearGradient
+              colors={[C.orange, C.orangeLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.aiButtonInner}
+            >
+              <Sparkle size={16} color="#fff" weight="fill" />
+              <Text style={styles.aiButtonText}>Start AI Consultation</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          {!isStarUser && (
+            <Text style={styles.aiCost}>
+              This consultation costs 50 Spikes. You have {spikes} Spikes.
             </Text>
-          </WebButton>
-        {!isStarUser && (
-              <Text variant="small" color="muted">
-                This consultation will cost 50 Spikes. You currently have {spikes} Spikes.
-              </Text>
-            )}
-      </LinearGradient>
+          )}
+        </LinearGradient>
 
-      <View style={styles.grid}>
-        {categories.map((category) => (
-          <WebCard
-            key={category.id}
-            tone="muted"
-            padding={theme.spacing.lg}
-            style={[styles.categoryCard, { borderColor: category.borderColor }]}
-          >
-            <View style={styles.cardTop}>
-              {category.icon}
-              <View style={{ flex: 1, gap: theme.spacing.xs }}>
-                <Text variant="body" weight="semiBold" color="foreground">
-                  {category.title}
-                </Text>
-                <Text variant="small" color="muted">
-                  {category.description}
-                </Text>
+        <View style={styles.categoriesContainer}>
+          {categories.map((category) => {
+            const Icon = category.IconComponent;
+            return (
+              <View
+                key={category.id}
+                style={[styles.categoryCard, { borderColor: category.accentBorder }]}
+              >
+                <View style={styles.cardTop}>
+                  <View style={[styles.categoryIcon, { backgroundColor: `${category.iconColor}15` }]}>
+                    <Icon size={22} color={category.iconColor} weight="fill" />
+                  </View>
+                  <View style={styles.categoryTextBlock}>
+                    <Text style={styles.categoryTitle}>{category.title}</Text>
+                    <Text style={styles.categoryDescription}>{category.description}</Text>
+                  </View>
+                </View>
+                <Text style={styles.availableLabel}>Available Programs</Text>
+                <View style={styles.subGrid}>
+                  {category.subpages.map((subpage) => (
+                    <TouchableOpacity
+                      key={subpage.id}
+                      style={styles.subButton}
+                      onPress={() => handleProgramPress(category.id, subpage.id, subpage.name)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.subButtonText}>{subpage.name}</Text>
+                      <ArrowRight size={12} color={C.textMuted} weight="bold" />
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
-            <Text variant="small" color="muted">
-              Available Programs:
-            </Text>
-            <View style={styles.subGrid}>
-              {category.subpages.map((subpage) => (
-                <TouchableOpacity
-                  key={subpage.id}
-                  style={styles.subButton}
-                  onPress={() => handleProgramPress(category.id, subpage.id, subpage.name)}
-                >
-                  <Text variant="small" color="foreground" weight="semiBold">
-                    {subpage.name}
-                  </Text>
-                  <ArrowRight size={12} color={theme.colors.foreground} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </WebCard>
-        ))}
-      </View>
+            );
+          })}
+        </View>
 
-      <WebCard tone="muted" padding={theme.spacing.lg} style={styles.infoCard}>
-        <View style={styles.infoHeader}>
-          <MessageSquare size={18} color="#60a5fa" />
-          <Text variant="body" weight="semiBold" color="foreground">
-            Professional Guidance
+        <View style={styles.infoCard}>
+          <View style={styles.infoHeader}>
+            <Info size={16} color={C.blue} weight="fill" />
+            <Text style={styles.infoTitle}>Professional Guidance</Text>
+          </View>
+          <Text style={styles.infoText}>
+            All programs are based on current sports medicine research. These programs complement professional medical care — always consult your healthcare provider before starting any rehabilitation program.
           </Text>
         </View>
-        <Text variant="small" color="muted" center>
-          All rehabilitation programs are based on current sports medicine research and best practices. These programs are designed to complement professional medical care, not replace it. Always consult with your healthcare provider before starting any rehabilitation program, especially for serious injuries or persistent pain.
-        </Text>
-      </WebCard>
-    </WebScreen>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  headerRow: { alignItems: 'flex-start' },
+  container: { flex: 1, backgroundColor: C.bg },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2937',
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  content: {
+    paddingHorizontal: 20,
+    gap: 20,
   },
   hero: {
     alignItems: 'center',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    gap: 10,
+    paddingVertical: 8,
   },
-  heroTitleRow: {
-    flexDirection: 'row',
+  heroIconRow: {
+    marginBottom: 4,
+  },
+  heroIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(239,68,68,0.25)',
     alignItems: 'center',
-    gap: theme.spacing.md,
     justifyContent: 'center',
-    flexWrap: 'wrap',
   },
-  heroCopy: {
-    maxWidth: 520,
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: C.textPrimary,
+    letterSpacing: -0.3,
+    textAlign: 'center',
+  },
+  heroSubtitle: {
+    fontSize: 13,
+    color: C.textMuted,
+    lineHeight: 20,
+    textAlign: 'center',
+    maxWidth: 320,
   },
   aiCard: {
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.3)',
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: 'rgba(168,85,247,0.2)',
+    padding: 16,
+    gap: 12,
   },
-  aiHeaderRow: { gap: theme.spacing.sm },
-  aiTitleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, flexWrap: 'wrap' },
+  aiHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  aiTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
   aiBadge: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: 'rgba(168,85,247,0.15)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(168,85,247,0.3)',
   },
-  aiButton: { width: '100%' },
-  grid: { flexDirection: 'column', gap: theme.spacing.md },
-  categoryCard: { borderWidth: 1 },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
-  subGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
+  aiBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: C.purple,
+  },
+  aiDescription: {
+    fontSize: 13,
+    color: C.textMuted,
+    lineHeight: 19,
+  },
+  aiButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  aiButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  aiButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  aiCost: {
+    fontSize: 11,
+    color: C.textMuted,
+    textAlign: 'center',
+  },
+  categoriesContainer: {
+    gap: 12,
+  },
+  categoryCard: {
+    backgroundColor: C.card,
+    borderRadius: 14,
+    borderWidth: 0.5,
+    padding: 16,
+    gap: 12,
+  },
+  cardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  categoryIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryTextBlock: {
+    flex: 1,
+    gap: 3,
+  },
+  categoryTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  categoryDescription: {
+    fontSize: 12,
+    color: C.textMuted,
+    lineHeight: 17,
+  },
+  availableLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  subGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   subButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: '#374151',
-    backgroundColor: 'rgba(55, 65, 81, 0.5)',
-    minWidth: 140,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    backgroundColor: C.glass,
+    minWidth: 120,
+    gap: 8,
   },
-  infoCard: { alignItems: 'center' },
-  infoHeader: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+  subButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.textPrimary,
+  },
+  infoCard: {
+    backgroundColor: C.card,
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 16,
+    gap: 10,
+    alignItems: 'center',
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.textPrimary,
+  },
+  infoText: {
+    fontSize: 12,
+    color: C.textMuted,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
 });
-

@@ -1,24 +1,50 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+  Alert,
+  ScrollView,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, MapPin, Trophy, ChevronRight, UserPlus, Check, Clock } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  MagnifyingGlass,
+  Trophy,
+  UserPlus,
+  CheckCircle,
+  Clock,
+  MapPin,
+  SealCheck,
+} from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
-import { WebScreen } from '@/components/web/Screen';
-import { WebPageHeader } from '@/components/web/PageHeader';
-import { WebCard } from '@/components/web/Card';
-import { WebBadge } from '@/components/web/Badge';
-import { WebButton } from '@/components/web/Button';
+import { SkeletonListRows } from '@/components/Skeleton';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
-import { SkeletonListRows } from '@/components/Skeleton';
-import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
+
+const C = {
+  bg: '#0E0F14',
+  card: '#1C1F2B',
+  orange: '#FF7A00',
+  orangeLight: '#FF9D00',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8C0FF',
+  textMuted: '#8A90B5',
+  border: 'rgba(255,255,255,0.08)',
+  glass: 'rgba(255,255,255,0.05)',
+  green: '#22c55e',
+  yellow: '#eab308',
+};
 
 interface Coach {
   id: number;
@@ -39,6 +65,7 @@ interface CoachingRequest {
 }
 
 export const CoachesScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
@@ -53,14 +80,12 @@ export const CoachesScreen: React.FC = () => {
     enabled: isAuthenticated && !isGuest,
   });
 
-  // Fetch existing coaching relationships
   const myCoachesQuery = useQuery({
     queryKey: ['my-coaches'],
     queryFn: () => apiRequest<Coach[]>('/api/athlete/coaches'),
     enabled: isAuthenticated && !isGuest,
   });
 
-  // Fetch pending coaching requests
   const coachingRequestsQuery = useQuery({
     queryKey: ['coaching-requests'],
     queryFn: () => apiRequest<{ sent: CoachingRequest[]; received: CoachingRequest[] }>('/api/coaching-requests'),
@@ -78,7 +103,6 @@ export const CoachesScreen: React.FC = () => {
     return sentRequests.some((r) => r.toUserId === coachId && r.status === 'pending');
   }, [sentRequests]);
 
-  // Request coaching mutation
   const requestCoachingMutation = useMutation({
     mutationFn: async (coachId: number) => {
       return apiRequest<{ success: boolean }>('/api/coaching-requests', {
@@ -100,17 +124,17 @@ export const CoachesScreen: React.FC = () => {
     },
     onError: (error: Error, coachId: number) => {
       setPendingRequests((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(coachId);
-        return newSet;
+        const s = new Set(prev);
+        s.delete(coachId);
+        return s;
       });
       Alert.alert('Error', error.message || 'Failed to send coaching request');
     },
     onSettled: (_data, _error, coachId: number) => {
       setPendingRequests((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(coachId);
-        return newSet;
+        const s = new Set(prev);
+        s.delete(coachId);
+        return s;
       });
     },
   });
@@ -120,22 +144,10 @@ export const CoachesScreen: React.FC = () => {
   }, [requestCoachingMutation]);
 
   const handleCoachPress = useCallback((coach: Coach) => {
-    Alert.alert(
-      coach.name,
-      `@${coach.username}\n\n${coach.bio || 'No bio available'}${coach.location ? `\n\n📍 ${coach.location}` : ''}`,
-      [
-        { text: 'Close', style: 'cancel' },
-        {
-          text: 'Message',
-          onPress: () => {
-            navigation.navigate('ChatConversation', {
-              conversationId: coach.id,
-              type: 'direct',
-            });
-          },
-        },
-      ]
-    );
+    navigation.navigate('ChatConversation', {
+      conversationId: coach.id,
+      type: 'direct',
+    });
   }, [navigation]);
 
   const filtered = useMemo(() => {
@@ -154,9 +166,9 @@ export const CoachesScreen: React.FC = () => {
 
     if (isCoached) {
       return (
-        <View style={styles.coachBadge}>
-          <Check size={14} color="#22c55e" />
-          <Text variant="small" style={{ color: '#22c55e' }} weight="semiBold">Your Coach</Text>
+        <View style={styles.connectedBadge}>
+          <CheckCircle size={14} color={C.green} weight="fill" />
+          <Text style={styles.connectedText}>Your Coach</Text>
         </View>
       );
     }
@@ -164,8 +176,8 @@ export const CoachesScreen: React.FC = () => {
     if (isPending) {
       return (
         <View style={styles.pendingBadge}>
-          <Clock size={14} color="#eab308" />
-          <Text variant="small" style={{ color: '#eab308' }} weight="semiBold">Pending</Text>
+          <Clock size={14} color={C.yellow} weight="fill" />
+          <Text style={styles.pendingText}>Pending</Text>
         </View>
       );
     }
@@ -175,13 +187,14 @@ export const CoachesScreen: React.FC = () => {
         style={styles.requestButton}
         onPress={() => handleRequestCoaching(coach.id)}
         disabled={isSending}
+        activeOpacity={0.8}
       >
         {isSending ? (
-          <ActivityIndicator size="small" color={theme.colors.primary} />
+          <ActivityIndicator size="small" color={C.orange} />
         ) : (
           <>
-            <UserPlus size={14} color={theme.colors.primary} />
-            <Text variant="small" color="primary" weight="semiBold">Request</Text>
+            <UserPlus size={14} color={C.orange} weight="fill" />
+            <Text style={styles.requestButtonText}>Request</Text>
           </>
         )}
       </TouchableOpacity>
@@ -189,151 +202,246 @@ export const CoachesScreen: React.FC = () => {
   }, [isMyCoach, hasPendingRequest, pendingRequests, handleRequestCoaching]);
 
   return (
-    <WebScreen backgroundColor="#0b1220" contentStyle={{ paddingTop: theme.spacing.lg }}>
-      <View style={styles.headerRow}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ChevronRight size={18} color={theme.colors.foreground} style={{ transform: [{ rotate: '180deg' }] }} />
+          <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
-        <WebPageHeader title="Coaches" description="Connect with experienced track and field coaches." />
+        <Text style={styles.headerTitle}>Coaches</Text>
+        <View style={{ flex: 1 }} />
       </View>
 
-      <WebCard tone="muted" padding={theme.spacing.md}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.pageSubtitle}>Connect with experienced track and field coaches.</Text>
+
         <View style={styles.searchRow}>
-          <Search size={16} color={theme.colors.textMuted} />
+          <MagnifyingGlass size={16} color={C.textMuted} weight="bold" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search coaches by name, username, or bio..."
-            placeholderTextColor={theme.colors.textMuted}
+            placeholder="Search coaches by name or bio..."
+            placeholderTextColor={C.textMuted}
             value={search}
             onChangeText={setSearch}
           />
         </View>
-      </WebCard>
 
-      {isGuest ? (
-        <Text variant="body" color="muted" style={{ textAlign: 'center' }}>
-          Sign in to browse coaches.
-        </Text>
-      ) : coachesQuery.isLoading ? (
-        <View style={styles.center}>
-          <SkeletonListRows count={4} />
-        </View>
-      ) : coachesQuery.isError ? (
-        <Text variant="body" color="muted" style={{ textAlign: 'center' }}>
-          Unable to load coaches.
-        </Text>
-      ) : filtered.length === 0 ? (
-        <WebCard tone="muted" padding={theme.spacing.lg}>
-          <View style={styles.emptyRow}>
-            <Trophy size={24} color={theme.colors.textMuted} />
-            <Text variant="body" color="muted">No coaches found.</Text>
+        {isGuest ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>Sign in to browse coaches.</Text>
           </View>
-        </WebCard>
-      ) : (
-        filtered.map((coach) => (
-          <TouchableOpacity key={coach.id} onPress={() => handleCoachPress(coach)} activeOpacity={0.7}>
-            <WebCard tone="muted" padding={theme.spacing.md}>
-              <View style={styles.itemRow}>
+        ) : coachesQuery.isLoading ? (
+          <SkeletonListRows count={4} />
+        ) : coachesQuery.isError ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>Unable to load coaches.</Text>
+          </View>
+        ) : filtered.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Trophy size={28} color={C.textMuted} weight="fill" />
+            <Text style={styles.emptyText}>No coaches found.</Text>
+          </View>
+        ) : (
+          <View style={styles.listContainer}>
+            {filtered.map((coach) => (
+              <TouchableOpacity
+                key={coach.id}
+                style={styles.coachCard}
+                onPress={() => handleCoachPress(coach)}
+                activeOpacity={0.7}
+              >
                 <Avatar
                   size="lg"
                   fallback={coach.name?.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                   src={coach.profileImageUrl || undefined}
                 />
-                <View style={{ flex: 1, gap: theme.spacing.xs }}>
+                <View style={styles.coachInfo}>
                   <View style={styles.nameRow}>
-                    <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
+                    <Text style={styles.coachName} numberOfLines={1}>
                       {coach.name}
                     </Text>
                     {!!coach.isVerified && (
-                      <WebBadge variant="secondary">Verified</WebBadge>
+                      <SealCheck size={16} color={C.orange} weight="fill" />
                     )}
                   </View>
-                  <Text variant="small" color="muted" numberOfLines={1}>
-                    @{coach.username}
-                  </Text>
+                  <Text style={styles.coachUsername} numberOfLines={1}>@{coach.username}</Text>
                   {!!coach.location && (
                     <View style={styles.locationRow}>
-                      <MapPin size={12} color={theme.colors.textMuted} />
-                      <Text variant="small" color="muted" numberOfLines={1}>
-                        {coach.location}
-                      </Text>
+                      <MapPin size={12} color={C.textMuted} weight="fill" />
+                      <Text style={styles.locationText} numberOfLines={1}>{coach.location}</Text>
                     </View>
                   )}
                   {!!coach.bio && (
-                    <Text variant="small" color="muted" numberOfLines={2}>
-                      {coach.bio}
-                    </Text>
+                    <Text style={styles.bioText} numberOfLines={2}>{coach.bio}</Text>
                   )}
                 </View>
                 {renderCoachButton(coach)}
-              </View>
-            </WebCard>
-          </TouchableOpacity>
-        ))
-      )}
-    </WebScreen>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  container: { flex: 1, backgroundColor: C.bg },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2937',
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  content: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  pageSubtitle: {
+    fontSize: 13,
+    color: C.textMuted,
+    lineHeight: 20,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    backgroundColor: '#0f172a',
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: '#1f2937',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    gap: 10,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    backgroundColor: C.glass,
   },
-  searchInput: { flex: 1, color: theme.colors.foreground },
-  center: { alignItems: 'center', gap: theme.spacing.sm, paddingVertical: theme.spacing.xl },
-  emptyRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
-  itemRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 14,
+    color: C.textPrimary,
+    fontSize: 14,
+  },
+  emptyCard: {
+    backgroundColor: C.card,
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: C.textMuted,
+    textAlign: 'center',
+  },
+  listContainer: {
+    gap: 10,
+  },
+  coachCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: C.card,
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    padding: 14,
+  },
+  coachInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  coachName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.textPrimary,
+    flexShrink: 1,
+  },
+  coachUsername: {
+    fontSize: 12,
+    color: C.textMuted,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  locationText: {
+    fontSize: 11,
+    color: C.textMuted,
+  },
+  bioText: {
+    fontSize: 12,
+    color: C.textSecondary,
+    lineHeight: 17,
+    marginTop: 2,
+  },
   requestButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: C.orange,
   },
-  coachBadge: {
+  requestButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.orange,
+  },
+  connectedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: '#22c55e',
+    gap: 5,
+    borderWidth: 0.5,
+    borderColor: C.green,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  connectedText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.green,
   },
   pendingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: '#eab308',
+    gap: 5,
+    borderWidth: 0.5,
+    borderColor: C.yellow,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  pendingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.yellow,
   },
 });
-
-
