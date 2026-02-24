@@ -426,16 +426,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   connectButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 0.5,
-    borderColor: C.orange,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    backgroundColor: C.orange,
   },
   connectText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.orange,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000',
   },
   statusBadge: {
     flexDirection: 'row',
