@@ -50,7 +50,12 @@ The Tracklit mobile app is built using React Native (Expo SDK 54) with TypeScrip
 ## Program Import/Upload Architecture
 The app uses a unified **Import / Upload** screen (`ProgramImportScreen`) that auto-detects input type:
 - **Google Sheets URL** → Regex-detected, parsed via backend `/api/programs/import-sheet`
+  - **Simple template**: 2 columns (A=Date, B=Session text). Session text stored in `description` field. Detected on mobile when all 6 workout fields are empty but description has content.
+  - **Advanced template**: 7 columns (A=Date, B=Pre-Activation 1, C=Pre-Activation 2, D=Short Distance, E=Medium Distance, F=Long Distance, G=Extra Session)
+  - Template type passed as `sheetTemplate` parameter to the API; server uses `fetchSimpleSpreadsheetData` or `fetchSpreadsheetData` accordingly
 - **PDF/DOC/DOCX files** → Uploaded as document programs via `/api/programs/upload`
-- **CSV/XLSX files** → Parsed locally using `lib/spreadsheetParser.ts` (column mapping: A=Date, B=Pre-Activation 1, C=Pre-Activation 2, D=Short Distance, E=Medium Distance, F=Long Distance, G=Extra Session)
+- **CSV/XLSX files** → Parsed locally using `lib/spreadsheetParser.ts` (Advanced column mapping)
 
 The `ProgramCreateScreen` offers 4 methods: Import/Upload (navigates to ProgramImportScreen), Program Builder, Text Based, and Sprinthia AI.
+
+**Practice Screen Session Mapping**: Sessions are matched to calendar dates using both a direct date-key lookup (Mon-DD format) and a sequential dayNumber offset from program start date. Date-key takes priority to handle sheets with rest days or gaps.

@@ -5155,7 +5155,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category, 
         level, 
         visibility, 
-        duration 
+        duration,
+        sheetTemplate 
       } = req.body;
       
       // Extract sheet ID from the URL
@@ -5173,9 +5174,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Import the sheets utility and fetch data
-        const { fetchSpreadsheetData } = await import('./utils/sheets');
-        console.log(`Attempting to fetch Google Sheet with ID: ${sheetId}`);
-        sheetData = await fetchSpreadsheetData(sheetId);
+        const { fetchSpreadsheetData, fetchSimpleSpreadsheetData } = await import('./utils/sheets');
+        console.log(`Attempting to fetch Google Sheet with ID: ${sheetId}, template: ${sheetTemplate || 'advanced'}`);
+        sheetData = sheetTemplate === 'simple'
+          ? await fetchSimpleSpreadsheetData(sheetId)
+          : await fetchSpreadsheetData(sheetId);
         console.log(`Successfully fetched sheet data: ${sheetData.title} with ${sheetData.totalSessions} sessions`);
       } catch (err) {
         console.error("Failed to fetch Google Sheet data:", err);

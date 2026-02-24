@@ -6,6 +6,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import {
   Table,
   FilePdf,
   Warning,
+  Info,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -51,6 +53,7 @@ const C = {
 type Visibility = 'public' | 'private' | 'premium';
 type PriceType = 'spikes' | 'money';
 type DetectedType = 'google_sheet' | 'document' | 'spreadsheet' | null;
+type SheetTemplate = 'simple' | 'advanced';
 
 const GOOGLE_SHEET_REGEX = /docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/;
 
@@ -120,6 +123,7 @@ export const ProgramImportScreen: React.FC = () => {
   const [importDuration, setImportDuration] = useState('');
   const [importCategory, setImportCategory] = useState('');
   const [importLevel, setImportLevel] = useState('');
+  const [sheetTemplate, setSheetTemplate] = useState<SheetTemplate>('simple');
 
   const handleLinkChange = useCallback((text: string) => {
     setLinkInput(text);
@@ -180,6 +184,7 @@ export const ProgramImportScreen: React.FC = () => {
             ...(importLevel ? { level: importLevel } : {}),
             visibility,
             ...(durationNum !== undefined ? { duration: durationNum } : {}),
+            sheetTemplate,
           },
         },
       );
@@ -338,6 +343,62 @@ export const ProgramImportScreen: React.FC = () => {
             <TouchableOpacity onPress={clearInput} style={styles.clearBtn}>
               <Text style={styles.clearBtnText}>Clear</Text>
             </TouchableOpacity>
+          </View>
+        )}
+
+        {detectedType === 'google_sheet' && (
+          <View style={styles.templateSection}>
+            <Text style={styles.sectionLabel}>Sheet Template</Text>
+            <View style={styles.templateToggle}>
+              {(['simple', 'advanced'] as const).map((t) => (
+                <TouchableOpacity
+                  key={t}
+                  style={[styles.templateBtn, sheetTemplate === t && styles.templateBtnActive]}
+                  onPress={() => setSheetTemplate(t)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.templateBtnText, sheetTemplate === t && styles.templateBtnTextActive]}>
+                    {t === 'simple' ? 'Simple' : 'Advanced'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {sheetTemplate === 'simple' && (
+              <View style={styles.instructionsCard}>
+                <View style={styles.instructionsHeader}>
+                  <Info size={14} color={C.orange} weight="fill" />
+                  <Text style={styles.instructionsTitle}>How to format your sheet</Text>
+                </View>
+                <Text style={styles.instructionsBody}>
+                  Your Google Sheet should have 2 columns:{'\n\n'}
+                  <Text style={styles.instructionsBold}>Column A</Text> — Date (e.g. Feb-24, Mar-1){'\n'}
+                  <Text style={styles.instructionsBold}>Column B</Text> — Session details (your full workout description){'\n\n'}
+                  The first row should be a header row (it will be skipped).{'\n'}
+                  Each row after that becomes one training session.
+                </Text>
+                <View style={styles.exampleTable}>
+                  <View style={styles.exampleRow}>
+                    <View style={[styles.exampleCell, styles.exampleHeaderCell]}><Text style={styles.exampleHeaderText}>A</Text></View>
+                    <View style={[styles.exampleCell, styles.exampleHeaderCell, { flex: 3 }]}><Text style={styles.exampleHeaderText}>B</Text></View>
+                  </View>
+                  <View style={styles.exampleRow}>
+                    <View style={styles.exampleCell}><Text style={styles.exampleCellText}>Feb-24</Text></View>
+                    <View style={[styles.exampleCell, { flex: 3 }]}><Text style={styles.exampleCellText}>Warm up, 4x60m, 3x150m, cool down</Text></View>
+                  </View>
+                  <View style={styles.exampleRow}>
+                    <View style={styles.exampleCell}><Text style={styles.exampleCellText}>Feb-25</Text></View>
+                    <View style={[styles.exampleCell, { flex: 3 }]}><Text style={styles.exampleCellText}>Tempo runs 6x200m, core work</Text></View>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {sheetTemplate === 'advanced' && (
+              <Text style={styles.templateHint}>
+                Advanced uses 7 columns: Date, Pre-Act 1, Pre-Act 2, Short Distance, Medium Distance, Long Distance, Extra Session.
+              </Text>
+            )}
           </View>
         )}
 
@@ -668,5 +729,96 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  templateSection: {
+    gap: 10,
+  },
+  templateToggle: {
+    flexDirection: 'row',
+    gap: 0,
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    overflow: 'hidden',
+  },
+  templateBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: C.glass,
+  },
+  templateBtnActive: {
+    backgroundColor: 'rgba(255,122,0,0.15)',
+  },
+  templateBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.textMuted,
+  },
+  templateBtnTextActive: {
+    color: C.orange,
+  },
+  templateHint: {
+    fontSize: 12,
+    color: C.textMuted,
+    lineHeight: 18,
+  },
+  instructionsCard: {
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,122,0,0.05)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.15)',
+    padding: 14,
+    gap: 10,
+  },
+  instructionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  instructionsTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.orange,
+  },
+  instructionsBody: {
+    fontSize: 12,
+    color: C.textSecondary,
+    lineHeight: 19,
+  },
+  instructionsBold: {
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  exampleTable: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: C.border,
+  },
+  exampleRow: {
+    flexDirection: 'row',
+  },
+  exampleCell: {
+    flex: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRightWidth: 0.5,
+    borderBottomWidth: 0.5,
+    borderColor: C.border,
+    backgroundColor: C.glass,
+  },
+  exampleHeaderCell: {
+    backgroundColor: 'rgba(255,122,0,0.1)',
+  },
+  exampleHeaderText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: C.orange,
+    textAlign: 'center',
+  },
+  exampleCellText: {
+    fontSize: 11,
+    color: C.textSecondary,
   },
 });

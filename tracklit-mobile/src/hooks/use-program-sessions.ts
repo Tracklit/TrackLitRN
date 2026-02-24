@@ -20,6 +20,8 @@ interface ProgramSession {
   mediumDistanceWorkout?: string;
   longDistanceWorkout?: string;
   extraSession?: string;
+  sessionText?: string;
+  isSimpleTemplate?: boolean;
   title?: string;
   description?: string;
   notes?: string | null;
@@ -80,16 +82,32 @@ const parseSpreadsheetData = (sessions: ProgramSession[]) => {
     const normalizedDate = normalizeDateKey(dateSource);
     const dayNumber = typeof session.dayNumber === 'number' ? session.dayNumber : index + 1;
 
+    const preAct1 = firstNonEmpty(session.preActivation1, session.columnB);
+    const preAct2 = firstNonEmpty(session.preActivation2, session.columnC);
+    const shortDist = firstNonEmpty(session.shortDistanceWorkout, session.columnD);
+    const medDist = firstNonEmpty(session.mediumDistanceWorkout, session.columnE);
+    const longDist = firstNonEmpty(session.longDistanceWorkout, session.columnF);
+    const extra = firstNonEmpty(session.columnG, session.extraSession);
+    const desc = session.description;
+
+    const isSimple = session.isSimpleTemplate || (
+      !preAct1 && !preAct2 && !shortDist && !medDist && !longDist && !extra
+      && !!desc && desc !== 'Training Session' && desc !== 'Rest and Recovery'
+    );
+    const sessionText = isSimple ? desc : undefined;
+
     return {
       ...session,
       dayNumber,
       date: normalizedDate ?? dateSource ?? undefined,
-      preActivation1: firstNonEmpty(session.preActivation1, session.columnB),
-      preActivation2: firstNonEmpty(session.preActivation2, session.columnC),
-      shortDistanceWorkout: firstNonEmpty(session.shortDistanceWorkout, session.columnD),
-      mediumDistanceWorkout: firstNonEmpty(session.mediumDistanceWorkout, session.columnE),
-      longDistanceWorkout: firstNonEmpty(session.longDistanceWorkout, session.columnF),
-      extraSession: firstNonEmpty(session.columnG, session.extraSession),
+      preActivation1: preAct1,
+      preActivation2: preAct2,
+      shortDistanceWorkout: shortDist,
+      mediumDistanceWorkout: medDist,
+      longDistanceWorkout: longDist,
+      extraSession: extra,
+      sessionText,
+      isSimpleTemplate: isSimple,
       title: session.title || 'Day Training',
       description: session.description || 'Training Session',
       notes: session.notes || null,

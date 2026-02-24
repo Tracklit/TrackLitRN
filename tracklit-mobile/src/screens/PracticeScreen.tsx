@@ -549,14 +549,18 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
   const sessionTitle = sessionData.title && sessionData.title !== 'Day Training' ? sessionData.title : null;
   const sessionDescription = sessionData.description && sessionData.description !== 'Training Session' ? sessionData.description : null;
 
-  const contentSections = [
-    { label: 'PA1', value: sessionData.preActivation1 },
-    { label: 'PA2', value: sessionData.preActivation2 },
-    { label: '60/100', value: sessionData.shortDistanceWorkout },
-    { label: '200', value: sessionData.mediumDistanceWorkout },
-    { label: '400', value: sessionData.longDistanceWorkout },
-    { label: 'Extra', value: sessionData.extraSession },
-  ];
+  const isSimple = sessionData.isSimpleTemplate || !!sessionData.sessionText;
+
+  const contentSections = isSimple
+    ? [{ label: 'Session', value: sessionData.sessionText }]
+    : [
+        { label: 'PA1', value: sessionData.preActivation1 },
+        { label: 'PA2', value: sessionData.preActivation2 },
+        { label: '60/100', value: sessionData.shortDistanceWorkout },
+        { label: '200', value: sessionData.mediumDistanceWorkout },
+        { label: '400', value: sessionData.longDistanceWorkout },
+        { label: 'Extra', value: sessionData.extraSession },
+      ];
 
   const hasAnyContent = hasGymData || contentSections.some((s) => !!s.value) || sessionTitle || sessionData.notes;
 

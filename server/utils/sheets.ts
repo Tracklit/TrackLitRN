@@ -359,6 +359,68 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
   }
 }
 
+export async function fetchSimpleSpreadsheetData(sheetId: string) {
+  try {
+    console.log(`Fetching Simple template sheet: ${sheetId}`);
+    const rows = await fetchPublicSheet(sheetId);
+    console.log(`Fetched ${rows.length} rows from simple sheet`);
+
+    const dataRows = rows.length > 1 ? rows.slice(1) : rows;
+
+    let sheetTitle = 'My Training Program';
+    try {
+      const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=properties.title&key=${process.env.GOOGLE_API_KEY}`;
+      const titleResponse = await fetch(apiUrl);
+      if (titleResponse.ok) {
+        const data = await titleResponse.json();
+        if (data?.properties?.title) {
+          sheetTitle = data.properties.title;
+        }
+      } else {
+        const fetchUrl = `https://docs.google.com/spreadsheets/d/${sheetId}`;
+        const htmlResponse = await fetch(fetchUrl);
+        const htmlText = await htmlResponse.text();
+        const titleMatch = htmlText.match(/<title>(.*?)<\/title>/i);
+        if (titleMatch?.[1]) {
+          sheetTitle = titleMatch[1].replace(' - Google Sheets', '').replace(' - Google Drive', '').trim();
+        }
+      }
+    } catch (e) {
+      console.warn("Couldn't extract sheet title:", e);
+    }
+
+    const sessions = dataRows.map((row, index) => {
+      const dateValue = (row[0] || '').replace(/^"|"$/g, '');
+      const sessionText = (row[1] || '').replace(/^"|"$/g, '');
+      const isRestDay = !dateValue.trim() || !sessionText.trim();
+
+      return {
+        dayNumber: index + 1,
+        date: dateValue,
+        preActivation1: '',
+        preActivation2: '',
+        shortDistanceWorkout: '',
+        mediumDistanceWorkout: '',
+        longDistanceWorkout: '',
+        extraSession: '',
+        isRestDay,
+        title: `Day ${index + 1} Training`,
+        description: sessionText,
+      };
+    });
+
+    return {
+      title: sheetTitle,
+      totalSessions: sessions.length,
+      sessions,
+      isSimpleTemplate: true,
+    };
+  } catch (error) {
+    console.error('Error fetching simple spreadsheet data:', error);
+    throw error;
+  }
+}
+
 export async function fetchSpreadsheetData(sheetId: string) {
   try {
     console.log(`Attempting to fetch Google Sheet: ${sheetId}`);
