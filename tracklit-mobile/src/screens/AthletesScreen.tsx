@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft,
+  CaretLeft,
   MagnifyingGlass,
   Users,
   UserPlus,
@@ -32,14 +32,12 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 const C = {
   bg: '#0E0F14',
-  card: '#1C1F2B',
   orange: '#FF7A00',
-  orangeLight: '#FF9D00',
   textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  glass: 'rgba(255,255,255,0.05)',
+  textSecondary: 'rgba(255,255,255,0.7)',
+  textMuted: 'rgba(255,255,255,0.4)',
+  border: 'rgba(255,255,255,0.06)',
+  iconBg: 'rgba(255,255,255,0.05)',
   green: '#22c55e',
   yellow: '#eab308',
 };
@@ -178,18 +176,18 @@ export const AthletesScreen: React.FC = () => {
 
     if (isFriend) {
       return (
-        <View style={styles.connectedBadge}>
-          <CheckCircle size={14} color={C.green} weight="fill" />
-          <Text style={styles.connectedText}>Connected</Text>
+        <View style={styles.statusBadge}>
+          <CheckCircle size={12} color={C.green} weight="fill" />
+          <Text style={[styles.statusText, { color: C.green }]}>Connected</Text>
         </View>
       );
     }
 
     if (isPending) {
       return (
-        <View style={styles.pendingBadge}>
-          <Clock size={14} color={C.yellow} weight="fill" />
-          <Text style={styles.pendingText}>Pending</Text>
+        <View style={styles.statusBadge}>
+          <Clock size={12} color={C.yellow} weight="fill" />
+          <Text style={[styles.statusText, { color: C.yellow }]}>Pending</Text>
         </View>
       );
     }
@@ -199,113 +197,116 @@ export const AthletesScreen: React.FC = () => {
         style={styles.connectButton}
         onPress={() => handleConnect(athlete.id)}
         disabled={isSending}
-        activeOpacity={0.8}
+        activeOpacity={0.6}
       >
         {isSending ? (
-          <ActivityIndicator size="small" color="#000" />
+          <ActivityIndicator size="small" color={C.orange} />
         ) : (
-          <>
-            <UserPlus size={14} color="#000" weight="fill" />
-            <Text style={styles.connectButtonText}>Connect</Text>
-          </>
+          <Text style={styles.connectText}>Connect</Text>
         )}
       </TouchableOpacity>
     );
   }, [isAlreadyFriend, hasPendingRequest, pendingRequests, handleConnect]);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
+          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Athletes</Text>
         <View style={{ flex: 1 }} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.pageSubtitle}>Search athletes by name or username.</Text>
-
+      <View style={styles.searchContainer}>
         <View style={styles.searchRow}>
-          <MagnifyingGlass size={16} color={C.textMuted} weight="bold" />
+          <MagnifyingGlass size={14} color={C.textMuted} weight="bold" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search athletes..."
+            placeholder="Search by name or username"
             placeholderTextColor={C.textMuted}
             value={search}
             onChangeText={handleSearchChange}
           />
         </View>
+      </View>
 
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
+        showsVerticalScrollIndicator={false}
+      >
         {isGuest ? (
-          <View style={styles.emptyCard}>
+          <View style={styles.emptyContainer}>
+            <Users size={40} color={C.textMuted} weight="fill" />
             <Text style={styles.emptyText}>Sign in to browse athletes.</Text>
           </View>
         ) : athletesQuery.isLoading && page === 1 ? (
-          <SkeletonListRows count={4} />
+          <SkeletonListRows count={6} />
         ) : athletesQuery.isError ? (
-          <View style={styles.emptyCard}>
+          <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Unable to load athletes.</Text>
           </View>
         ) : athletes.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Users size={28} color={C.textMuted} weight="fill" />
+          <View style={styles.emptyContainer}>
+            <Users size={40} color={C.textMuted} weight="fill" />
             <Text style={styles.emptyText}>No athletes found.</Text>
           </View>
         ) : (
-          <View style={styles.listContainer}>
-            {athletes.map((a) => (
-              <TouchableOpacity
-                key={a.id}
-                style={styles.athleteCard}
-                onPress={() => handleAthletePress(a)}
-                activeOpacity={0.7}
-              >
-                <Avatar
-                  size="md"
-                  fallback={(a.name || a.username || 'U').slice(0, 2)}
-                  src={a.profileImageUrl || undefined}
-                />
-                <View style={styles.athleteInfo}>
-                  <View style={styles.nameRow}>
-                    <Text style={styles.athleteName} numberOfLines={1}>
-                      {a.name || 'TrackLit Athlete'}
-                    </Text>
-                    {isCoach(a) && (
-                      <View style={styles.coachTag}>
-                        <Text style={styles.coachTagText}>COACH</Text>
-                      </View>
+          <View style={styles.list}>
+            {athletes.map((a, index) => (
+              <View key={a.id}>
+                {index > 0 && <View style={styles.itemSeparator} />}
+                <TouchableOpacity
+                  onPress={() => handleAthletePress(a)}
+                  activeOpacity={0.6}
+                  style={styles.itemRow}
+                >
+                  <Avatar
+                    size="sm"
+                    fallback={(a.name || a.username || 'U').slice(0, 2)}
+                    src={a.profileImageUrl || undefined}
+                  />
+                  <View style={styles.itemBody}>
+                    <View style={styles.itemHeaderRow}>
+                      <Text style={styles.itemName} numberOfLines={1}>
+                        {a.name || 'TrackLit Athlete'}
+                      </Text>
+                      {isCoach(a) && (
+                        <View style={styles.coachTag}>
+                          <Text style={styles.coachTagText}>COACH</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.itemUsername} numberOfLines={1}>@{a.username}</Text>
+                    {(a.isFollowing || a.isFollower) && (
+                      <Text style={styles.itemMeta}>
+                        {a.isFollowing ? 'Following' : ''}
+                        {a.isFollowing && a.isFollower ? ' · ' : ''}
+                        {a.isFollower ? 'Follows you' : ''}
+                      </Text>
                     )}
                   </View>
-                  <Text style={styles.athleteUsername} numberOfLines={1}>@{a.username}</Text>
-                  {(a.isFollowing || a.isFollower) && (
-                    <Text style={styles.followInfo}>
-                      {a.isFollowing ? 'Following' : ''}
-                      {a.isFollowing && a.isFollower ? ' · ' : ''}
-                      {a.isFollower ? 'Follows you' : ''}
-                    </Text>
-                  )}
-                </View>
-                {renderConnectionButton(a)}
-              </TouchableOpacity>
+                  {renderConnectionButton(a)}
+                </TouchableOpacity>
+              </View>
             ))}
 
             {hasMore && (
-              <TouchableOpacity
-                style={styles.loadMoreButton}
-                onPress={handleLoadMore}
-                disabled={athletesQuery.isFetching}
-                activeOpacity={0.8}
-              >
-                {athletesQuery.isFetching ? (
-                  <ActivityIndicator size="small" color={C.orange} />
-                ) : (
-                  <Text style={styles.loadMoreText}>Show More</Text>
-                )}
-              </TouchableOpacity>
+              <>
+                <View style={styles.itemSeparator} />
+                <TouchableOpacity
+                  style={styles.loadMoreRow}
+                  onPress={handleLoadMore}
+                  disabled={athletesQuery.isFetching}
+                  activeOpacity={0.6}
+                >
+                  {athletesQuery.isFetching ? (
+                    <ActivityIndicator size="small" color={C.orange} />
+                  ) : (
+                    <Text style={styles.loadMoreText}>Show More</Text>
+                  )}
+                </TouchableOpacity>
+              </>
             )}
           </View>
         )}
@@ -320,173 +321,138 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    gap: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: C.border,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: C.glass,
-    borderWidth: 0.5,
-    borderColor: C.border,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: C.iconBg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: C.textPrimary,
+    letterSpacing: 0.3,
   },
-  content: {
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  pageSubtitle: {
-    fontSize: 13,
-    color: C.textMuted,
-    lineHeight: 20,
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: C.border,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    backgroundColor: C.glass,
+    gap: 8,
+    backgroundColor: C.iconBg,
+    borderRadius: 10,
+    paddingHorizontal: 12,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 10,
     color: C.textPrimary,
-    fontSize: 14,
+    fontSize: 13,
   },
-  emptyCard: {
-    backgroundColor: C.card,
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    padding: 24,
+  content: {
+    padding: 16,
+  },
+  emptyContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    paddingVertical: 60,
+    gap: 12,
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: 13,
     color: C.textMuted,
     textAlign: 'center',
+    lineHeight: 20,
   },
-  listContainer: {
-    gap: 10,
+  list: {
+    gap: 0,
   },
-  athleteCard: {
+  itemSeparator: {
+    height: 0.5,
+    backgroundColor: C.border,
+    marginLeft: 48,
+  },
+  itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: C.card,
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    padding: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
-  athleteInfo: {
+  itemBody: {
     flex: 1,
     gap: 2,
   },
-  nameRow: {
+  itemHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
-  athleteName: {
-    fontSize: 14,
+  itemName: {
+    fontSize: 13,
     fontWeight: '600',
     color: C.textPrimary,
     flexShrink: 1,
   },
-  athleteUsername: {
-    fontSize: 12,
+  itemUsername: {
+    fontSize: 11,
     color: C.textMuted,
   },
-  followInfo: {
-    fontSize: 11,
+  itemMeta: {
+    fontSize: 10,
     color: C.textSecondary,
-    marginTop: 2,
+    marginTop: 1,
   },
   coachTag: {
-    backgroundColor: 'rgba(255,122,0,0.15)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,122,0,0.3)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
   },
   coachTagText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '800',
     color: C.orange,
     letterSpacing: 0.5,
   },
   connectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: C.orange,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-    minWidth: 90,
-    justifyContent: 'center',
-  },
-  connectButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#000',
-  },
-  connectedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    borderWidth: 0.5,
-    borderColor: C.green,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: C.orange,
   },
-  connectedText: {
-    fontSize: 12,
+  connectText: {
+    fontSize: 11,
     fontWeight: '600',
-    color: C.green,
+    color: C.orange,
   },
-  pendingBadge: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    borderWidth: 0.5,
-    borderColor: C.yellow,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    gap: 4,
   },
-  pendingText: {
-    fontSize: 12,
+  statusText: {
+    fontSize: 10,
     fontWeight: '600',
-    color: C.yellow,
   },
-  loadMoreButton: {
+  loadMoreRow: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    marginTop: 4,
-    backgroundColor: C.card,
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: C.border,
   },
   loadMoreText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: C.orange,
   },
