@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { launchImageLibrary, type Asset } from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import {
   CaretLeft,
   Camera,
@@ -69,7 +69,7 @@ export const CreateGroupScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
-  const [imageAsset, setImageAsset] = useState<Asset | null>(null);
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<Friend[]>([]);
 
   const friendsQuery = useQuery({
@@ -81,18 +81,28 @@ export const CreateGroupScreen: React.FC = () => {
   const friends = useMemo(() => friendsQuery.data ?? [], [friendsQuery.data]);
 
   const pickImage = useCallback(async () => {
-    const result = await launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.8 });
-    if (result.didCancel) return;
-    if (result.errorCode) {
-      Alert.alert('Unable to pick image', result.errorMessage || 'Please try again.');
-      return;
+    try {
+      const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permResult.status !== 'granted') {
+        Alert.alert('Permission needed', 'Photo library permission is required to choose a group photo.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets?.[0]) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch {
+      Alert.alert('Error', 'Could not open photo library.');
     }
-    const asset = result.assets?.[0] ?? null;
-    if (asset?.uri) setImageAsset(asset);
   }, []);
 
   const removeImage = useCallback(() => {
-    setImageAsset(null);
+    setImageUri(null);
   }, []);
 
   const toggleMember = useCallback((friend: Friend) => {
@@ -115,48 +125,60 @@ export const CreateGroupScreen: React.FC = () => {
       const token = await getToken();
       if (!token) throw new Error('Missing auth token');
 
-      const formData = new FormData();
-      formData.append('name', name.trim());
-      if (description.trim()) formData.append('description', description.trim());
-      formData.append('isPrivate', String(isPrivate));
-      if (imageAsset?.uri) {
-        formData.append('image', {
-          uri: imageAsset.uri,
-          name: imageAsset.fileName || 'group.jpg',
-          type: imageAsset.type || 'image/jpeg',
-        } as any);
-      }
-      if (selectedMembers.length > 0) {
-        formData.append(
-          'members',
-          JSON.stringify(
-            selectedMembers.map((m) => ({
-              id: m.id,
-              name: m.name,
-              username: m.username,
-              profileImageUrl: m.profileImageUrl,
-            })),
-          ),
-        );
-      }
+      const memberIds = selectedMembers.map((m) => m.id);
 
-      const response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      if (!response.ok) {
-        let errorMsg = 'Failed to create group';
-        try {
-          const json = await response.json();
-          errorMsg = json.message || json.error || errorMsg;
-        } catch {
-          const text = await response.text();
-          if (text) errorMsg = text;
+      if (imageUri) {
+        const formData = new FormData();
+        formData.append('name', name.trim());
+        if (description.trim()) formData.append('description', description.trim());
+        formData.append('isPrivate', String(isPrivate));
+
+        const uriParts = imageUri.split('.');
+        const ext = uriParts[uriParts.length - 1] || 'jpg';
+        formData.append('image', {
+          uri: imageUri,
+          name: `group.${ext}`,
+          type: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
+        } as any);
+
+        if (memberIds.length > 0) {
+          formData.append('memberIds', JSON.stringify(memberIds));
         }
-        throw new Error(errorMsg);
+
+        const response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          let errorMsg = 'Failed to create group';
+          try {
+            const json = await response.json();
+            errorMsg = json.message || json.error || errorMsg;
+          } catch {
+            try {
+              errorMsg = await response.text() || errorMsg;
+            } catch {}
+          }
+          throw new Error(errorMsg);
+        }
+        return response.json();
+      } else {
+        const body: Record<string, any> = {
+          name: name.trim(),
+          isPrivate,
+        };
+        if (description.trim()) body.description = description.trim();
+        if (memberIds.length > 0) body.memberIds = memberIds;
+
+        return apiRequest('/api/chat/groups', {
+          method: 'POST',
+          data: body,
+        });
       }
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chat-groups'] });
@@ -207,9 +229,9 @@ export const CreateGroupScreen: React.FC = () => {
         ) : (
           <>
             <TouchableOpacity style={styles.imagePickerRow} onPress={pickImage} activeOpacity={0.6}>
-              {imageAsset?.uri ? (
+              {imageUri ? (
                 <View style={styles.imagePreviewWrap}>
-                  <Image source={{ uri: imageAsset.uri }} style={styles.imagePreview} />
+                  <Image source={{ uri: imageUri }} style={styles.imagePreview} />
                   <TouchableOpacity style={styles.removeImageBtn} onPress={removeImage}>
                     <X size={12} color={C.textPrimary} weight="bold" />
                   </TouchableOpacity>
