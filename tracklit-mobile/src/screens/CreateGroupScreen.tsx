@@ -135,8 +135,8 @@ export const CreateGroupScreen: React.FC = () => {
 
       const formData = new FormData();
       formData.append('name', name.trim());
-      if (description.trim()) formData.append('description', description.trim());
-      formData.append('isPrivate', String(isPrivate));
+      formData.append('description', description.trim() || '');
+      formData.append('isPrivate', isPrivate ? 'true' : 'false');
 
       if (imageUri) {
         const uriParts = imageUri.split('.');
@@ -152,17 +152,16 @@ export const CreateGroupScreen: React.FC = () => {
         formData.append('members', JSON.stringify(members));
       }
 
-      console.log('[CreateGroup] POST /api/chat/groups', {
+      console.log('[CreateGroup] POST /api/chat/groups (FormData)', {
         name: name.trim(),
+        isPrivate: isPrivate ? 'true' : 'false',
         hasImage: !!imageUri,
         memberCount: members.length,
       });
 
       const response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 

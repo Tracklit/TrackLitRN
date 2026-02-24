@@ -1,3 +1,5 @@
+import * as XLSX from 'xlsx';
+
 export interface ParsedSession {
   dayNumber: number;
   date: string;
@@ -174,6 +176,27 @@ export function parseCSVString(csvString: string, title?: string): ParsedSpreads
 
   return {
     title: title || 'My Training Program',
+    totalSessions: sessions.length,
+    sessions,
+  };
+}
+
+export function parseXLSXBase64(base64: string, title?: string): ParsedSpreadsheet {
+  const workbook = XLSX.read(base64, { type: 'base64' });
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) throw new Error('No sheets found in the workbook');
+
+  const sheet = workbook.Sheets[sheetName];
+  const rows: string[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+  if (rows.length === 0) throw new Error('Empty spreadsheet');
+
+  const stringRows = rows.map((row) => row.map((cell) => String(cell ?? '')));
+  const dataRows = stringRows.length > 1 ? stringRows.slice(1) : stringRows;
+  const sessions = mapRowsToSessions(dataRows);
+
+  return {
+    title: title || sheetName || 'My Training Program',
     totalSessions: sessions.length,
     sessions,
   };

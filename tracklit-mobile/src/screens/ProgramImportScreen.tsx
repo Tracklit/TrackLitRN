@@ -31,7 +31,7 @@ import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwa
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { uploadProgramFile } from '@/lib/upload';
-import { parseCSVString, type ParsedSession } from '@/lib/spreadsheetParser';
+import { parseCSVString, parseXLSXBase64, type ParsedSession } from '@/lib/spreadsheetParser';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 
@@ -238,27 +238,18 @@ export const ProgramImportScreen: React.FC = () => {
       if (!title.trim()) throw new Error('Program title is required');
 
       const ext = (file.name || '').split('.').pop()?.toLowerCase() || '';
-
-      if (ext === 'xlsx' || ext === 'xls') {
-        return uploadProgramFile({
-          file,
-          fields: {
-            title: title.trim(),
-            description: description.trim(),
-            visibility,
-            price: 0,
-            priceType: 'spikes',
-            duration: Number(importDuration) || 0,
-            parseAsSpreadsheet: true,
-            ...(importCategory ? { category: importCategory } : {}),
-            ...(importLevel ? { level: importLevel } : {}),
-          },
-        });
-      }
-
-      const content = await FileSystem.readAsStringAsync(file.uri);
       const baseName = file.name.replace(/\.[^.]+$/, '');
-      const parsed = parseCSVString(content, baseName);
+
+      let parsed;
+      if (ext === 'xlsx' || ext === 'xls') {
+        const base64 = await FileSystem.readAsStringAsync(file.uri, {
+          encoding: 'base64',
+        });
+        parsed = parseXLSXBase64(base64, baseName);
+      } else {
+        const content = await FileSystem.readAsStringAsync(file.uri);
+        parsed = parseCSVString(content, baseName);
+      }
 
       if (!parsed.sessions.length) throw new Error('No sessions found in the spreadsheet');
 
