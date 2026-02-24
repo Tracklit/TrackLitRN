@@ -1,5 +1,3 @@
-import * as XLSX from 'xlsx';
-
 export interface ParsedSession {
   dayNumber: number;
   date: string;
@@ -91,16 +89,6 @@ function parseCSV(csv: string): string[][] {
   return rows;
 }
 
-function xlsxBufferToCSV(buffer: ArrayBuffer): string {
-  const workbook = XLSX.read(buffer, { type: 'array' });
-  const firstSheetName = workbook.SheetNames[0];
-  if (!firstSheetName) {
-    throw new Error('No sheets found in the workbook');
-  }
-  const worksheet = workbook.Sheets[firstSheetName];
-  return XLSX.utils.sheet_to_csv(worksheet);
-}
-
 function mapRowsToSessions(dataRows: string[][]): ParsedSession[] {
   return dataRows.map((row, index) => {
     const dateValue = row[0] || '';
@@ -189,40 +177,4 @@ export function parseCSVString(csvString: string, title?: string): ParsedSpreads
     totalSessions: sessions.length,
     sessions,
   };
-}
-
-export function parseXLSXBuffer(
-  buffer: ArrayBuffer,
-  title?: string,
-): ParsedSpreadsheet {
-  const csvString = xlsxBufferToCSV(buffer);
-  return parseCSVString(csvString, title);
-}
-
-export function parseSpreadsheet(
-  input: string | ArrayBuffer,
-  fileName: string,
-): ParsedSpreadsheet {
-  const baseName = fileName.replace(/\.[^.]+$/, '');
-  const extension = fileName.split('.').pop()?.toLowerCase();
-
-  if (extension === 'csv') {
-    if (typeof input !== 'string') {
-      throw new Error('CSV input must be a string');
-    }
-    return parseCSVString(input, baseName);
-  }
-
-  if (extension === 'xlsx' || extension === 'xls') {
-    if (typeof input === 'string') {
-      const bytes = new Uint8Array(input.length);
-      for (let i = 0; i < input.length; i++) {
-        bytes[i] = input.charCodeAt(i);
-      }
-      return parseXLSXBuffer(bytes.buffer as ArrayBuffer, baseName);
-    }
-    return parseXLSXBuffer(input, baseName);
-  }
-
-  throw new Error(`Unsupported file type: .${extension}`);
 }

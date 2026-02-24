@@ -31,7 +31,7 @@ import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwa
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { uploadProgramFile } from '@/lib/upload';
-import { parseSpreadsheet, type ParsedSession } from '@/lib/spreadsheetParser';
+import { parseCSVString, type ParsedSession } from '@/lib/spreadsheetParser';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 
@@ -238,31 +238,27 @@ export const ProgramImportScreen: React.FC = () => {
       if (!title.trim()) throw new Error('Program title is required');
 
       const ext = (file.name || '').split('.').pop()?.toLowerCase() || '';
-      let parsed;
 
-      if (ext === 'csv') {
-        const content = await FileSystem.readAsStringAsync(file.uri);
-        parsed = parseSpreadsheet(content, file.name);
-      } else {
-        const base64 = await FileSystem.readAsStringAsync(file.uri, { encoding: FileSystem.EncodingType.Base64 });
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-        const lookup = new Uint8Array(256);
-        for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;
-        const clean = base64.replace(/[^A-Za-z0-9+/]/g, '');
-        const bufLen = (clean.length * 3) / 4 - (base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0);
-        const bytes = new Uint8Array(bufLen);
-        let p = 0;
-        for (let i = 0; i < clean.length; i += 4) {
-          const a = lookup[clean.charCodeAt(i)];
-          const b = lookup[clean.charCodeAt(i + 1)];
-          const c = lookup[clean.charCodeAt(i + 2)];
-          const d = lookup[clean.charCodeAt(i + 3)];
-          bytes[p++] = (a << 2) | (b >> 4);
-          if (p < bufLen) bytes[p++] = ((b & 15) << 4) | (c >> 2);
-          if (p < bufLen) bytes[p++] = ((c & 3) << 6) | d;
-        }
-        parsed = parseSpreadsheet(bytes.buffer as ArrayBuffer, file.name);
+      if (ext === 'xlsx' || ext === 'xls') {
+        return uploadProgramFile({
+          file,
+          fields: {
+            title: title.trim(),
+            description: description.trim(),
+            visibility,
+            price: 0,
+            priceType: 'spikes',
+            duration: Number(importDuration) || 0,
+            parseAsSpreadsheet: true,
+            ...(importCategory ? { category: importCategory } : {}),
+            ...(importLevel ? { level: importLevel } : {}),
+          },
+        });
       }
+
+      const content = await FileSystem.readAsStringAsync(file.uri);
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      const parsed = parseCSVString(content, baseName);
 
       if (!parsed.sessions.length) throw new Error('No sessions found in the spreadsheet');
 
