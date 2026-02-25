@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 0,
+    gap: 10,
   },
   avatarImage: {
     width: 36,
@@ -639,7 +639,6 @@ const styles = StyleSheet.create({
   },
   postMeta: {
     flex: 1,
-    marginLeft: theme.spacing.md,
   },
   postContent: {
     marginTop: theme.spacing.sm,
