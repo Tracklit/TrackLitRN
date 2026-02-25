@@ -885,7 +885,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingTop: 8,
+    paddingBottom: theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,122,0,0.15)',
     backgroundColor: '#0E0F14',

@@ -46,6 +46,7 @@ export type RootStackParamList = {
   Connections: undefined;
   Coaches: undefined;
   Athletes: undefined;
+  MyAthletes: undefined;
   Sprinthia: undefined;
   Rehab: undefined;
   RehabHamstringProgram: undefined;

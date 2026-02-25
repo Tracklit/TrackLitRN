@@ -59,3 +59,19 @@ The app uses a unified **Import / Upload** screen (`ProgramImportScreen`) that a
 The `ProgramCreateScreen` offers 4 methods: Import/Upload (navigates to ProgramImportScreen), Program Builder, Text Based, and Sprinthia AI.
 
 **Practice Screen Session Mapping**: Sessions are matched to calendar dates using both a direct date-key lookup (Mon-DD format) and a sequential dayNumber offset from program start date. Date-key takes priority to handle sheets with rest days or gaps.
+
+## Coaching & Social Features
+- **Athletes Screen**: Directory of all users, flat-list style, connect button changes to "Requested" state optimistically (no toast)
+- **Coaches Screen**: Directory of coaches, same optimistic button state pattern
+- **My Athletes Screen** (`MyAthletesScreen`): Coach-only screen showing accepted athletes from `/api/coach/athletes`, accessible via drawer
+- **Subscriptions Screen**: Dark premium styled, 3 tabs (My Subscriptions, My Subscribers, My Offering)
+
+## Rehabilitation Module
+- **RehabScreen**: Hub with 4 categories (Acute Muscle, Chronic, Back, Bone Breaks)
+- **Sub-screens** use `navigation.goBack()` (not `navigate('Rehab')`) to prevent navigation loops
+- All rehab screens use `@/components/LinearGradient` and Phosphor icons (not lucide or react-native-linear-gradient)
+
+## Admin Panel
+- Admin access determined by `user.role === 'admin'` in the database
+- Server route `/api/admin/seed-admin` (POST) promotes `replittest` to admin (one-time use, requires deployment)
+- Admin panel at `/admin-panel` in the web app

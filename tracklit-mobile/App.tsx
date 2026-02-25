@@ -83,6 +83,7 @@ import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { ConnectionsScreen } from './src/screens/ConnectionsScreen';
 import { CoachesScreen } from './src/screens/CoachesScreen';
 import { AthletesScreen } from './src/screens/AthletesScreen';
+import { MyAthletesScreen } from './src/screens/MyAthletesScreen';
 import { RehabScreen } from './src/screens/RehabScreen';
 import { HamstringRehabProgramScreen } from './src/screens/rehab/HamstringRehabProgramScreen';
 import { FootRehabProgramScreen } from './src/screens/rehab/FootRehabProgramScreen';
@@ -142,6 +143,7 @@ const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'PublicProfile',
   'Coaches',
   'Athletes',
+  'MyAthletes',
   'Clubs',
   'ClubDetail',
   'ClubManagement',
@@ -264,6 +266,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="Connections" component={ConnectionsScreen} />
     <RootStack.Screen name="Coaches" component={CoachesScreen} />
     <RootStack.Screen name="Athletes" component={AthletesScreen} />
+    <RootStack.Screen name="MyAthletes" component={MyAthletesScreen} />
     <RootStack.Screen name="Clubs" component={ClubsScreen} />
     <RootStack.Screen name="ClubDetail" component={ClubDetailScreen} />
     <RootStack.Screen name="ClubManagement" component={ClubManagementScreen} />
@@ -456,7 +459,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           IconComponent: Target,
           requiresCoach: true,
           onPress: () =>
-            navigateIntoAppStack({ screen: 'Athletes' }),
+            navigateIntoAppStack({ screen: 'MyAthletes' }),
         },
         {
           label: 'Roster Stats',

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
-import { Clock, ArrowLeft } from 'lucide-react-native';
+import { Clock, ArrowLeft } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { WebScreen } from '@/components/web/Screen';
@@ -31,7 +31,7 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
           This rehabilitation protocol is being finalized for mobile. Check back soon for the complete program.
         </Text>
         <View style={styles.actions}>
-          <WebButton variant="outline" onPress={() => navigation.navigate('Rehab')}>
+          <WebButton variant="outline" onPress={() => navigation.goBack()}>
             <ArrowLeft size={14} color={theme.colors.foreground} />
             <Text variant="body" weight="semiBold" color="foreground">
               Back to Rehab

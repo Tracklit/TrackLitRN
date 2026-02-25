@@ -2,19 +2,19 @@ import React, { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import LinearGradient from 'react-native-linear-gradient';
 import {
   ArrowLeft,
-  Calendar,
+  CalendarBlank,
   Clock,
-  Target,
-  AlertTriangle,
+  Crosshair,
+  Warning,
   CheckCircle,
   Play,
   Pause,
   SkipForward,
   Star,
-} from 'lucide-react-native';
+} from 'phosphor-react-native';
+import { LinearGradient } from '@/components/LinearGradient';
 import { useMutation } from '@tanstack/react-query';
 
 import { Text } from '@/components/ui/Text';
@@ -268,7 +268,7 @@ export const HamstringRehabProgramScreen: React.FC = () => {
   return (
     <WebScreen backgroundColor="#010a18" contentStyle={{ paddingTop: theme.spacing.xl }}>
       <View style={styles.headerRow}>
-        <WebButton variant="ghost" size="sm" onPress={() => navigation.navigate('Rehab')}>
+        <WebButton variant="ghost" size="sm" onPress={() => navigation.goBack()}>
           <ArrowLeft size={14} color={theme.colors.foreground} />
           <Text variant="small" weight="medium" color="foreground">
             Back to Rehab
@@ -292,11 +292,11 @@ export const HamstringRehabProgramScreen: React.FC = () => {
             <Text variant="small" color="muted">Duration: {rehabProgram.duration}</Text>
           </View>
           <View style={styles.metaItem}>
-            <Target size={14} color={theme.colors.foreground} />
+            <Crosshair size={14} color={theme.colors.foreground} />
             <Text variant="small" color="muted">4 Progressive Phases</Text>
           </View>
           <View style={styles.metaItem}>
-            <Calendar size={14} color={theme.colors.foreground} />
+            <CalendarBlank size={14} color={theme.colors.foreground} />
             <Text variant="small" color="muted">Daily Guided Exercises</Text>
           </View>
         </View>
@@ -410,7 +410,7 @@ export const HamstringRehabProgramScreen: React.FC = () => {
 
       <WebCard tone="muted" padding={theme.spacing.lg} style={styles.warningCard}>
         <View style={styles.warningRow}>
-          <AlertTriangle size={16} color="#f59e0b" />
+          <Warning size={16} color="#f59e0b" />
           <View style={{ flex: 1 }}>
             <Text variant="body" weight="semiBold" color="warning">
               Important Medical Disclaimer

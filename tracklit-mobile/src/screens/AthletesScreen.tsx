@@ -130,7 +130,6 @@ export const AthletesScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['friend-requests-pending'] });
       queryClient.invalidateQueries({ queryKey: ['athletes'] });
-      Alert.alert('Success', 'Friend request sent!');
     },
     onError: (error: Error, userId: number) => {
       setPendingRequests((prev) => {
@@ -139,13 +138,6 @@ export const AthletesScreen: React.FC = () => {
         return s;
       });
       Alert.alert('Error', error.message || 'Failed to send friend request');
-    },
-    onSettled: (_data, _error, userId: number) => {
-      setPendingRequests((prev) => {
-        const s = new Set(prev);
-        s.delete(userId);
-        return s;
-      });
     },
   });
 

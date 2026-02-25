@@ -118,7 +118,6 @@ export const CoachesScreen: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coaching-requests'] });
       queryClient.invalidateQueries({ queryKey: ['my-coaches'] });
-      Alert.alert('Success', 'Coaching request sent!');
     },
     onError: (error: Error, coachId: number) => {
       setPendingRequests((prev) => {
@@ -127,13 +126,6 @@ export const CoachesScreen: React.FC = () => {
         return s;
       });
       Alert.alert('Error', error.message || 'Failed to send coaching request');
-    },
-    onSettled: (_data, _error, coachId: number) => {
-      setPendingRequests((prev) => {
-        const s = new Set(prev);
-        s.delete(coachId);
-        return s;
-      });
     },
   });
 

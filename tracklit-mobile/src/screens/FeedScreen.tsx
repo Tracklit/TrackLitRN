@@ -626,6 +626,7 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 0,
   },
   avatarImage: {
     width: 36,
@@ -633,6 +634,8 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   avatarFallback: {
+    width: 36,
+    height: 36,
   },
   postMeta: {
     flex: 1,

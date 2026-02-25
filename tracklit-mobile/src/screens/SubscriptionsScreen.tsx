@@ -1,26 +1,47 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Heart, Users, DollarSign, Settings, ChevronRight } from 'lucide-react-native';
+import {
+  CaretLeft,
+  Heart,
+  Users,
+  CurrencyDollar,
+  GearSix,
+  XCircle,
+} from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
-import { WebScreen } from '@/components/web/Screen';
-import { WebPageHeader } from '@/components/web/PageHeader';
-import { WebCard } from '@/components/web/Card';
-import { WebTabs, WebTabsList, WebTabsTrigger, WebTabsContent } from '@/components/web/Tabs';
-import { WebBadge } from '@/components/web/Badge';
-import { WebButton } from '@/components/web/Button';
+import { SkeletonListRows } from '@/components/Skeleton';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import { SkeletonListRows } from '@/components/Skeleton';
-import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type TabKey = 'subscriptions' | 'subscribers' | 'offering';
+
+const C = {
+  bg: '#0E0F14',
+  card: '#1C1F2B',
+  orange: '#FF7A00',
+  textPrimary: '#FFFFFF',
+  textSecondary: 'rgba(255,255,255,0.7)',
+  textMuted: 'rgba(255,255,255,0.4)',
+  border: 'rgba(255,255,255,0.06)',
+  iconBg: 'rgba(255,255,255,0.05)',
+  red: '#ef4444',
+  blue: '#3b82f6',
+  green: '#22c55e',
+};
 
 interface MySubscription {
   id: number;
@@ -64,6 +85,7 @@ const formatPrice = (amountCents: number, currency = 'USD') => {
 };
 
 export const SubscriptionsScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
@@ -101,190 +123,363 @@ export const SubscriptionsScreen: React.FC = () => {
     },
   });
 
+  const activeSubCount = mySubscriptions.filter((s) => s.status === 'active').length;
+  const activeSubscriberCount = mySubscribers.filter((s) => s.status === 'active').length;
+  const monthlyIncome = mySubscribers
+    .filter((s) => s.status === 'active')
+    .reduce((sum, sub) => sum + (sub.coachAmount || 0), 0);
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: 'subscriptions', label: 'Subscriptions' },
+    { key: 'subscribers', label: 'Subscribers' },
+    { key: 'offering', label: 'Offering' },
+  ];
+
   return (
-    <WebScreen
-      backgroundColor="#f3f4f6"
-      contentStyle={{ paddingTop: theme.spacing.lg }}
-    >
-      <View style={styles.headerRow}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ChevronRight size={18} color="#0f172a" style={{ transform: [{ rotate: '180deg' }] }} />
+          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
         </TouchableOpacity>
-        <WebPageHeader
-          title="My Subscriptions"
-          description="Manage your coaching subscriptions and subscriber relationships"
-        />
+        <Text style={styles.headerTitle}>My Subscriptions</Text>
+        <View style={{ flex: 1 }} />
       </View>
 
-      <View style={styles.statsGrid}>
-        <WebCard tone="light" padding={theme.spacing.lg}>
-          <View style={styles.statsRow}>
-            <Heart size={24} color="#ef4444" />
-            <View>
-              <Text variant="h4" weight="bold" color="foreground">
-                {mySubscriptions.filter((s) => s.status === 'active').length}
-              </Text>
-              <Text variant="small" color="muted">Active Subscriptions</Text>
-            </View>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <Heart size={20} color={C.red} weight="fill" />
+            <Text style={styles.statValue}>{activeSubCount}</Text>
+            <Text style={styles.statLabel}>Active Subs</Text>
           </View>
-        </WebCard>
-        <WebCard tone="light" padding={theme.spacing.lg}>
-          <View style={styles.statsRow}>
-            <Users size={24} color="#3b82f6" />
-            <View>
-              <Text variant="h4" weight="bold" color="foreground">
-                {mySubscribers.filter((s) => s.status === 'active').length}
-              </Text>
-              <Text variant="small" color="muted">Active Subscribers</Text>
-            </View>
+          <View style={styles.statCard}>
+            <Users size={20} color={C.blue} weight="fill" />
+            <Text style={styles.statValue}>{activeSubscriberCount}</Text>
+            <Text style={styles.statLabel}>Subscribers</Text>
           </View>
-        </WebCard>
-        <WebCard tone="light" padding={theme.spacing.lg}>
-          <View style={styles.statsRow}>
-            <DollarSign size={24} color="#22c55e" />
-            <View>
-              <Text variant="h4" weight="bold" color="foreground">
-                {formatPrice(
-                  mySubscribers
-                    .filter((s) => s.status === 'active')
-                    .reduce((sum, sub) => sum + (sub.coachAmount || 0), 0),
-                )}
-              </Text>
-              <Text variant="small" color="muted">Monthly Income</Text>
-            </View>
+          <View style={styles.statCard}>
+            <CurrencyDollar size={20} color={C.green} weight="fill" />
+            <Text style={styles.statValue}>{formatPrice(monthlyIncome)}</Text>
+            <Text style={styles.statLabel}>Monthly</Text>
           </View>
-        </WebCard>
-      </View>
+        </View>
 
-      <WebTabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-        <WebTabsList>
-          <WebTabsTrigger value="subscriptions">My Subscriptions</WebTabsTrigger>
-          <WebTabsTrigger value="subscribers">My Subscribers</WebTabsTrigger>
-          <WebTabsTrigger value="offering">My Offering</WebTabsTrigger>
-        </WebTabsList>
+        <View style={styles.tabRow}>
+          {tabs.map((t) => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.tabButton, tab === t.key && styles.tabButtonActive]}
+              onPress={() => setTab(t.key)}
+              activeOpacity={0.6}
+            >
+              <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>
+                {t.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        <WebTabsContent value="subscriptions">
-          {isGuest ? (
-            <Text variant="body" color="muted">Sign in to manage subscriptions.</Text>
-          ) : mySubsQuery.isLoading ? (
-            <SkeletonListRows count={2} hasAvatar={false} />
-          ) : mySubscriptions.length === 0 ? (
-            <WebCard tone="muted" padding={theme.spacing.md}>
-              <Text variant="body" color="muted">No subscriptions yet.</Text>
-            </WebCard>
-          ) : (
-            mySubscriptions.map((s) => (
-              <WebCard key={s.id} tone="muted" padding={theme.spacing.md}>
-                <View style={styles.itemRow}>
-                  <View style={{ flex: 1, gap: theme.spacing.xs }}>
-                    <Text variant="body" weight="semiBold" color="foreground">
-                      {s.coachName}
-                    </Text>
-                    <Text variant="small" color="muted">
-                      @{s.coachUsername} • {formatPrice(s.totalAmount)} / {s.priceInterval}
-                    </Text>
-                    <Text variant="small" color="muted" numberOfLines={1}>
-                      {s.subscriptionTitle}
-                    </Text>
+        {tab === 'subscriptions' && (
+          <>
+            {isGuest ? (
+              <View style={styles.emptyContainer}>
+                <Heart size={40} color={C.textMuted} weight="fill" />
+                <Text style={styles.emptyText}>Sign in to manage subscriptions.</Text>
+              </View>
+            ) : mySubsQuery.isLoading ? (
+              <SkeletonListRows count={2} />
+            ) : mySubscriptions.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Heart size={40} color={C.textMuted} weight="fill" />
+                <Text style={styles.emptyText}>No subscriptions yet.</Text>
+              </View>
+            ) : (
+              mySubscriptions.map((s) => (
+                <View key={s.id} style={styles.card}>
+                  <View style={styles.cardRow}>
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <Text style={styles.cardTitle}>{s.coachName}</Text>
+                      <Text style={styles.cardSub}>
+                        @{s.coachUsername} · {formatPrice(s.totalAmount)} / {s.priceInterval}
+                      </Text>
+                      <Text style={styles.cardMeta} numberOfLines={1}>
+                        {s.subscriptionTitle}
+                      </Text>
+                    </View>
+                    <View style={[styles.badge, s.status === 'active' ? styles.badgeActive : styles.badgeInactive]}>
+                      <Text style={[styles.badgeText, s.status === 'active' ? styles.badgeTextActive : styles.badgeTextInactive]}>
+                        {s.status}
+                      </Text>
+                    </View>
                   </View>
-                  <WebBadge variant="secondary">{s.status}</WebBadge>
+                  {s.status === 'active' && (
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={() => cancelSubscription.mutate(s.id)}
+                      disabled={cancelSubscription.isPending}
+                      activeOpacity={0.6}
+                    >
+                      {cancelSubscription.isPending ? (
+                        <ActivityIndicator size="small" color={C.red} />
+                      ) : (
+                        <>
+                          <XCircle size={14} color={C.red} weight="bold" />
+                          <Text style={styles.cancelText}>Cancel</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  )}
                 </View>
-                {s.status === 'active' && (
-                  <WebButton
-                    variant="outline"
-                    size="sm"
-                    onPress={() => cancelSubscription.mutate(s.id)}
-                    disabled={cancelSubscription.isPending}
-                    style={{ marginTop: theme.spacing.sm }}
-                  >
-                    Cancel
-                  </WebButton>
-                )}
-              </WebCard>
-            ))
-          )}
-        </WebTabsContent>
+              ))
+            )}
+          </>
+        )}
 
-        <WebTabsContent value="subscribers">
-          {isGuest ? (
-            <Text variant="body" color="muted">Sign in to manage subscribers.</Text>
-          ) : mySubscribersQuery.isLoading ? (
-            <SkeletonListRows count={2} hasAvatar={false} />
-          ) : mySubscribers.length === 0 ? (
-            <WebCard tone="muted" padding={theme.spacing.md}>
-              <Text variant="body" color="muted">No subscribers yet.</Text>
-            </WebCard>
-          ) : (
-            mySubscribers.map((s) => (
-              <WebCard key={s.id} tone="muted" padding={theme.spacing.md}>
-                <View style={styles.itemRow}>
-                  <View style={{ flex: 1, gap: theme.spacing.xs }}>
-                    <Text variant="body" weight="semiBold" color="foreground">
-                      {s.subscriberName}
-                    </Text>
-                    <Text variant="small" color="muted">
-                      @{s.subscriberUsername} • {formatPrice(s.totalAmount)} / {s.priceInterval}
-                    </Text>
-                    <Text variant="small" color="muted" numberOfLines={1}>
-                      {s.subscriptionTitle}
-                    </Text>
+        {tab === 'subscribers' && (
+          <>
+            {isGuest ? (
+              <View style={styles.emptyContainer}>
+                <Users size={40} color={C.textMuted} weight="fill" />
+                <Text style={styles.emptyText}>Sign in to manage subscribers.</Text>
+              </View>
+            ) : mySubscribersQuery.isLoading ? (
+              <SkeletonListRows count={2} />
+            ) : mySubscribers.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Users size={40} color={C.textMuted} weight="fill" />
+                <Text style={styles.emptyText}>No subscribers yet.</Text>
+              </View>
+            ) : (
+              mySubscribers.map((s) => (
+                <View key={s.id} style={styles.card}>
+                  <View style={styles.cardRow}>
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <Text style={styles.cardTitle}>{s.subscriberName}</Text>
+                      <Text style={styles.cardSub}>
+                        @{s.subscriberUsername} · {formatPrice(s.totalAmount)} / {s.priceInterval}
+                      </Text>
+                      <Text style={styles.cardMeta} numberOfLines={1}>
+                        {s.subscriptionTitle}
+                      </Text>
+                    </View>
+                    <View style={[styles.badge, s.status === 'active' ? styles.badgeActive : styles.badgeInactive]}>
+                      <Text style={[styles.badgeText, s.status === 'active' ? styles.badgeTextActive : styles.badgeTextInactive]}>
+                        {s.status}
+                      </Text>
+                    </View>
                   </View>
-                  <WebBadge variant="secondary">{s.status}</WebBadge>
                 </View>
-              </WebCard>
-            ))
-          )}
-        </WebTabsContent>
+              ))
+            )}
+          </>
+        )}
 
-        <WebTabsContent value="offering">
-          {isGuest ? (
-            <Text variant="body" color="muted">Sign in to edit your offering.</Text>
-          ) : myOfferingQuery.isLoading ? (
-            <SkeletonListRows count={2} hasAvatar={false} />
-          ) : (
-            <WebCard tone="muted" padding={theme.spacing.md}>
-              <Text variant="body" weight="semiBold" color="foreground" style={{ marginBottom: theme.spacing.xs }}>
-                {myOffering?.title || 'Coaching Subscription'}
-              </Text>
-              <Text variant="small" color="muted" style={{ marginBottom: theme.spacing.sm }}>
-                {myOffering?.description || 'Get personalized coaching and training programs'}
-              </Text>
-              <Text variant="small" color="muted">
-                {myOffering
-                  ? `${formatPrice(myOffering.priceAmount, myOffering.priceCurrency)} / ${myOffering.priceInterval}`
-                  : '$25.00 / month'}
-              </Text>
-              <WebButton variant="outline" size="sm" style={{ marginTop: theme.spacing.md }}>
-                <Settings size={14} color={theme.colors.foreground} />
-                Edit Offering
-              </WebButton>
-            </WebCard>
-          )}
-        </WebTabsContent>
-      </WebTabs>
-    </WebScreen>
+        {tab === 'offering' && (
+          <>
+            {isGuest ? (
+              <View style={styles.emptyContainer}>
+                <GearSix size={40} color={C.textMuted} weight="fill" />
+                <Text style={styles.emptyText}>Sign in to edit your offering.</Text>
+              </View>
+            ) : myOfferingQuery.isLoading ? (
+              <SkeletonListRows count={2} />
+            ) : (
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>
+                  {myOffering?.title || 'Coaching Subscription'}
+                </Text>
+                <Text style={[styles.cardSub, { marginTop: 6 }]}>
+                  {myOffering?.description || 'Get personalized coaching and training programs'}
+                </Text>
+                <Text style={[styles.priceText, { marginTop: 10 }]}>
+                  {myOffering
+                    ? `${formatPrice(myOffering.priceAmount, myOffering.priceCurrency)} / ${myOffering.priceInterval}`
+                    : '$25.00 / month'}
+                </Text>
+                <TouchableOpacity style={styles.editButton} activeOpacity={0.6}>
+                  <GearSix size={14} color={C.orange} weight="bold" />
+                  <Text style={styles.editButtonText}>Edit Offering</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  container: { flex: 1, backgroundColor: C.bg },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: C.border,
+  },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#e5e7eb',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: C.iconBg,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: C.textPrimary,
+    letterSpacing: 0.3,
+  },
+  content: {
+    padding: 16,
+    gap: 16,
   },
   statsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    gap: 10,
   },
-  statsRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
-  itemRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  statCard: {
+    flex: 1,
+    backgroundColor: C.card,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    gap: 6,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: C.textMuted,
+    letterSpacing: 0.3,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: C.card,
+    borderRadius: 10,
+    padding: 3,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  tabButtonActive: {
+    backgroundColor: C.orange,
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.textMuted,
+  },
+  tabTextActive: {
+    color: '#000',
+  },
+  card: {
+    backgroundColor: C.card,
+    borderRadius: 12,
+    padding: 16,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.textPrimary,
+  },
+  cardSub: {
+    fontSize: 12,
+    color: C.textSecondary,
+  },
+  cardMeta: {
+    fontSize: 11,
+    color: C.textMuted,
+  },
+  priceText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: C.orange,
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeActive: {
+    backgroundColor: 'rgba(34,197,94,0.15)',
+  },
+  badgeInactive: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  badgeTextActive: {
+    color: C.green,
+  },
+  badgeTextInactive: {
+    color: C.textMuted,
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.3)',
+  },
+  cancelText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.red,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    marginTop: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,122,0,0.3)',
+  },
+  editButtonText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: C.orange,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: C.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
 });
-
-

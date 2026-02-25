@@ -7300,6 +7300,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/seed-admin", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const username = req.user?.username;
+    if (username !== 'replittest') {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    try {
+      await dbStorage.updateUser(req.user!.id, { role: 'admin' });
+      res.json({ message: "Admin role granted", username });
+    } catch (error: any) {
+      console.error("Error seeding admin:", error);
+      res.status(500).json({ error: "Failed to grant admin role" });
+    }
+  });
+
   app.post("/api/admin/users/:id/spikes", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
