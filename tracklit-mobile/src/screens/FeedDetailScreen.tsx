@@ -302,12 +302,14 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.md,
   },
   postSection: {
+    paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.sm,
   },
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
+    gap: theme.spacing.md,
   },
   postAvatar: {
     width: 40,
@@ -316,7 +318,6 @@ const styles = StyleSheet.create({
   },
   postMeta: {
     flex: 1,
-    marginLeft: theme.spacing.md,
   },
   postContent: {
     lineHeight: 22,

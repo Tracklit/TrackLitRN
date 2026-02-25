@@ -514,7 +514,7 @@ export const SprinthiaScreen: React.FC = () => {
         keyboardVerticalOffset={0}
       >
         {/* Header (mobile-first, 2 rows) */}
-        <View style={[styles.header, { paddingTop: insets.top }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <View style={styles.headerTopRow}>
             <View style={styles.titleGroup}>
               <Image source={poweredByAria} style={styles.poweredBy} resizeMode="contain" />

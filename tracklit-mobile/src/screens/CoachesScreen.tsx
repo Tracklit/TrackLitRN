@@ -106,6 +106,7 @@ export const CoachesScreen: React.FC = () => {
       return apiRequest<{ success: boolean }>('/api/coaching-requests', {
         method: 'POST',
         data: {
+          fromUserId: Number(user!.id),
           toUserId: coachId,
           requestType: 'athlete_request',
           message: "I'd like to request your coaching",
