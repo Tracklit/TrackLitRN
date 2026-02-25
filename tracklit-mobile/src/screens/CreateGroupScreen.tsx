@@ -125,7 +125,6 @@ export const CreateGroupScreen: React.FC = () => {
       const token = await getToken();
       if (!token) throw new Error('Missing auth token');
 
-      const memberIds = selectedMembers.map((m) => m.id);
       const members = selectedMembers.map((m) => ({
         id: m.id,
         name: m.name,
@@ -133,37 +132,60 @@ export const CreateGroupScreen: React.FC = () => {
         profileImageUrl: m.profileImageUrl,
       }));
 
-      const formData = new FormData();
-      formData.append('name', name.trim());
-      formData.append('description', description.trim() || '');
-      formData.append('isPrivate', isPrivate ? 'true' : 'false');
+      const hasImage = !!imageUri;
 
-      if (imageUri) {
-        const uriParts = imageUri.split('.');
+      console.log('[CreateGroup] POST /api/chat/groups', {
+        name: name.trim(),
+        isPrivate: isPrivate ? 'true' : 'false',
+        hasImage,
+        memberCount: members.length,
+        mode: hasImage ? 'FormData' : 'JSON',
+      });
+
+      let response: Response;
+
+      if (hasImage) {
+        const formData = new FormData();
+        formData.append('name', name.trim());
+        formData.append('description', description.trim() || '');
+        formData.append('isPrivate', isPrivate ? 'true' : 'false');
+
+        const uriParts = imageUri!.split('.');
         const ext = uriParts[uriParts.length - 1] || 'jpg';
         formData.append('image', {
           uri: imageUri,
           name: `group.${ext}`,
           type: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
         } as any);
+
+        if (members.length > 0) {
+          formData.append('members', JSON.stringify(members));
+        }
+
+        response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+      } else {
+        const jsonBody: Record<string, any> = {
+          name: name.trim(),
+          description: description.trim() || '',
+          isPrivate: isPrivate ? 'true' : 'false',
+        };
+        if (members.length > 0) {
+          jsonBody.members = JSON.stringify(members);
+        }
+
+        response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(jsonBody),
+        });
       }
-
-      if (members.length > 0) {
-        formData.append('members', JSON.stringify(members));
-      }
-
-      console.log('[CreateGroup] POST /api/chat/groups (FormData)', {
-        name: name.trim(),
-        isPrivate: isPrivate ? 'true' : 'false',
-        hasImage: !!imageUri,
-        memberCount: members.length,
-      });
-
-      const response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
 
       const responseText = await response.text();
       console.log('[CreateGroup] Response:', response.status, responseText.substring(0, 1000));
