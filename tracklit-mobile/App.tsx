@@ -89,6 +89,8 @@ import { HamstringRehabProgramScreen } from './src/screens/rehab/HamstringRehabP
 import { FootRehabProgramScreen } from './src/screens/rehab/FootRehabProgramScreen';
 import { RehabProgramComingSoonScreen } from './src/screens/rehab/RehabProgramComingSoonScreen';
 import { SpikesScreen } from './src/screens/SpikesScreen';
+import { SpikesInfoScreen } from './src/screens/SpikesInfoScreen';
+import { SpikesProgressScreen } from './src/screens/SpikesProgressScreen';
 import { SubscriptionsScreen } from './src/screens/SubscriptionsScreen';
 import { PublicProfileScreen } from './src/screens/PublicProfileScreen';
 import { ClubsScreen } from './src/screens/ClubsScreen';
@@ -153,6 +155,8 @@ const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'RehabFootProgram',
   'RehabProgramComingSoon',
   'Spikes',
+  'SpikesInfo',
+  'SpikesProgress',
   'Subscriptions',
 ]);
 
@@ -277,6 +281,8 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="RehabFootProgram" component={FootRehabProgramScreen} />
     <RootStack.Screen name="RehabProgramComingSoon" component={RehabProgramComingSoonScreen} />
     <RootStack.Screen name="Spikes" component={SpikesScreen} />
+    <RootStack.Screen name="SpikesInfo" component={SpikesInfoScreen} />
+    <RootStack.Screen name="SpikesProgress" component={SpikesProgressScreen} />
     <RootStack.Screen name="Subscriptions" component={SubscriptionsScreen} />
   </RootStack.Navigator>
 );

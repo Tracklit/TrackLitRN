@@ -53,6 +53,8 @@ export type RootStackParamList = {
   RehabFootProgram: undefined;
   RehabProgramComingSoon: { title: string; category: string };
   Spikes: undefined;
+  SpikesInfo: undefined;
+  SpikesProgress: undefined;
   Subscriptions: undefined;
   PhotoFinishAnalysis: { uri?: string; fileName?: string };
 };

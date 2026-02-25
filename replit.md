@@ -71,6 +71,11 @@ The `ProgramCreateScreen` offers 4 methods: Import/Upload (navigates to ProgramI
 - **Sub-screens** use `navigation.goBack()` (not `navigate('Rehab')`) to prevent navigation loops
 - All rehab screens use `@/components/LinearGradient` and Phosphor icons (not lucide or react-native-linear-gradient)
 
+## Spikes System
+- **SpikesScreen**: Clean hub showing balance, with two navigation cards to subpages
+- **SpikesInfoScreen**: Informational page explaining what spikes are, how to earn them, and tier unlock details
+- **SpikesProgressScreen**: User's progression — balance, tier progress bar, login streak with check-in, achievements list, and recent transaction history
+
 ## Admin Panel
 - Admin access determined by `user.role === 'admin'` in the database
 - Server route `/api/admin/seed-admin` (POST) promotes `replittest` to admin (one-time use, requires deployment)
