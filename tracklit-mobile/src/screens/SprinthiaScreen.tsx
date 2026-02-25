@@ -514,8 +514,15 @@ export const SprinthiaScreen: React.FC = () => {
         keyboardVerticalOffset={0}
       >
         {/* Header (mobile-first, 2 rows) */}
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
           <View style={styles.headerTopRow}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              style={styles.backButton}
+            >
+              <FontAwesome5 name="chevron-left" size={16} color="#fff" />
+            </TouchableOpacity>
             <View style={styles.titleGroup}>
               <Image source={poweredByAria} style={styles.poweredBy} resizeMode="contain" />
             </View>
@@ -892,10 +899,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#0E0F14',
     gap: theme.spacing.sm,
   },
+  backButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 14,
   },
   headerBottomRow: {
     flexDirection: 'row',

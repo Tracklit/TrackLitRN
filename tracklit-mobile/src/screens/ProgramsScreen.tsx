@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
+import theme from '@/utils/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   MagnifyingGlass,
@@ -258,7 +259,11 @@ export const ProgramsScreen: React.FC = () => {
   });
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={theme.gradient.background}
+      locations={theme.gradient.locations}
+      style={styles.container}
+    >
       <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -459,7 +464,7 @@ export const ProgramsScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
       </Modal>
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -852,7 +857,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: C.bg,
   },
   scrollContent: {
     flexGrow: 1,
