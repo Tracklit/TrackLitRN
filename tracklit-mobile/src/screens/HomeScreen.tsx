@@ -1046,6 +1046,7 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
               <RNText style={tsStyles.statLabel}>Sessions</RNText>
             </View>
           </View>
+          <View style={tsStyles.vDivider} />
           <View style={tsStyles.statCell}>
             <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(251,191,36,0.25)' }]}>
               <PencilLine size={14} color="#fbbf24" weight="fill" />
@@ -1056,6 +1057,7 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
             </View>
           </View>
         </View>
+        <View style={tsStyles.hDivider} />
         <View style={tsStyles.row}>
           <TouchableOpacity
             style={tsStyles.statCell}
@@ -1069,8 +1071,9 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
               <RNText style={tsStyles.statValue} numberOfLines={1}>{tool.label}</RNText>
               <RNText style={tsStyles.statLabel}>Quick Action</RNText>
             </View>
-            <CaretRight size={12} color="rgba(255,255,255,0.5)" weight="bold" />
+            <CaretRight size={12} color="rgba(255,255,255,0.4)" weight="bold" />
           </TouchableOpacity>
+          <View style={tsStyles.vDivider} />
           <View style={tsStyles.statCell}>
             <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(250,204,21,0.25)' }]}>
               <Lightning size={14} color="#facc15" weight="fill" />
@@ -1182,22 +1185,27 @@ const tsStyles = StyleSheet.create({
   },
   page: {
     width: STATS_CARD_WIDTH,
-    paddingHorizontal: 12,
-    gap: 6,
+    paddingHorizontal: 4,
   },
   row: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'stretch',
   },
   statCell: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: 10,
     paddingVertical: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     gap: 8,
+  },
+  vDivider: {
+    width: 0.5,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  hDivider: {
+    height: 0.5,
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
   iconWrap: {
     width: 28,
