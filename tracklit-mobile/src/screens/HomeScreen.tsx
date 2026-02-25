@@ -12,6 +12,7 @@ import {
   Alert,
   Image,
   Text as RNText,
+  Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
@@ -38,6 +39,10 @@ import {
   Heart,
   FloppyDisk,
   Newspaper,
+  Lightning,
+  Barbell,
+  PencilLine,
+  ChatCircle,
 } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -447,6 +452,58 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     enabled: !!userId && userId !== 'guest',
   });
 
+  const { data: journalEntries = [] } = useQuery({
+    queryKey: ['journal-home'],
+    queryFn: () => apiRequest<any[]>('/api/journal'),
+    staleTime: 120000,
+    enabled: !!userId && userId !== 'guest',
+  });
+
+  const { data: feedPosts = [] } = useQuery({
+    queryKey: ['feed-home'],
+    queryFn: () => apiRequest<any[]>('/api/feed?filter=all'),
+    staleTime: 120000,
+    enabled: !!userId && userId !== 'guest',
+  });
+
+  const spikesBalance = Number((user as any)?.spikes ?? 0);
+
+  const trainingStats = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(todayStart.getTime() - 7 * 86400000);
+    const monthAgo = new Date(todayStart.getTime() - 30 * 86400000);
+
+    const completedSessions = programSessions?.filter((s: any) => s.completed_at) ?? [];
+    const allJournal = (journalEntries as any[]) ?? [];
+    const allFeed = (feedPosts as any[]).filter((p: any) => p.isOwnPost) ?? [];
+    const totalWeeklySessions = 7;
+
+    const inRange = (dateStr: string | undefined, from: Date) => {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      return d >= from && d <= now;
+    };
+
+    const todaySessions = completedSessions.filter((s: any) => inRange(s.completed_at, todayStart)).length;
+    const todayJournal = allJournal.filter((j: any) => inRange(j.date || j.createdAt, todayStart)).length;
+    const todayPosts = allFeed.filter((p: any) => inRange(p.createdAt, todayStart)).length;
+
+    const weekSessions = completedSessions.filter((s: any) => inRange(s.completed_at, weekAgo)).length;
+    const weekJournal = allJournal.filter((j: any) => inRange(j.date || j.createdAt, weekAgo)).length;
+    const weekPosts = allFeed.filter((p: any) => inRange(p.createdAt, weekAgo)).length;
+
+    const monthSessions = completedSessions.filter((s: any) => inRange(s.completed_at, monthAgo)).length;
+    const monthJournal = allJournal.filter((j: any) => inRange(j.date || j.createdAt, monthAgo)).length;
+    const monthPosts = allFeed.filter((p: any) => inRange(p.createdAt, monthAgo)).length;
+
+    return [
+      { key: 'today', label: 'Today', sessions: todaySessions, weeklyTotal: 1, journal: todayJournal, posts: todayPosts, spikes: spikesBalance },
+      { key: '7days', label: '7 Days', sessions: weekSessions, weeklyTotal: totalWeeklySessions, journal: weekJournal, posts: weekPosts, spikes: spikesBalance },
+      { key: '30days', label: '30 Days', sessions: monthSessions, weeklyTotal: totalWeeklySessions * 4, journal: monthJournal, posts: monthPosts, spikes: spikesBalance },
+    ];
+  }, [programSessions, journalEntries, feedPosts, spikesBalance]);
+
   const unreadNotifications =
     (notifications as any[]).filter((n) => !n.isRead).length + (pendingRequests as any[]).length;
 
@@ -774,6 +831,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           </LinearGradient>
         </TouchableOpacity>
 
+        {/* Training Stats Carousel */}
+        <TrainingStatsCarousel data={trainingStats} />
+
         {/* Category Cards */}
         <View style={styles.cardsContainer}>
           {categoryCards.map((card, idx) => {
@@ -928,6 +988,217 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     </LinearGradient>
   );
 };
+
+const STATS_CARD_WIDTH = Dimensions.get('window').width - 2 * theme.spacing.container;
+
+interface StatsPeriod {
+  key: string;
+  label: string;
+  sessions: number;
+  weeklyTotal: number;
+  journal: number;
+  posts: number;
+  spikes: number;
+}
+
+const TrainingStatsCarousel = ({ data }: { data: StatsPeriod[] }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const statsRef = useRef<FlatList>(null);
+
+  const handleScroll = useCallback((e: any) => {
+    const idx = Math.round(e.nativeEvent.contentOffset.x / STATS_CARD_WIDTH);
+    setActiveIndex(Math.max(0, Math.min(idx, data.length - 1)));
+  }, [data.length]);
+
+  const renderStatsPage = ({ item }: { item: StatsPeriod }) => (
+    <View style={tsStyles.page}>
+      <View style={tsStyles.row}>
+        <View style={tsStyles.statCell}>
+          <View style={tsStyles.iconWrap}>
+            <Barbell size={14} color="#fff" weight="fill" />
+          </View>
+          <View style={tsStyles.statText}>
+            <RNText style={tsStyles.statValue}>{item.sessions}<RNText style={tsStyles.statTotal}>/{item.weeklyTotal}</RNText></RNText>
+            <RNText style={tsStyles.statLabel}>Sessions</RNText>
+          </View>
+        </View>
+        <View style={tsStyles.statCell}>
+          <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(251,191,36,0.25)' }]}>
+            <PencilLine size={14} color="#fbbf24" weight="fill" />
+          </View>
+          <View style={tsStyles.statText}>
+            <RNText style={tsStyles.statValue}>{item.journal}</RNText>
+            <RNText style={tsStyles.statLabel}>Journal</RNText>
+          </View>
+        </View>
+      </View>
+      <View style={tsStyles.row}>
+        <View style={tsStyles.statCell}>
+          <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(99,102,241,0.25)' }]}>
+            <ChatCircle size={14} color="#818cf8" weight="fill" />
+          </View>
+          <View style={tsStyles.statText}>
+            <RNText style={tsStyles.statValue}>{item.posts}</RNText>
+            <RNText style={tsStyles.statLabel}>Feed Posts</RNText>
+          </View>
+        </View>
+        <View style={tsStyles.statCell}>
+          <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(250,204,21,0.25)' }]}>
+            <Lightning size={14} color="#facc15" weight="fill" />
+          </View>
+          <View style={tsStyles.statText}>
+            <RNText style={tsStyles.statValue}>{item.spikes.toLocaleString()}</RNText>
+            <RNText style={tsStyles.statLabel}>Spikes</RNText>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={tsStyles.wrapper}>
+      <LinearGradient
+        colors={['#FF7A00', '#FF9A40']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={tsStyles.card}
+      >
+        <View style={tsStyles.header}>
+          <RNText style={tsStyles.headerTitle}>YOUR ACTIVITY</RNText>
+          <View style={tsStyles.dots}>
+            {data.map((d, i) => (
+              <TouchableOpacity
+                key={d.key}
+                onPress={() => {
+                  statsRef.current?.scrollToOffset({ offset: i * STATS_CARD_WIDTH, animated: true });
+                  setActiveIndex(i);
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              >
+                <View style={[tsStyles.dot, i === activeIndex && tsStyles.dotActive]} />
+              </TouchableOpacity>
+            ))}
+          </View>
+          <RNText style={tsStyles.periodLabel}>{data[activeIndex]?.label}</RNText>
+        </View>
+        <FlatList
+          ref={statsRef}
+          data={data}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.key}
+          onMomentumScrollEnd={handleScroll}
+          renderItem={renderStatsPage}
+          getItemLayout={(_, index) => ({
+            length: STATS_CARD_WIDTH,
+            offset: STATS_CARD_WIDTH * index,
+            index,
+          })}
+        />
+      </LinearGradient>
+    </View>
+  );
+};
+
+const tsStyles = StyleSheet.create({
+  wrapper: {
+    marginBottom: theme.spacing.xxxl,
+    marginTop: -theme.spacing.xl,
+  },
+  card: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  headerTitle: {
+    color: 'rgba(0,0,0,0.6)',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    flex: 1,
+  },
+  dots: {
+    flexDirection: 'row',
+    gap: 5,
+    marginRight: 10,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  dotActive: {
+    backgroundColor: '#fff',
+    width: 16,
+  },
+  periodLabel: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '800',
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  page: {
+    width: STATS_CARD_WIDTH,
+    paddingHorizontal: 12,
+    gap: 6,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  statCell: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    gap: 8,
+  },
+  iconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statText: {
+    flex: 1,
+  },
+  statValue: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '800',
+    lineHeight: 20,
+  },
+  statTotal: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.6)',
+  },
+  statLabel: {
+    color: 'rgba(0,0,0,0.5)',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    lineHeight: 14,
+  },
+});
 
 const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: string[] }) => {
   if (!session) return null;
