@@ -12,6 +12,7 @@ import {
   Lightning,
   Trophy,
   ArrowRight,
+  ArrowLeft,
   Info,
   ChartLineUp,
 } from 'phosphor-react-native';
@@ -45,10 +46,22 @@ export const SpikesScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={styles.backButton}
+        >
+          <ArrowLeft size={20} color="#e2e8f0" weight="bold" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Spikes</Text>
+        <View style={{ width: 36 }} />
+      </View>
+
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 16, paddingBottom: contentBottomPadding },
+          { paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -124,6 +137,27 @@ export const SpikesScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
   scroll: {
     paddingHorizontal: 20,
