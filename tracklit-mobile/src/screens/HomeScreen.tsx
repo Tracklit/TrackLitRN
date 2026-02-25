@@ -42,7 +42,13 @@ import {
   Lightning,
   Barbell,
   PencilLine,
-  ChatCircle,
+  FilmStrip,
+  PersonSimpleThrow,
+  Timer,
+  Clock,
+  VideoCamera,
+  FirstAidKit,
+  Brain,
 } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -459,12 +465,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     enabled: !!userId && userId !== 'guest',
   });
 
-  const { data: feedPosts = [] } = useQuery({
-    queryKey: ['feed-home'],
-    queryFn: () => apiRequest<any[]>('/api/feed?filter=all'),
-    staleTime: 120000,
-    enabled: !!userId && userId !== 'guest',
-  });
+  const [lastUsedTool, setLastUsedTool] = useState<string | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem('last_used_tool').then((val) => {
+      setLastUsedTool(val || 'PhotoFinish');
+    });
+  }, []);
 
   const spikesBalance = Number((user as any)?.spikes ?? 0);
 
@@ -476,7 +483,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
     const completedSessions = programSessions?.filter((s: any) => s.completed_at) ?? [];
     const allJournal = (journalEntries as any[]) ?? [];
-    const allFeed = (feedPosts as any[]).filter((p: any) => p.isOwnPost) ?? [];
     const totalWeeklySessions = 7;
 
     const inRange = (dateStr: string | undefined, from: Date) => {
@@ -487,22 +493,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
     const todaySessions = completedSessions.filter((s: any) => inRange(s.completed_at, todayStart)).length;
     const todayJournal = allJournal.filter((j: any) => inRange(j.date || j.createdAt, todayStart)).length;
-    const todayPosts = allFeed.filter((p: any) => inRange(p.createdAt, todayStart)).length;
 
     const weekSessions = completedSessions.filter((s: any) => inRange(s.completed_at, weekAgo)).length;
     const weekJournal = allJournal.filter((j: any) => inRange(j.date || j.createdAt, weekAgo)).length;
-    const weekPosts = allFeed.filter((p: any) => inRange(p.createdAt, weekAgo)).length;
 
     const monthSessions = completedSessions.filter((s: any) => inRange(s.completed_at, monthAgo)).length;
     const monthJournal = allJournal.filter((j: any) => inRange(j.date || j.createdAt, monthAgo)).length;
-    const monthPosts = allFeed.filter((p: any) => inRange(p.createdAt, monthAgo)).length;
 
     return [
-      { key: 'today', label: 'Today', sessions: todaySessions, weeklyTotal: 1, journal: todayJournal, posts: todayPosts, spikes: spikesBalance },
-      { key: '7days', label: '7 Days', sessions: weekSessions, weeklyTotal: totalWeeklySessions, journal: weekJournal, posts: weekPosts, spikes: spikesBalance },
-      { key: '30days', label: '30 Days', sessions: monthSessions, weeklyTotal: totalWeeklySessions * 4, journal: monthJournal, posts: monthPosts, spikes: spikesBalance },
+      { key: 'today', label: 'Today', sessions: todaySessions, weeklyTotal: 1, journal: todayJournal, spikes: spikesBalance, quickAction: lastUsedTool || 'PhotoFinish' },
+      { key: '7days', label: '7 Days', sessions: weekSessions, weeklyTotal: totalWeeklySessions, journal: weekJournal, spikes: spikesBalance, quickAction: lastUsedTool || 'PhotoFinish' },
+      { key: '30days', label: '30 Days', sessions: monthSessions, weeklyTotal: totalWeeklySessions * 4, journal: monthJournal, spikes: spikesBalance, quickAction: lastUsedTool || 'PhotoFinish' },
     ];
-  }, [programSessions, journalEntries, feedPosts, spikesBalance]);
+  }, [programSessions, journalEntries, spikesBalance, lastUsedTool]);
 
   const unreadNotifications =
     (notifications as any[]).filter((n) => !n.isRead).length + (pendingRequests as any[]).length;
@@ -677,6 +680,102 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         />
       </View>
 
+      {/* Activity Carousel — fixed above scroll */}
+      {activities.length > 0 && !carouselHidden && (
+        <View style={styles.carouselContainer}>
+          <TouchableOpacity
+            style={styles.carouselToggle}
+            activeOpacity={0.6}
+            onPress={() => setCarouselCollapsed(prev => !prev)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            {carouselCollapsed ? (
+              <Plus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
+            ) : (
+              <Minus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
+            )}
+          </TouchableOpacity>
+          {!carouselCollapsed && (
+            <FlatList
+              ref={carouselRef}
+              data={carouselData}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item._carouselKey}
+              contentContainerStyle={styles.carouselContent}
+              contentOffset={{ x: carouselMiddleOffset * CAROUSEL_ITEM_WIDTH, y: 0 }}
+              onMomentumScrollEnd={(e) =>
+                handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH)
+              }
+              onScrollEndDrag={(e) => {
+                if (!e.nativeEvent.velocity || (Math.abs(e.nativeEvent.velocity.x) < 0.1)) {
+                  handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH);
+                }
+              }}
+              getItemLayout={(_, index) => ({
+                length: CAROUSEL_ITEM_WIDTH,
+                offset: CAROUSEL_ITEM_WIDTH * index,
+                index,
+              })}
+              renderItem={({ item }) => {
+                const badge = getActivityBadge(item.activityType);
+                const hasProfileImage = !!item.user?.profileImageUrl;
+                const initial = (item.user?.name?.[0] || item.user?.username?.[0] || '?').toUpperCase();
+                const username = item.user?.name?.split(' ')[0] || item.user?.username || '';
+                const isRead = readActivities.has(item.id);
+
+                return (
+                  <TouchableOpacity
+                    style={styles.carouselItem}
+                    activeOpacity={0.7}
+                    onPress={() => handleTickerTap(item)}
+                  >
+                    <View style={[
+                      styles.carouselRing,
+                      isRead ? styles.carouselRingRead : styles.carouselRingUnread,
+                    ]}>
+                      <View style={styles.carouselCircle}>
+                        {hasProfileImage ? (
+                          <Image
+                            source={{ uri: item.user!.profileImageUrl }}
+                            style={styles.carouselImage}
+                          />
+                        ) : (
+                          <Text style={styles.carouselInitial}>{initial}</Text>
+                        )}
+                      </View>
+                      <View style={[
+                        styles.carouselBadge,
+                        badge === 'journal' && styles.carouselBadgeJournal,
+                        badge === 'feed' && styles.carouselBadgeFeed,
+                        badge === 'system' && styles.carouselBadgeSystem,
+                      ]}>
+                        {badge === 'journal' ? (
+                          <Book size={10} color="#fff" weight="fill" />
+                        ) : badge === 'feed' ? (
+                          <Newspaper size={10} color="#fff" weight="fill" />
+                        ) : (
+                          <View style={styles.carouselRedDot} />
+                        )}
+                      </View>
+                    </View>
+                    <Text
+                      variant="caption"
+                      color="secondary"
+                      numberOfLines={1}
+                      style={styles.carouselUsername}
+                    >
+                      {username}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          )}
+          <View style={styles.carouselDivider} />
+        </View>
+      )}
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -693,102 +792,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         }
       >
         <InlineRefreshHeader visible={isRefreshing} />
-
-        {/* Activity Carousel */}
-        {activities.length > 0 && !carouselHidden && (
-          <View style={styles.carouselContainer}>
-            <TouchableOpacity
-              style={styles.carouselToggle}
-              activeOpacity={0.6}
-              onPress={() => setCarouselCollapsed(prev => !prev)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              {carouselCollapsed ? (
-                <Plus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
-              ) : (
-                <Minus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
-              )}
-            </TouchableOpacity>
-            {!carouselCollapsed && (
-              <FlatList
-                ref={carouselRef}
-                data={carouselData}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item._carouselKey}
-                contentContainerStyle={styles.carouselContent}
-                contentOffset={{ x: carouselMiddleOffset * CAROUSEL_ITEM_WIDTH, y: 0 }}
-                onMomentumScrollEnd={(e) =>
-                  handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH)
-                }
-                onScrollEndDrag={(e) => {
-                  if (!e.nativeEvent.velocity || (Math.abs(e.nativeEvent.velocity.x) < 0.1)) {
-                    handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH);
-                  }
-                }}
-                getItemLayout={(_, index) => ({
-                  length: CAROUSEL_ITEM_WIDTH,
-                  offset: CAROUSEL_ITEM_WIDTH * index,
-                  index,
-                })}
-                renderItem={({ item }) => {
-                  const badge = getActivityBadge(item.activityType);
-                  const hasProfileImage = !!item.user?.profileImageUrl;
-                  const initial = (item.user?.name?.[0] || item.user?.username?.[0] || '?').toUpperCase();
-                  const username = item.user?.name?.split(' ')[0] || item.user?.username || '';
-                  const isRead = readActivities.has(item.id);
-
-                  return (
-                    <TouchableOpacity
-                      style={styles.carouselItem}
-                      activeOpacity={0.7}
-                      onPress={() => handleTickerTap(item)}
-                    >
-                      <View style={[
-                        styles.carouselRing,
-                        isRead ? styles.carouselRingRead : styles.carouselRingUnread,
-                      ]}>
-                        <View style={styles.carouselCircle}>
-                          {hasProfileImage ? (
-                            <Image
-                              source={{ uri: item.user!.profileImageUrl }}
-                              style={styles.carouselImage}
-                            />
-                          ) : (
-                            <Text style={styles.carouselInitial}>{initial}</Text>
-                          )}
-                        </View>
-                        <View style={[
-                          styles.carouselBadge,
-                          badge === 'journal' && styles.carouselBadgeJournal,
-                          badge === 'feed' && styles.carouselBadgeFeed,
-                          badge === 'system' && styles.carouselBadgeSystem,
-                        ]}>
-                          {badge === 'journal' ? (
-                            <Book size={10} color="#fff" weight="fill" />
-                          ) : badge === 'feed' ? (
-                            <Newspaper size={10} color="#fff" weight="fill" />
-                          ) : (
-                            <View style={styles.carouselRedDot} />
-                          )}
-                        </View>
-                      </View>
-                      <Text
-                        variant="caption"
-                        color="secondary"
-                        numberOfLines={1}
-                        style={styles.carouselUsername}
-                      >
-                        {username}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                }}
-              />
-            )}
-            <View style={styles.carouselDivider} />
-          </View>
-        )}
 
         {/* Practice Card */}
         <TouchableOpacity
@@ -832,7 +835,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         </TouchableOpacity>
 
         {/* Training Stats Carousel */}
-        <TrainingStatsCarousel data={trainingStats} />
+        <TrainingStatsCarousel data={trainingStats} onNavigate={onNavigate} />
 
         {/* Category Cards */}
         <View style={styles.cardsContainer}>
@@ -997,11 +1000,23 @@ interface StatsPeriod {
   sessions: number;
   weeklyTotal: number;
   journal: number;
-  posts: number;
   spikes: number;
+  quickAction: string;
 }
 
-const TrainingStatsCarousel = ({ data }: { data: StatsPeriod[] }) => {
+const TOOL_CONFIG: Record<string, { label: string; icon: React.ReactNode; screen: string }> = {
+  PhotoFinish: { label: 'Photo Finish', icon: <FilmStrip size={14} color="#818cf8" weight="fill" />, screen: 'PhotoFinish' },
+  Sprinthia: { label: 'Sprinthia AI', icon: <Brain size={14} color="#a78bfa" weight="fill" />, screen: 'Sprinthia' },
+  StartGun: { label: 'Start Gun', icon: <PersonSimpleThrow size={14} color="#f87171" weight="fill" />, screen: 'StartGun' },
+  Stopwatch: { label: 'Stopwatch', icon: <Timer size={14} color="#38bdf8" weight="fill" />, screen: 'Stopwatch' },
+  IntervalTimer: { label: 'Interval Timer', icon: <Clock size={14} color="#4ade80" weight="fill" />, screen: 'IntervalTimer' },
+  Journal: { label: 'Journal', icon: <BookOpen size={14} color="#fbbf24" weight="fill" />, screen: 'Journal' },
+  ExerciseLibrary: { label: 'Exercise Lib', icon: <VideoCamera size={14} color="#c084fc" weight="fill" />, screen: 'ExerciseLibrary' },
+  Rehab: { label: 'Rehab', icon: <FirstAidKit size={14} color="#fb7185" weight="fill" />, screen: 'Rehab' },
+  Spikes: { label: 'Spikes', icon: <Lightning size={14} color="#facc15" weight="fill" />, screen: 'Spikes' },
+};
+
+const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNavigate?: (route: string) => void }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const statsRef = useRef<FlatList>(null);
 
@@ -1010,50 +1025,65 @@ const TrainingStatsCarousel = ({ data }: { data: StatsPeriod[] }) => {
     setActiveIndex(Math.max(0, Math.min(idx, data.length - 1)));
   }, [data.length]);
 
-  const renderStatsPage = ({ item }: { item: StatsPeriod }) => (
-    <View style={tsStyles.page}>
-      <View style={tsStyles.row}>
-        <View style={tsStyles.statCell}>
-          <View style={tsStyles.iconWrap}>
-            <Barbell size={14} color="#fff" weight="fill" />
+  const handleQuickAction = useCallback((toolKey: string) => {
+    const tool = TOOL_CONFIG[toolKey];
+    if (tool && onNavigate) {
+      onNavigate(tool.screen);
+    }
+  }, [onNavigate]);
+
+  const renderStatsPage = ({ item }: { item: StatsPeriod }) => {
+    const tool = TOOL_CONFIG[item.quickAction] || TOOL_CONFIG.PhotoFinish;
+    return (
+      <View style={tsStyles.page}>
+        <View style={tsStyles.row}>
+          <View style={tsStyles.statCell}>
+            <View style={tsStyles.iconWrap}>
+              <Barbell size={14} color="#fff" weight="fill" />
+            </View>
+            <View style={tsStyles.statText}>
+              <RNText style={tsStyles.statValue}>{item.sessions}<RNText style={tsStyles.statTotal}>/{item.weeklyTotal}</RNText></RNText>
+              <RNText style={tsStyles.statLabel}>Sessions</RNText>
+            </View>
           </View>
-          <View style={tsStyles.statText}>
-            <RNText style={tsStyles.statValue}>{item.sessions}<RNText style={tsStyles.statTotal}>/{item.weeklyTotal}</RNText></RNText>
-            <RNText style={tsStyles.statLabel}>Sessions</RNText>
+          <View style={tsStyles.statCell}>
+            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(251,191,36,0.25)' }]}>
+              <PencilLine size={14} color="#fbbf24" weight="fill" />
+            </View>
+            <View style={tsStyles.statText}>
+              <RNText style={tsStyles.statValue}>{item.journal}</RNText>
+              <RNText style={tsStyles.statLabel}>Journal</RNText>
+            </View>
           </View>
         </View>
-        <View style={tsStyles.statCell}>
-          <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(251,191,36,0.25)' }]}>
-            <PencilLine size={14} color="#fbbf24" weight="fill" />
-          </View>
-          <View style={tsStyles.statText}>
-            <RNText style={tsStyles.statValue}>{item.journal}</RNText>
-            <RNText style={tsStyles.statLabel}>Journal</RNText>
+        <View style={tsStyles.row}>
+          <TouchableOpacity
+            style={tsStyles.statCell}
+            activeOpacity={0.7}
+            onPress={() => handleQuickAction(item.quickAction)}
+          >
+            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(99,102,241,0.25)' }]}>
+              {tool.icon}
+            </View>
+            <View style={tsStyles.statText}>
+              <RNText style={tsStyles.statValue} numberOfLines={1}>{tool.label}</RNText>
+              <RNText style={tsStyles.statLabel}>Quick Action</RNText>
+            </View>
+            <CaretRight size={12} color="rgba(255,255,255,0.5)" weight="bold" />
+          </TouchableOpacity>
+          <View style={tsStyles.statCell}>
+            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(250,204,21,0.25)' }]}>
+              <Lightning size={14} color="#facc15" weight="fill" />
+            </View>
+            <View style={tsStyles.statText}>
+              <RNText style={tsStyles.statValue}>{item.spikes.toLocaleString()}</RNText>
+              <RNText style={tsStyles.statLabel}>Spikes</RNText>
+            </View>
           </View>
         </View>
       </View>
-      <View style={tsStyles.row}>
-        <View style={tsStyles.statCell}>
-          <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(99,102,241,0.25)' }]}>
-            <ChatCircle size={14} color="#818cf8" weight="fill" />
-          </View>
-          <View style={tsStyles.statText}>
-            <RNText style={tsStyles.statValue}>{item.posts}</RNText>
-            <RNText style={tsStyles.statLabel}>Feed Posts</RNText>
-          </View>
-        </View>
-        <View style={tsStyles.statCell}>
-          <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(250,204,21,0.25)' }]}>
-            <Lightning size={14} color="#facc15" weight="fill" />
-          </View>
-          <View style={tsStyles.statText}>
-            <RNText style={tsStyles.statValue}>{item.spikes.toLocaleString()}</RNText>
-            <RNText style={tsStyles.statLabel}>Spikes</RNText>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={tsStyles.wrapper}>

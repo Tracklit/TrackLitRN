@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
   CalendarBlank,
@@ -18,16 +19,10 @@ import { LinearGradient } from '@/components/LinearGradient';
 import { useMutation } from '@tanstack/react-query';
 
 import { Text } from '@/components/ui/Text';
-import { WebScreen } from '@/components/web/Screen';
-import { WebCard } from '@/components/web/Card';
-import { WebButton } from '@/components/web/Button';
-import { WebBadge } from '@/components/web/Badge';
-import { WebProgress } from '@/components/web/Progress';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import theme from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -40,42 +35,12 @@ const rehabProgram = {
       days: 'Week 1',
       goals: ['Control pain and swelling', 'Prevent muscle shortening', 'Begin gentle movement', 'Protect healing tissue'],
       exercises: [
-        {
-          name: 'RICE Protocol',
-          sets: 'First 24-48 hours',
-          duration: 'Continuous',
-          description: 'Rest, Ice (15-20 min every 2-3 hrs), Compression bandaging, Elevation when possible',
-        },
-        {
-          name: 'NSAIDs (if cleared by physician)',
-          sets: 'As prescribed',
-          duration: '3-5 days max',
-          description: 'Ibuprofen 400mg 3x daily with food OR Naproxen as directed to reduce inflammation',
-        },
-        {
-          name: 'Compression Bandaging',
-          sets: 'Daily application',
-          duration: 'First week',
-          description: 'Elastic wrap from knee to mid-thigh, snug but not cutting circulation',
-        },
-        {
-          name: 'Very Gentle Range of Motion',
-          sets: 'Every 2 hours',
-          duration: '5-10 slow reps',
-          description: 'Sitting knee flexion/extension within pain-free range, stop at first sign of discomfort',
-        },
-        {
-          name: 'Isometric Glute Activation',
-          sets: '3-4 times daily',
-          duration: '10 x 5-second holds',
-          description: 'Lying prone, gently squeeze glutes without moving legs. Unloaded muscle activation',
-        },
-        {
-          name: 'Gentle Massage Therapy',
-          sets: '2-3 times daily',
-          duration: '5-10 minutes',
-          description: 'Light effleurage strokes above and below injury site, avoid direct pressure on strain',
-        },
+        { name: 'RICE Protocol', sets: 'First 24-48 hours', duration: 'Continuous', description: 'Rest, Ice (15-20 min every 2-3 hrs), Compression bandaging, Elevation when possible' },
+        { name: 'NSAIDs (if cleared by physician)', sets: 'As prescribed', duration: '3-5 days max', description: 'Ibuprofen 400mg 3x daily with food OR Naproxen as directed to reduce inflammation' },
+        { name: 'Compression Bandaging', sets: 'Daily application', duration: 'First week', description: 'Elastic wrap from knee to mid-thigh, snug but not cutting circulation' },
+        { name: 'Very Gentle Range of Motion', sets: 'Every 2 hours', duration: '5-10 slow reps', description: 'Sitting knee flexion/extension within pain-free range, stop at first sign of discomfort' },
+        { name: 'Isometric Glute Activation', sets: '3-4 times daily', duration: '10 x 5-second holds', description: 'Lying prone, gently squeeze glutes without moving legs. Unloaded muscle activation' },
+        { name: 'Gentle Massage Therapy', sets: '2-3 times daily', duration: '5-10 minutes', description: 'Light effleurage strokes above and below injury site, avoid direct pressure on strain' },
       ],
     },
     {
@@ -83,42 +48,12 @@ const rehabProgram = {
       days: 'Week 2',
       goals: ['Increase range of motion', 'Begin strengthening', 'Reduce bandaging dependence', 'Progress massage intensity'],
       exercises: [
-        {
-          name: 'Transition Bandaging',
-          sets: 'As needed',
-          duration: 'Reduce to activity only',
-          description: 'Switch to elastic therapeutic tape or reduce compression wrap usage to activity periods only',
-        },
-        {
-          name: 'NSAIDs Reduction',
-          sets: 'Taper dosage',
-          duration: 'Days 5-7',
-          description: 'Gradually reduce anti-inflammatory medication as acute inflammation subsides',
-        },
-        {
-          name: 'Active Range of Motion',
-          sets: '4-5 times daily',
-          duration: '2-3 sets of 15 reps',
-          description: 'Seated and standing knee flexion/extension, progress range as tolerated',
-        },
-        {
-          name: 'Isometric Hamstring Holds',
-          sets: '3 times daily',
-          duration: '3 sets x 10 holds, 8-10 seconds each',
-          description: 'Prone position, gentle hamstring contraction at multiple knee angles',
-        },
-        {
-          name: 'Gentle Stationary Bike',
-          sets: '1-2 times daily',
-          duration: '10-15 minutes',
-          description: 'No resistance, focus on smooth pedaling motion within comfortable range',
-        },
-        {
-          name: 'Progressive Massage Therapy',
-          sets: 'Daily',
-          duration: '10-15 minutes',
-          description: 'Light cross-fiber friction massage around injury site, deeper pressure to surrounding muscles',
-        },
+        { name: 'Transition Bandaging', sets: 'As needed', duration: 'Reduce to activity only', description: 'Switch to elastic therapeutic tape or reduce compression wrap usage to activity periods only' },
+        { name: 'NSAIDs Reduction', sets: 'Taper dosage', duration: 'Days 5-7', description: 'Gradually reduce anti-inflammatory medication as acute inflammation subsides' },
+        { name: 'Active Range of Motion', sets: '4-5 times daily', duration: '2-3 sets of 15 reps', description: 'Seated and standing knee flexion/extension, progress range as tolerated' },
+        { name: 'Isometric Hamstring Holds', sets: '3 times daily', duration: '3 sets x 10 holds, 8-10 seconds each', description: 'Prone position, gentle hamstring contraction at multiple knee angles' },
+        { name: 'Gentle Stationary Bike', sets: '1-2 times daily', duration: '10-15 minutes', description: 'No resistance, focus on smooth pedaling motion within comfortable range' },
+        { name: 'Progressive Massage Therapy', sets: 'Daily', duration: '10-15 minutes', description: 'Light cross-fiber friction massage around injury site, deeper pressure to surrounding muscles' },
       ],
     },
     {
@@ -126,36 +61,11 @@ const rehabProgram = {
       days: 'Week 3-4',
       goals: ['Restore muscle strength', 'Improve eccentric control', 'Begin dynamic movement patterns'],
       exercises: [
-        {
-          name: 'Discontinue Bandaging',
-          sets: 'Assessment day 14-18',
-          duration: 'Permanent',
-          description: 'Remove compression support once swelling subsided and strength improving',
-        },
-        {
-          name: 'Eccentric Hamstring Strengthening',
-          sets: 'Every other day',
-          duration: '3 sets x 6-10 reps',
-          description: 'Assisted Nordic curls, single-leg Romanian deadlifts with body weight',
-        },
-        {
-          name: 'Dynamic Stretching',
-          sets: '2-3 times daily',
-          duration: '10-15 repetitions',
-          description: 'Leg swings, walking high knees, butt kicks (controlled amplitude)',
-        },
-        {
-          name: 'Progressive Walking/Jogging',
-          sets: 'Daily',
-          duration: '15-25 minutes',
-          description: 'Week 3: brisk walking. Week 4: walk-jog intervals (2 min walk, 30 sec jog)',
-        },
-        {
-          name: 'Deep Tissue Massage',
-          sets: '3-4 times weekly',
-          duration: '15-20 minutes',
-          description: 'Deeper pressure, trigger point release, myofascial work on entire posterior chain',
-        },
+        { name: 'Discontinue Bandaging', sets: 'Assessment day 14-18', duration: 'Permanent', description: 'Remove compression support once swelling subsided and strength improving' },
+        { name: 'Eccentric Hamstring Strengthening', sets: 'Every other day', duration: '3 sets x 6-10 reps', description: 'Assisted Nordic curls, single-leg Romanian deadlifts with body weight' },
+        { name: 'Dynamic Stretching', sets: '2-3 times daily', duration: '10-15 repetitions', description: 'Leg swings, walking high knees, butt kicks (controlled amplitude)' },
+        { name: 'Progressive Walking/Jogging', sets: 'Daily', duration: '15-25 minutes', description: 'Week 3: brisk walking. Week 4: walk-jog intervals (2 min walk, 30 sec jog)' },
+        { name: 'Deep Tissue Massage', sets: '3-4 times weekly', duration: '15-20 minutes', description: 'Deeper pressure, trigger point release, myofascial work on entire posterior chain' },
       ],
     },
     {
@@ -163,30 +73,10 @@ const rehabProgram = {
       days: 'Week 5-8',
       goals: ['Sport-specific movement patterns', 'High-intensity eccentric strength', 'Injury prevention protocols'],
       exercises: [
-        {
-          name: 'Advanced Eccentric Training',
-          sets: '3 times weekly',
-          duration: '4 sets x 8-12 reps',
-          description: 'Full Nordic curls, single-leg RDLs with weight, eccentric leg curls',
-        },
-        {
-          name: 'Sprint Progression',
-          sets: 'Every other day',
-          duration: 'Progressive intensity',
-          description: 'Week 5-6: 70% sprints x 4-6 reps. Week 7-8: 85-95% sprints x 6-8 reps',
-        },
-        {
-          name: 'Plyometric Progression',
-          sets: '2-3 times weekly',
-          duration: '3-4 sets x 6-10 reps',
-          description: 'Bounds, hops, reactive jumps. Progress from bilateral to unilateral',
-        },
-        {
-          name: 'Maintenance Massage',
-          sets: '1-2 times weekly',
-          duration: '20-30 minutes',
-          description: 'Focus on maintaining tissue quality and preventing re-injury',
-        },
+        { name: 'Advanced Eccentric Training', sets: '3 times weekly', duration: '4 sets x 8-12 reps', description: 'Full Nordic curls, single-leg RDLs with weight, eccentric leg curls' },
+        { name: 'Sprint Progression', sets: 'Every other day', duration: 'Progressive intensity', description: 'Week 5-6: 70% sprints x 4-6 reps. Week 7-8: 85-95% sprints x 6-8 reps' },
+        { name: 'Plyometric Progression', sets: '2-3 times weekly', duration: '3-4 sets x 6-10 reps', description: 'Bounds, hops, reactive jumps. Progress from bilateral to unilateral' },
+        { name: 'Maintenance Massage', sets: '1-2 times weekly', duration: '20-30 minutes', description: 'Focus on maintaining tissue quality and preventing re-injury' },
       ],
     },
   ],
@@ -215,12 +105,14 @@ const dailyPrograms = {
 
 export const HamstringRehabProgramScreen: React.FC = () => {
   const navigation = useNavigation<Navigation>();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [currentPhase, setCurrentPhase] = useState(0);
   const [showDailyPrograms, setShowDailyPrograms] = useState(false);
 
   const isProOrStar = !!(user as any)?.isPremium || user?.role === 'star';
   const activePhaseIndex = currentPhase < 0 ? 0 : currentPhase;
+  const progressPercent = Math.round(((activePhaseIndex + 1) / rehabProgram.phases.length) * 100);
 
   const assignProgramMutation = useMutation({
     mutationFn: async () => {
@@ -266,374 +158,422 @@ export const HamstringRehabProgramScreen: React.FC = () => {
   };
 
   return (
-    <WebScreen backgroundColor="#010a18" contentStyle={{ paddingTop: theme.spacing.xl }}>
-      <View style={styles.headerRow}>
-        <WebButton variant="ghost" size="sm" onPress={() => navigation.goBack()}>
-          <ArrowLeft size={14} color={theme.colors.foreground} />
-          <Text variant="small" weight="medium" color="foreground">
-            Back to Rehab
-          </Text>
-        </WebButton>
-        <View style={styles.divider} />
-        <View style={styles.badgeRed}>
-          <Text variant="small" color="destructive">
-            Acute Muscle Injury
-          </Text>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <ArrowLeft size={18} color="#FFFFFF" weight="bold" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Hamstring Rehab</Text>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>Acute Muscle</Text>
         </View>
       </View>
 
-      <View style={styles.titleBlock}>
-        <Text variant="h1" weight="bold" color="foreground">
-          {rehabProgram.title}
-        </Text>
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <Clock size={14} color={theme.colors.foreground} />
-            <Text variant="small" color="muted">Duration: {rehabProgram.duration}</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Crosshair size={14} color={theme.colors.foreground} />
-            <Text variant="small" color="muted">4 Progressive Phases</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <CalendarBlank size={14} color={theme.colors.foreground} />
-            <Text variant="small" color="muted">Daily Guided Exercises</Text>
-          </View>
-        </View>
-      </View>
-
-      <LinearGradient
-        colors={['rgba(20, 83, 45, 0.2)', 'rgba(30, 64, 175, 0.2)']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.assignCard}
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.assignRow}>
-          <View style={{ flex: 1 }}>
-            <Text variant="body" weight="semiBold" color="foreground">
-              Assign This Program
-            </Text>
-            <Text variant="small" color="muted">
+        <View style={styles.titleBlock}>
+          <Text style={styles.programTitle}>{rehabProgram.title}</Text>
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Clock size={14} color="rgba(255,255,255,0.5)" weight="fill" />
+              <Text style={styles.metaText}>{rehabProgram.duration}</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Crosshair size={14} color="rgba(255,255,255,0.5)" weight="fill" />
+              <Text style={styles.metaText}>4 Phases</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <CalendarBlank size={14} color="rgba(255,255,255,0.5)" weight="fill" />
+              <Text style={styles.metaText}>Daily Guided</Text>
+            </View>
+          </View>
+        </View>
+
+        <LinearGradient
+          colors={['rgba(20, 83, 45, 0.25)', 'rgba(30, 64, 175, 0.25)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.assignCard}
+        >
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={styles.assignTitle}>Assign This Program</Text>
+            <Text style={styles.assignDesc}>
               This will replace your current training program with this rehabilitation protocol until recovery is complete.
             </Text>
           </View>
-          <WebButton
+          <TouchableOpacity
+            style={[styles.assignBtn, assignProgramMutation.isPending && { opacity: 0.6 }]}
             onPress={() => assignProgramMutation.mutate()}
             disabled={assignProgramMutation.isPending}
+            activeOpacity={0.7}
           >
-            {assignProgramMutation.isPending ? 'Assigning...' : 'Assign Program'}
-          </WebButton>
-        </View>
-      </LinearGradient>
+            <Text style={styles.assignBtnText}>
+              {assignProgramMutation.isPending ? 'Assigning...' : 'Assign'}
+            </Text>
+          </TouchableOpacity>
+        </LinearGradient>
 
-      {isProOrStar && (
-        <LinearGradient
-          colors={['rgba(88, 28, 135, 0.2)', 'rgba(30, 64, 175, 0.2)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.proCard}
-        >
-          <View style={styles.proHeader}>
-            <View style={styles.proTitleRow}>
-              <Star size={16} color="#c084fc" />
-              <Text variant="small" weight="medium" color="accent">
-                Pro/Star Daily Programs
-              </Text>
-            </View>
-            <WebButton
-              variant="outline"
-              size="sm"
-              onPress={() => setShowDailyPrograms((prev) => !prev)}
-            >
-              <Text variant="small" weight="medium" color="foreground">
-                {showDailyPrograms ? 'Hide' : 'Show'} Daily Programs
-              </Text>
-            </WebButton>
-          </View>
-          {showDailyPrograms && (
-            <View style={styles.dailyGrid}>
-              <View style={{ flex: 1 }}>
-                <Text variant="small" weight="medium" color="foreground" style={{ marginBottom: theme.spacing.sm }}>
-                  Week 1 - Initial Recovery
+        {isProOrStar && (
+          <LinearGradient
+            colors={['rgba(88, 28, 135, 0.2)', 'rgba(30, 64, 175, 0.2)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.proCard}
+          >
+            <View style={styles.proHeader}>
+              <View style={styles.proTitleRow}>
+                <Star size={16} color="#c084fc" weight="fill" />
+                <Text style={styles.proTitle}>Pro/Star Daily Programs</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.proToggle}
+                onPress={() => setShowDailyPrograms((prev) => !prev)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.proToggleText}>
+                  {showDailyPrograms ? 'Hide' : 'Show'}
                 </Text>
-                <View style={styles.dailyList}>
+              </TouchableOpacity>
+            </View>
+            {showDailyPrograms && (
+              <View style={styles.dailyGrid}>
+                <View>
+                  <Text style={styles.weekLabel}>Week 1 - Initial Recovery</Text>
                   {dailyPrograms.week1.map((day) => (
                     <View key={day.day} style={styles.dailyCard}>
                       <View style={styles.dailyHeader}>
-                        <Text variant="small" weight="medium" color="foreground">
-                          Day {day.day}
-                        </Text>
+                        <Text style={styles.dailyDay}>Day {day.day}</Text>
                         <View style={styles.intensityPill}>
-                          <Text variant="small" color="accent">{day.intensity}</Text>
+                          <Text style={styles.intensityText}>{day.intensity}</Text>
                         </View>
                       </View>
-                      <Text variant="small" color="muted">
-                        {day.focus}
-                      </Text>
-                      <Text variant="small" color="muted">
-                        {day.exercises.join(' • ')}
-                      </Text>
+                      <Text style={styles.dailyFocus}>{day.focus}</Text>
+                      <Text style={styles.dailyExercises}>{day.exercises.join(' · ')}</Text>
                     </View>
                   ))}
                 </View>
-              </View>
-
-              <View style={{ flex: 1 }}>
-                <Text variant="small" weight="medium" color="foreground" style={{ marginBottom: theme.spacing.sm }}>
-                  Week 2 - Progressive Loading
-                </Text>
-                <View style={styles.dailyList}>
+                <View>
+                  <Text style={styles.weekLabel}>Week 2 - Progressive Loading</Text>
                   {dailyPrograms.week2.map((day) => (
                     <View key={day.day} style={styles.dailyCard}>
                       <View style={styles.dailyHeader}>
-                        <Text variant="small" weight="medium" color="foreground">
-                          Day {day.day}
-                        </Text>
-                        <View style={styles.intensityPillBlue}>
-                          <Text variant="small" color="accent">{day.intensity}</Text>
+                        <Text style={styles.dailyDay}>Day {day.day}</Text>
+                        <View style={[styles.intensityPill, styles.intensityPillBlue]}>
+                          <Text style={[styles.intensityText, { color: '#60a5fa' }]}>{day.intensity}</Text>
                         </View>
                       </View>
-                      <Text variant="small" color="muted">
-                        {day.focus}
-                      </Text>
-                      <Text variant="small" color="muted">
-                        {day.exercises.join(' • ')}
-                      </Text>
+                      <Text style={styles.dailyFocus}>{day.focus}</Text>
+                      <Text style={styles.dailyExercises}>{day.exercises.join(' · ')}</Text>
                     </View>
                   ))}
                 </View>
               </View>
-            </View>
-          )}
-        </LinearGradient>
-      )}
+            )}
+          </LinearGradient>
+        )}
 
-      <WebCard tone="muted" padding={theme.spacing.lg} style={styles.warningCard}>
-        <View style={styles.warningRow}>
-          <Warning size={16} color="#f59e0b" />
+        <View style={styles.warningCard}>
+          <Warning size={16} color="#f59e0b" weight="fill" />
           <View style={{ flex: 1 }}>
-            <Text variant="body" weight="semiBold" color="warning">
-              Important Medical Disclaimer
-            </Text>
-            <Text variant="small" color="warning">
-              This program is for educational purposes and should complement, not replace, professional medical care. Stop exercises if pain increases. Consult your healthcare provider before starting this program, especially for Grade 2-3 strains or if symptoms persist beyond expected timeframes.
+            <Text style={styles.warningTitle}>Important Medical Disclaimer</Text>
+            <Text style={styles.warningText}>
+              This program is for educational purposes and should complement, not replace, professional medical care. Stop exercises if pain increases. Consult your healthcare provider before starting.
             </Text>
           </View>
         </View>
-      </WebCard>
 
-      <View style={styles.phaseList}>
-        {rehabProgram.phases.map((phase, index) => {
-          const isActive = index === currentPhase;
-          return (
-            <WebCard
-              key={phase.name}
-              tone="muted"
-              padding={theme.spacing.lg}
-              style={[styles.phaseCard, isActive && styles.phaseCardActive]}
-            >
-              <View style={styles.phaseHeader}>
-                <View>
-                  <View style={styles.phaseTitleRow}>
-                    <View style={[styles.phaseNumber, isActive && styles.phaseNumberActive]}>
-                      <Text variant="small" weight="bold" color="foreground">
-                        {index + 1}
-                      </Text>
-                    </View>
-                    <Text variant="body" weight="semiBold" color="foreground">
-                      {phase.name}
-                    </Text>
-                  </View>
-                  <Text variant="small" color="muted" style={{ marginLeft: 36 }}>
-                    {phase.days}
-                  </Text>
-                </View>
-                <View style={styles.phaseActions}>
-                  {index > currentPhase && (
-                    <WebButton variant="outline" size="sm" onPress={() => handleSkipAhead(index)}>
-                      <SkipForward size={12} color={theme.colors.foreground} />
-                      <Text variant="small" color="foreground">
-                        Skip Ahead
-                      </Text>
-                    </WebButton>
-                  )}
-                  <WebButton
-                    variant="ghost"
-                    size="sm"
+        <View style={styles.phaseList}>
+          {rehabProgram.phases.map((phase, index) => {
+            const isActive = index === currentPhase;
+            return (
+              <View key={phase.name} style={[styles.phaseCard, isActive && styles.phaseCardActive]}>
+                <View style={styles.phaseHeader}>
+                  <TouchableOpacity
+                    style={styles.phaseTitleRow}
                     onPress={() => setCurrentPhase(isActive ? -1 : index)}
+                    activeOpacity={0.7}
                   >
-                    {isActive ? <Pause size={14} color={theme.colors.foreground} /> : <Play size={14} color={theme.colors.foreground} />}
-                  </WebButton>
+                    <View style={[styles.phaseNumber, isActive && styles.phaseNumberActive]}>
+                      <Text style={styles.phaseNumberText}>{index + 1}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.phaseName}>{phase.name}</Text>
+                      <Text style={styles.phaseDays}>{phase.days}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <View style={styles.phaseActions}>
+                    {index > currentPhase && (
+                      <TouchableOpacity
+                        style={styles.skipBtn}
+                        onPress={() => handleSkipAhead(index)}
+                        activeOpacity={0.7}
+                      >
+                        <SkipForward size={12} color="rgba(255,255,255,0.6)" weight="fill" />
+                        <Text style={styles.skipText}>Skip</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                      onPress={() => setCurrentPhase(isActive ? -1 : index)}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      {isActive ? (
+                        <Pause size={16} color="rgba(255,255,255,0.5)" weight="fill" />
+                      ) : (
+                        <Play size={16} color="rgba(255,255,255,0.5)" weight="fill" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
 
-              {isActive && (
-                <View style={styles.phaseContent}>
-                  <View style={styles.phaseSection}>
-                    <Text variant="small" weight="medium" color="foreground">
-                      Phase Goals:
-                    </Text>
+                {isActive && (
+                  <View style={styles.phaseContent}>
+                    <Text style={styles.sectionLabel}>Phase Goals</Text>
                     {phase.goals.map((goal) => (
                       <View key={goal} style={styles.goalRow}>
-                        <CheckCircle size={12} color="#16a34a" />
-                        <Text variant="small" color="muted">
-                          {goal}
-                        </Text>
+                        <CheckCircle size={14} color="#16a34a" weight="fill" />
+                        <Text style={styles.goalText}>{goal}</Text>
+                      </View>
+                    ))}
+
+                    <Text style={[styles.sectionLabel, { marginTop: 12 }]}>Daily Exercises</Text>
+                    {phase.exercises.map((exercise) => (
+                      <View key={exercise.name} style={styles.exerciseCard}>
+                        <View style={styles.exerciseHeader}>
+                          <Text style={styles.exerciseName}>{exercise.name}</Text>
+                          <View style={styles.exerciseBadge}>
+                            <Text style={styles.exerciseBadgeText}>{exercise.sets} · {exercise.duration}</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.exerciseDesc}>{exercise.description}</Text>
                       </View>
                     ))}
                   </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
 
-                  <View style={styles.phaseSection}>
-                    <Text variant="small" weight="medium" color="foreground">
-                      Daily Exercises:
-                    </Text>
-                    <View style={styles.exerciseList}>
-                      {phase.exercises.map((exercise) => (
-                        <View key={exercise.name} style={styles.exerciseCard}>
-                          <View style={styles.exerciseHeader}>
-                            <Text variant="small" weight="semiBold" color="foreground" style={styles.exerciseTitle}>
-                              {exercise.name}
-                            </Text>
-                            <WebBadge variant="outline" style={styles.exerciseBadge}>
-                              {exercise.sets} • {exercise.duration}
-                            </WebBadge>
-                          </View>
-                          <Text variant="small" color="muted">
-                            {exercise.description}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                </View>
-              )}
-            </WebCard>
-          );
-        })}
-      </View>
-
-      <WebCard tone="muted" padding={theme.spacing.lg}>
-        <Text variant="body" weight="semiBold" color="foreground">
-          Recovery Progress
-        </Text>
-        <Text variant="small" color="muted">
-          Track your progress through each phase of recovery
-        </Text>
-        <View style={{ marginTop: theme.spacing.md, gap: theme.spacing.sm }}>
-          <View style={styles.progressHeader}>
-            <Text variant="small" color="muted">
-              Phase {activePhaseIndex + 1} of {rehabProgram.phases.length}
-            </Text>
-            <Text variant="small" color="muted">
-              {Math.round(((activePhaseIndex + 1) / rehabProgram.phases.length) * 100)}% Complete
-            </Text>
+        <View style={styles.progressCard}>
+          <Text style={styles.progressTitle}>Recovery Progress</Text>
+          <Text style={styles.progressSubtitle}>Track your progress through each phase of recovery</Text>
+          <View style={styles.progressRow}>
+            <Text style={styles.progressLabel}>Phase {activePhaseIndex + 1} of {rehabProgram.phases.length}</Text>
+            <Text style={styles.progressLabel}>{progressPercent}%</Text>
           </View>
-          <WebProgress value={((activePhaseIndex + 1) / rehabProgram.phases.length) * 100} />
-          <Text variant="small" color="muted">
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+          </View>
+          <Text style={styles.progressNote}>
             This is a visual representation. Your actual recovery may vary based on individual factors.
           </Text>
         </View>
-      </WebCard>
-    </WebScreen>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
-  divider: { width: 1, height: 20, backgroundColor: '#4b5563' },
-  badgeRed: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.md,
+  container: { flex: 1, backgroundColor: '#0E0F14' },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
-  titleBlock: { gap: theme.spacing.md },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.md },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  badge: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeText: { fontSize: 10, fontWeight: '700', color: '#f87171' },
+  scrollContent: { padding: 16, gap: 16 },
+  titleBlock: { gap: 10 },
+  programTitle: { fontSize: 20, fontWeight: '800', color: '#FFFFFF', lineHeight: 26 },
+  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metaText: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
   assignCard: {
-    borderRadius: theme.borderRadius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(34, 197, 94, 0.3)',
-    padding: theme.spacing.lg,
+    padding: 16,
   },
-  assignRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  assignTitle: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  assignDesc: { fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 16 },
+  assignBtn: {
+    backgroundColor: '#FF7A00',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  assignBtnText: { fontSize: 12, fontWeight: '700', color: '#000' },
   proCard: {
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(168, 85, 247, 0.3)',
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    padding: 16,
+    gap: 12,
   },
-  proHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: theme.spacing.sm },
-  proTitleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-  dailyGrid: { flexDirection: 'column', gap: theme.spacing.md },
-  dailyList: { gap: theme.spacing.sm },
-  dailyCard: {
-    borderRadius: theme.borderRadius.md,
+  proHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  proTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  proTitle: { fontSize: 12, fontWeight: '700', color: '#c084fc' },
+  proToggle: {
     borderWidth: 1,
-    borderColor: '#374151',
-    backgroundColor: 'rgba(31, 41, 55, 0.4)',
-    padding: theme.spacing.md,
-    gap: theme.spacing.xs,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  proToggleText: { fontSize: 11, fontWeight: '600', color: '#FFFFFF' },
+  dailyGrid: { gap: 16 },
+  weekLabel: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.7)', marginBottom: 8 },
+  dailyCard: {
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    padding: 12,
+    gap: 4,
+    marginBottom: 6,
   },
   dailyHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dailyDay: { fontSize: 12, fontWeight: '600', color: '#FFFFFF' },
+  dailyFocus: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
+  dailyExercises: { fontSize: 10, color: 'rgba(255,255,255,0.35)' },
   intensityPill: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
     backgroundColor: 'rgba(126, 34, 206, 0.3)',
   },
-  intensityPillBlue: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: 'rgba(37, 99, 235, 0.3)',
+  intensityPillBlue: { backgroundColor: 'rgba(37, 99, 235, 0.3)' },
+  intensityText: { fontSize: 9, fontWeight: '700', color: '#c084fc' },
+  warningCard: {
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: '#1C1F2B',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
   },
-  warningCard: { borderColor: 'rgba(245, 158, 11, 0.3)', borderWidth: 1 },
-  warningRow: { flexDirection: 'row', gap: theme.spacing.md },
-  phaseList: { gap: theme.spacing.md },
-  phaseCard: { borderColor: '#374151', borderWidth: 1 },
-  phaseCardActive: { borderColor: 'rgba(59, 130, 246, 0.5)', backgroundColor: 'rgba(30, 64, 175, 0.2)' },
-  phaseHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: theme.spacing.md, alignItems: 'flex-start' },
-  phaseTitleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+  warningTitle: { fontSize: 13, fontWeight: '700', color: '#f59e0b', marginBottom: 4 },
+  warningText: { fontSize: 11, color: '#f59e0b', lineHeight: 16, opacity: 0.8 },
+  phaseList: { gap: 10 },
+  phaseCard: {
+    backgroundColor: '#1C1F2B',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  phaseCardActive: {
+    borderColor: 'rgba(59, 130, 246, 0.5)',
+    backgroundColor: 'rgba(30, 64, 175, 0.08)',
+  },
+  phaseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  phaseTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   phaseNumber: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#4b5563',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   phaseNumberActive: { backgroundColor: '#3b82f6' },
-  phaseActions: {
+  phaseNumberText: { fontSize: 12, fontWeight: '800', color: '#FFFFFF' },
+  phaseName: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
+  phaseDays: { fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
+  phaseActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  skipBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
-    maxWidth: '45%',
-  },
-  phaseContent: { marginTop: theme.spacing.md, gap: theme.spacing.md },
-  phaseSection: { gap: theme.spacing.sm },
-  goalRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-  exerciseList: { gap: theme.spacing.sm },
-  exerciseCard: {
-    borderRadius: theme.borderRadius.md,
+    gap: 4,
     borderWidth: 1,
-    borderColor: '#4b5563',
-    backgroundColor: 'rgba(55, 65, 81, 0.3)',
-    padding: theme.spacing.md,
-    gap: theme.spacing.xs,
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  skipText: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.6)' },
+  phaseContent: { marginTop: 14, gap: 6 },
+  sectionLabel: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.7)', marginBottom: 4 },
+  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2 },
+  goalText: { fontSize: 12, color: 'rgba(255,255,255,0.6)', flex: 1 },
+  exerciseCard: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 10,
+    padding: 12,
+    gap: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   exerciseHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: theme.spacing.sm,
-    flexWrap: 'wrap',
+    gap: 8,
   },
-  exerciseTitle: { flex: 1, flexWrap: 'wrap' },
-  exerciseBadge: { maxWidth: '60%', alignSelf: 'flex-start' },
-  progressHeader: { flexDirection: 'row', justifyContent: 'space-between' },
+  exerciseName: { fontSize: 13, fontWeight: '600', color: '#FFFFFF', flex: 1 },
+  exerciseBadge: {
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  exerciseBadgeText: { fontSize: 9, fontWeight: '700', color: '#FF7A00' },
+  exerciseDesc: { fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 16 },
+  progressCard: {
+    backgroundColor: '#1C1F2B',
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+  },
+  progressTitle: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  progressSubtitle: { fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 16 },
+  progressRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  progressLabel: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
+  progressBarBg: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: '#3b82f6',
+  },
+  progressNote: { fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 14 },
 });
-
