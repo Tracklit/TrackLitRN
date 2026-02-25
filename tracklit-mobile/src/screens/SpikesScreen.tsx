@@ -12,25 +12,27 @@ import {
   Lightning,
   Trophy,
   ArrowRight,
-  ArrowLeft,
+  CaretLeft,
   Info,
   ChartLineUp,
 } from 'phosphor-react-native';
-import { LinearGradient } from '@/components/LinearGradient';
 
 import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
-import theme from '@/utils/theme';
-import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '@/utils/layoutPadding';
+import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 const C = {
+  bg: '#0E0F14',
   orange: '#FF7A00',
   card: '#1C1F2B',
   border: 'rgba(255,255,255,0.06)',
+  textPrimary: '#FFFFFF',
+  textSecondary: 'rgba(255,255,255,0.7)',
   textMuted: 'rgba(255,255,255,0.5)',
+  iconBg: 'rgba(255,255,255,0.05)',
 };
 
 export const SpikesScreen: React.FC = () => {
@@ -41,21 +43,13 @@ export const SpikesScreen: React.FC = () => {
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom);
 
   return (
-    <LinearGradient
-      colors={theme.gradient.background}
-      locations={theme.gradient.locations}
-      style={styles.container}
-    >
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          style={styles.backButton}
-        >
-          <ArrowLeft size={20} color="#e2e8f0" weight="bold" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Spikes</Text>
-        <View style={{ width: 36 }} />
+        <View style={{ flex: 1 }} />
       </View>
 
       <ScrollView
@@ -130,33 +124,36 @@ export const SpikesScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: C.bg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 8,
+    paddingVertical: 14,
+    gap: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: C.border,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: C.iconBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: C.textPrimary,
     letterSpacing: 0.3,
   },
   scroll: {
@@ -167,6 +164,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 32,
     paddingBottom: 8,
+    gap: 4,
   },
   balanceIconWrap: {
     width: 56,
@@ -175,12 +173,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,122,0,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   balanceValue: {
     fontSize: 42,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: C.textPrimary,
     letterSpacing: -1,
   },
   balanceLabel: {
@@ -223,7 +221,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: C.textPrimary,
   },
   cardDesc: {
     fontSize: 12,
@@ -250,7 +248,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: C.textPrimary,
   },
   statLabel: {
     fontSize: 11,

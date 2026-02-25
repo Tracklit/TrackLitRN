@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import { db } from "./db";
 import { sql, eq, and } from "drizzle-orm";
-import { messageReactions } from "@shared/schema";
+import { messageReactions, chatGroups, chatGroupMembers, chatGroupMessages, users } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -437,46 +437,40 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
     const userId = req.user!.id;
     const { name, description, isPrivate = false, members } = req.body;
 
+    console.log('[CreateGroup Server] Request body:', { name, description, isPrivate, members: members ? 'present' : 'none', userId });
+
     if (!name?.trim()) {
       return res.status(400).json({ error: "Group name is required" });
     }
 
-    // Parse members if provided
-    let inviteMembers = [];
+    let inviteMembers: any[] = [];
     if (members) {
       try {
         inviteMembers = JSON.parse(members);
       } catch (e) {
-        console.error("Error parsing members:", e);
+        console.error("[CreateGroup Server] Error parsing members:", e);
       }
     }
 
-    // Generate invite code
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    // Handle image upload with compression and Azure Blob Storage
-    let imageUrl = null;
+    let imageUrl: string | null = null;
     if (req.file) {
       try {
         imageUrl = await uploadChatImage(req.file.buffer, userId, 'group', 96);
       } catch (error) {
-        console.error('Error uploading group image:', error);
-        // Continue without image if upload fails
+        console.error('[CreateGroup Server] Error uploading group image:', error);
       }
     }
 
-    // Collect all member IDs (creator + invited members)
     const allMemberIds = [userId];
-    const validInviteMembers = [];
+    const validInviteMembers: any[] = [];
 
-    // Process invited members
     for (const member of inviteMembers) {
       if (member.username && member.username !== req.user!.username) {
-        // Look up user by username
         const userResult = await db.execute(sql`
           SELECT id, name, username FROM users WHERE username = ${member.username}
         `);
-        
         if (userResult.rows.length > 0) {
           const foundUser = userResult.rows[0] as any;
           allMemberIds.push(Number(foundUser.id));
@@ -485,39 +479,48 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
       }
     }
 
-    // Create group with direct SQL - cast arrays to proper types
-    const groupResult = await db.execute(sql`
-      INSERT INTO chat_groups (name, description, image, creator_id, admin_ids, member_ids, is_private, invite_code)
-      VALUES (${name.trim()}, ${description || ''}, ${imageUrl}, ${userId}, ARRAY[${userId}]::integer[], ARRAY[${sql.join(allMemberIds, sql`, `)}]::integer[], ${isPrivate === 'true'}, ${inviteCode})
-      RETURNING *
-    `);
+    console.log('[CreateGroup Server] Inserting group via Drizzle ORM...');
 
-    const group = groupResult.rows[0];
+    const [group] = await db.insert(chatGroups).values({
+      name: name.trim(),
+      description: description || '',
+      image: imageUrl,
+      creatorId: userId,
+      adminIds: [userId],
+      memberIds: allMemberIds,
+      isPrivate: isPrivate === 'true' || isPrivate === true,
+      inviteCode,
+    }).returning();
 
-    // Add creator as member
-    await db.execute(sql`
-      INSERT INTO chat_group_members (group_id, user_id, role)
-      VALUES (${group.id}, ${userId}, 'creator')
-    `);
+    console.log('[CreateGroup Server] Group created:', group.id);
 
-    // Add invited members
+    await db.insert(chatGroupMembers).values({
+      groupId: group.id,
+      userId: userId,
+      role: 'creator',
+    });
+
     for (const member of validInviteMembers) {
-      await db.execute(sql`
-        INSERT INTO chat_group_members (group_id, user_id, role)
-        VALUES (${group.id}, ${member.id}, 'member')
-      `);
+      await db.insert(chatGroupMembers).values({
+        groupId: group.id,
+        userId: Number(member.id),
+        role: 'member',
+      });
 
-      // Create system message announcing the new member
-      await db.execute(sql`
-        INSERT INTO chat_group_messages (group_id, sender_id, sender_name, text, message_type, created_at)
-        VALUES (${group.id}, ${userId}, 'System', ${`${member.name} was added to the group`}, 'system', NOW())
-      `);
+      await db.insert(chatGroupMessages).values({
+        groupId: group.id,
+        senderId: userId,
+        senderName: 'System',
+        text: `${member.name} was added to the group`,
+        messageType: 'system',
+      });
     }
 
     res.json(group);
-  } catch (error) {
-    console.error("Error creating chat group:", error);
-    res.status(500).json({ error: "Failed to create group" });
+  } catch (error: any) {
+    console.error("[CreateGroup Server] Error creating chat group:", error?.message || error);
+    console.error("[CreateGroup Server] Stack:", error?.stack);
+    res.status(500).json({ error: "Failed to create group", details: error?.message });
   }
 });
 

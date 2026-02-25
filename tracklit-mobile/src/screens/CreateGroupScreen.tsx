@@ -166,13 +166,13 @@ export const CreateGroupScreen: React.FC = () => {
       });
 
       const responseText = await response.text();
-      console.log('[CreateGroup] Response:', response.status, responseText.substring(0, 500));
+      console.log('[CreateGroup] Response:', response.status, responseText.substring(0, 1000));
 
       if (!response.ok) {
         let errorMsg = 'Failed to create group';
         try {
           const json = JSON.parse(responseText);
-          errorMsg = json.message || json.error || json.details || errorMsg;
+          errorMsg = json.details || json.message || json.error || errorMsg;
         } catch {
           if (responseText) errorMsg = responseText;
         }
