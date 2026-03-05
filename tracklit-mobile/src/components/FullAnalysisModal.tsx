@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'phosphor-react-native';
 
@@ -8,6 +8,8 @@ import { AdvancedAnalysis } from '@/components/AdvancedAnalysis';
 import { FrameComparison } from '@/components/FrameComparison';
 import type { PoseLandmark } from '@/components/MediaPipeBridge';
 import type { FrameAnalysis, LandmarkSnapshot } from '@/utils/poseAnalysis';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface CapturedFrame {
   uri: string;
@@ -51,54 +53,77 @@ export const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={false}
+      transparent={true}
       onRequestClose={onClose}
     >
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Text variant="h3" weight="bold" style={styles.headerTitle}>Analysis</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <X size={22} color="#fff" weight="bold" />
-          </TouchableOpacity>
+      <View style={styles.overlay}>
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 8 }]}>
+          <View style={styles.handle} />
+          <View style={styles.header}>
+            <Text variant="h3" weight="bold" style={styles.headerTitle}>Analysis</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <X size={20} color="#fff" weight="bold" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <FrameComparison
+              frameA={frameA}
+              frameB={frameB}
+              onCaptureFrame={onCaptureFrame}
+              onClear={onClearFrames}
+              canCapture={canCapture}
+            />
+
+            <AdvancedAnalysis
+              landmarks={landmarks}
+              timestamp={timestamp}
+              onRequestAI={onRequestAI}
+              aiLoading={aiLoading}
+              landmarkHistory={landmarkHistory}
+            />
+          </ScrollView>
         </View>
-
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
-          showsVerticalScrollIndicator={false}
-        >
-          <FrameComparison
-            frameA={frameA}
-            frameB={frameB}
-            onCaptureFrame={onCaptureFrame}
-            onClear={onClearFrames}
-            canCapture={canCapture}
-          />
-
-          <AdvancedAnalysis
-            landmarks={landmarks}
-            timestamp={timestamp}
-            onRequestAI={onRequestAI}
-            aiLoading={aiLoading}
-            landmarkHistory={landmarkHistory}
-          />
-        </ScrollView>
       </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  sheet: {
     backgroundColor: '#111',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: SCREEN_HEIGHT * 0.65,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 4,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
@@ -106,9 +131,9 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -117,6 +142,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 8,
+    paddingTop: 6,
+    paddingBottom: 16,
   },
 });

@@ -593,6 +593,97 @@ export function formatAnalysisForAI(analysis: FrameAnalysis, frameInfo?: { frame
   return text;
 }
 
+export interface PerformanceMetrics {
+  groundContactTimeMs: number | null;
+  strideLengthNorm: number | null;
+  strideFrequencyHz: number | null;
+  horizontalVelocityNorm: number | null;
+}
+
+export function computePerformanceMetrics(history: LandmarkSnapshot[]): PerformanceMetrics | null {
+  if (history.length < 3) return null;
+
+  const sorted = [...history].sort((a, b) => a.timestamp - b.timestamp);
+  const totalDurationMs = sorted[sorted.length - 1].timestamp - sorted[0].timestamp;
+  if (totalDurationMs <= 0) return null;
+
+  const firstLm = sorted[0].landmarks;
+  const lastLm = sorted[sorted.length - 1].landmarks;
+  const lh0 = firstLm[LANDMARK.LEFT_HIP];
+  const rh0 = firstLm[LANDMARK.RIGHT_HIP];
+  const lhN = lastLm[LANDMARK.LEFT_HIP];
+  const rhN = lastLm[LANDMARK.RIGHT_HIP];
+
+  let horizontalVelocityNorm: number | null = null;
+  if (lh0 && rh0 && lhN && rhN && lh0.visibility > VIS_THRESHOLD && lhN.visibility > VIS_THRESHOLD) {
+    const hipX0 = (lh0.x + rh0.x) / 2;
+    const hipXN = (lhN.x + rhN.x) / 2;
+    const dX = Math.abs(hipXN - hipX0);
+    horizontalVelocityNorm = (dX / totalDurationMs) * 1000;
+  }
+
+  type AnklePoint = { timestamp: number; y: number };
+  const anklePoints: AnklePoint[] = sorted.map((snap) => {
+    const la = snap.landmarks[LANDMARK.LEFT_ANKLE];
+    const ra = snap.landmarks[LANDMARK.RIGHT_ANKLE];
+    if (!la || !ra || la.visibility < VIS_THRESHOLD) return null;
+    return { timestamp: snap.timestamp, y: Math.max(la.y, ra.y) };
+  }).filter(Boolean) as AnklePoint[];
+
+  if (anklePoints.length < 2) {
+    return { groundContactTimeMs: null, strideLengthNorm: null, strideFrequencyHz: null, horizontalVelocityNorm };
+  }
+
+  const maxAnkleY = Math.max(...anklePoints.map((p) => p.y));
+  const contactThreshold = maxAnkleY - 0.06;
+
+  let inContact = false;
+  let contactStart = 0;
+  let totalContactMs = 0;
+  let contactCount = 0;
+
+  for (let i = 0; i < anklePoints.length; i++) {
+    const onGround = anklePoints[i].y >= contactThreshold;
+    if (onGround && !inContact) {
+      inContact = true;
+      contactStart = anklePoints[i].timestamp;
+    } else if (!onGround && inContact) {
+      inContact = false;
+      totalContactMs += anklePoints[i].timestamp - contactStart;
+      contactCount++;
+    }
+  }
+  if (inContact) {
+    totalContactMs += anklePoints[anklePoints.length - 1].timestamp - contactStart;
+    contactCount++;
+  }
+  const groundContactTimeMs = contactCount > 0 ? totalContactMs / contactCount : null;
+
+  const strideTimes: number[] = [];
+  for (let i = 1; i < anklePoints.length - 1; i++) {
+    if (anklePoints[i].y < anklePoints[i - 1].y && anklePoints[i].y < anklePoints[i + 1].y) {
+      strideTimes.push(anklePoints[i].timestamp);
+    }
+  }
+
+  let strideFrequencyHz: number | null = null;
+  let strideLengthNorm: number | null = null;
+
+  if (strideTimes.length >= 2) {
+    let totalPeriod = 0;
+    for (let i = 1; i < strideTimes.length; i++) {
+      totalPeriod += strideTimes[i] - strideTimes[i - 1];
+    }
+    const avgPeriodMs = totalPeriod / (strideTimes.length - 1);
+    strideFrequencyHz = avgPeriodMs > 0 ? 1000 / avgPeriodMs : null;
+    if (horizontalVelocityNorm !== null && strideFrequencyHz !== null && strideFrequencyHz > 0) {
+      strideLengthNorm = horizontalVelocityNorm / strideFrequencyHz;
+    }
+  }
+
+  return { groundContactTimeMs, strideLengthNorm, strideFrequencyHz, horizontalVelocityNorm };
+}
+
 export function formatComparisonForAI(frameA: FrameAnalysis, frameB: FrameAnalysis, frameInfoA?: { frame: number; fps: number; timeMs: number }, frameInfoB?: { frame: number; fps: number; timeMs: number }): string {
   let text = '=== FRAME COMPARISON ===\n\n';
   text += '--- Frame A ---\n';

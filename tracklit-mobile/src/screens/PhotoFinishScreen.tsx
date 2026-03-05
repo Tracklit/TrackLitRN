@@ -30,6 +30,10 @@ import {
   Camera,
   ChartBar,
   Angle,
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -101,6 +105,7 @@ export const PhotoFinishScreen: React.FC = () => {
   const [analysisModalVisible, setAnalysisModalVisible] = useState(false);
   const [showAngles, setShowAngles] = useState(false);
   const [landmarkHistory, setLandmarkHistory] = useState<LandmarkSnapshot[]>([]);
+  const [poseDetectionFailed, setPoseDetectionFailed] = useState(false);
   const MAX_HISTORY = 5;
 
   useEffect(() => {
@@ -233,6 +238,7 @@ export const PhotoFinishScreen: React.FC = () => {
 
       const landmarks = await mediaPipeRef.current.detectPose(base64);
       setPoseLandmarks(landmarks);
+      setPoseDetectionFailed(!landmarks);
       if (landmarks) {
         setLandmarkHistory((prev) => {
           const updated = [...prev, { landmarks, timestamp: currentPosition }];
@@ -241,6 +247,7 @@ export const PhotoFinishScreen: React.FC = () => {
       }
     } catch {
       setPoseLandmarks(null);
+      setPoseDetectionFailed(true);
     }
     setPoseProcessing(false);
   }, [videoUri, currentPosition, poseProcessing]);
@@ -332,6 +339,31 @@ export const PhotoFinishScreen: React.FC = () => {
     setCompFrameA(null);
     setCompFrameB(null);
   }, []);
+
+  const stepBackward = useCallback(async () => {
+    if (!videoRef.current || !isLoaded) return;
+    const frameMs = 1000 / frameRate;
+    const newPos = Math.max(0, currentPosition - frameMs);
+    await videoRef.current.setPositionAsync(newPos, { toleranceMillisBefore: 0, toleranceMillisAfter: 0 });
+    setCurrentPosition(newPos);
+  }, [frameRate, currentPosition, isLoaded]);
+
+  const stepForward = useCallback(async () => {
+    if (!videoRef.current || !isLoaded) return;
+    const frameMs = 1000 / frameRate;
+    const newPos = Math.min(durationRef.current, currentPosition + frameMs);
+    await videoRef.current.setPositionAsync(newPos, { toleranceMillisBefore: 0, toleranceMillisAfter: 0 });
+    setCurrentPosition(newPos);
+  }, [frameRate, currentPosition, isLoaded]);
+
+  const togglePlayPause = useCallback(async () => {
+    if (!videoRef.current || !isLoaded) return;
+    if (isPlaying) {
+      await videoRef.current.pauseAsync();
+    } else {
+      await videoRef.current.playAsync();
+    }
+  }, [isPlaying, isLoaded]);
 
   const handleAIAnalysis = useCallback(async (analysis: FrameAnalysis) => {
     setAiModalVisible(true);
@@ -595,12 +627,13 @@ export const PhotoFinishScreen: React.FC = () => {
           <TouchableOpacity
             onPress={() => {
               setPoseEnabled(!poseEnabled);
+              setPoseDetectionFailed(false);
               if (!poseEnabled) {
                 setPoseLandmarks(null);
                 setLandmarkHistory([]);
               }
             }}
-            style={[styles.topBtn, poseEnabled && styles.topBtnPose]}
+            style={[styles.topBtn, poseEnabled && styles.topBtnPose, poseEnabled && poseProcessing && styles.topBtnPoseLoading]}
           >
             <Person size={20} color={poseEnabled ? '#00FF88' : '#fff'} weight="fill" />
           </TouchableOpacity>
@@ -666,8 +699,23 @@ export const PhotoFinishScreen: React.FC = () => {
         </View>
 
         <View style={styles.scrubTrack} {...scrubPanResponder.panHandlers}>
+          <View style={styles.scrubTrackBg} />
           <View style={[styles.scrubFill, { width: `${progress * 100}%` }]} />
           <View style={[styles.scrubThumb, { left: `${progress * 100}%` }]} />
+        </View>
+
+        <View style={styles.scrubControls}>
+          <TouchableOpacity onPress={stepBackward} style={styles.scrubCtrlBtn} hitSlop={{ top: 10, bottom: 10, left: 16, right: 16 }}>
+            <SkipBack size={20} color="rgba(255,255,255,0.75)" weight="fill" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={togglePlayPause} style={styles.scrubPlayBtn}>
+            {isPlaying
+              ? <Pause size={24} color="#FF9800" weight="fill" />
+              : <Play size={24} color="#FF9800" weight="fill" />}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={stepForward} style={styles.scrubCtrlBtn} hitSlop={{ top: 10, bottom: 10, left: 16, right: 16 }}>
+            <SkipForward size={20} color="rgba(255,255,255,0.75)" weight="fill" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -690,6 +738,14 @@ export const PhotoFinishScreen: React.FC = () => {
         <View style={styles.poseLoadingIndicator}>
           <Text variant="small" weight="bold" style={{ color: '#00FF88' }}>
             Detecting pose...
+          </Text>
+        </View>
+      )}
+
+      {poseEnabled && poseDetectionFailed && !poseProcessing && (
+        <View style={styles.poseFailedIndicator}>
+          <Text variant="small" weight="bold" style={{ color: '#FF6B6B' }}>
+            No athlete detected — scrub to a clearer frame
           </Text>
         </View>
       )}
@@ -851,6 +907,14 @@ const styles = StyleSheet.create({
     height: 32,
     justifyContent: 'center',
   },
+  scrubTrackBg: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 1.5,
+  },
   scrubFill: {
     position: 'absolute',
     left: 0,
@@ -947,12 +1011,50 @@ const styles = StyleSheet.create({
   },
   poseLoadingIndicator: {
     position: 'absolute',
-    bottom: 120,
+    bottom: 150,
     alignSelf: 'center',
     backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+  },
+  poseFailedIndicator: {
+    position: 'absolute',
+    bottom: 150,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,107,0.3)',
+  },
+  scrubControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 28,
+    paddingTop: 4,
+    paddingBottom: 2,
+  },
+  scrubCtrlBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrubPlayBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,152,0,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,152,0,0.3)',
+  },
+  topBtnPoseLoading: {
+    opacity: 0.6,
   },
   topBtnAngle: {
     backgroundColor: 'rgba(255,152,0,0.2)',

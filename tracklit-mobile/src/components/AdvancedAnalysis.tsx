@@ -16,17 +16,20 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
+  Timer,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import type { PoseLandmark } from '@/components/MediaPipeBridge';
 import {
   computeFullAnalysis,
+  computePerformanceMetrics,
   type FrameAnalysis,
   type JointAngle,
   type SymmetryMetric,
   type MotionVector,
   type LandmarkSnapshot,
+  type PerformanceMetrics,
 } from '@/utils/poseAnalysis';
 
 interface AdvancedAnalysisProps {
@@ -112,12 +115,17 @@ export const AdvancedAnalysis: React.FC<AdvancedAnalysisProps> = ({
   landmarkHistory,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'angles' | 'symmetry' | 'position' | 'confidence' | 'motion'>('angles');
+  const [activeTab, setActiveTab] = useState<'angles' | 'symmetry' | 'position' | 'confidence' | 'motion' | 'performance'>('angles');
 
   const analysis = useMemo(() => {
     if (!landmarks || landmarks.length === 0) return null;
     return computeFullAnalysis(landmarks, timestamp, landmarkHistory);
   }, [landmarks, timestamp, landmarkHistory]);
+
+  const perfMetrics = useMemo<PerformanceMetrics | null>(() => {
+    if (!landmarkHistory || landmarkHistory.length < 3) return null;
+    return computePerformanceMetrics(landmarkHistory);
+  }, [landmarkHistory]);
 
   if (!analysis) return null;
 
@@ -126,6 +134,7 @@ export const AdvancedAnalysis: React.FC<AdvancedAnalysisProps> = ({
     { key: 'symmetry' as const, label: 'Symmetry', icon: Scales },
     { key: 'position' as const, label: 'Position', icon: PersonArmsSpread },
     { key: 'motion' as const, label: 'Motion', icon: Lightning },
+    { key: 'performance' as const, label: 'Performance', icon: Timer },
     { key: 'confidence' as const, label: 'Quality', icon: ShieldCheck },
   ];
 
@@ -244,6 +253,69 @@ export const AdvancedAnalysis: React.FC<AdvancedAnalysisProps> = ({
                     <Text variant="small" weight="bold" style={styles.strideValue}>{m.value}{m.unit}</Text>
                   </View>
                 ))}
+              </View>
+            )}
+
+            {activeTab === 'performance' && (
+              <View>
+                {perfMetrics ? (
+                  <>
+                    <View style={styles.perfGrid}>
+                      <View style={styles.perfCell}>
+                        <Timer size={18} color="#FF9800" weight="fill" />
+                        <Text variant="small" style={styles.perfLabel}>Contact Time</Text>
+                        <Text variant="body" weight="bold" style={styles.perfValue}>
+                          {perfMetrics.groundContactTimeMs !== null
+                            ? `${Math.round(perfMetrics.groundContactTimeMs)}ms`
+                            : '—'}
+                        </Text>
+                      </View>
+                      <View style={styles.perfDivider} />
+                      <View style={styles.perfCell}>
+                        <Ruler size={18} color="#00FF88" weight="fill" />
+                        <Text variant="small" style={styles.perfLabel}>Stride Length</Text>
+                        <Text variant="body" weight="bold" style={styles.perfValue}>
+                          {perfMetrics.strideLengthNorm !== null
+                            ? `${perfMetrics.strideLengthNorm.toFixed(3)}`
+                            : '—'}
+                        </Text>
+                        <Text variant="small" style={styles.perfUnit}>norm. units</Text>
+                      </View>
+                    </View>
+                    <View style={styles.perfGrid}>
+                      <View style={styles.perfCell}>
+                        <Lightning size={18} color="#FFD600" weight="fill" />
+                        <Text variant="small" style={styles.perfLabel}>Cadence</Text>
+                        <Text variant="body" weight="bold" style={styles.perfValue}>
+                          {perfMetrics.strideFrequencyHz !== null
+                            ? `${(perfMetrics.strideFrequencyHz * 60).toFixed(0)} spm`
+                            : '—'}
+                        </Text>
+                        <Text variant="small" style={styles.perfUnit}>strides/min</Text>
+                      </View>
+                      <View style={styles.perfDivider} />
+                      <View style={styles.perfCell}>
+                        <ArrowRight size={18} color="#00CFFF" weight="fill" />
+                        <Text variant="small" style={styles.perfLabel}>Velocity</Text>
+                        <Text variant="body" weight="bold" style={styles.perfValue}>
+                          {perfMetrics.horizontalVelocityNorm !== null
+                            ? `${perfMetrics.horizontalVelocityNorm.toFixed(3)}`
+                            : '—'}
+                        </Text>
+                        <Text variant="small" style={styles.perfUnit}>norm. units/s</Text>
+                      </View>
+                    </View>
+                    <View style={styles.perfNote}>
+                      <Text variant="small" style={styles.perfNoteText}>
+                        Metrics estimated from pose landmark history across {(landmarkHistory ?? []).length} frames. Values are in normalised image coordinates (0–1 range). Scrub through more of the video for better accuracy.
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <Text variant="small" style={styles.emptyText}>
+                    Scrub through frames with pose enabled to compute performance metrics. Need at least 3 frames.
+                  </Text>
+                )}
               </View>
             )}
 
@@ -628,6 +700,49 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  perfGrid: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+  },
+  perfCell: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  perfDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  perfLabel: {
+    color: '#888',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  perfValue: {
+    color: '#fff',
+    fontSize: 17,
+  },
+  perfUnit: {
+    color: '#555',
+    fontSize: 9,
+    textTransform: 'uppercase',
+  },
+  perfNote: {
+    backgroundColor: 'rgba(255,152,0,0.06)',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,152,0,0.15)',
+  },
+  perfNoteText: {
+    color: '#888',
+    fontSize: 11,
+    lineHeight: 16,
   },
   aiButton: {
     flexDirection: 'row',
