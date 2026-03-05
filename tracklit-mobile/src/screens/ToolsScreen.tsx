@@ -16,7 +16,6 @@ import {
   Clock,
   FirstAidKit,
   Lightning,
-  Brain,
   Lock,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -38,7 +37,6 @@ type ToolScreen = Extract<
   | 'ExerciseLibrary'
   | 'Rehab'
   | 'Spikes'
-  | 'Sprinthia'
 >;
 
 const C = {
@@ -66,77 +64,71 @@ export const ToolsScreen: React.FC = () => {
   const navigation = useNavigation<Navigation>();
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
+  const ICON_COLOR = 'rgba(255,255,255,0.5)';
+
   const tools: Tool[] = [
     {
       id: 'photo-finish',
       title: 'Photo Finish',
       description: 'Upload and analyze your videos',
-      icon: <FilmStrip size={26} color="#FF7A00" weight="fill" />,
-      color: 'rgba(255,122,0,0.12)',
+      icon: <FilmStrip size={26} color={ICON_COLOR} weight="fill" />,
+      color: 'rgba(255,255,255,0.06)',
       screen: 'PhotoFinish',
-    },
-    {
-      id: 'sprinthia',
-      title: 'Sprinthia AI',
-      description: 'AI track & field coach',
-      icon: <Brain size={26} color="#a78bfa" weight="fill" />,
-      color: 'rgba(167,139,250,0.12)',
-      screen: 'Sprinthia',
     },
     {
       id: 'start-gun',
       title: 'Start Gun',
       description: 'Simulate a race start signal',
-      icon: <PersonSimpleThrow size={26} color="#f87171" weight="fill" />,
-      color: 'rgba(248,113,113,0.12)',
+      icon: <PersonSimpleThrow size={26} color={ICON_COLOR} weight="fill" />,
+      color: 'rgba(255,255,255,0.06)',
       screen: 'StartGun',
     },
     {
       id: 'stopwatch',
       title: 'Stopwatch',
       description: 'Track time with precision',
-      icon: <Timer size={26} color="#38bdf8" weight="fill" />,
-      color: 'rgba(56,189,248,0.12)',
+      icon: <Timer size={26} color={ICON_COLOR} weight="fill" />,
+      color: 'rgba(255,255,255,0.06)',
       screen: 'Stopwatch',
     },
     {
       id: 'interval-timer',
       title: 'Interval Timer',
       description: 'Customizable work/rest intervals',
-      icon: <Clock size={26} color="#4ade80" weight="fill" />,
-      color: 'rgba(74,222,128,0.12)',
+      icon: <Clock size={26} color={ICON_COLOR} weight="fill" />,
+      color: 'rgba(255,255,255,0.06)',
       screen: 'IntervalTimer',
     },
     {
       id: 'journal',
       title: 'Journal',
       description: 'Search your workout notes',
-      icon: <BookOpen size={26} color="#fbbf24" weight="fill" />,
-      color: 'rgba(251,191,36,0.12)',
+      icon: <BookOpen size={26} color={ICON_COLOR} weight="fill" />,
+      color: 'rgba(255,255,255,0.06)',
       screen: 'Journal',
     },
     {
       id: 'exercise-library',
       title: 'Exercise Library',
       description: 'Organize training videos',
-      icon: <VideoCamera size={26} color="#c084fc" weight="fill" />,
-      color: 'rgba(192,132,252,0.12)',
+      icon: <VideoCamera size={26} color={ICON_COLOR} weight="fill" />,
+      color: 'rgba(255,255,255,0.06)',
       screen: 'ExerciseLibrary',
     },
     {
       id: 'rehab',
       title: 'Rehab',
       description: 'Injury recovery programs',
-      icon: <FirstAidKit size={26} color="#fb7185" weight="fill" />,
-      color: 'rgba(251,113,133,0.12)',
+      icon: <FirstAidKit size={26} color={ICON_COLOR} weight="fill" />,
+      color: 'rgba(255,255,255,0.06)',
       screen: 'Rehab',
     },
     {
       id: 'spikes',
       title: 'Spikes',
       description: 'Earn rewards & track progress',
-      icon: <Lightning size={26} color="#facc15" weight="fill" />,
-      color: 'rgba(250,204,21,0.12)',
+      icon: <Lightning size={26} color={ICON_COLOR} weight="fill" />,
+      color: 'rgba(255,255,255,0.06)',
       screen: 'Spikes',
     },
   ];
@@ -242,7 +234,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     alignItems: 'center',
     gap: 8,
-    minHeight: 150,
+    height: 148,
   },
   toolCardDisabled: {
     backgroundColor: 'rgba(28,31,43,0.5)',

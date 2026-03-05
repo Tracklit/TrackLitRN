@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#111',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: SCREEN_HEIGHT * 0.65,
+    height: SCREEN_HEIGHT * 0.65,
   },
   handle: {
     width: 40,

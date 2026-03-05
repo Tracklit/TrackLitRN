@@ -706,7 +706,8 @@ export const PhotoFinishScreen: React.FC = () => {
 
         <View style={styles.scrubControls}>
           <TouchableOpacity onPress={stepBackward} style={styles.scrubCtrlBtn} hitSlop={{ top: 10, bottom: 10, left: 16, right: 16 }}>
-            <SkipBack size={20} color="rgba(255,255,255,0.75)" weight="fill" />
+            <SkipBack size={18} color="rgba(255,255,255,0.75)" weight="fill" />
+            <Text style={styles.scrubFrameLabel}>-1f</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={togglePlayPause} style={styles.scrubPlayBtn}>
             {isPlaying
@@ -714,7 +715,8 @@ export const PhotoFinishScreen: React.FC = () => {
               : <Play size={24} color="#FF9800" weight="fill" />}
           </TouchableOpacity>
           <TouchableOpacity onPress={stepForward} style={styles.scrubCtrlBtn} hitSlop={{ top: 10, bottom: 10, left: 16, right: 16 }}>
-            <SkipForward size={20} color="rgba(255,255,255,0.75)" weight="fill" />
+            <SkipForward size={18} color="rgba(255,255,255,0.75)" weight="fill" />
+            <Text style={styles.scrubFrameLabel}>+1f</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1038,10 +1040,15 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
   },
   scrubCtrlBtn: {
-    width: 36,
-    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
+  },
+  scrubFrameLabel: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   scrubPlayBtn: {
     width: 44,
