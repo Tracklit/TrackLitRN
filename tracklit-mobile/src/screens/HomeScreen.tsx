@@ -445,7 +445,54 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     }
   }, [isLoadingMore, hasMore, allActivities.length]);
 
-  const activities = allActivities.length > 0 ? allActivities : (activitiesQuery.data ?? PLACEHOLDER_ACTIVITIES);
+  // Fetched early so ownActivity (below) can reference it without a forward-declaration error
+  const { data: journalEntriesEarly = [] } = useQuery({
+    queryKey: ['journal-home'],
+    queryFn: () => apiRequest<any[]>('/api/journal'),
+    staleTime: 120000,
+    enabled: !!userId && userId !== 'guest',
+  });
+
+  const rawActivities = allActivities.length > 0 ? allActivities : (activitiesQuery.data ?? PLACEHOLDER_ACTIVITIES);
+
+  // Build a synthetic ticker card from the user's own most-recent public journal entry.
+  // This works regardless of which backend is in use (Azure or dev), since journal entries
+  // are fetched separately and always available in HomeScreen.
+  const ownActivity: CommunityActivity | null = useMemo(() => {
+    if (!user || !userId || userId === 'guest') return null;
+    const entries = (journalEntriesEarly as any[]);
+    if (!entries.length) return null;
+    const latest = entries
+      .filter((e: any) => e.isPublic !== false)
+      .sort((a: any, b: any) =>
+        new Date(b.createdAt ?? b.date ?? 0).getTime() -
+        new Date(a.createdAt ?? a.date ?? 0).getTime()
+      )[0];
+    if (!latest) return null;
+    return {
+      id: -(latest.id ?? 1),
+      userId: Number(userId),
+      activityType: 'journal_entry',
+      title: latest.title || 'Journal Entry',
+      description: latest.notes ? String(latest.notes).slice(0, 140) : undefined,
+      createdAt: latest.createdAt || new Date().toISOString(),
+      user: {
+        id: Number(userId),
+        username: (user as any).username || '',
+        name: (user as any).name || (user as any).username || 'You',
+        profileImageUrl: (user as any).profileImageUrl ?? undefined,
+      },
+    };
+  }, [user, userId, journalEntriesEarly]);
+
+  // Pin own activity at position 0; remove any server-returned duplicate for same user+entry
+  const activities = useMemo(() => {
+    if (!ownActivity) return rawActivities;
+    const deduped = rawActivities.filter(
+      (a) => !(a.userId === ownActivity.userId && a.activityType === 'journal_entry' && a.id <= 0)
+    );
+    return [ownActivity, ...deduped];
+  }, [ownActivity, rawActivities]);
 
   const CAROUSEL_COPIES = 3;
   const carouselData = activities.length > 0
