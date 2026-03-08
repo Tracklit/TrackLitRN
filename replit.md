@@ -70,13 +70,25 @@ The `ProgramCreateScreen` offers 4 methods: Import/Upload (navigates to ProgramI
 - **RehabScreen**: Hub with 4 categories (Acute Muscle, Chronic, Back, Bone Breaks)
 - **Sub-screens** use `navigation.goBack()` (not `navigate('Rehab')`) to prevent navigation loops
 - All rehab screens use `@/components/LinearGradient` and Phosphor icons (not lucide or react-native-linear-gradient)
+- All rehab screens (RehabScreen, FootRehabProgramScreen, HamstringRehabProgramScreen, RehabProgramComingSoonScreen) include `ScreenTabBar` at the bottom and a drawer button (List icon) in the header
+- AI Consultation button in RehabScreen navigates directly to `navigation.navigate('Sprinthia')` (a RootStack screen)
 
 ## Spikes System
 - **SpikesScreen**: Clean hub showing balance, with two navigation cards to subpages
 - **SpikesInfoScreen**: Informational page explaining what spikes are, how to earn them, and tier unlock details
 - **SpikesProgressScreen**: User's progression — balance, tier progress bar, login streak with check-in, achievements list, and recent transaction history
+- All Spikes screens include `ScreenTabBar` at the bottom and a drawer button (List icon) in the header
+
+## Navigation Utilities
+- **ScreenTabBar** (`src/components/ScreenTabBar.tsx`): Reusable bottom tab bar component for RootStack screens that are not tabs. Used on Rehab and Spikes screens. Navigates via `navigation.navigate('MainTabs', { screen: tab })`. Drawer button uses `DrawerActions.openDrawer()`.
+
+## Settings Screen
+- Account Details: Full Name, Username, Email, Change Password
+- **Athlete Profile section**: Age, Height (cm), Weight (kg), Gender (Male/Female/Other/N/A) — sent to `/api/user` PATCH and used by Sprinthia for personalized biomechanical analysis
+- Role toggle (Athlete/Coach), Privacy, Preferences (push notifications, ticker)
 
 ## Admin Panel
 - Admin access determined by `user.role === 'admin'` in the database
-- Server route `/api/admin/seed-admin` (POST) promotes `replittest` to admin (one-time use, requires deployment)
-- Admin panel at `/admin-panel` in the web app
+- Server route `/api/admin/seed-admin` (POST) promotes user to admin
+- Admin panel at `/admin-panel` in the web app (`https://app-tracklit-prod-tnrusd.azurewebsites.net/admin-panel`)
+- Mobile drawer shows "Admin Panel" link (visible only when `user.role === 'admin'`) — opens web admin URL via `Linking.openURL()`

@@ -68,6 +68,10 @@ export const SettingsScreen: React.FC = () => {
   const [email, setEmail] = useState(user?.email || '');
   const [fullName, setFullName] = useState(user?.name || '');
   const [isPrivate, setIsPrivate] = useState(!!user?.isPrivate);
+  const [age, setAge] = useState(String((user as any)?.age ?? ''));
+  const [height, setHeight] = useState(String((user as any)?.height ?? ''));
+  const [weight, setWeight] = useState(String((user as any)?.weight ?? ''));
+  const [gender, setGender] = useState<string>((user as any)?.gender ?? '');
   const [pushNotifications, setPushNotifications] = useState(true);
   const [showTicker, setShowTicker] = useState(true);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -83,7 +87,11 @@ export const SettingsScreen: React.FC = () => {
     setEmail(user?.email || '');
     setFullName(user?.name || '');
     setIsPrivate(!!user?.isPrivate);
-  }, [user?.username, user?.email, user?.name, user?.isPrivate]);
+    setAge(String((user as any)?.age ?? ''));
+    setHeight(String((user as any)?.height ?? ''));
+    setWeight(String((user as any)?.weight ?? ''));
+    setGender((user as any)?.gender ?? '');
+  }, [user?.username, user?.email, user?.name, user?.isPrivate, (user as any)?.age, (user as any)?.height, (user as any)?.weight, (user as any)?.gender]);
 
   useEffect(() => {
     AsyncStorage.getItem('push_notifications').then(val => {
@@ -99,9 +107,13 @@ export const SettingsScreen: React.FC = () => {
       username !== (user?.username || '') ||
       email !== (user?.email || '') ||
       fullName !== (user?.name || '') ||
-      isPrivate !== !!user?.isPrivate;
+      isPrivate !== !!user?.isPrivate ||
+      age !== String((user as any)?.age ?? '') ||
+      height !== String((user as any)?.height ?? '') ||
+      weight !== String((user as any)?.weight ?? '') ||
+      gender !== ((user as any)?.gender ?? '');
     setHasChanges(changed);
-  }, [username, email, fullName, isPrivate, user]);
+  }, [username, email, fullName, isPrivate, age, height, weight, gender, user]);
 
   const coachStatusMutation = useMutation({
     mutationFn: async (value: boolean) => {
@@ -168,6 +180,10 @@ export const SettingsScreen: React.FC = () => {
       name: fullName.trim() || undefined,
       email: email.trim() || undefined,
       isPrivate,
+      age: age.trim() ? parseInt(age.trim(), 10) : undefined,
+      height: height.trim() ? parseFloat(height.trim()) : undefined,
+      weight: weight.trim() ? parseFloat(weight.trim()) : undefined,
+      gender: gender || undefined,
     });
   };
 
@@ -325,6 +341,71 @@ export const SettingsScreen: React.FC = () => {
               </LinearGradient>
             </TouchableOpacity>
           )}
+        </View>
+
+        {renderSectionHeader('ATHLETE PROFILE')}
+
+        <View style={styles.card}>
+          <View style={styles.profileGrid}>
+            <View style={styles.profileGridCell}>
+              <Text style={styles.inputLabel}>Age</Text>
+              <TextInput
+                style={styles.input}
+                value={age}
+                onChangeText={setAge}
+                placeholder="Years"
+                placeholderTextColor={COLORS.textMuted}
+                keyboardType="numeric"
+                maxLength={3}
+              />
+            </View>
+            <View style={styles.profileGridCell}>
+              <Text style={styles.inputLabel}>Height (cm)</Text>
+              <TextInput
+                style={styles.input}
+                value={height}
+                onChangeText={setHeight}
+                placeholder="cm"
+                placeholderTextColor={COLORS.textMuted}
+                keyboardType="numeric"
+                maxLength={4}
+              />
+            </View>
+            <View style={styles.profileGridCell}>
+              <Text style={styles.inputLabel}>Weight (kg)</Text>
+              <TextInput
+                style={styles.input}
+                value={weight}
+                onChangeText={setWeight}
+                placeholder="kg"
+                placeholderTextColor={COLORS.textMuted}
+                keyboardType="numeric"
+                maxLength={4}
+              />
+            </View>
+          </View>
+
+          <View style={styles.genderBlock}>
+            <Text style={styles.inputLabel}>Gender</Text>
+            <View style={styles.genderRow}>
+              {['Male', 'Female', 'Other', 'N/A'].map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[styles.genderBtn, gender === opt && styles.genderBtnActive]}
+                  onPress={() => setGender(gender === opt ? '' : opt)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.genderBtnText, gender === opt && styles.genderBtnTextActive]}>
+                    {opt}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <Text style={styles.inputHint}>
+            Used by Sprinthia for personalized biomechanical analysis.
+          </Text>
         </View>
 
         {renderSectionHeader('ROLE')}
@@ -585,6 +666,45 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.textMuted,
     marginTop: 4,
+  },
+
+  profileGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  profileGridCell: {
+    flex: 1,
+  },
+
+  genderBlock: {
+    marginBottom: 8,
+  },
+  genderRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  genderBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+  },
+  genderBtnActive: {
+    borderColor: COLORS.orange,
+    backgroundColor: 'rgba(255,122,0,0.12)',
+  },
+  genderBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+  },
+  genderBtnTextActive: {
+    color: COLORS.orange,
   },
 
   actionRow: {

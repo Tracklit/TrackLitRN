@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from 'react-native';
 import {
   NavigationContainer,
@@ -501,8 +502,10 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Admin Panel',
           IconComponent: ShieldCheck,
           requiresAdmin: true,
-          onPress: () =>
-            navigateIntoAppStack({ screen: 'AppStack', params: { screen: 'Settings' } }),
+          onPress: () => {
+            props.navigation.closeDrawer();
+            Linking.openURL('https://app-tracklit-prod-tnrusd.azurewebsites.net/admin-panel');
+          },
         },
       ],
     },

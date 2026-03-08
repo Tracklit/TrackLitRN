@@ -6,7 +6,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Lightning,
@@ -15,7 +15,9 @@ import {
   CaretLeft,
   Info,
   ChartLineUp,
+  List,
 } from 'phosphor-react-native';
+import { ScreenTabBar } from '@/components/ScreenTabBar';
 
 import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,7 +51,12 @@ export const SpikesScreen: React.FC = () => {
           <CaretLeft size={18} color={C.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Spikes</Text>
-        <View style={{ flex: 1 }} />
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <List size={20} color="rgba(255,255,255,0.7)" weight="bold" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -124,6 +131,7 @@ export const SpikesScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+      <ScreenTabBar />
     </View>
   );
 };
@@ -151,6 +159,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '700',
     color: C.textPrimary,

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   ArrowLeft,
@@ -14,7 +14,9 @@ import {
   ArrowRight,
   ChatCircleDots,
   Info,
+  List,
 } from 'phosphor-react-native';
+import { ScreenTabBar } from '@/components/ScreenTabBar';
 
 import { Text } from '@/components/ui/Text';
 import { LinearGradient } from '@/components/LinearGradient';
@@ -131,11 +133,17 @@ export const RehabScreen: React.FC = () => {
           <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Rehabilitation</Text>
-        <View style={{ flex: 1 }} />
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          style={styles.drawerBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <List size={20} color="rgba(255,255,255,0.7)" weight="bold" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: 20 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -170,7 +178,7 @@ export const RehabScreen: React.FC = () => {
           </Text>
           <TouchableOpacity
             style={styles.aiButton}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Sprinthia' } as never)}
+            onPress={() => navigation.navigate('Sprinthia')}
             activeOpacity={0.8}
           >
             <LinearGradient
@@ -236,6 +244,7 @@ export const RehabScreen: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
+      <ScreenTabBar />
     </View>
   );
 };
@@ -247,6 +256,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
+  },
+  drawerBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backButton: {
     width: 40,

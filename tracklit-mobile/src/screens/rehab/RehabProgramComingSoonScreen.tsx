@@ -1,10 +1,11 @@
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, DrawerActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Clock, ArrowLeft } from 'phosphor-react-native';
+import { Clock, ArrowLeft, List } from 'phosphor-react-native';
+import { ScreenTabBar } from '@/components/ScreenTabBar';
 
 import { Text } from '@/components/ui/Text';
 import type { RootStackParamList } from '@/navigation/types';
@@ -20,28 +21,39 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <ArrowLeft size={18} color="#FFFFFF" weight="bold" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Rehabilitation</Text>
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={styles.drawerBtn}
+        >
+          <List size={18} color="rgba(255,255,255,0.7)" weight="bold" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
-          <Clock size={36} color="rgba(255,255,255,0.4)" />
-          <Text variant="h3" weight="bold" color="foreground">
-            {title}
-          </Text>
-          <Text variant="body" color="muted" center>
+          <View style={styles.iconWrap}>
+            <Clock size={40} color="rgba(255,255,255,0.4)" />
+          </View>
+          <Text style={styles.cardTitle}>{title}</Text>
+          <Text style={styles.cardSubtext}>
             This rehabilitation protocol is being finalized for mobile. Check back soon for the complete program.
           </Text>
-          <View style={styles.actions}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-              <ArrowLeft size={14} color="#FFFFFF" />
-              <Text variant="body" weight="semiBold" color="foreground">
-                Back to Rehab
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.goBackBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <ArrowLeft size={14} color="#FFFFFF" weight="bold" />
+            <Text style={styles.goBackText}>Back to Rehab</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+      <ScreenTabBar />
     </View>
   );
 };
@@ -51,21 +63,68 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0E0F14',
   },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  drawerBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   scrollContent: {
-    padding: 16,
+    padding: 20,
   },
   card: {
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
     backgroundColor: '#1C1F2B',
     borderRadius: 12,
-    padding: 20,
+    padding: 32,
+    marginTop: 20,
   },
-  actions: {
-    marginTop: 12,
-    width: '100%',
+  iconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
-  backBtn: {
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  cardSubtext: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  goBackBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -74,6 +133,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.15)',
     borderRadius: 10,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    marginTop: 8,
+    width: '100%',
+  },
+  goBackText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
