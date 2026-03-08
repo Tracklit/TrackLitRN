@@ -409,11 +409,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   });
 
   useEffect(() => {
-    if (activitiesQuery.data && activitiesQuery.data.length > 0) {
-      setAllActivities(activitiesQuery.data);
-      setHasMore(activitiesQuery.data.length >= 25);
+    const data = activitiesQuery.data;
+    if (data && data.length > 0) {
+      setAllActivities(data);
+      setHasMore(data.length >= 25);
     }
-  }, [activitiesQuery.data]);
+  // dataUpdatedAt is a stable timestamp — only changes when new data arrives, not on every render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activitiesQuery.dataUpdatedAt]);
 
   const loadMoreActivities = useCallback(async () => {
     if (isLoadingMore || !hasMore || allActivities.length === 0) return;
