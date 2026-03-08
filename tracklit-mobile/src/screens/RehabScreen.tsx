@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -108,6 +109,19 @@ export const RehabScreen: React.FC = () => {
   const spikes = Number((user as any)?.spikes ?? 0);
 
   const categories = useMemo(() => rehabCategories, []);
+
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('rehab_disclaimer_accepted').then((val) => {
+      if (val !== 'true') setShowDisclaimer(true);
+    });
+  }, []);
+
+  const handleAcceptDisclaimer = async () => {
+    await AsyncStorage.setItem('rehab_disclaimer_accepted', 'true');
+    setShowDisclaimer(false);
+  };
 
   const handleProgramPress = (categoryId: string, programId: string, programName: string) => {
     if (categoryId === 'acute-muscle' && programId === 'hamstring') {
@@ -226,16 +240,42 @@ export const RehabScreen: React.FC = () => {
           })}
         </View>
 
-        <View style={styles.infoCard}>
-          <View style={styles.infoHeader}>
-            <Info size={16} color={C.blue} weight="fill" />
-            <Text style={styles.infoTitle}>Professional Guidance</Text>
-          </View>
-          <Text style={styles.infoText}>
-            All programs are based on current sports medicine research. These programs complement professional medical care — always consult your healthcare provider before starting any rehabilitation program.
-          </Text>
-        </View>
       </ScrollView>
+
+      <Modal
+        visible={showDisclaimer}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalIconRow}>
+              <View style={styles.modalIconWrap}>
+                <Info size={26} color={C.blue} weight="fill" />
+              </View>
+            </View>
+            <Text style={styles.modalTitle}>Professional Guidance</Text>
+            <Text style={styles.modalBody}>
+              All programs are based on current sports medicine research and are intended to support — not replace — professional medical care.{'\n\n'}Always consult your healthcare provider, physiotherapist, or coach before starting any rehabilitation program. Stop immediately if you experience pain or discomfort.
+            </Text>
+            <TouchableOpacity
+              style={styles.acceptBtn}
+              onPress={handleAcceptDisclaimer}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={[C.orange, C.orangeLight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.acceptBtnInner}
+              >
+                <Text style={styles.acceptBtnText}>I Understand & Accept</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -424,29 +464,61 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: C.textPrimary,
   },
-  infoCard: {
-    backgroundColor: C.card,
-    borderRadius: 14,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    padding: 16,
-    gap: 10,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: '#1A1D28',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    borderTopWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  modalIconRow: {
     alignItems: 'center',
+    marginBottom: 16,
   },
-  infoHeader: {
-    flexDirection: 'row',
+  modalIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(96,165,250,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(96,165,250,0.25)',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
-  infoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: C.textPrimary,
-  },
-  infoText: {
-    fontSize: 12,
-    color: C.textMuted,
-    lineHeight: 18,
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
     textAlign: 'center',
+    marginBottom: 12,
+  },
+  modalBody: {
+    fontSize: 14,
+    color: '#8A90B5',
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 28,
+  },
+  acceptBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  acceptBtnInner: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acceptBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
 });
