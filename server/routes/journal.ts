@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { db } from "../db";
-import { users } from "@shared/schema";
+import { users, communityActivities } from "@shared/schema";
 import { journalEntries, insertJournalEntrySchema, InsertJournalEntry } from "@shared/journal-schema";
 import { eq } from "drizzle-orm";
 
@@ -78,6 +78,28 @@ export async function createJournalEntry(req: Request, res: Response) {
     const journalData: InsertJournalEntry = validation.data;
 
     const [newEntry] = await db.insert(journalEntries).values(journalData).returning();
+
+    if (newEntry.isPublic) {
+      try {
+        const moodRating = (journalData.content as any)?.mood ?? null;
+        await db.insert(communityActivities).values({
+          userId: req.user!.id,
+          activityType: 'journal_entry',
+          title: newEntry.title,
+          description: newEntry.notes ? newEntry.notes.slice(0, 140) : undefined,
+          relatedEntityId: newEntry.id,
+          relatedEntityType: 'journal_entry',
+          metadata: {
+            workoutData: {
+              moodRating,
+            },
+          },
+          isVisible: true,
+        });
+      } catch (activityError) {
+        console.error("Failed to create community activity for journal entry:", activityError);
+      }
+    }
 
     return res.status(201).json(newEntry);
   } catch (error) {
