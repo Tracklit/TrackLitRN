@@ -1,11 +1,10 @@
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation, useRoute, DrawerActions } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Clock, ArrowLeft, List } from 'phosphor-react-native';
-import { ScreenTabBar } from '@/components/ScreenTabBar';
+import { Clock, ArrowLeft } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import type { RootStackParamList } from '@/navigation/types';

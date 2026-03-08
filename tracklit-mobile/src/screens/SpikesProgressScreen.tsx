@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -17,9 +17,7 @@ import {
   CalendarCheck,
   CheckCircle,
   Fire,
-  List,
 } from 'phosphor-react-native';
-import { ScreenTabBar } from '@/components/ScreenTabBar';
 import { LinearGradient } from '@/components/LinearGradient';
 
 import { Text } from '@/components/ui/Text';
@@ -113,12 +111,7 @@ export const SpikesProgressScreen: React.FC = () => {
           <CaretLeft size={22} color="#fff" weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Progress</Text>
-        <TouchableOpacity
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <List size={20} color="rgba(255,255,255,0.7)" weight="bold" />
-        </TouchableOpacity>
+        <View style={{ width: 22 }} />
       </View>
 
       <ScrollView
@@ -280,8 +273,8 @@ export const SpikesProgressScreen: React.FC = () => {
           </View>
         ) : null}
 
+        <View style={{ height: insets.bottom + 20 }} />
       </ScrollView>
-      <ScreenTabBar />
     </LinearGradient>
   );
 };

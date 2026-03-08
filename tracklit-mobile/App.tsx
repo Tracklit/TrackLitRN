@@ -636,6 +636,7 @@ const DrawerNavigator: React.FC = () => (
     screenOptions={{
       headerShown: false,
       drawerType: 'front',
+      swipeEnabled: false,
       overlayColor: 'rgba(0,0,0,0.6)',
       sceneContainerStyle: { backgroundColor: 'transparent' },
       drawerStyle: {

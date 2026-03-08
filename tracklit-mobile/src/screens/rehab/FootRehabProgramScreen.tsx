@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -12,10 +12,8 @@ import {
   CheckCircle,
   Play,
   Pause,
-  List,
 } from 'phosphor-react-native';
 import { LinearGradient } from '@/components/LinearGradient';
-import { ScreenTabBar } from '@/components/ScreenTabBar';
 import { useMutation } from '@tanstack/react-query';
 
 import { Text } from '@/components/ui/Text';
@@ -224,13 +222,6 @@ export const FootRehabProgramScreen: React.FC = () => {
         <View style={styles.badge}>
           <Text style={styles.badgeText}>Chronic Injury</Text>
         </View>
-        <TouchableOpacity
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          style={styles.drawerBtn}
-        >
-          <List size={18} color="rgba(255,255,255,0.7)" weight="bold" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -361,7 +352,6 @@ export const FootRehabProgramScreen: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
-      <ScreenTabBar />
     </View>
   );
 };
@@ -376,12 +366,6 @@ const styles = StyleSheet.create({
     gap: 10,
     borderBottomWidth: 0.5,
     borderBottomColor: 'rgba(255,255,255,0.06)',
-  },
-  drawerBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   backBtn: {
     width: 36,

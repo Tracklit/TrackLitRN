@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -14,10 +14,8 @@ import {
   Pause,
   SkipForward,
   Star,
-  List,
 } from 'phosphor-react-native';
 import { LinearGradient } from '@/components/LinearGradient';
-import { ScreenTabBar } from '@/components/ScreenTabBar';
 import { useMutation } from '@tanstack/react-query';
 
 import { Text } from '@/components/ui/Text';
@@ -169,13 +167,6 @@ export const HamstringRehabProgramScreen: React.FC = () => {
         <View style={styles.badge}>
           <Text style={styles.badgeText}>Acute Muscle</Text>
         </View>
-        <TouchableOpacity
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          style={styles.drawerBtn}
-        >
-          <List size={18} color="rgba(255,255,255,0.7)" weight="bold" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -381,7 +372,6 @@ export const HamstringRehabProgramScreen: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
-      <ScreenTabBar />
     </View>
   );
 };
@@ -419,12 +409,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   badgeText: { fontSize: 10, fontWeight: '700', color: '#f87171' },
-  drawerBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   scrollContent: { padding: 16, gap: 16 },
   titleBlock: { gap: 10 },
   programTitle: { fontSize: 20, fontWeight: '800', color: '#FFFFFF', lineHeight: 26 },
