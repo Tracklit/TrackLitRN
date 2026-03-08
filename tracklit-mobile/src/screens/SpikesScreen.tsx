@@ -173,13 +173,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,122,0,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 36,
   },
   balanceValue: {
     fontSize: 42,
     fontWeight: '700',
     color: C.textPrimary,
     letterSpacing: -1,
+    marginTop: 0,
   },
   balanceLabel: {
     fontSize: 15,
