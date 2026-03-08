@@ -25,13 +25,7 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
           <ArrowLeft size={18} color="#FFFFFF" weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Rehabilitation</Text>
-        <TouchableOpacity
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          style={styles.drawerBtn}
-        >
-          <List size={18} color="rgba(255,255,255,0.7)" weight="bold" />
-        </TouchableOpacity>
+        <View style={{ width: 32 }} />
       </View>
 
       <ScrollView
@@ -52,7 +46,6 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <ScreenTabBar />
     </View>
   );
 };
@@ -84,12 +77,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
-  },
-  drawerBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   scrollContent: {
     padding: 20,

@@ -105,7 +105,7 @@ export const RehabScreen: React.FC = () => {
   const navigation = useNavigation<Navigation>();
   const { user } = useAuth();
 
-  const isStarUser = user?.subscription === 'star' || (user as any)?.isPremium;
+  const isStarUser = (user as any)?.subscriptionTier === 'star' || (user as any)?.isPremium;
   const spikes = Number((user as any)?.spikes ?? 0);
 
   const categories = useMemo(() => rehabCategories, []);
