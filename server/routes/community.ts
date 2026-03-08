@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import { db } from "../db";
 import { communityActivities, users } from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, ne } from "drizzle-orm";
 
 const router = Router();
 
@@ -67,64 +67,107 @@ const STATIC_FALLBACK = [
   },
 ];
 
-// Get community activities for ticker carousel — newest first (index 0 = leftmost card)
+const FIELDS = {
+  id: communityActivities.id,
+  userId: communityActivities.userId,
+  activityType: communityActivities.activityType,
+  title: communityActivities.title,
+  description: communityActivities.description,
+  relatedEntityId: communityActivities.relatedEntityId,
+  relatedEntityType: communityActivities.relatedEntityType,
+  metadata: communityActivities.metadata,
+  createdAt: communityActivities.createdAt,
+  username: users.username,
+  name: users.name,
+  profileImageUrl: users.profileImageUrl,
+};
+
+function mapRow(row: any) {
+  return {
+    id: row.id,
+    userId: row.userId,
+    activityType: row.activityType,
+    title: row.title,
+    description: row.description ?? undefined,
+    relatedEntityId: row.relatedEntityId ?? undefined,
+    relatedEntityType: row.relatedEntityType ?? undefined,
+    metadata: row.metadata ?? undefined,
+    createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
+    user: {
+      id: row.userId,
+      username: row.username,
+      name: row.name,
+      profileImageUrl: row.profileImageUrl ?? undefined,
+    },
+  };
+}
+
+// GET /api/community/activities?offset=0&limit=25
+// offset=0: user's own most-recent activity is pinned at position 0
+// offset>0: plain paginated continuation
 router.get("/activities", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
-  try {
-    const rows = await db
-      .select({
-        id: communityActivities.id,
-        userId: communityActivities.userId,
-        activityType: communityActivities.activityType,
-        title: communityActivities.title,
-        description: communityActivities.description,
-        relatedEntityId: communityActivities.relatedEntityId,
-        relatedEntityType: communityActivities.relatedEntityType,
-        metadata: communityActivities.metadata,
-        createdAt: communityActivities.createdAt,
-        username: users.username,
-        name: users.name,
-        profileImageUrl: users.profileImageUrl,
-      })
-      .from(communityActivities)
-      .innerJoin(users, eq(communityActivities.userId, users.id))
-      .where(eq(communityActivities.isVisible, true))
-      .orderBy(desc(communityActivities.createdAt))
-      .limit(50);
+  const currentUserId = (req.user as any).id as number;
+  const offset = Math.max(0, parseInt((req.query.offset as string) ?? '0') || 0);
+  const limit = Math.min(Math.max(1, parseInt((req.query.limit as string) ?? '25') || 25), 50);
 
-    if (rows.length === 0) {
-      return res.json(STATIC_FALLBACK);
+  try {
+    let pinned: any = null;
+
+    if (offset === 0) {
+      // Fetch the current user's most recent visible activity to pin first
+      const [pinnedRow] = await db
+        .select(FIELDS)
+        .from(communityActivities)
+        .innerJoin(users, eq(communityActivities.userId, users.id))
+        .where(and(
+          eq(communityActivities.isVisible, true),
+          eq(communityActivities.userId, currentUserId)
+        ))
+        .orderBy(desc(communityActivities.createdAt))
+        .limit(1);
+
+      pinned = pinnedRow ?? null;
     }
 
-    const activities = rows.map((row) => ({
-      id: row.id,
-      userId: row.userId,
-      activityType: row.activityType,
-      title: row.title,
-      description: row.description,
-      relatedEntityId: row.relatedEntityId,
-      relatedEntityType: row.relatedEntityType,
-      metadata: row.metadata,
-      createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
-      user: {
-        id: row.userId,
-        username: row.username,
-        name: row.name,
-        profileImageUrl: row.profileImageUrl ?? undefined,
-      },
-    }));
+    // For offset=0: fetch (limit-1) others, excluding the pinned row's ID
+    // For offset>0: fetch `limit` items starting from DB offset (offset-1 to account for pin)
+    const dbOffset = offset === 0 ? 0 : offset - 1;
+    const dbLimit  = offset === 0 ? (pinned ? limit - 1 : limit) : limit;
+
+    const whereClause = pinned
+      ? and(eq(communityActivities.isVisible, true), ne(communityActivities.id, pinned.id))
+      : eq(communityActivities.isVisible, true);
+
+    const rows = await db
+      .select(FIELDS)
+      .from(communityActivities)
+      .innerJoin(users, eq(communityActivities.userId, users.id))
+      .where(whereClause)
+      .orderBy(desc(communityActivities.createdAt))
+      .offset(dbOffset)
+      .limit(dbLimit);
+
+    const activities = [
+      ...(pinned ? [mapRow(pinned)] : []),
+      ...rows.map(mapRow),
+    ];
+
+    if (activities.length === 0) {
+      return res.json(offset === 0 ? STATIC_FALLBACK : []);
+    }
 
     res.json(activities);
   } catch (error) {
     console.error("Error fetching community activities:", error);
-    res.json(STATIC_FALLBACK);
+    res.json(offset === 0 ? STATIC_FALLBACK : []);
   }
 });
 
-// Create a new community activity
+// POST /api/community/activities
 router.post("/activities", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
@@ -140,7 +183,7 @@ router.post("/activities", async (req: Request, res: Response) => {
     const [newActivity] = await db
       .insert(communityActivities)
       .values({
-        userId: req.user!.id,
+        userId: (req.user as any).id,
         activityType,
         title,
         description,

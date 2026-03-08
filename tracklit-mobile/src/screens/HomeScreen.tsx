@@ -385,9 +385,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const AVATAR_FALLBACKS = [11, 5, 12, 9, 13, 14, 16, 8, 33, 3, 7, 15, 18, 20, 25, 27, 30, 35, 40, 45];
 
+  const [allActivities, setAllActivities] = useState<CommunityActivity[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   const activitiesQuery = useQuery<CommunityActivity[]>({
     queryKey: ['community-activities'],
-    queryFn: () => apiRequest<CommunityActivity[]>('/api/community/activities'),
+    queryFn: () => apiRequest<CommunityActivity[]>('/api/community/activities?offset=0&limit=25'),
     refetchInterval: 30000,
     retry: false,
     staleTime: 60000,
@@ -404,7 +408,41 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     },
   });
 
-  const activities = activitiesQuery.data ?? PLACEHOLDER_ACTIVITIES;
+  useEffect(() => {
+    if (activitiesQuery.data && activitiesQuery.data.length > 0) {
+      setAllActivities(activitiesQuery.data);
+      setHasMore(activitiesQuery.data.length >= 25);
+    }
+  }, [activitiesQuery.data]);
+
+  const loadMoreActivities = useCallback(async () => {
+    if (isLoadingMore || !hasMore || allActivities.length === 0) return;
+    setIsLoadingMore(true);
+    try {
+      const more = await apiRequest<CommunityActivity[]>(
+        `/api/community/activities?offset=${allActivities.length}&limit=25`
+      );
+      if (more && more.length > 0) {
+        const withAvatars = more.map((a: CommunityActivity, i: number) => {
+          if (a.user && !a.user.profileImageUrl) {
+            const imgIdx = AVATAR_FALLBACKS[(allActivities.length + i) % AVATAR_FALLBACKS.length];
+            return { ...a, user: { ...a.user, profileImageUrl: `https://i.pravatar.cc/150?img=${imgIdx}` } };
+          }
+          return a;
+        });
+        setAllActivities(prev => [...prev, ...withAvatars]);
+        setHasMore(more.length >= 25);
+      } else {
+        setHasMore(false);
+      }
+    } catch {
+      // silently fail — user can trigger again by continuing to scroll
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, hasMore, allActivities.length]);
+
+  const activities = allActivities.length > 0 ? allActivities : (activitiesQuery.data ?? PLACEHOLDER_ACTIVITIES);
 
   const CAROUSEL_COPIES = 3;
   const carouselData = activities.length > 0
@@ -416,14 +454,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const handleCarouselScrollEnd = useCallback((contentOffsetX: number, itemWidth: number) => {
     if (!activities.length || !carouselRef.current) return;
-    const totalItemWidth = itemWidth;
-    const singleSetWidth = activities.length * totalItemWidth;
+    const singleSetWidth = activities.length * itemWidth;
+    // Trigger load more when user has scrolled into the final 30% of the middle copy
+    if (contentOffsetX > singleSetWidth * 1.7 && hasMore && !isLoadingMore) {
+      loadMoreActivities();
+    }
     if (contentOffsetX < singleSetWidth * 0.3) {
       carouselRef.current.scrollToOffset({ offset: contentOffsetX + singleSetWidth, animated: false });
     } else if (contentOffsetX > singleSetWidth * 1.7) {
       carouselRef.current.scrollToOffset({ offset: contentOffsetX - singleSetWidth, animated: false });
     }
-  }, [activities.length]);
+  }, [activities.length, hasMore, isLoadingMore, loadMoreActivities]);
 
   const getActivityBadge = (activityType: ActivityType) => {
     switch (activityType) {
