@@ -29,6 +29,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
+import { goBackOrNavigateToTab } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -257,7 +258,12 @@ export const ProgramCreateScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => goBackOrNavigateToTab(navigation, 'Programs')}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Program</Text>

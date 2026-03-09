@@ -1,5 +1,6 @@
 console.log('=== SERVER FILE LOADING ===');
 import express, { type Request, Response, NextFunction } from "express";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./utils";
@@ -18,6 +19,15 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
+if (process.env.PROXY_API_TO_PROD === 'true') {
+  console.log('Proxying /api to remote backend: https://app-tracklit-prod-tnrusd.azurewebsites.net');
+  app.use('/api', createProxyMiddleware({
+    target: 'https://app-tracklit-prod-tnrusd.azurewebsites.net',
+    changeOrigin: true,
+    secure: false,
+  }));
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -33,10 +43,10 @@ app.get('/ping', (req, res) => {
 
 // Favicon handler to prevent 404 errors
 app.get('/favicon.ico', (req, res) => {
-  const faviconPath = isProduction 
+  const faviconPath = isProduction
     ? path.join(process.cwd(), 'dist', 'public', 'icon-192.png')
     : path.join(process.cwd(), 'client', 'public', 'icon-192.png');
-  
+
   // Check if the file exists, otherwise send a simple response
   if (fs.existsSync(faviconPath)) {
     res.setHeader('Content-Type', 'image/png');
@@ -102,7 +112,7 @@ app.use((req, res, next) => {
 
   // Import scheduler utilities
   const { refreshAllGoogleSheetPrograms } = await import('./utils/scheduler');
-  
+
   // Set up a daily refresh of Google Sheets data at midnight UTC
   setInterval(() => {
     const now = new Date();
@@ -152,8 +162,8 @@ app.use((req, res, next) => {
 
   // Add health check endpoint for deployments
   app.get('/health', (_req: Request, res: Response) => {
-    res.status(200).json({ 
-      status: 'OK', 
+    res.status(200).json({
+      status: 'OK',
       timestamp: new Date().toISOString(),
       uptime: process.uptime()
     });
@@ -166,18 +176,18 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    
+
     // In production, sanitize error messages to avoid exposing internal details
     let message = err.message || "Internal Server Error";
     if (isProduction && status >= 500) {
       // Log full error for debugging but don't expose to client
       console.error('[ERROR]', err);
-      
+
       // Check for database connection errors
-      if (message.includes('Failed query') || 
-          message.includes('connection') || 
-          message.includes('ECONNREFUSED') ||
-          message.includes('timeout')) {
+      if (message.includes('Failed query') ||
+        message.includes('connection') ||
+        message.includes('ECONNREFUSED') ||
+        message.includes('timeout')) {
         message = "Service temporarily unavailable. Please try again.";
       } else {
         message = "An unexpected error occurred. Please try again.";
@@ -189,14 +199,14 @@ app.use((req, res, next) => {
 
   // Production deployments use environment PORT, development uses 5000
   const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
-  
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   console.log(`Environment: NODE_ENV=${process.env.NODE_ENV}, isProduction=${isProduction}`);
   console.log(`Critical env vars: DATABASE_URL=${!!process.env.DATABASE_URL}, SESSION_SECRET=${!!process.env.SESSION_SECRET}`);
   console.log(`Port config: process.env.PORT=${process.env.PORT}, using port=${port}`);
-  
+
   if (isProduction) {
     console.log('Setting up production static file serving');
     serveStatic(app);
@@ -207,9 +217,9 @@ app.use((req, res, next) => {
     await viteModule.setupVite(app, server);
   }
   const host = "0.0.0.0";
-  
+
   console.log(`Attempting to start server on ${host}:${port}`);
-  
+
   // Use the server returned from registerRoutes instead of creating a new one
   server.on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {

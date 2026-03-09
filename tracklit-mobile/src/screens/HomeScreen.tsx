@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   View,
   ScrollView,
@@ -62,9 +62,11 @@ import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { apiRequest } from '@/lib/api';
+import { env } from '@/config/env';
 import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
 
 import { useProgramSessions } from '@/hooks/use-program-sessions';
+import type { RootStackParamList } from '@/navigation/types';
 import theme from '../utils/theme';
 
 interface HomeScreenProps {
@@ -106,8 +108,75 @@ interface CommunityActivity {
   };
 }
 
+interface CarouselUserEntry {
+  key: string;
+  activity: CommunityActivity | null;
+  userId: number;
+  displayName: string;
+  username: string;
+  profileImageUrl?: string;
+  isSelf: boolean;
+}
+
+const PROFILE_STORAGE_KEY_PREFIX = 'tracklit_profile_';
+
+type PublicProfileSummary = {
+  id: number;
+  name?: string | null;
+  username?: string | null;
+  profileImageUrl?: string | null;
+};
+
+const normalizeProfileImageUrl = (profileImageUrl?: string | null): string | undefined => {
+  if (!profileImageUrl || typeof profileImageUrl !== 'string') return undefined;
+
+  const trimmed = profileImageUrl.trim();
+  if (!trimmed) return undefined;
+
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('file://') ||
+    trimmed.startsWith('content://') ||
+    trimmed.startsWith('data:')
+  ) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('//')) {
+    return `https:${trimmed}`;
+  }
+
+  if (trimmed.startsWith('/')) {
+    return `${env.API_BASE_URL}${trimmed}`;
+  }
+
+  return `${env.API_BASE_URL}/${trimmed.replace(/^\/+/, '')}`;
+};
+
+const CarouselAvatar: React.FC<{ imageUrl?: string; initial: string }> = ({ imageUrl, initial }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageUrl]);
+
+  if (!imageUrl || imageFailed) {
+    return <Text style={styles.carouselInitial}>{initial}</Text>;
+  }
+
+  return (
+    <Image
+      source={{ uri: imageUrl }}
+      style={styles.carouselImage}
+      onError={() => setImageFailed(true)}
+    />
+  );
+};
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [greeting, setGreeting] = useState('');
   const { user, refreshUser } = useAuth();
   const queryClient = useQueryClient();
@@ -119,21 +188,39 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [carouselHidden, setCarouselHidden] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [selectionLoaded, setSelectionLoaded] = useState(false);
-  const carouselRef = useRef<FlatList>(null);
   const userId = user?.id;
+  const numericUserId = userId && userId !== 'guest' ? Number(userId) : null;
+  const [ownStoredAvatarUri, setOwnStoredAvatarUri] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       AsyncStorage.getItem('carousel_hidden').then(val => {
         setCarouselHidden(val === 'true');
       });
+      if (numericUserId) {
+        AsyncStorage.getItem(`${PROFILE_STORAGE_KEY_PREFIX}${numericUserId}`).then((raw) => {
+          if (!raw) {
+            setOwnStoredAvatarUri(null);
+            return;
+          }
+
+          try {
+            const data = JSON.parse(raw);
+            setOwnStoredAvatarUri(typeof data?.avatarUri === 'string' ? data.avatarUri : null);
+          } catch {
+            setOwnStoredAvatarUri(null);
+          }
+        });
+      } else {
+        setOwnStoredAvatarUri(null);
+      }
       AsyncStorage.getItem(PROGRAM_SELECTION_KEY).then(val => {
         setSelectedProgramId(val);
         setSelectionLoaded(true);
       });
       queryClient.invalidateQueries({ queryKey: ['today-session'] });
       queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
-    }, [queryClient])
+    }, [numericUserId, queryClient])
   );
 
   const purchasedProgramsQuery = useQuery({
@@ -299,92 +386,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     else setGreeting('Good evening');
   }, []);
 
-  const PLACEHOLDER_ACTIVITIES: CommunityActivity[] = [
-    {
-      id: 1,
-      userId: 1,
-      activityType: 'workout',
-      title: 'Sprint Training Complete',
-      description: 'Finished 6x100m sprint session with excellent form. Felt strong on the blocks and maintained good posture through the drive phase.',
-      createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-      user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: 'https://i.pravatar.cc/150?img=11' },
-    },
-    {
-      id: 2,
-      userId: 2,
-      activityType: 'user_joined',
-      title: 'New Athlete Joined',
-      description: 'Welcome Sarah M. to the TrackLit community!',
-      createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-      user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: 'https://i.pravatar.cc/150?img=5' },
-    },
-    {
-      id: 3,
-      userId: 3,
-      activityType: 'meet_created',
-      title: 'Spring Championship Meet',
-      description: 'New meet scheduled for April 15th at Metro Stadium. Events include 100m, 200m, 400m, and 4x100m relay.',
-      createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-      user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: 'https://i.pravatar.cc/150?img=12' },
-    },
-    {
-      id: 4,
-      userId: 4,
-      activityType: 'journal_entry',
-      title: 'Recovery Day Reflection',
-      description: 'Took an easy recovery day with stretching and foam rolling. Feeling fresh for tomorrow\'s tempo run.',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      user: { id: 4, username: 'mia_track', name: 'Mia T.', profileImageUrl: 'https://i.pravatar.cc/150?img=9' },
-    },
-    {
-      id: 5,
-      userId: 5,
-      activityType: 'workout',
-      title: 'Hurdle Drills Session',
-      description: 'Worked on 3-step rhythm over 5 hurdles. Coach said my trail leg is improving. PB on the last rep!',
-      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-      user: { id: 5, username: 'hurdle_king', name: 'Marcus D.', profileImageUrl: 'https://i.pravatar.cc/150?img=13' },
-    },
-    {
-      id: 6,
-      userId: 6,
-      activityType: 'meet_results',
-      title: 'Regional Qualifiers Results',
-      description: 'Congrats to all athletes who competed today! 3 new personal bests recorded across the squad.',
-      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      user: { id: 6, username: 'coach_rivera', name: 'Coach Rivera', profileImageUrl: 'https://i.pravatar.cc/150?img=14' },
-    },
-    {
-      id: 7,
-      userId: 7,
-      activityType: 'program_assigned',
-      title: 'New Program: Speed Endurance',
-      description: '8-week speed endurance block starting Monday. Focus on lactate threshold and race-pace training.',
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      user: { id: 7, username: 'ella_sprints', name: 'Ella W.', profileImageUrl: 'https://i.pravatar.cc/150?img=16' },
-    },
-    {
-      id: 8,
-      userId: 8,
-      activityType: 'group_joined',
-      title: 'Joined Sprint Squad',
-      description: 'Jordan K. just joined the Sprint Squad training group. Welcome to the team!',
-      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-      user: { id: 8, username: 'jordan_k', name: 'Jordan K.', profileImageUrl: 'https://i.pravatar.cc/150?img=8' },
-    },
-    {
-      id: 9,
-      userId: 9,
-      activityType: 'journal_entry',
-      title: 'Pre-Competition Notes',
-      description: 'Visualized my race plan for Saturday. Feeling confident about the 200m. Goal: sub-22 seconds.',
-      createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-      user: { id: 9, username: 'dash_quinn', name: 'Quinn L.', profileImageUrl: 'https://i.pravatar.cc/150?img=33' },
-    },
-  ];
-
-  const AVATAR_FALLBACKS = [11, 5, 12, 9, 13, 14, 16, 8, 33, 3, 7, 15, 18, 20, 25, 27, 30, 35, 40, 45];
-
   const [allActivities, setAllActivities] = useState<CommunityActivity[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -395,25 +396,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     refetchInterval: 30000,
     retry: false,
     staleTime: 60000,
-    placeholderData: PLACEHOLDER_ACTIVITIES,
-    select: (data: CommunityActivity[]) => {
-      if (!data || data.length === 0) return PLACEHOLDER_ACTIVITIES;
-      return data.map((a, i) => {
-        if (a.user && !a.user.profileImageUrl) {
-          const imgIdx = AVATAR_FALLBACKS[i % AVATAR_FALLBACKS.length];
-          return { ...a, user: { ...a.user, profileImageUrl: `https://i.pravatar.cc/150?img=${imgIdx}` } };
-        }
-        return a;
-      });
-    },
   });
 
   useEffect(() => {
-    const data = activitiesQuery.data;
-    if (data && data.length > 0) {
-      setAllActivities(data);
-      setHasMore(data.length >= 25);
-    }
+    const data = activitiesQuery.data ?? [];
+    setAllActivities(data);
+    setHasMore(data.length >= 25);
   // dataUpdatedAt is a stable timestamp — only changes when new data arrives, not on every render
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activitiesQuery.dataUpdatedAt]);
@@ -426,14 +414,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         `/api/community/activities?offset=${allActivities.length}&limit=25`
       );
       if (more && more.length > 0) {
-        const withAvatars = more.map((a: CommunityActivity, i: number) => {
-          if (a.user && !a.user.profileImageUrl) {
-            const imgIdx = AVATAR_FALLBACKS[(allActivities.length + i) % AVATAR_FALLBACKS.length];
-            return { ...a, user: { ...a.user, profileImageUrl: `https://i.pravatar.cc/150?img=${imgIdx}` } };
-          }
-          return a;
-        });
-        setAllActivities(prev => [...prev, ...withAvatars]);
+        setAllActivities(prev => [...prev, ...more]);
         setHasMore(more.length >= 25);
       } else {
         setHasMore(false);
@@ -453,7 +434,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     enabled: !!userId && userId !== 'guest',
   });
 
-  const rawActivities = allActivities.length > 0 ? allActivities : (activitiesQuery.data ?? PLACEHOLDER_ACTIVITIES);
+  const rawActivities = allActivities.length > 0 ? allActivities : (activitiesQuery.data ?? []);
 
   // Build a synthetic ticker card from the user's own most-recent public journal entry.
   // This works regardless of which backend is in use (Azure or dev), since journal entries
@@ -480,41 +461,136 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         id: Number(userId),
         username: (user as any).username || '',
         name: (user as any).name || (user as any).username || 'You',
-        profileImageUrl: (user as any).profileImageUrl ?? undefined,
+        profileImageUrl: normalizeProfileImageUrl(
+          ownStoredAvatarUri || (user as any).profileImageUrl || null
+        ),
       },
     };
-  }, [user, userId, journalEntriesEarly]);
+  }, [ownStoredAvatarUri, user, userId, journalEntriesEarly]);
 
-  // Pin own activity at position 0; remove any server-returned duplicate for same user+entry
-  const activities = useMemo(() => {
-    if (!ownActivity) return rawActivities;
-    const deduped = rawActivities.filter(
-      (a) => !(a.userId === ownActivity.userId && a.activityType === 'journal_entry' && a.id <= 0)
-    );
-    return [ownActivity, ...deduped];
-  }, [ownActivity, rawActivities]);
+  const carouselAvatarLookupUserIds = useMemo(() => {
+    const ids: number[] = [];
+    const seen = new Set<number>();
 
-  const CAROUSEL_COPIES = 3;
-  const carouselData = activities.length > 0
-    ? Array.from({ length: CAROUSEL_COPIES }, (_, copyIdx) =>
-        activities.map((a, i) => ({ ...a, _carouselKey: `${copyIdx}-${i}` }))
-      ).flat()
-    : [];
-  const carouselMiddleOffset = activities.length;
-
-  const handleCarouselScrollEnd = useCallback((contentOffsetX: number, itemWidth: number) => {
-    if (!activities.length || !carouselRef.current) return;
-    const singleSetWidth = activities.length * itemWidth;
-    // Trigger load more when user has scrolled into the final 30% of the middle copy
-    if (contentOffsetX > singleSetWidth * 1.7 && hasMore && !isLoadingMore) {
-      loadMoreActivities();
+    if (
+      numericUserId &&
+      !normalizeProfileImageUrl(ownStoredAvatarUri || (user as any)?.profileImageUrl || null)
+    ) {
+      ids.push(numericUserId);
+      seen.add(numericUserId);
     }
-    if (contentOffsetX < singleSetWidth * 0.3) {
-      carouselRef.current.scrollToOffset({ offset: contentOffsetX + singleSetWidth, animated: false });
-    } else if (contentOffsetX > singleSetWidth * 1.7) {
-      carouselRef.current.scrollToOffset({ offset: contentOffsetX - singleSetWidth, animated: false });
+
+    for (const activity of rawActivities) {
+      const activityUserId = activity.user?.id ?? activity.userId;
+      if (!activityUserId || seen.has(activityUserId)) {
+        continue;
+      }
+
+      if (!normalizeProfileImageUrl(activity.user?.profileImageUrl)) {
+        ids.push(activityUserId);
+        seen.add(activityUserId);
+      }
+
+      if (ids.length >= 12) {
+        break;
+      }
     }
-  }, [activities.length, hasMore, isLoadingMore, loadMoreActivities]);
+
+    return ids;
+  }, [numericUserId, ownStoredAvatarUri, rawActivities, user]);
+
+  const carouselUserProfilesQuery = useQuery({
+    queryKey: ['community-carousel-user-profiles', carouselAvatarLookupUserIds],
+    enabled: carouselAvatarLookupUserIds.length > 0,
+    staleTime: 300000,
+    retry: false,
+    queryFn: async () => {
+      const profiles = await Promise.all(
+        carouselAvatarLookupUserIds.map(async (lookupUserId) => {
+          try {
+            return await apiRequest<PublicProfileSummary>(`/api/users/${lookupUserId}`);
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      return profiles.filter((profile): profile is PublicProfileSummary => !!profile);
+    },
+  });
+
+  const carouselUserProfileByUserId = useMemo(() => {
+    const profileMap = new Map<number, PublicProfileSummary>();
+
+    for (const profile of carouselUserProfilesQuery.data ?? []) {
+      profileMap.set(profile.id, profile);
+    }
+
+    return profileMap;
+  }, [carouselUserProfilesQuery.data]);
+
+  const carouselEntries = useMemo<CarouselUserEntry[]>(() => {
+    const entries: CarouselUserEntry[] = [];
+    const seenUserIds = new Set<number>();
+    const ownProfile = numericUserId ? carouselUserProfileByUserId.get(numericUserId) : undefined;
+    const ownResolvedProfileImageUrl =
+      normalizeProfileImageUrl(ownStoredAvatarUri || (user as any)?.profileImageUrl || null) ||
+      normalizeProfileImageUrl(ownProfile?.profileImageUrl);
+    const ownResolvedDisplayName =
+      ownProfile?.name?.trim() ||
+      (user as any)?.name ||
+      (user as any)?.username ||
+      'You';
+    const ownResolvedUsername =
+      ownProfile?.username?.trim() ||
+      (user as any)?.username ||
+      '';
+
+    if (numericUserId && user) {
+      entries.push({
+        key: `self-${numericUserId}`,
+        activity: ownActivity,
+        userId: numericUserId,
+        displayName: ownResolvedDisplayName,
+        username: ownResolvedUsername,
+        profileImageUrl: ownResolvedProfileImageUrl,
+        isSelf: true,
+      });
+      seenUserIds.add(numericUserId);
+    }
+
+    for (const activity of rawActivities) {
+      const activityUserId = activity.user?.id ?? activity.userId;
+      if (!activity.user || !activityUserId || seenUserIds.has(activityUserId)) {
+        continue;
+      }
+
+      const profile = carouselUserProfileByUserId.get(activityUserId);
+      const resolvedProfileImageUrl =
+        normalizeProfileImageUrl(activity.user.profileImageUrl) ||
+        normalizeProfileImageUrl(profile?.profileImageUrl);
+      const resolvedDisplayName =
+        profile?.name?.trim() ||
+        activity.user.name ||
+        activity.user.username;
+      const resolvedUsername =
+        profile?.username?.trim() ||
+        activity.user.username;
+
+      entries.push({
+        key: `activity-user-${activityUserId}`,
+        activity,
+        userId: activityUserId,
+        displayName: resolvedDisplayName,
+        username: resolvedUsername,
+        profileImageUrl: resolvedProfileImageUrl,
+        isSelf: false,
+      });
+      seenUserIds.add(activityUserId);
+    }
+
+    return entries;
+  }, [carouselUserProfileByUserId, numericUserId, ownActivity, ownStoredAvatarUri, rawActivities, user]);
 
   const getActivityBadge = (activityType: ActivityType) => {
     switch (activityType) {
@@ -527,6 +603,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         return 'feed';
     }
   };
+
+  const openOwnProfile = useCallback(() => {
+    if (!numericUserId || !user) {
+      return;
+    }
+
+    const parentNavigation = navigation.getParent<NavigationProp<RootStackParamList>>();
+    const targetNavigation = parentNavigation ?? navigation;
+
+    targetNavigation.navigate('PublicProfile', {
+      userId: numericUserId,
+      name: (user as any).name || null,
+      username: (user as any).username || null,
+      profileImageUrl:
+        normalizeProfileImageUrl(ownStoredAvatarUri || (user as any).profileImageUrl || null) || null,
+    });
+  }, [navigation, numericUserId, ownStoredAvatarUri, user]);
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications-home'],
@@ -772,7 +865,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       </View>
 
       {/* Activity Carousel — fixed above scroll */}
-      {activities.length > 0 && !carouselHidden && (
+      {carouselEntries.length > 0 && !carouselHidden && (
         <View style={styles.carouselContainer}>
           <TouchableOpacity
             style={styles.carouselToggle}
@@ -788,52 +881,47 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           </TouchableOpacity>
           {!carouselCollapsed && (
             <FlatList
-              ref={carouselRef}
-              data={carouselData}
+              data={carouselEntries}
               horizontal
               showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item._carouselKey}
+              keyExtractor={(item) => item.key}
               contentContainerStyle={styles.carouselContent}
-              contentOffset={{ x: carouselMiddleOffset * CAROUSEL_ITEM_WIDTH, y: 0 }}
-              onMomentumScrollEnd={(e) =>
-                handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH)
-              }
-              onScrollEndDrag={(e) => {
-                if (!e.nativeEvent.velocity || (Math.abs(e.nativeEvent.velocity.x) < 0.1)) {
-                  handleCarouselScrollEnd(e.nativeEvent.contentOffset.x, CAROUSEL_ITEM_WIDTH);
+              onEndReached={() => {
+                if (hasMore && !isLoadingMore) {
+                  loadMoreActivities();
                 }
               }}
+              onEndReachedThreshold={0.6}
               getItemLayout={(_, index) => ({
                 length: CAROUSEL_ITEM_WIDTH,
                 offset: CAROUSEL_ITEM_WIDTH * index,
                 index,
               })}
               renderItem={({ item }) => {
-                const badge = getActivityBadge(item.activityType);
-                const hasProfileImage = !!item.user?.profileImageUrl;
-                const initial = (item.user?.name?.[0] || item.user?.username?.[0] || '?').toUpperCase();
-                const username = item.user?.name?.split(' ')[0] || item.user?.username || '';
-                const isRead = readActivities.has(item.id);
+                const badge = item.isSelf ? 'profile' : getActivityBadge(item.activity?.activityType ?? 'workout');
+                const initial = (item.displayName?.[0] || item.username?.[0] || '?').toUpperCase();
+                const username = item.displayName?.split(' ')[0] || item.username || (item.isSelf ? 'You' : '');
+                const isRead = item.activity ? readActivities.has(item.activity.id) : false;
 
                 return (
                   <TouchableOpacity
                     style={styles.carouselItem}
                     activeOpacity={0.7}
-                    onPress={() => handleTickerTap(item)}
+                    onPress={() => {
+                      if (item.isSelf) {
+                        openOwnProfile();
+                        return;
+                      }
+
+                      handleTickerTap(item.activity ?? undefined);
+                    }}
                   >
                     <View style={[
                       styles.carouselRing,
                       isRead ? styles.carouselRingRead : styles.carouselRingUnread,
                     ]}>
                       <View style={styles.carouselCircle}>
-                        {hasProfileImage ? (
-                          <Image
-                            source={{ uri: item.user!.profileImageUrl }}
-                            style={styles.carouselImage}
-                          />
-                        ) : (
-                          <Text style={styles.carouselInitial}>{initial}</Text>
-                        )}
+                        <CarouselAvatar imageUrl={item.profileImageUrl} initial={initial} />
                       </View>
                       <View style={[
                         styles.carouselBadge,
@@ -845,6 +933,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                           <Book size={10} color="#fff" weight="fill" />
                         ) : badge === 'feed' ? (
                           <Newspaper size={10} color="#fff" weight="fill" />
+                        ) : badge === 'profile' ? (
+                          <User size={10} color="#fff" weight="fill" />
                         ) : (
                           <View style={styles.carouselRedDot} />
                         )}

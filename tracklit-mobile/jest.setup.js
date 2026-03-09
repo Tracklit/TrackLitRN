@@ -39,6 +39,15 @@ jest.mock('react-native-linear-gradient', () => {
   return ({ children, style }) => <View style={style}>{children}</View>;
 });
 
+jest.mock('react-native-webview', () => {
+  const { View } = require('react-native');
+  return {
+    WebView: ({ children, testID = 'webview', ...rest }) => (
+      <View testID={testID} {...rest}>{children}</View>
+    ),
+  };
+});
+
 // ──────────────────────── Reanimated ────────────────────────
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
@@ -182,6 +191,7 @@ const mockUseAuth = jest.fn(() => ({
   logout: jest.fn(),
   continueAsGuest: jest.fn(),
   refreshUser: jest.fn(),
+  setUserAndPersist: jest.fn(),
 }));
 
 jest.mock('@/contexts/AuthContext', () => ({

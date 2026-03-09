@@ -35,6 +35,7 @@ import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { TargetTimesDrawer } from '@/components/practice/TargetTimesDrawer';
 import type { RootStackParamList } from '@/navigation/types';
 import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
+import { navigateToTab } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -364,7 +365,7 @@ export const PracticeScreen: React.FC = () => {
               <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
                 Contact your coach to get a program assigned to your account.
               </Text>
-              <Button variant="outline" onPress={() => navigation.navigate('Programs' as any)} style={styles.emptyButton}>
+              <Button variant="outline" onPress={() => navigateToTab(navigation, 'Programs')} style={styles.emptyButton}>
                 <Text variant="small" weight="medium" color="primary-foreground">
                   View Available Programs
                 </Text>

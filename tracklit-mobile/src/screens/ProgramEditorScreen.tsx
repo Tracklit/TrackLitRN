@@ -39,6 +39,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { env } from '@/config/env';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
+import { goBackOrNavigateToTab } from '@/navigation/appNavigation';
 
 type ProgramEditorRouteProp = RouteProp<RootStackParamList, 'ProgramEditor'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -473,11 +474,26 @@ export const ProgramEditorScreen: React.FC = () => {
     }
   };
 
+  const handleBack = useCallback(() => {
+    const finishBackNavigation = () => goBackOrNavigateToTab(navigation, 'Programs');
+
+    const sessions = buildSessionPayload();
+    if (sessions.length > 0 && !isUploadedProgram) {
+      handleSaveAll(true).finally(finishBackNavigation);
+      return;
+    }
+
+    finishBackNavigation();
+  }, [buildSessionPayload, handleSaveAll, isUploadedProgram, navigation]);
+
 
   if (programQuery.isLoading) {
     return (
       <View style={styles.container}>
-        <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
+        <View
+          style={[styles.loadingContainer, { paddingTop: insets.top }]}
+          testID="program-editor-loading"
+        >
           <SkeletonProgramList count={3} />
         </View>
       </View>
@@ -487,7 +503,19 @@ export const ProgramEditorScreen: React.FC = () => {
   if (programQuery.isError || !program) {
     return (
       <View style={styles.container}>
-        <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={handleBack}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <ArrowLeft size={20} color={C.textPrimary} weight="bold" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle} numberOfLines={1}>Program Editor</Text>
+          <View style={styles.headerActions} />
+        </View>
+        <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Unable to load program.</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => programQuery.refetch()}>
             <Text style={styles.retryBtnText}>Retry</Text>
@@ -502,22 +530,25 @@ export const ProgramEditorScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => {
-          const sessions = buildSessionPayload();
-          if (sessions.length > 0 && !isUploadedProgram) {
-            handleSaveAll(true).finally(() => navigation.goBack());
-          } else {
-            navigation.goBack();
-          }
-        }}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleBack}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <ArrowLeft size={20} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Program Editor</Text>
         <View style={styles.headerActions}>
           {isUploadedProgram ? (
-            <TouchableOpacity style={styles.webBtn} onPress={handleViewOnWeb}>
+            <TouchableOpacity
+              style={styles.webBtn}
+              onPress={handleViewOnWeb}
+              accessibilityRole="button"
+              accessibilityLabel="View on web"
+            >
               <Eye size={16} color={C.textPrimary} weight="fill" />
-              <Text style={styles.webBtnText}>View</Text>
+              <Text style={styles.webBtnText}>View on web</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.saveBtn} onPress={() => handleSaveAll(false)} disabled={isSaving} activeOpacity={0.8}>
@@ -550,7 +581,14 @@ export const ProgramEditorScreen: React.FC = () => {
         scrollEnabled={!isDragging}
       >
         <View style={styles.detailsCard}>
-          <Text style={styles.sectionTitle}>Program Details</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Program Details</Text>
+            {(!isOwner || isUploadedProgram) && (
+              <View style={styles.readOnlyBadge}>
+                <Text style={styles.readOnlyText}>Read only</Text>
+              </View>
+            )}
+          </View>
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Title</Text>
             <TextInput
@@ -686,7 +724,10 @@ export const ProgramEditorScreen: React.FC = () => {
                         )}
                       </View>
                       {isRest ? (
-                        <Moon size={12} color={C.orange} weight="fill" style={{ marginTop: 2 }} />
+                        <>
+                          <Moon size={12} color={C.orange} weight="fill" style={{ marginTop: 2 }} />
+                          <Text style={styles.cellSummary}>Rest day</Text>
+                        </>
                       ) : null}
                       {hasContent ? (
                         <View style={styles.cellContent}>
@@ -1026,6 +1067,11 @@ const styles = StyleSheet.create({
     borderColor: C.border,
     padding: 16,
     gap: 12,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   sectionTitle: {
     fontSize: 15,

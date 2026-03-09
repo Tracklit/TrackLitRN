@@ -309,6 +309,8 @@ export const ProgramsScreen: React.FC = () => {
             <TouchableOpacity
               style={[styles.viewToggleButton, viewMode === 'cards' && styles.viewToggleActive]}
               onPress={() => setViewMode('cards')}
+              accessibilityRole="button"
+              accessibilityLabel="Card view"
             >
               <SquaresFour
                 size={14}
@@ -319,6 +321,8 @@ export const ProgramsScreen: React.FC = () => {
             <TouchableOpacity
               style={[styles.viewToggleButton, viewMode === 'list' && styles.viewToggleActive]}
               onPress={() => setViewMode('list')}
+              accessibilityRole="button"
+              accessibilityLabel="List view"
             >
               <List
                 size={14}
@@ -414,6 +418,8 @@ export const ProgramsScreen: React.FC = () => {
           style={[styles.fab, { bottom: getBottomNavOverlayHeight(insets.bottom) + 16 }]}
           onPress={handleCreateAction}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Create program"
         >
           <LinearGradient
             colors={[C.orange, C.orangeLight]}

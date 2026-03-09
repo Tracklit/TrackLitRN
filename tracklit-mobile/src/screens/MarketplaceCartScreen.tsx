@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
+import { goBackOrNavigateToScreen } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -80,12 +81,15 @@ export const MarketplaceCartScreen: React.FC = () => {
     () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
     [insets.bottom],
   );
+  const handleBackPress = () => {
+    goBackOrNavigateToScreen(navigation, 'Marketplace');
+  };
 
   return (
     <LinearGradient colors={theme.gradient.background} locations={theme.gradient.locations} style={styles.container}>
       <ScrollView style={{ paddingTop: insets.top }} contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.iconBtn} onPress={handleBackPress}>
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: 'center' }}>
@@ -248,5 +252,4 @@ const styles = StyleSheet.create({
   },
   summaryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });
-
 

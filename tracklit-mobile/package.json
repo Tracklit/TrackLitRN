@@ -7,6 +7,8 @@
     "ios": "npx expo run:ios",
     "start": "npx expo start",
     "test": "jest",
+    "test:azure-smoke": "node ./scripts/azure-prod-smoke.mjs",
+    "test:maestro-smoke": "./scripts/run-maestro-smoke.sh",
     "lint": "eslint .",
     "build": "npx react-native build-android"
   },

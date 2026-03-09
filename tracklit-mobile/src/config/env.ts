@@ -1,3 +1,5 @@
+import { getUrlHostname, getUrlOrigin } from '@/utils/url';
+
 const PRODUCTION_API_BASE_URL =
   "https://app-tracklit-prod-tnrusd.azurewebsites.net";
 
@@ -15,15 +17,18 @@ const isAllowedHost = (hostname: string) => {
 const resolveApiBaseUrl = (candidate?: string) => {
   if (!candidate) return PRODUCTION_API_BASE_URL;
 
-  try {
-    const url = new URL(candidate);
-    if (!isAllowedHost(url.hostname)) {
-      return PRODUCTION_API_BASE_URL;
-    }
-    return url.origin;
-  } catch {
+  const hostname = getUrlHostname(candidate);
+  const origin = getUrlOrigin(candidate);
+
+  if (!hostname || !origin) {
     return PRODUCTION_API_BASE_URL;
   }
+
+  if (!isAllowedHost(hostname)) {
+    return PRODUCTION_API_BASE_URL;
+  }
+
+  return origin;
 };
 
 const API_BASE_URL = resolveApiBaseUrl(

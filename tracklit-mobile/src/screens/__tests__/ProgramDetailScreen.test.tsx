@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -75,6 +75,7 @@ beforeEach(() => {
     logout: jest.fn(),
     continueAsGuest: jest.fn(),
     refreshUser: jest.fn(),
+    setUserAndPersist: jest.fn(),
   });
 });
 
@@ -83,23 +84,24 @@ function loadProgramDetailScreen() {
 }
 
 describe('ProgramDetailScreen', () => {
-  // ─── Loading / Error ───
-  it('shows loading indicator while fetching', () => {
+  it('shows the loading skeleton while fetching', () => {
     mockedApiRequest.mockImplementation(() => new Promise(() => {}));
     const Screen = loadProgramDetailScreen();
-    const { getByText } = render(<Screen />, { wrapper: Wrapper });
-    expect(getByText('Loading program...')).toBeTruthy();
+    const { getByTestId } = render(<Screen />, { wrapper: Wrapper });
+
+    expect(getByTestId('program-detail-loading')).toBeTruthy();
   });
 
   it('shows error state with retry button when fetch fails', async () => {
     mockedApiRequest.mockRejectedValue(new Error('fail'));
     const Screen = loadProgramDetailScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
+
     expect(await findByText('Unable to load program. Please try again.')).toBeTruthy();
     expect(await findByText('Retry')).toBeTruthy();
   });
 
-  it('retry button triggers refetch', async () => {
+  it('retry button triggers a refetch', async () => {
     mockedApiRequest
       .mockRejectedValueOnce(new Error('fail'))
       .mockResolvedValueOnce(mockProgram);
@@ -107,144 +109,93 @@ describe('ProgramDetailScreen', () => {
     const Screen = loadProgramDetailScreen();
     const { findByText, findAllByText } = render(<Screen />, { wrapper: Wrapper });
 
-    const retryBtn = await findByText('Retry');
-    fireEvent.press(retryBtn);
+    fireEvent.press(await findByText('Retry'));
 
-    // Title appears in both header and overview card
     const titles = await findAllByText('Test Sprint Program', {}, { timeout: 3000 });
     expect(titles.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('back button is present in error state', async () => {
+  it('shows a back button in the error state', async () => {
     mockedApiRequest.mockRejectedValue(new Error('fail'));
     const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
-    // The back arrow icon renders as text "arrow-left" from our mock
-    expect(await findByText('arrow-left')).toBeTruthy();
+    const { findByLabelText } = render(<Screen />, { wrapper: Wrapper });
+
+    expect(await findByLabelText('Go back')).toBeTruthy();
   });
 
-  // ─── Program display ───
-  it('shows program title in header', async () => {
+  it('shows the program title in the header', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramDetailScreen();
     const { findAllByText } = render(<Screen />, { wrapper: Wrapper });
+
     const titles = await findAllByText('Test Sprint Program');
     expect(titles.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('shows level badge', async () => {
+  it('shows the program metadata and description', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramDetailScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
+
     expect(await findByText('Intermediate')).toBeTruthy();
-  });
-
-  it('shows coach name', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByText('by Coach Smith')).toBeTruthy();
-  });
-
-  it('shows duration formatted as "X weeks"', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByText('8 weeks')).toBeTruthy();
-  });
-
-  it('shows session count', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByText('3 sessions')).toBeTruthy();
-  });
-
-  it('shows category', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByText('sprint')).toBeTruthy();
-  });
-
-  it('shows description', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByText('A test description for the program.')).toBeTruthy();
   });
 
-  it('shows events as badges', async () => {
+  it('shows event badges', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramDetailScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
+
     expect(await findByText('100m')).toBeTruthy();
     expect(await findByText('200m')).toBeTruthy();
     expect(await findByText('400m')).toBeTruthy();
   });
 
-  // ─── Sessions display ───
-  it('shows "Week N" headers', async () => {
+  it('shows the training schedule grouped by week', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramDetailScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
+
+    expect(await findByText('Training Schedule')).toBeTruthy();
     expect(await findByText('Week 1')).toBeTruthy();
     expect(await findByText('Week 2')).toBeTruthy();
-  });
-
-  it('shows session title and description', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
-    expect(await findByText('Speed Work')).toBeTruthy();
-    expect(await findByText('Short sprints and drills')).toBeTruthy();
-  });
-
-  it('shows workout type badge', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
-    expect(await findByText('Sprint')).toBeTruthy();
-  });
-
-  it('shows exercises text', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
-    expect(await findByText('Drills, 4x60m')).toBeTruthy();
-  });
-
-  it('shows duration for sessions', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
-    expect(await findByText('90 min')).toBeTruthy();
-  });
-
-  it('shows day badges in sessions', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByText('Day 1')).toBeTruthy();
     expect(await findByText('Day 3')).toBeTruthy();
   });
 
-  it('shows empty state when no sessions', async () => {
+  it('shows session details including workout type, exercises and duration', async () => {
+    mockedApiRequest.mockResolvedValue(mockProgram);
+    const Screen = loadProgramDetailScreen();
+    const { findByText } = render(<Screen />, { wrapper: Wrapper });
+
+    expect(await findByText('Speed Work')).toBeTruthy();
+    expect(await findByText('Short sprints and drills')).toBeTruthy();
+    expect(await findByText('Sprint')).toBeTruthy();
+    expect(await findByText('Drills, 4x60m')).toBeTruthy();
+    expect(await findByText('90 min')).toBeTruthy();
+  });
+
+  it('shows an empty sessions state when no sessions exist', async () => {
     mockedApiRequest.mockResolvedValue({ ...mockProgram, sessions: [] });
     const Screen = loadProgramDetailScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
+
     expect(await findByText('No sessions have been added to this program yet.')).toBeTruthy();
   });
 
-  // ─── Owner actions ───
-  it('shows "Edit Program" button for owner', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram); // userId matches user.id
+  it('shows Edit Program for the owner', async () => {
+    mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramDetailScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
+
     expect(await findByText('Edit Program')).toBeTruthy();
   });
 
-  it('hides "Edit Program" button for non-owner', async () => {
+  it('hides Edit Program for non-owners', async () => {
     mockedUseAuth.mockReturnValue({
       user: { id: 999, name: 'Other' },
       isAuthenticated: true,
@@ -256,39 +207,33 @@ describe('ProgramDetailScreen', () => {
       logout: jest.fn(),
       continueAsGuest: jest.fn(),
       refreshUser: jest.fn(),
+      setUserAndPersist: jest.fn(),
     });
-
     mockedApiRequest.mockResolvedValue(mockProgram);
+
     const Screen = loadProgramDetailScreen();
     const { findAllByText, queryByText } = render(<Screen />, { wrapper: Wrapper });
-    // Title appears in both header and overview card
+
     const titles = await findAllByText('Test Sprint Program', {}, { timeout: 3000 });
     expect(titles.length).toBeGreaterThanOrEqual(1);
     expect(queryByText('Edit Program')).toBeNull();
   });
 
-  it('Edit button navigates to ProgramEditor', async () => {
+  it('navigates to ProgramEditor from the edit button', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramDetailScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
 
     fireEvent.press(await findByText('Edit Program'));
+
     expect((global as any).__mockNavigate).toHaveBeenCalledWith('ProgramEditor', { id: 42 });
   });
 
-  // ─── Training Schedule title ───
-  it('shows "Training Schedule" section header', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramDetailScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
-    expect(await findByText('Training Schedule')).toBeTruthy();
-  });
-
-  // ─── Flexible duration fallback ───
-  it('shows "Flexible duration" when durationWeeks is missing', async () => {
+  it('shows flexible duration when durationWeeks is missing', async () => {
     mockedApiRequest.mockResolvedValue({ ...mockProgram, durationWeeks: undefined });
     const Screen = loadProgramDetailScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
+
     expect(await findByText('Flexible duration')).toBeTruthy();
   });
 });
