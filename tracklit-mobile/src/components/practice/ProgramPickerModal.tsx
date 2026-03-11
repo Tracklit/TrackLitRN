@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Animated,
 } from 'react-native';
-import { ClipboardText, CheckCircle, CaretDown } from 'phosphor-react-native';
+import { ClipboardText, CheckCircle, CaretDown, Link } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import theme from '@/utils/theme';
@@ -43,25 +43,19 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   const animValue = useRef(new Animated.Value(0)).current;
 
   const sortedPrograms = useMemo(() => {
-    const sorted = [...programs].sort((a, b) => {
+    return [...programs].sort((a, b) => {
       const titleA = (a.program?.title || '').toLowerCase();
       const titleB = (b.program?.title || '').toLowerCase();
       return titleA.localeCompare(titleB);
     });
-    console.warn('[Dropdown] Sorted programs:', sorted.map((p, i) => ({
-      index: i,
-      purchaseId: p.id,
-      programId: p.programId,
-      title: p.program?.title,
-    })));
-    return sorted;
   }, [programs]);
 
-  const selectedTitle = useMemo(() => {
-    if (!selectedProgramId || programs.length === 0) return 'Assign Program';
-    const match = programs.find((p) => String(p.id) === String(selectedProgramId));
-    return match?.program?.title || 'Assign Program';
+  const selectedProgram = useMemo(() => {
+    if (!selectedProgramId || programs.length === 0) return null;
+    return programs.find((p) => String(p.id) === String(selectedProgramId)) ?? null;
   }, [selectedProgramId, programs]);
+
+  const selectedTitle = selectedProgram?.program?.title ?? null;
 
   useEffect(() => {
     Animated.timing(animValue, {
@@ -77,35 +71,39 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   });
 
   const handleSelect = (assignment: PurchasedProgramItem) => {
-    console.warn('[Dropdown] User tapped program:', {
-      purchaseId: assignment.id,
-      programId: assignment.programId,
-      title: assignment.program?.title,
-    });
     onSelect(assignment);
     setIsOpen(false);
   };
 
   return (
     <View style={styles.wrapper}>
-      <View style={styles.row}>
-        <TouchableOpacity
-          style={styles.dropdownButton}
-          onPress={() => setIsOpen(!isOpen)}
-          activeOpacity={0.7}
-        >
-          <ClipboardText size={14} color={theme.colors.primaryForeground} weight="fill" />
-          <Text variant="small" weight="medium" color="primary-foreground" numberOfLines={1} style={styles.buttonLabel}>
-            {selectedTitle}
-          </Text>
-          <CaretDown
-            size={12}
-            color={theme.colors.primaryForeground}
-            weight="fill"
-            style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
-          />
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={[styles.dropdownButton, isOpen && styles.dropdownButtonOpen]}
+        onPress={() => setIsOpen(!isOpen)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.dropdownButtonLeft}>
+          <View style={[styles.iconCircle, selectedTitle && styles.iconCircleActive]}>
+            <Link size={14} color={selectedTitle ? '#FF7A00' : 'rgba(255,255,255,0.5)'} weight="fill" />
+          </View>
+          <View style={styles.buttonTextGroup}>
+            {selectedTitle ? (
+              <>
+                <Text style={styles.buttonAttachedLabel}>Attached program</Text>
+                <Text style={styles.buttonProgramName} numberOfLines={1}>{selectedTitle}</Text>
+              </>
+            ) : (
+              <Text style={styles.buttonPlaceholder}>Attach a program...</Text>
+            )}
+          </View>
+        </View>
+        <CaretDown
+          size={14}
+          color="rgba(255,255,255,0.4)"
+          weight="fill"
+          style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
+        />
+      </TouchableOpacity>
 
       <Animated.View style={[styles.dropdownContainer, { maxHeight }]}>
         <ScrollView
@@ -131,7 +129,7 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
                     <View style={[styles.programIcon, isSelected && styles.programIconSelected]}>
                       <ClipboardText
                         size={14}
-                        color={isSelected ? 'white' : 'rgba(255,255,255,0.7)'}
+                        color={isSelected ? '#FF7A00' : 'rgba(255,255,255,0.7)'}
                         weight="fill"
                       />
                     </View>
@@ -149,14 +147,14 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
                         {assignment.program?.duration ? ` • ${assignment.program.duration}` : ''}
                       </Text>
                     </View>
-                    {isSelected && <CheckCircle size={18} color={theme.colors.primary} weight="fill" />}
+                    {isSelected && <CheckCircle size={18} color="#FF7A00" weight="fill" />}
                   </TouchableOpacity>
                 );
               })}
             </View>
           ) : (
             <View style={styles.emptyState}>
-              <Text variant="small" color="muted">No programs assigned yet</Text>
+              <Text variant="small" color="muted">No programs available to attach</Text>
             </View>
           )}
         </ScrollView>
@@ -169,31 +167,67 @@ const styles = StyleSheet.create({
   wrapper: {
     zIndex: 10,
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
   dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: 12,
     paddingHorizontal: theme.spacing.md,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
-  buttonLabel: {
-    maxWidth: 180,
+  dropdownButtonOpen: {
+    borderColor: 'rgba(255, 122, 0, 0.4)',
+    backgroundColor: 'rgba(255, 122, 0, 0.06)',
+  },
+  dropdownButtonLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconCircleActive: {
+    backgroundColor: 'rgba(255,122,0,0.12)',
+  },
+  buttonTextGroup: {
+    flex: 1,
+    gap: 1,
+  },
+  buttonPlaceholder: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.4)',
+    fontWeight: '400',
+  },
+  buttonAttachedLabel: {
+    fontSize: 10,
+    color: '#FF7A00',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  buttonProgramName: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '600',
   },
   dropdownContainer: {
     overflow: 'hidden',
     marginTop: theme.spacing.sm,
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    backgroundColor: '#13151E',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   scroll: {
     maxHeight: 280,
@@ -214,7 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   programRowSelected: {
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    backgroundColor: 'rgba(255, 122, 0, 0.1)',
   },
   programIcon: {
     width: 28,
@@ -225,7 +259,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   programIconSelected: {
-    backgroundColor: 'rgba(59, 130, 246, 0.25)',
+    backgroundColor: 'rgba(255, 122, 0, 0.2)',
   },
   programInfo: {
     flex: 1,

@@ -257,6 +257,12 @@ export const PracticeScreen: React.FC = () => {
           <InlineRefreshHeader visible={isRefreshing} />
 
           <View style={styles.programsRow}>
+            <View style={styles.attachHeader}>
+              <Text style={styles.attachHeaderText}>Active Program</Text>
+              {selectedProgram && (
+                <Text style={styles.attachSwapHint}>Tap to change</Text>
+              )}
+            </View>
             <ProgramPickerDropdown
               programs={purchasedProgramsQuery.data ?? []}
               selectedProgramId={selectedProgram?.id ?? null}
@@ -624,6 +630,24 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xl,
     marginBottom: theme.spacing.lg,
     zIndex: 10,
+  },
+  attachHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  attachHeaderText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.45)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  attachSwapHint: {
+    fontSize: 11,
+    color: 'rgba(255,122,0,0.6)',
+    fontWeight: '500',
   },
   contentContainer: {
     marginTop: theme.spacing.md,
