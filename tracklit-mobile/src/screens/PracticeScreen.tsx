@@ -239,6 +239,22 @@ export const PracticeScreen: React.FC = () => {
         style={styles.container}
       >
         <MainScreenHeader />
+
+        <View style={styles.programsRow}>
+          <View style={styles.attachHeader}>
+            <Text style={styles.attachHeaderText}>Active Program</Text>
+            {selectedProgram && (
+              <Text style={styles.attachSwapHint}>Tap to change</Text>
+            )}
+          </View>
+          <ProgramPickerDropdown
+            programs={purchasedProgramsQuery.data ?? []}
+            selectedProgramId={selectedProgram?.id ?? null}
+            onSelect={handleSelectProgram}
+            isLoading={purchasedProgramsQuery.isLoading}
+          />
+        </View>
+
         <ScrollView
           contentInsetAdjustmentBehavior="never"
           contentContainerStyle={[
@@ -255,21 +271,6 @@ export const PracticeScreen: React.FC = () => {
           }
         >
           <InlineRefreshHeader visible={isRefreshing} />
-
-          <View style={styles.programsRow}>
-            <View style={styles.attachHeader}>
-              <Text style={styles.attachHeaderText}>Active Program</Text>
-              {selectedProgram && (
-                <Text style={styles.attachSwapHint}>Tap to change</Text>
-              )}
-            </View>
-            <ProgramPickerDropdown
-              programs={purchasedProgramsQuery.data ?? []}
-              selectedProgramId={selectedProgram?.id ?? null}
-              onSelect={handleSelectProgram}
-              isLoading={purchasedProgramsQuery.isLoading}
-            />
-          </View>
 
           {selectedProgram ? (
             <View style={styles.contentContainer}>
@@ -627,9 +628,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
   },
   programsRow: {
-    marginTop: theme.spacing.xl,
-    marginBottom: theme.spacing.lg,
-    zIndex: 10,
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    zIndex: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: '#0E0F14',
   },
   attachHeader: {
     flexDirection: 'row',
