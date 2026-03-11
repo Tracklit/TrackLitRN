@@ -13,16 +13,17 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { PencilSimpleLine, Heart, ChatCircle, ArrowLeft, Book } from 'phosphor-react-native';
+import { PencilSimpleLine, Heart, ChatCircle, Book, Bell } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
@@ -400,18 +401,19 @@ export const FeedScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.md }]}>
-        <InlineRefreshHeader visible={isRefreshing} />
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <ArrowLeft size={22} color="#e2e8f0" weight="bold" />
-        </TouchableOpacity>
-        <Text variant="body" weight="semiBold" color="foreground">
-          Feed
-        </Text>
-        <View style={{ width: 22 }} />
+      <View style={{ paddingTop: insets.top }}>
+        <ScreenHeader
+          title=""
+          right={
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={() => navigation.navigate('Notifications')}
+              activeOpacity={0.7}
+            >
+              <Bell size={22} color="#94a3b8" weight="fill" />
+            </TouchableOpacity>
+          }
+        />
       </View>
 
       <View style={styles.filterRow}>
@@ -595,12 +597,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  topBar: {
-    flexDirection: 'row',
+  headerBtn: {
+    width: 38,
+    height: 38,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.sm,
+    justifyContent: 'center',
   },
   filterRow: {
     flexDirection: 'row',
