@@ -13,17 +13,17 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { PencilSimpleLine, Heart, ChatCircle, Book, Bell } from 'phosphor-react-native';
+import { PencilSimpleLine, Heart, ChatCircle, Book } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
-import { ScreenHeader } from '@/components/ScreenHeader';
+import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
@@ -401,20 +401,7 @@ export const FeedScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <View style={{ paddingTop: insets.top }}>
-        <ScreenHeader
-          title=""
-          right={
-            <TouchableOpacity
-              style={styles.headerBtn}
-              onPress={() => navigation.navigate('Notifications')}
-              activeOpacity={0.7}
-            >
-              <Bell size={22} color="#94a3b8" weight="fill" />
-            </TouchableOpacity>
-          }
-        />
-      </View>
+      <MainScreenHeader />
 
       <View style={styles.filterRow}>
         <TouchableOpacity
@@ -596,12 +583,6 @@ export const FeedScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  headerBtn: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   filterRow: {
     flexDirection: 'row',
