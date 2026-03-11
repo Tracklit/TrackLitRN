@@ -238,12 +238,17 @@ export const PracticeScreen: React.FC = () => {
 
   const pickerMaxH = useRef(new Animated.Value(300)).current;
   const pickerNaturalH = useRef(300);
+  const pickerMeasured = useRef(false);
   const pickerShowing = useRef(true);
   const lastScrollY = useRef(0);
 
   const handlePickerLayout = useCallback((e: LayoutChangeEvent) => {
+    if (pickerMeasured.current) return;
     const h = e.nativeEvent.layout.height;
-    if (h > 0) pickerNaturalH.current = h;
+    if (h > 0) {
+      pickerMeasured.current = true;
+      pickerNaturalH.current = h;
+    }
   }, []);
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -664,8 +669,6 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
     zIndex: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
     backgroundColor: '#0E0F14',
   },
   attachHeader: {
