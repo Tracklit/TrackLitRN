@@ -17,13 +17,15 @@ import {
   FirstAidKit,
   Lightning,
   Lock,
+  Bell,
 } from 'phosphor-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { Text } from '../components/ui/Text';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
+import { ScreenHeader } from '@/components/ScreenHeader';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -179,10 +181,19 @@ export const ToolsScreen: React.FC = () => {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>Tools</Text>
-      </View>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <ScreenHeader
+        title=""
+        right={
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => navigation.navigate('Notifications')}
+            activeOpacity={0.7}
+          >
+            <Bell size={22} color="#94a3b8" weight="fill" />
+          </TouchableOpacity>
+        }
+      />
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -206,15 +217,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
   },
-  headerRow: {
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: C.textPrimary,
-    letterSpacing: 0.3,
+  headerBtn: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     paddingHorizontal: 20,
