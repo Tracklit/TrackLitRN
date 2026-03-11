@@ -15,10 +15,9 @@ import {
   CircleIcon as Circle,
   CheckCircle,
   Timer,
-  Bell,
 } from 'phosphor-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { LinearGradient } from '@/components/LinearGradient';
@@ -29,7 +28,7 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { ScreenHeader } from '@/components/ScreenHeader';
+import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import { ProgramPickerDropdown } from '@/components/practice/ProgramPickerModal';
@@ -240,20 +239,7 @@ export const PracticeScreen: React.FC = () => {
         locations={theme.gradient.locations}
         style={styles.container}
       >
-        <View style={{ paddingTop: insets.top }}>
-          <ScreenHeader
-            title=""
-            right={
-              <TouchableOpacity
-                style={styles.headerBtn}
-                onPress={() => navigation.navigate('Notifications')}
-                activeOpacity={0.7}
-              >
-                <Bell size={22} color="#94a3b8" weight="fill" />
-              </TouchableOpacity>
-            }
-          />
-        </View>
+        <MainScreenHeader />
         <ScrollView
           contentInsetAdjustmentBehavior="never"
           contentContainerStyle={[
@@ -634,12 +620,6 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  headerBtn: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.xl,

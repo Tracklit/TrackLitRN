@@ -27,15 +27,14 @@ import {
   ShoppingBag,
   Barbell,
   Trash,
-  Bell,
 } from 'phosphor-react-native';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
 import { SkeletonProgramList } from '@/components/Skeleton';
-import { ScreenHeader } from '@/components/ScreenHeader';
+import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
@@ -266,20 +265,7 @@ export const ProgramsScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <View style={{ paddingTop: insets.top }}>
-        <ScreenHeader
-          title=""
-          right={
-            <TouchableOpacity
-              style={styles.headerBtn}
-              onPress={() => navigation.navigate('Notifications')}
-              activeOpacity={0.7}
-            >
-              <Bell size={22} color="#94a3b8" weight="fill" />
-            </TouchableOpacity>
-          }
-        />
-      </View>
+      <MainScreenHeader />
       <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -879,12 +865,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-  },
-  headerBtn: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   scrollContent: {
     flexGrow: 1,
