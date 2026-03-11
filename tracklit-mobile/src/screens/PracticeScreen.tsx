@@ -380,15 +380,12 @@ export const PracticeScreen: React.FC = () => {
           onPress={() => setShowTargetTimes(true)}
         >
           <LinearGradient
-            colors={theme.gradients.webPurple.colors}
-            start={theme.gradients.webPurple.start}
-            end={theme.gradients.webPurple.end}
+            colors={['#FF7A00', '#FF9A3C']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
             style={styles.targetTimesButtonInner}
           >
             <Timer size={20} color="white" weight="fill" />
-            <Text variant="small" weight="bold" color="primary-foreground">
-              %
-            </Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -832,19 +829,22 @@ const styles = StyleSheet.create({
   },
   targetTimesButton: {
     position: 'absolute',
-    right: theme.spacing.lg,
-    bottom: theme.spacing.xl * 2,
+    right: 24,
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: 32,
     overflow: 'hidden',
-    ...theme.shadows.lg,
+    shadowColor: '#FF7A00',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
   targetTimesButtonInner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    borderRadius: 16,
+    borderRadius: 32,
   },
 });
