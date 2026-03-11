@@ -1,10 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
+  Animated,
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import { DocumentViewer } from '@/components/DocumentViewer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -232,6 +236,30 @@ export const PracticeScreen: React.FC = () => {
     await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
   });
 
+  const pickerMaxH = useRef(new Animated.Value(300)).current;
+  const pickerNaturalH = useRef(300);
+  const pickerShowing = useRef(true);
+  const lastScrollY = useRef(0);
+
+  const handlePickerLayout = useCallback((e: LayoutChangeEvent) => {
+    const h = e.nativeEvent.layout.height;
+    if (h > 0) pickerNaturalH.current = h;
+  }, []);
+
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const dy = y - lastScrollY.current;
+    lastScrollY.current = y;
+
+    if (dy > 8 && pickerShowing.current && y > 20) {
+      pickerShowing.current = false;
+      Animated.timing(pickerMaxH, { toValue: 0, duration: 180, useNativeDriver: false }).start();
+    } else if (dy < -5 && !pickerShowing.current) {
+      pickerShowing.current = true;
+      Animated.timing(pickerMaxH, { toValue: pickerNaturalH.current, duration: 220, useNativeDriver: false }).start();
+    }
+  }, [pickerMaxH]);
+
   return (
       <LinearGradient
         colors={theme.gradient.background}
@@ -240,20 +268,22 @@ export const PracticeScreen: React.FC = () => {
       >
         <MainScreenHeader />
 
-        <View style={styles.programsRow}>
-          <View style={styles.attachHeader}>
-            <Text style={styles.attachHeaderText}>Active Program</Text>
-            {selectedProgram && (
-              <Text style={styles.attachSwapHint}>Tap to change</Text>
-            )}
+        <Animated.View style={{ maxHeight: pickerMaxH, overflow: 'hidden' }}>
+          <View style={styles.programsRow} onLayout={handlePickerLayout}>
+            <View style={styles.attachHeader}>
+              <Text style={styles.attachHeaderText}>Active Program</Text>
+              {selectedProgram && (
+                <Text style={styles.attachSwapHint}>Tap to change</Text>
+              )}
+            </View>
+            <ProgramPickerDropdown
+              programs={purchasedProgramsQuery.data ?? []}
+              selectedProgramId={selectedProgram?.id ?? null}
+              onSelect={handleSelectProgram}
+              isLoading={purchasedProgramsQuery.isLoading}
+            />
           </View>
-          <ProgramPickerDropdown
-            programs={purchasedProgramsQuery.data ?? []}
-            selectedProgramId={selectedProgram?.id ?? null}
-            onSelect={handleSelectProgram}
-            isLoading={purchasedProgramsQuery.isLoading}
-          />
-        </View>
+        </Animated.View>
 
         <ScrollView
           contentInsetAdjustmentBehavior="never"
@@ -262,6 +292,8 @@ export const PracticeScreen: React.FC = () => {
             { paddingBottom: contentBottomPadding },
           ]}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={handleScroll}
           refreshControl={
             <RefreshControl
               tintColor="#fff"
