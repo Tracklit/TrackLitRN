@@ -194,7 +194,7 @@ export const ProgramImportScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
       Alert.alert('Imported', `Program imported with ${response?.importedSessions ?? 0} sessions.`);
       if (response?.program?.id !== undefined) navigation.replace('ProgramDetail', { id: response.program.id });
-      else navigation.navigate('MainTabs', { screen: 'Programs' } as never);
+      else navigation.navigate('MainTabs', { screen: 'Training' } as never);
     },
     onError: (error: Error) => {
       Alert.alert('Import failed', error.message || 'Please try again.');
@@ -224,7 +224,7 @@ export const ProgramImportScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
       queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
       Alert.alert('Uploaded', 'Your program document was uploaded.');
-      navigation.navigate('MainTabs', { screen: 'Programs' } as never);
+      navigation.navigate('MainTabs', { screen: 'Training' } as never);
     },
     onError: (error: Error) => {
       Alert.alert('Upload failed', error.message || 'Please try again.');
@@ -301,7 +301,7 @@ export const ProgramImportScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
       Alert.alert('Imported', `Spreadsheet imported with ${result?.importedSessions ?? 0} sessions.`);
       if (result?.program?.id !== undefined) navigation.replace('ProgramDetail', { id: result.program.id });
-      else navigation.navigate('MainTabs', { screen: 'Programs' } as never);
+      else navigation.navigate('MainTabs', { screen: 'Training' } as never);
     },
     onError: (error: Error) => {
       Alert.alert('Import failed', error.message || 'Please try again.');

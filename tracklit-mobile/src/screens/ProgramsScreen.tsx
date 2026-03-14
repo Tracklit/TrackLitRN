@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,8 +22,6 @@ import {
   LockSimple,
   WarningCircle,
   ClipboardText,
-  ShoppingBag,
-  Barbell,
   Trash,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -75,36 +73,14 @@ interface Program {
   isPurchased?: boolean;
 }
 
-interface PurchasedProgramItem {
-  id: number | string;
-  programId: number | string;
-  program: Program;
-  isAssigned?: boolean;
-  isCreated?: boolean;
-  assignerName?: string;
-  creatorName?: string;
+
+interface ProgramsScreenProps {
+  hideHeader?: boolean;
 }
 
-interface WorkoutLibraryResponse {
-  workouts: Array<{
-    id: number | string;
-    title: string;
-    description?: string | null;
-    category?: string | null;
-    content?: any;
-    createdAt?: string;
-  }>;
-  isLimited?: boolean;
-  totalSaved?: number;
-  maxFreeAllowed?: number;
-}
-
-export const ProgramsScreen: React.FC = () => {
+export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = false }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
-  const [activeTab, setActiveTab] = useState<'my-programs' | 'purchased' | 'workout-library'>(
-    'my-programs'
-  );
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<'all' | 'sprint' | 'distance' | 'strength'>('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -122,38 +98,28 @@ export const ProgramsScreen: React.FC = () => {
     enabled: isAuthenticated && !isGuest,
   });
 
-  const purchasedProgramsQuery = useQuery({
-    queryKey: ['purchased-programs'],
-    queryFn: () => apiRequest<PurchasedProgramItem[]>('/api/purchased-programs'),
-    enabled: isAuthenticated && !isGuest,
-  });
-
-  const workoutLibraryQuery = useQuery({
-    queryKey: ['workout-library'],
-    queryFn: () => apiRequest<WorkoutLibraryResponse>('/api/workout-library'),
-    enabled: isAuthenticated && !isGuest,
-  });
-
   const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
     await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
   });
+
+  useEffect(() => {
+    if (
+      hideHeader &&
+      !myProgramsQuery.isLoading &&
+      !myProgramsQuery.isError &&
+      myProgramsQuery.data?.length === 0 &&
+      !isGuest
+    ) {
+      navigation.navigate('ProgramCreate');
+    }
+  }, [hideHeader, myProgramsQuery.isLoading, myProgramsQuery.isError, myProgramsQuery.data, isGuest]);
 
   const handleContinueProgram = (program: Program) => {
     navigation.navigate('ProgramEditor', { id: program.id });
   };
 
-  const handleContinuePurchasedProgram = async (purchase: PurchasedProgramItem) => {
-    await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(purchase.id));
-    navigation.navigate('MainTabs', { screen: 'Practice' } as never);
-  };
-
   const handleAttachMyProgram = async (program: Program) => {
-    const purchases = purchasedProgramsQuery.data ?? [];
-    const matching = purchases.find((p) => String(p.programId) === String(program.id));
-    if (matching) {
-      await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(matching.id));
-    }
-    navigation.navigate('MainTabs', { screen: 'Practice' } as never);
+    navigation.navigate('MainTabs', { screen: 'Training' } as never);
   };
 
   const deleteProgramMutation = useMutation({
@@ -164,22 +130,6 @@ export const ProgramsScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
       queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
       queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
-      queryClient.invalidateQueries({ queryKey: ['today-session'] });
-    },
-  });
-
-  const unassignProgramMutation = useMutation({
-    mutationFn: async (purchaseId: number | string) => {
-      await apiRequest(`/api/purchased-programs/${purchaseId}`, { method: 'DELETE' });
-    },
-    onSuccess: async () => {
-      const storedId = await AsyncStorage.getItem(PROGRAM_SELECTION_KEY);
-      if (storedId) {
-        await AsyncStorage.removeItem(PROGRAM_SELECTION_KEY);
-      }
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
-      queryClient.invalidateQueries({ queryKey: ['user-programs'] });
       queryClient.invalidateQueries({ queryKey: ['today-session'] });
     },
   });
@@ -197,27 +147,6 @@ export const ProgramsScreen: React.FC = () => {
             deleteProgramMutation.mutate(program.id, {
               onSuccess: () => Alert.alert('Deleted', `"${program.title}" has been deleted.`),
               onError: (err: any) => Alert.alert('Error', err?.message || 'Failed to delete program.'),
-            });
-          },
-        },
-      ]
-    );
-  };
-
-  const handleUnassignProgram = (purchase: PurchasedProgramItem) => {
-    const title = purchase.program?.title || 'this program';
-    Alert.alert(
-      'Remove Program',
-      `Are you sure you want to remove "${title}" from your assigned programs?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            unassignProgramMutation.mutate(purchase.id, {
-              onSuccess: () => Alert.alert('Removed', `"${title}" has been removed.`),
-              onError: (err: any) => Alert.alert('Error', err?.message || 'Failed to remove program.'),
             });
           },
         },
@@ -251,27 +180,13 @@ export const ProgramsScreen: React.FC = () => {
     );
   });
 
-  const filteredPurchasedPrograms = (purchasedProgramsQuery.data ?? []).filter((purchase) => {
-    const program = purchase.program;
-    if (!program) return false;
-    return (
-      matchesQuery(program.title) ||
-      matchesQuery(program.description) ||
-      matchesCategory(program)
-    );
-  });
-
-  const filteredWorkouts = (workoutLibraryQuery.data?.workouts ?? []).filter((workout) => {
-    return matchesQuery(workout.title) || matchesQuery(workout.description ?? undefined);
-  });
-
   return (
     <LinearGradient
       colors={theme.gradient.background}
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <MainScreenHeader />
+      {!hideHeader && <MainScreenHeader />}
       <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -315,52 +230,15 @@ export const ProgramsScreen: React.FC = () => {
 
         </View>
 
-        <View style={styles.tabs}>
-          {([
-            { key: 'my-programs', label: 'My Programs' },
-            { key: 'purchased', label: 'Purchased' },
-            { key: 'workout-library', label: 'Library' },
-          ] as const).map((tab) => (
-            <TouchableOpacity
-              key={tab.key}
-              style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-              onPress={() => setActiveTab(tab.key)}
-            >
-              <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {activeTab === 'my-programs' ? (
-          <MyProgramsTab
-            programs={filteredMyPrograms}
-            isLoading={myProgramsQuery.isLoading}
-            isError={myProgramsQuery.isError}
-            isGuest={isGuest}
-            onContinue={handleContinueProgram}
-            onDelete={handleDeleteProgram}
-            onAttach={handleAttachMyProgram}
-          />
-        ) : activeTab === 'purchased' ? (
-          <PurchasedProgramsTab
-            purchases={filteredPurchasedPrograms}
-            isLoading={purchasedProgramsQuery.isLoading}
-            isError={purchasedProgramsQuery.isError}
-            isGuest={isGuest}
-            onContinue={handleContinuePurchasedProgram}
-            onRemove={handleUnassignProgram}
-          />
-        ) : (
-          <WorkoutLibraryTab
-            library={workoutLibraryQuery.data}
-            isLoading={workoutLibraryQuery.isLoading}
-            isError={workoutLibraryQuery.isError}
-            isGuest={isGuest}
-            filteredWorkouts={filteredWorkouts}
-          />
-        )}
+        <MyProgramsTab
+          programs={filteredMyPrograms}
+          isLoading={myProgramsQuery.isLoading}
+          isError={myProgramsQuery.isError}
+          isGuest={isGuest}
+          onContinue={handleContinueProgram}
+          onDelete={handleDeleteProgram}
+          onAttach={handleAttachMyProgram}
+        />
       </KeyboardAwareScreenScrollView>
 
       <Modal
@@ -394,7 +272,7 @@ export const ProgramsScreen: React.FC = () => {
         </TouchableOpacity>
       </Modal>
 
-      {isAuthenticated && !isGuest && activeTab === 'my-programs' && (
+      {isAuthenticated && !isGuest && (
         <TouchableOpacity
           style={[styles.fab, { bottom: getBottomNavOverlayHeight(insets.bottom) + 16 }]}
           onPress={handleCreateAction}
@@ -525,146 +403,6 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   );
 };
 
-interface PurchasedProgramsTabProps {
-  purchases: PurchasedProgramItem[];
-  isLoading: boolean;
-  isError: boolean;
-  isGuest: boolean;
-  onContinue: (purchase: PurchasedProgramItem) => void;
-  onRemove: (purchase: PurchasedProgramItem) => void;
-}
-
-const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
-  purchases,
-  isLoading,
-  isError,
-  isGuest,
-  onContinue,
-  onRemove,
-}) => {
-  if (isGuest) {
-    return (
-      <View style={styles.emptyState}>
-        <LockSimple size={48} color={C.textMuted} weight="fill" />
-        <Text style={styles.emptyTitle}>Sign In Required</Text>
-        <Text style={styles.emptyDescription}>Sign in to view your purchased and assigned programs.</Text>
-      </View>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <View style={styles.emptyState}>
-        <SkeletonProgramList count={3} />
-      </View>
-    );
-  }
-
-  if (isError) {
-    return (
-      <View style={styles.emptyState}>
-        <WarningCircle size={48} color={C.textMuted} weight="fill" />
-        <Text style={styles.emptyDescription}>Unable to load purchased programs. Pull to refresh.</Text>
-      </View>
-    );
-  }
-
-  if (purchases.length === 0) {
-    return (
-      <View style={styles.emptyState}>
-        <ShoppingBag size={48} color={C.textMuted} weight="fill" />
-        <Text style={styles.emptyTitle}>No Purchased Programs</Text>
-        <Text style={styles.emptyDescription}>Purchases and coach assignments will show up here.</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.listContainer}>
-      {purchases.map((purchase) => (
-        <ProgramListItem
-          key={purchase.id}
-          program={purchase.program}
-          badgeLabel={
-            purchase.isAssigned ? 'Assigned' : purchase.isCreated ? 'Created' : 'Purchased'
-          }
-          onContinue={() => onContinue(purchase)}
-          onDelete={() => onRemove(purchase)}
-          buttonLabel="Assign to Practice"
-        />
-      ))}
-    </View>
-  );
-};
-
-interface WorkoutLibraryTabProps {
-  library?: WorkoutLibraryResponse;
-  isLoading: boolean;
-  isError: boolean;
-  isGuest: boolean;
-  filteredWorkouts: WorkoutLibraryResponse['workouts'];
-}
-
-const WorkoutLibraryTab: React.FC<WorkoutLibraryTabProps> = ({ library, isLoading, isError, isGuest, filteredWorkouts }) => {
-  if (isGuest) {
-    return (
-      <View style={styles.emptyState}>
-        <LockSimple size={48} color={C.textMuted} weight="fill" />
-        <Text style={styles.emptyTitle}>Sign In Required</Text>
-        <Text style={styles.emptyDescription}>Sign in to view your workout library.</Text>
-      </View>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <View style={styles.emptyState}>
-        <SkeletonProgramList count={3} />
-      </View>
-    );
-  }
-
-  if (isError) {
-    return (
-      <View style={styles.emptyState}>
-        <WarningCircle size={48} color={C.textMuted} weight="fill" />
-        <Text style={styles.emptyDescription}>Unable to load workout library. Pull to refresh.</Text>
-      </View>
-    );
-  }
-
-  const workouts = filteredWorkouts ?? library?.workouts ?? [];
-
-  if (workouts.length === 0) {
-    return (
-      <View style={styles.emptyState}>
-        <Barbell size={48} color={C.textMuted} weight="fill" />
-        <Text style={styles.emptyTitle}>No workouts saved</Text>
-        <Text style={styles.emptyDescription}>Save workouts from Practice to see them here.</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.programsContainer}>
-      {workouts.map((workout) => (
-        <View key={workout.id} style={styles.programCard}>
-          <View style={styles.programCardInner}>
-            <View style={styles.programTitleRow}>
-              <Text style={styles.programTitleText} numberOfLines={1}>{workout.title}</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{workout.category || 'Workout'}</Text>
-              </View>
-            </View>
-            {!!workout.description && (
-              <Text style={styles.programSubtext} numberOfLines={2}>{workout.description}</Text>
-            )}
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-};
 
 interface ProgramCardItemProps {
   program: Program;

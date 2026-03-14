@@ -25,7 +25,6 @@ import {
 import {
   House,
   Barbell,
-  Book,
   Clock,
   Heart,
   ChatCircleDots,
@@ -55,8 +54,7 @@ import { Text } from './src/components/ui/Text';
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
-import { PracticeScreen } from './src/screens/PracticeScreen';
-import { ProgramsScreen } from './src/screens/ProgramsScreen';
+import { TrainingScreen } from './src/screens/TrainingScreen';
 import { ProgramDetailScreen } from './src/screens/ProgramDetailScreen';
 import { ToolsScreen } from './src/screens/ToolsScreen';
 import { BottomNavigation } from './src/navigation/BottomNavigation';
@@ -122,7 +120,7 @@ type DrawerParamList = {
 };
 const Drawer = createDrawerNavigator<DrawerParamList>();
 const navigationRef = createNavigationContainerRef();
-const TAB_ROUTE_NAMES = new Set(['Home', 'Practice', 'Programs', 'Feed', 'Tools', 'Profile']);
+const TAB_ROUTE_NAMES = new Set(['Home', 'Training', 'Feed', 'Tools', 'Profile']);
 const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'MarketplaceListingDetail',
   'MarketplaceCart',
@@ -229,8 +227,7 @@ const MainTabs: React.FC = () => {
         tabBar={(props) => <BottomNavigation {...props} />}
       >
         <Tab.Screen name="Home" component={HomeTabScreen} />
-        <Tab.Screen name="Practice" component={PracticeScreen} />
-        <Tab.Screen name="Programs" component={ProgramsScreen} />
+        <Tab.Screen name="Training" component={TrainingScreen} />
         <Tab.Screen name="Feed" component={FeedScreen} />
         <Tab.Screen name="Tools" component={ToolsScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
@@ -392,16 +389,10 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       title: 'TRAINING',
       items: [
         {
-          label: 'Practice',
+          label: 'Training',
           IconComponent: Barbell,
           onPress: () =>
-            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Practice' } }),
-        },
-        {
-          label: 'Programs',
-          IconComponent: Book,
-          onPress: () =>
-            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Programs' } }),
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Training' } }),
         },
         {
           label: 'Training Tools',

@@ -11,8 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
 import {
   House,
-  CalendarBlank,
-  BookOpen,
+  Barbell,
   Newspaper,
   Timer,
   type Icon,
@@ -22,7 +21,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { apiRequest } from '@/lib/api';
 import theme from '@/utils/theme';
 
-type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Tools';
+type TabRoute = 'Home' | 'Training' | 'Feed' | 'Tools';
 
 interface NavItem {
   title: string;
@@ -39,16 +38,10 @@ const navItems: NavItem[] = [
     IconComponent: House,
   },
   {
-    title: 'Practice',
-    routeName: 'Practice',
-    key: 'practice',
-    IconComponent: CalendarBlank,
-  },
-  {
-    title: 'Programs',
-    routeName: 'Programs',
-    key: 'programs',
-    IconComponent: BookOpen,
+    title: 'Training',
+    routeName: 'Training',
+    key: 'training',
+    IconComponent: Barbell,
   },
   {
     title: 'Feed',

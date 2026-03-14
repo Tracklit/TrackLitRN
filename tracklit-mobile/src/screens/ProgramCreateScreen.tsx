@@ -117,7 +117,7 @@ export const ProgramCreateScreen: React.FC = () => {
       Alert.alert('Created', 'Your program was created successfully.');
       if (program?.id !== undefined) {
         if (selectedMethod === 'text') {
-          navigation.navigate('MainTabs', { screen: 'Programs' } as never);
+          navigation.navigate('MainTabs', { screen: 'Training' } as never);
         } else if (selectedMethod === 'builder') {
           navigation.replace('ProgramEditor', { id: program.id });
         } else {

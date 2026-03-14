@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { House, CalendarBlank, BookOpen, Newspaper, Timer } from 'phosphor-react-native';
+import { House, Barbell, Newspaper, Timer } from 'phosphor-react-native';
 
 import type { RootStackParamList, TabParamList } from '@/navigation/types';
 
@@ -11,8 +11,7 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 const TAB_ITEMS: { label: string; tab: keyof TabParamList; Icon: any }[] = [
   { label: 'Home', tab: 'Home', Icon: House },
-  { label: 'Practice', tab: 'Practice', Icon: CalendarBlank },
-  { label: 'Programs', tab: 'Programs', Icon: BookOpen },
+  { label: 'Training', tab: 'Training', Icon: Barbell },
   { label: 'Feed', tab: 'Feed', Icon: Newspaper },
   { label: 'Tools', tab: 'Tools', Icon: Timer },
 ];

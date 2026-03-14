@@ -213,7 +213,7 @@ export const NotificationsScreen: React.FC = () => {
     }
 
     if (url.startsWith('/programs')) {
-      navigation.navigate('MainTabs', { screen: 'Programs' } as any);
+      navigation.navigate('MainTabs', { screen: 'Training' } as any);
       return;
     }
 

@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { DocumentViewer } from '@/components/DocumentViewer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,8 +19,9 @@ import {
   Timer,
   CaretDown,
   Link,
+  XCircle,
 } from 'phosphor-react-native';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -62,7 +64,11 @@ interface PurchasedProgramItem {
 }
 
 
-export const PracticeScreen: React.FC = () => {
+interface PracticeScreenProps {
+  hideHeader?: boolean;
+}
+
+export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = false }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated, refreshUser } = useAuth();
@@ -234,6 +240,39 @@ export const PracticeScreen: React.FC = () => {
     await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
   });
 
+  const unassignProgramMutation = useMutation({
+    mutationFn: async (purchaseId: number | string) => {
+      await apiRequest(`/api/purchased-programs/${purchaseId}`, { method: 'DELETE' });
+    },
+    onSuccess: async () => {
+      await AsyncStorage.removeItem(PROGRAM_SELECTION_KEY);
+      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
+      queryClient.invalidateQueries({ queryKey: ['today-session'] });
+    },
+  });
+
+  const handleUnassignProgram = () => {
+    if (!selectedProgram) return;
+    const title = selectedProgram.program?.title || 'this program';
+    Alert.alert(
+      'Unassign Program',
+      `Remove "${title}" from your practice?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            unassignProgramMutation.mutate(selectedProgram.id, {
+              onError: (err: any) => Alert.alert('Error', err?.message || 'Failed to remove program.'),
+            });
+          },
+        },
+      ]
+    );
+  };
+
   const EXPANDED_H = 92;
   const COLLAPSED_H = 50;
   const COLLAPSE_RANGE = 50;
@@ -276,7 +315,7 @@ export const PracticeScreen: React.FC = () => {
         locations={theme.gradient.locations}
         style={styles.container}
       >
-        <MainScreenHeader />
+        {!hideHeader && <MainScreenHeader />}
 
         {/* Sticky collapsible program header */}
         <View style={styles.stickyHeaderWrap}>
@@ -288,24 +327,36 @@ export const PracticeScreen: React.FC = () => {
             </Animated.View>
 
             {/* Button row — always visible */}
-            <TouchableOpacity
-              style={styles.programTrigger}
-              onPress={() => setDropdownOpen((o) => !o)}
-              activeOpacity={0.75}
-            >
-              <View style={[styles.programTriggerIcon, selectedTitle && styles.programTriggerIconActive]}>
-                <Link size={14} color={selectedTitle ? '#FF7A00' : 'rgba(255,255,255,0.45)'} weight="fill" />
-              </View>
-              <Text style={styles.programTriggerName} numberOfLines={1}>
-                {selectedTitle ?? 'Select a program…'}
-              </Text>
-              <CaretDown
-                size={13}
-                color="rgba(255,255,255,0.45)"
-                weight="fill"
-                style={{ transform: [{ rotate: dropdownOpen ? '180deg' : '0deg' }] }}
-              />
-            </TouchableOpacity>
+            <View style={styles.programTriggerRow}>
+              <TouchableOpacity
+                style={[styles.programTrigger, { flex: 1 }]}
+                onPress={() => setDropdownOpen((o) => !o)}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.programTriggerIcon, selectedTitle && styles.programTriggerIconActive]}>
+                  <Link size={14} color={selectedTitle ? '#FF7A00' : 'rgba(255,255,255,0.45)'} weight="fill" />
+                </View>
+                <Text style={styles.programTriggerName} numberOfLines={1}>
+                  {selectedTitle ?? 'Select a program…'}
+                </Text>
+                <CaretDown
+                  size={13}
+                  color="rgba(255,255,255,0.45)"
+                  weight="fill"
+                  style={{ transform: [{ rotate: dropdownOpen ? '180deg' : '0deg' }] }}
+                />
+              </TouchableOpacity>
+              {selectedProgram && (
+                <TouchableOpacity
+                  style={styles.unassignBtn}
+                  onPress={handleUnassignProgram}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <XCircle size={20} color="rgba(255,255,255,0.4)" weight="fill" />
+                </TouchableOpacity>
+              )}
+            </View>
           </Animated.View>
 
           {/* Inline dropdown panel */}
@@ -469,14 +520,14 @@ export const PracticeScreen: React.FC = () => {
               style={styles.emptyGradientCard}
             >
               <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
-                No training program assigned
+                No program assigned
               </Text>
               <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
-                Contact your coach to get a program assigned to your account.
+                Assign a Program or Create a Program to start tracking your training.
               </Text>
-              <Button variant="outline" onPress={() => navigation.navigate('Programs' as any)} style={styles.emptyButton}>
+              <Button variant="outline" onPress={() => navigation.navigate('ProgramCreate')} style={styles.emptyButton}>
                 <Text variant="small" weight="medium" color="primary-foreground">
-                  View Available Programs
+                  Create a Program
                 </Text>
               </Button>
             </LinearGradient>
@@ -755,6 +806,15 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: 'rgba(255,122,0,0.55)',
     fontWeight: '500',
+  },
+  programTriggerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  unassignBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    justifyContent: 'center',
   },
   programTrigger: {
     flexDirection: 'row',

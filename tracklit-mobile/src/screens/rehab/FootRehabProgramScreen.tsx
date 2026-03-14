@@ -199,7 +199,7 @@ export const FootRehabProgramScreen: React.FC = () => {
               if (response?.programId !== undefined) {
                 navigation.navigate('ProgramDetail', { id: response.programId });
               } else {
-                navigation.navigate('MainTabs', { screen: 'Programs' } as never);
+                navigation.navigate('MainTabs', { screen: 'Training' } as never);
               }
             },
           },

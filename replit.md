@@ -11,7 +11,7 @@ The Tracklit mobile app is built using React Native (Expo SDK 54) with TypeScrip
 
 **UI/UX Decisions:**
 - **Icons:** Consistent use of Phosphor Icons with a "fill" weight.
-- **Navigation:** Bottom navigation features 5 tabs (Home, Practice, Programs, Feed, Tools), with Profile accessible via a drawer.
+- **Navigation:** Bottom navigation features 4 tabs (Home, Training, Feed, Tools), with Profile accessible via a drawer. The Training tab is a unified screen with Practice and Programs sub-tabs.
 - **Theming:** A dark AAA sports game aesthetic dominates, featuring a dark background (`#0E0F14`), orange accent colors, gradient effects, and glassmorphism for panels and cards.
 - **Component Styling:** Reusable components like `ScreenHeader` are used, with specific screens (Practice, Programs, Tools) sharing a consistent style: no header gradient, extra-large horizontal padding, 12px border-radius for cards, and large gaps between elements.
 - **Accessibility:** Safe area insets are used for device-safe padding.
