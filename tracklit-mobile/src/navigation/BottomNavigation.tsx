@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -6,7 +6,6 @@ import {
   Text,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -22,47 +21,21 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { apiRequest } from '@/lib/api';
 import theme from '@/utils/theme';
 
-type TabRoute = 'Home' | 'Training' | 'Feed' | 'Tools';
+type TabRoute = 'Home' | 'Training' | 'Feed' | 'Tools' | 'Sprinthia';
 
 interface NavItem {
   title: string;
   key: string;
   IconComponent: Icon;
-  routeName?: TabRoute;
-  isStack?: boolean;
+  routeName: TabRoute;
 }
 
 const navItems: NavItem[] = [
-  {
-    title: 'Home',
-    routeName: 'Home',
-    key: 'dashboard',
-    IconComponent: House,
-  },
-  {
-    title: 'Training',
-    routeName: 'Training',
-    key: 'training',
-    IconComponent: Barbell,
-  },
-  {
-    title: 'Feed',
-    routeName: 'Feed',
-    key: 'feed',
-    IconComponent: Newspaper,
-  },
-  {
-    title: 'Tools',
-    routeName: 'Tools',
-    key: 'tools',
-    IconComponent: Timer,
-  },
-  {
-    title: 'Sprinthia',
-    key: 'sprinthia',
-    isStack: true,
-    IconComponent: ChatCircleDots,
-  },
+  { title: 'Home',      routeName: 'Home',      key: 'dashboard', IconComponent: House },
+  { title: 'Training',  routeName: 'Training',  key: 'training',  IconComponent: Barbell },
+  { title: 'Feed',      routeName: 'Feed',       key: 'feed',      IconComponent: Newspaper },
+  { title: 'Tools',     routeName: 'Tools',      key: 'tools',     IconComponent: Timer },
+  { title: 'Sprinthia', routeName: 'Sprinthia',  key: 'sprinthia', IconComponent: ChatCircleDots },
 ];
 
 interface NavItemComponentProps {
@@ -91,17 +64,10 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        <IconComp
-          size={23}
-          color={contentColor}
-          weight="fill"
-        />
+        <IconComp size={23} color={contentColor} weight="fill" />
         {showBadge && <View style={styles.badge} />}
       </View>
-      <Text style={[
-        styles.navLabel,
-        { color: contentColor }
-      ]}>
+      <Text style={[styles.navLabel, { color: contentColor }]}>
         {item.title}
       </Text>
     </TouchableOpacity>
@@ -123,7 +89,6 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
 
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
   const isFeedActive = state.routeNames[state.index] === 'Feed';
-  const isSprinthiaActive = parentRoute?.name === 'Sprinthia';
 
   const feedCheckQuery = useQuery({
     queryKey: ['feed-badge-check'],
@@ -164,7 +129,7 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
     }
   }, [isFeedActive]);
 
-  if (parentRoute?.name && parentRoute.name !== 'MainTabs' && !isSprinthiaActive) {
+  if (parentRoute?.name && parentRoute.name !== 'MainTabs') {
     return null;
   }
 
@@ -175,15 +140,9 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
     ]}>
       <View style={styles.navBar}>
         {navItems.map((item) => {
-          const isActive = item.isStack
-            ? isSprinthiaActive
-            : state.routeNames[state.index] === item.routeName;
+          const isActive = state.routeNames[state.index] === item.routeName;
 
           const handlePress = () => {
-            if (item.isStack) {
-              parent?.navigate('Sprinthia' as never);
-              return;
-            }
             const route = state.routes.find((r) => r.name === item.routeName);
             if (!route) return;
             const event = navigation.emit({
@@ -192,18 +151,14 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
               canPreventDefault: true,
             });
             if (!isActive && !event.defaultPrevented) {
-              navigation.navigate(item.routeName as string);
+              navigation.navigate(item.routeName);
             }
           };
 
           const handleLongPress = () => {
-            if (item.isStack) return;
             const route = state.routes.find((r) => r.name === item.routeName);
             if (!route) return;
-            navigation.emit({
-              type: 'tabLongPress',
-              target: route.key,
-            });
+            navigation.emit({ type: 'tabLongPress', target: route.key });
           };
 
           return (

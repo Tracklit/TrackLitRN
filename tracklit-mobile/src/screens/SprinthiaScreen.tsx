@@ -37,6 +37,7 @@ import * as Speech from 'expo-speech';
 import * as Clipboard from 'expo-clipboard';
 
 import { Text } from '../components/ui/Text';
+import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -559,8 +560,11 @@ export const SprinthiaScreen: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
-        {/* Header (mobile-first, 2 rows) */}
-        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+        {/* Top nav bar — matches other main pages */}
+        <MainScreenHeader />
+
+        {/* Sprinthia sub-header */}
+        <View style={styles.header}>
           <View style={styles.headerTopRow}>
             {entryContext === 'rehab' ? (
               <TouchableOpacity
@@ -638,7 +642,7 @@ export const SprinthiaScreen: React.FC = () => {
           onRequestClose={() => setShowLanguageMenu(false)}
         >
           <Pressable style={styles.languageOverlay} onPress={() => setShowLanguageMenu(false)}>
-            <Pressable style={[styles.languageMenu, { marginTop: insets.top + 80 }]} onPress={() => undefined}>
+            <Pressable style={[styles.languageMenu, { marginTop: insets.top + 130 }]} onPress={() => undefined}>
               {languageOptions.map((lang) => (
                 <TouchableOpacity
                   key={lang.code}

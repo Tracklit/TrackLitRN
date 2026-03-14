@@ -230,6 +230,7 @@ const MainTabs: React.FC = () => {
         <Tab.Screen name="Training" component={TrainingScreen} />
         <Tab.Screen name="Feed" component={FeedScreen} />
         <Tab.Screen name="Tools" component={ToolsScreen} />
+        <Tab.Screen name="Sprinthia" component={SprinthiaScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
     </View>

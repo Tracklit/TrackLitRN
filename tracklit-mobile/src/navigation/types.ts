@@ -6,6 +6,7 @@ export type TabParamList = {
   Feed: undefined;
   Tools: undefined;
   Profile: { focusCoachToggle?: boolean } | undefined;
+  Sprinthia: { entryContext?: 'default' | 'rehab'; initialPrompt?: string } | undefined;
 };
 
 export type RootStackParamList = {
