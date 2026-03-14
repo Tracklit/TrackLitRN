@@ -8,20 +8,18 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 import {
   CaretLeft,
   MagnifyingGlass,
   Users,
-  List,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { SkeletonListRows } from '@/components/Skeleton';
-import { ScreenTabBar } from '@/components/ScreenTabBar';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
@@ -84,13 +82,11 @@ export const MyAthletesScreen: React.FC = () => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.drawerButton} onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
-          <List size={20} color={C.textPrimary} weight="bold" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Athletes</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <CaretLeft size={18} color={C.textSecondary} weight="bold" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>My Athletes</Text>
+        <View style={{ flex: 1 }} />
       </View>
 
       <View style={styles.searchContainer}>
@@ -157,8 +153,6 @@ export const MyAthletesScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
-
-      <ScreenTabBar />
     </View>
   );
 };
@@ -174,14 +168,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: C.border,
   },
-  drawerButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: C.iconBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   backButton: {
     width: 36,
     height: 36,
@@ -191,7 +177,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    flex: 1,
     fontSize: 16,
     fontWeight: '700',
     color: C.textPrimary,

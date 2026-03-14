@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   ArrowLeft,
@@ -15,12 +15,10 @@ import {
   ArrowRight,
   ChatCircleDots,
   Info,
-  List,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { LinearGradient } from '@/components/LinearGradient';
-import { ScreenTabBar } from '@/components/ScreenTabBar';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -143,13 +141,11 @@ export const RehabScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.drawerButton} onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
-          <List size={20} color={C.textPrimary} weight="bold" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Rehabilitation</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Rehabilitation</Text>
+        <View style={{ flex: 1 }} />
       </View>
 
       <ScrollView
@@ -280,8 +276,6 @@ export const RehabScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
-
-      <ScreenTabBar />
     </View>
   );
 };
@@ -294,16 +288,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  drawerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: C.glass,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   backButton: {
     width: 40,
     height: 40,
@@ -313,9 +297,9 @@ const styles = StyleSheet.create({
     borderColor: C.border,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
   headerTitle: {
-    flex: 1,
     fontSize: 18,
     fontWeight: '700',
     color: C.textPrimary,

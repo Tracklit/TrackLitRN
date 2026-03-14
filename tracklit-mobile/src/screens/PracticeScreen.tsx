@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   ScrollView,
-  Animated,
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
@@ -16,8 +15,6 @@ import {
   CircleIcon as Circle,
   CheckCircle,
   Timer,
-  CaretDown,
-  Link,
 } from 'phosphor-react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
@@ -31,9 +28,9 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
+import { ProgramPickerDropdown } from '@/components/practice/ProgramPickerModal';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { TargetTimesDrawer } from '@/components/practice/TargetTimesDrawer';
 import type { RootStackParamList } from '@/navigation/types';
@@ -234,135 +231,19 @@ export const PracticeScreen: React.FC = () => {
     await Promise.all([queryClient.invalidateQueries(), refreshUser()]);
   });
 
-  const EXPANDED_H = 92;
-  const COLLAPSED_H = 50;
-  const COLLAPSE_RANGE = 50;
-
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownAnimH = useRef(new Animated.Value(0)).current;
-
-  const sortedPrograms = useMemo(() => {
-    return [...programs].sort((a, b) =>
-      (a.program?.title || '').toLowerCase().localeCompare((b.program?.title || '').toLowerCase())
-    );
-  }, [programs]);
-
-  useEffect(() => {
-    Animated.timing(dropdownAnimH, {
-      toValue: dropdownOpen ? Math.min(sortedPrograms.length * 64 + 16, 280) : 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  }, [dropdownOpen, sortedPrograms.length]);
-
-  const headerHeight = scrollY.interpolate({
-    inputRange: [0, COLLAPSE_RANGE],
-    outputRange: [EXPANDED_H, COLLAPSED_H],
-    extrapolate: 'clamp',
-  });
-
-  const expandedOpacity = scrollY.interpolate({
-    inputRange: [0, COLLAPSE_RANGE * 0.6],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  const selectedTitle = selectedProgram?.program?.title ?? null;
-
   return (
       <LinearGradient
         colors={theme.gradient.background}
         locations={theme.gradient.locations}
         style={styles.container}
       >
-        <MainScreenHeader />
-
-        {/* Sticky collapsible program header */}
-        <View style={styles.stickyHeaderWrap}>
-          <Animated.View style={[styles.stickyHeader, { height: headerHeight }]}>
-            {/* Expanded-only label row */}
-            <Animated.View style={[styles.expandedRow, { opacity: expandedOpacity }]} pointerEvents="none">
-              <Text style={styles.activeProgramLabel}>ACTIVE PROGRAM</Text>
-              {selectedTitle && <Text style={styles.tapToChange}>Tap to change</Text>}
-            </Animated.View>
-
-            {/* Button row — always visible */}
-            <TouchableOpacity
-              style={styles.programTrigger}
-              onPress={() => setDropdownOpen((o) => !o)}
-              activeOpacity={0.75}
-            >
-              <View style={[styles.programTriggerIcon, selectedTitle && styles.programTriggerIconActive]}>
-                <Link size={14} color={selectedTitle ? '#FF7A00' : 'rgba(255,255,255,0.45)'} weight="fill" />
-              </View>
-              <Text style={styles.programTriggerName} numberOfLines={1}>
-                {selectedTitle ?? 'Select a program…'}
-              </Text>
-              <CaretDown
-                size={13}
-                color="rgba(255,255,255,0.45)"
-                weight="fill"
-                style={{ transform: [{ rotate: dropdownOpen ? '180deg' : '0deg' }] }}
-              />
-            </TouchableOpacity>
-          </Animated.View>
-
-          {/* Inline dropdown panel */}
-          <Animated.View style={[styles.dropdownPanel, { maxHeight: dropdownAnimH }]}>
-            <ScrollView
-              style={styles.dropdownScroll}
-              showsVerticalScrollIndicator={false}
-              nestedScrollEnabled
-            >
-              {purchasedProgramsQuery.isLoading ? (
-                <View style={styles.dropdownEmpty}>
-                  <Text style={styles.dropdownEmptyText}>Loading programs…</Text>
-                </View>
-              ) : sortedPrograms.length > 0 ? (
-                sortedPrograms.map((assignment, idx) => {
-                  const isSelected = String(selectedProgram?.id) === String(assignment.id);
-                  return (
-                    <TouchableOpacity
-                      key={`${assignment.id}-${idx}`}
-                      style={[styles.dropdownItem, isSelected && styles.dropdownItemSelected]}
-                      onPress={() => { handleSelectProgram(assignment); setDropdownOpen(false); }}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.dropdownItemIcon, isSelected && styles.dropdownItemIconSelected]}>
-                        <ClipboardText size={13} color={isSelected ? '#FF7A00' : 'rgba(255,255,255,0.6)'} weight="fill" />
-                      </View>
-                      <View style={styles.dropdownItemText}>
-                        <Text style={styles.dropdownItemTitle} numberOfLines={1}>{assignment.program?.title ?? 'Unnamed'}</Text>
-                        <Text style={styles.dropdownItemSub} numberOfLines={1}>
-                          {assignment.program?.category ?? 'Training Program'}
-                        </Text>
-                      </View>
-                      {isSelected && <CheckCircle size={16} color="#FF7A00" weight="fill" />}
-                    </TouchableOpacity>
-                  );
-                })
-              ) : (
-                <View style={styles.dropdownEmpty}>
-                  <Text style={styles.dropdownEmptyText}>No programs available</Text>
-                </View>
-              )}
-            </ScrollView>
-          </Animated.View>
-        </View>
-
         <ScrollView
           contentInsetAdjustmentBehavior="never"
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: contentBottomPadding },
+            { paddingTop: insets.top, paddingBottom: contentBottomPadding },
           ]}
           showsVerticalScrollIndicator={false}
-          scrollEventThrottle={16}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
-          )}
           refreshControl={
             <RefreshControl
               tintColor="#fff"
@@ -372,6 +253,15 @@ export const PracticeScreen: React.FC = () => {
           }
         >
           <InlineRefreshHeader visible={isRefreshing} />
+
+          <View style={styles.programsRow}>
+            <ProgramPickerDropdown
+              programs={purchasedProgramsQuery.data ?? []}
+              selectedProgramId={selectedProgram?.id ?? null}
+              onSelect={handleSelectProgram}
+              isLoading={purchasedProgramsQuery.isLoading}
+            />
+          </View>
 
           {selectedProgram ? (
             <View style={styles.contentContainer}>
@@ -488,12 +378,15 @@ export const PracticeScreen: React.FC = () => {
           onPress={() => setShowTargetTimes(true)}
         >
           <LinearGradient
-            colors={['#FF7A00', '#FF9A3C']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
+            colors={theme.gradients.webPurple.colors}
+            start={theme.gradients.webPurple.start}
+            end={theme.gradients.webPurple.end}
             style={styles.targetTimesButtonInner}
           >
             <Timer size={20} color="white" weight="fill" />
+            <Text variant="small" weight="bold" color="primary-foreground">
+              %
+            </Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -728,107 +621,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: theme.spacing.xl,
   },
-  stickyHeaderWrap: {
-    zIndex: 30,
-    backgroundColor: '#0E0F14',
-  },
-  stickyHeader: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: 10,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  expandedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  activeProgramLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  tapToChange: {
-    fontSize: 10,
-    color: 'rgba(255,122,0,0.55)',
-    fontWeight: '500',
-  },
-  programTrigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  programTriggerIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  programTriggerIconActive: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
-  },
-  programTriggerName: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  dropdownPanel: {
-    overflow: 'hidden',
-    backgroundColor: '#13151E',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
-  },
-  dropdownScroll: {
-    paddingVertical: 6,
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: 0,
-  },
-  dropdownItemSelected: {
-    backgroundColor: 'rgba(255,122,0,0.08)',
-  },
-  dropdownItemIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dropdownItemIconSelected: {
-    backgroundColor: 'rgba(255,122,0,0.18)',
-  },
-  dropdownItemText: {
-    flex: 1,
-  },
-  dropdownItemTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  dropdownItemSub: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: 1,
-  },
-  dropdownEmpty: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  dropdownEmptyText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.35)',
+  programsRow: {
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    zIndex: 10,
   },
   contentContainer: {
     marginTop: theme.spacing.md,
@@ -1034,22 +830,19 @@ const styles = StyleSheet.create({
   },
   targetTimesButton: {
     position: 'absolute',
-    right: 24,
+    right: theme.spacing.lg,
+    bottom: theme.spacing.xl * 2,
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#FF7A00',
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
+    ...theme.shadows.lg,
   },
   targetTimesButtonInner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    borderRadius: 32,
+    borderRadius: 16,
   },
 });

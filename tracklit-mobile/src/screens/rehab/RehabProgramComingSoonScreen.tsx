@@ -1,13 +1,12 @@
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation, useRoute, DrawerActions } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Clock, ArrowLeft, List } from 'phosphor-react-native';
+import { Clock, ArrowLeft } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
-import { ScreenTabBar } from '@/components/ScreenTabBar';
 import type { RootStackParamList } from '@/navigation/types';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -22,9 +21,6 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.headerBar}>
-        <TouchableOpacity style={styles.drawerBtn} onPress={() => navigation.dispatch(DrawerActions.openDrawer())} activeOpacity={0.7}>
-          <List size={20} color="#FFFFFF" weight="bold" />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
           <ArrowLeft size={18} color="#FFFFFF" weight="bold" />
         </TouchableOpacity>
@@ -50,8 +46,6 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      <ScreenTabBar />
     </View>
   );
 };
@@ -69,14 +63,6 @@ const styles = StyleSheet.create({
     gap: 10,
     borderBottomWidth: 0.5,
     borderBottomColor: 'rgba(255,255,255,0.06)',
-  },
-  drawerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   backBtn: {
     width: 36,

@@ -16,6 +16,8 @@ import {
   MagnifyingGlass,
   Funnel,
   CaretDown,
+  SquaresFour,
+  List,
   Check,
   Plus,
   User,
@@ -32,7 +34,6 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
 import { SkeletonProgramList } from '@/components/Skeleton';
-import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
@@ -107,6 +108,7 @@ export const ProgramsScreen: React.FC = () => {
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<'all' | 'sprint' | 'distance' | 'strength'>('all');
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const { user, isAuthenticated, refreshUser } = useAuth();
@@ -144,15 +146,6 @@ export const ProgramsScreen: React.FC = () => {
 
   const handleContinuePurchasedProgram = async (purchase: PurchasedProgramItem) => {
     await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(purchase.id));
-    navigation.navigate('MainTabs', { screen: 'Practice' } as never);
-  };
-
-  const handleAttachMyProgram = async (program: Program) => {
-    const purchases = purchasedProgramsQuery.data ?? [];
-    const matching = purchases.find((p) => String(p.programId) === String(program.id));
-    if (matching) {
-      await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(matching.id));
-    }
     navigation.navigate('MainTabs', { screen: 'Practice' } as never);
   };
 
@@ -271,14 +264,13 @@ export const ProgramsScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <MainScreenHeader />
       <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: contentBottomPadding },
+          { paddingTop: insets.top, paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
         extraScrollHeight={80}
@@ -313,6 +305,28 @@ export const ProgramsScreen: React.FC = () => {
             <CaretDown size={10} color={C.textPrimary} weight="fill" />
           </TouchableOpacity>
 
+          <View style={styles.viewToggle}>
+            <TouchableOpacity
+              style={[styles.viewToggleButton, viewMode === 'cards' && styles.viewToggleActive]}
+              onPress={() => setViewMode('cards')}
+            >
+              <SquaresFour
+                size={14}
+                color={viewMode === 'cards' ? C.orange : C.textMuted}
+                weight="fill"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.viewToggleButton, viewMode === 'list' && styles.viewToggleActive]}
+              onPress={() => setViewMode('list')}
+            >
+              <List
+                size={14}
+                color={viewMode === 'list' ? C.orange : C.textMuted}
+                weight="fill"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.tabs}>
@@ -341,7 +355,7 @@ export const ProgramsScreen: React.FC = () => {
             isGuest={isGuest}
             onContinue={handleContinueProgram}
             onDelete={handleDeleteProgram}
-            onAttach={handleAttachMyProgram}
+            viewMode={viewMode}
           />
         ) : activeTab === 'purchased' ? (
           <PurchasedProgramsTab
@@ -351,6 +365,7 @@ export const ProgramsScreen: React.FC = () => {
             isGuest={isGuest}
             onContinue={handleContinuePurchasedProgram}
             onRemove={handleUnassignProgram}
+            viewMode={viewMode}
           />
         ) : (
           <WorkoutLibraryTab
@@ -460,7 +475,7 @@ interface MyProgramsTabProps {
   isGuest: boolean;
   onContinue: (program: Program) => void;
   onDelete: (program: Program) => void;
-  onAttach: (program: Program) => void;
+  viewMode: 'cards' | 'list';
 }
 
 const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
@@ -470,7 +485,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   isGuest,
   onContinue,
   onDelete,
-  onAttach,
+  viewMode,
 }) => {
   if (isGuest) {
     return (
@@ -509,7 +524,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
     );
   }
 
-  return (
+  return viewMode === 'list' ? (
     <View style={styles.listContainer}>
       {programs.map((program) => (
         <ProgramListItem
@@ -517,7 +532,18 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
           program={program}
           onContinue={() => onContinue(program)}
           onDelete={() => onDelete(program)}
-          onAttach={() => onAttach(program)}
+          buttonLabel="Edit Program"
+        />
+      ))}
+    </View>
+  ) : (
+    <View style={styles.programsContainer}>
+      {programs.map((program) => (
+        <ProgramCardItem
+          key={program.id}
+          program={program}
+          onContinue={() => onContinue(program)}
+          onDelete={() => onDelete(program)}
           buttonLabel="Edit Program"
         />
       ))}
@@ -532,6 +558,7 @@ interface PurchasedProgramsTabProps {
   isGuest: boolean;
   onContinue: (purchase: PurchasedProgramItem) => void;
   onRemove: (purchase: PurchasedProgramItem) => void;
+  viewMode: 'cards' | 'list';
 }
 
 const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
@@ -541,6 +568,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
   isGuest,
   onContinue,
   onRemove,
+  viewMode,
 }) => {
   if (isGuest) {
     return (
@@ -579,7 +607,7 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
     );
   }
 
-  return (
+  return viewMode === 'list' ? (
     <View style={styles.listContainer}>
       {purchases.map((purchase) => (
         <ProgramListItem
@@ -590,7 +618,28 @@ const PurchasedProgramsTab: React.FC<PurchasedProgramsTabProps> = ({
           }
           onContinue={() => onContinue(purchase)}
           onDelete={() => onRemove(purchase)}
-          buttonLabel="Assign to Practice"
+          buttonLabel="Assign"
+        />
+      ))}
+    </View>
+  ) : (
+    <View style={styles.programsContainer}>
+      {purchases.map((purchase) => (
+        <ProgramCardItem
+          key={purchase.id}
+          program={purchase.program}
+          badgeLabel={
+            purchase.isAssigned ? 'Assigned' : purchase.isCreated ? 'Created' : 'Purchased'
+          }
+          subtitle={
+            purchase.isAssigned && purchase.assignerName
+              ? `Coach: ${purchase.assignerName}`
+              : 'TrackLit'
+          }
+          onContinue={() => onContinue(purchase)}
+          onDelete={() => onRemove(purchase)}
+          price={purchase.program?.price}
+          buttonLabel="Assign"
         />
       ))}
     </View>
@@ -673,7 +722,6 @@ interface ProgramCardItemProps {
   price?: number;
   onContinue: () => void;
   onDelete?: () => void;
-  onAttach?: () => void;
   buttonLabel?: string;
 }
 
@@ -684,7 +732,6 @@ const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
   price,
   onContinue,
   onDelete,
-  onAttach,
   buttonLabel = 'Continue',
 }) => {
   return (
@@ -736,11 +783,6 @@ const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
               <Text style={styles.actionBtnPrimaryText}>{buttonLabel}</Text>
             </LinearGradient>
           </TouchableOpacity>
-          {onAttach && (
-            <TouchableOpacity style={styles.actionBtnSecondary} onPress={onAttach} activeOpacity={0.7}>
-              <Text style={styles.actionBtnSecondaryText}>Assign to Practice</Text>
-            </TouchableOpacity>
-          )}
         </View>
       </View>
     </View>
@@ -752,7 +794,6 @@ interface ProgramListItemProps {
   badgeLabel?: string;
   onContinue: () => void;
   onDelete?: () => void;
-  onAttach?: () => void;
   buttonLabel?: string;
 }
 
@@ -761,7 +802,6 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
   badgeLabel,
   onContinue,
   onDelete,
-  onAttach,
   buttonLabel = 'Continue',
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -798,11 +838,6 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
           <TouchableOpacity style={styles.listExpandedBtn} onPress={onContinue} activeOpacity={0.8}>
             <Text style={styles.listActionPrimary}>{buttonLabel}</Text>
           </TouchableOpacity>
-          {onAttach && (
-            <TouchableOpacity style={styles.listExpandedSecondaryBtn} onPress={onAttach} activeOpacity={0.7}>
-              <Text style={styles.listActionSecondary}>Assign to Practice</Text>
-            </TouchableOpacity>
-          )}
           {onDelete && (
             <TouchableOpacity onPress={onDelete} style={styles.listExpandedDeleteBtn} activeOpacity={0.7}>
               <Trash size={14} color="#ef4444" weight="fill" />
@@ -870,7 +905,7 @@ const styles = StyleSheet.create({
     color: C.textPrimary,
     marginHorizontal: 2,
   },
-  _viewToggle: {
+  viewToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 40,
@@ -1016,20 +1051,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: C.textPrimary,
   },
-  actionBtnSecondary: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,122,0,0.35)',
-    backgroundColor: 'rgba(255,122,0,0.07)',
-  },
-  actionBtnSecondaryText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.orange,
-  },
   listCard: {
     borderRadius: 12,
     backgroundColor: C.card,
@@ -1075,15 +1096,6 @@ const styles = StyleSheet.create({
   listExpandedBtn: {
     paddingVertical: 6,
     paddingHorizontal: 4,
-  },
-  listExpandedSecondaryBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  listActionSecondary: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255,122,0,0.8)',
   },
   listExpandedDeleteBtn: {
     flexDirection: 'row',
