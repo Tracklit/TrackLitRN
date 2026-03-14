@@ -27,8 +27,6 @@ import {
   X,
   CaretRight,
   Star,
-  Minus,
-  Plus,
   Book,
   Users,
   CalendarBlank,
@@ -115,7 +113,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [selectedActivity, setSelectedActivity] = useState<CommunityActivity | null>(null);
   const [likedActivities, setLikedActivities] = useState<Set<number>>(new Set());
   const [readActivities, setReadActivities] = useState<Set<number>>(new Set());
-  const [carouselCollapsed, setCarouselCollapsed] = useState(false);
   const [carouselHidden, setCarouselHidden] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [selectionLoaded, setSelectionLoaded] = useState(false);
@@ -771,22 +768,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         />
       </View>
 
-      {/* Activity Carousel — fixed above scroll */}
-      {activities.length > 0 && !carouselHidden && (
-        <View style={styles.carouselContainer}>
-          <TouchableOpacity
-            style={styles.carouselToggle}
-            activeOpacity={0.6}
-            onPress={() => setCarouselCollapsed(prev => !prev)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            {carouselCollapsed ? (
-              <Plus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
-            ) : (
-              <Minus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
-            )}
-          </TouchableOpacity>
-          {!carouselCollapsed && (
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xxxxl }) }
+        ]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            tintColor="#fff"
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+          />
+        }
+      >
+        <InlineRefreshHeader visible={isRefreshing} />
+
+        {/* Activity Carousel — scrolls with page */}
+        {activities.length > 0 && !carouselHidden && (
+          <View style={styles.carouselContainer}>
             <FlatList
               ref={carouselRef}
               data={carouselData}
@@ -862,33 +863,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 );
               }}
             />
-          )}
-          <View style={styles.carouselDivider} />
-        </View>
-      )}
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.contentContainer,
-          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xxxxl }) }
-        ]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            tintColor="#fff"
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-          />
-        }
-      >
-        <InlineRefreshHeader visible={isRefreshing} />
+            <View style={styles.carouselDivider} />
+          </View>
+        )}
 
         {/* Practice Card */}
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => handleCardPress('Practice')}
-          style={[styles.practiceCardWrapper, carouselHidden && { marginTop: 16 }]}
+          style={styles.practiceCardWrapper}
         >
           <LinearGradient
             colors={['#6d28d9', '#c084fc']}
@@ -913,7 +896,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             ) : todaySession ? (
               <>
                 <Text style={styles.practiceSessionTitle} numberOfLines={2}>
-                  {todaySession.title && todaySession.title !== 'Day Training' ? todaySession.title : `Day ${todaySession.dayNumber} Session`}
+                  {todaySession.title && !/^Day\s*\d*\s*(Training|Session)?\s*$/i.test(todaySession.title.trim()) ? todaySession.title : 'Today\'s Session'}
                 </Text>
                 <HomeWorkoutContent session={todaySession} gymData={todayGymData} />
               </>

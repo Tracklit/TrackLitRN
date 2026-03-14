@@ -562,18 +562,21 @@ export const SprinthiaScreen: React.FC = () => {
         {/* Header (mobile-first, 2 rows) */}
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
           <View style={styles.headerTopRow}>
-            <TouchableOpacity
-              onPress={handleBackPress}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel={entryContext === 'rehab' ? 'Back to Rehabilitation' : 'Go back'}
-            >
-              <FontAwesome5 name="chevron-left" size={16} color="#fff" />
-            </TouchableOpacity>
-            <View style={styles.titleGroup}>
-              <Image source={poweredByAria} style={styles.poweredBy} resizeMode="contain" />
-            </View>
+            {entryContext === 'rehab' ? (
+              <TouchableOpacity
+                onPress={handleBackPress}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                style={styles.backButton}
+                accessibilityRole="button"
+                accessibilityLabel="Back to Rehabilitation"
+              >
+                <FontAwesome5 name="chevron-left" size={16} color="#fff" />
+              </TouchableOpacity>
+            ) : null}
+            <Text weight="bold" color="foreground" style={styles.titleText}>
+              Sprinthia
+            </Text>
+            <Image source={poweredByAria} style={styles.poweredBy} resizeMode="contain" />
           </View>
 
           <View style={styles.headerBottomRow}>
@@ -958,7 +961,8 @@ const styles = StyleSheet.create({
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    justifyContent: 'space-between',
+    gap: 12,
   },
   headerBottomRow: {
     flexDirection: 'row',

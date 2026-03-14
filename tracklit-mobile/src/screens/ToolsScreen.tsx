@@ -15,7 +15,6 @@ import {
   VideoCamera,
   Clock,
   FirstAidKit,
-  Lightning,
   Lock,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -37,7 +36,6 @@ type ToolScreen = Extract<
   | 'IntervalTimer'
   | 'ExerciseLibrary'
   | 'Rehab'
-  | 'Spikes'
 >;
 
 const C = {
@@ -123,14 +121,6 @@ export const ToolsScreen: React.FC = () => {
       icon: <FirstAidKit size={26} color={ICON_COLOR} weight="fill" />,
       color: 'rgba(255,255,255,0.06)',
       screen: 'Rehab',
-    },
-    {
-      id: 'spikes',
-      title: 'Spikes',
-      description: 'Earn rewards & track progress',
-      icon: <Lightning size={26} color={ICON_COLOR} weight="fill" />,
-      color: 'rgba(255,255,255,0.06)',
-      screen: 'Spikes',
     },
   ];
 

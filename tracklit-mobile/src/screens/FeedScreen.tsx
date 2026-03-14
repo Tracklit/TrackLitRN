@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +9,8 @@ import {
   TextInput,
   Alert,
   Image,
+  Animated,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
@@ -34,6 +36,77 @@ import theme from '@/utils/theme';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type FeedFilter = 'all' | 'connections';
+
+const SkeletonPostCard: React.FC = () => {
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [shimmer]);
+
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.55] });
+
+  return (
+    <Animated.View style={[skeletonStyles.card, { opacity }]}>
+      <View style={skeletonStyles.headerRow}>
+        <View style={skeletonStyles.avatar} />
+        <View style={skeletonStyles.nameBlock}>
+          <View style={skeletonStyles.nameLine} />
+          <View style={skeletonStyles.subLine} />
+        </View>
+      </View>
+      <View style={skeletonStyles.bodyLine} />
+      <View style={[skeletonStyles.bodyLine, skeletonStyles.bodyLineMid]} />
+      <View style={[skeletonStyles.bodyLine, skeletonStyles.bodyLineShort]} />
+    </Animated.View>
+  );
+};
+
+const skeletonStyles = StyleSheet.create({
+  card: {
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    gap: 10,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 4,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  nameBlock: { gap: 6, flex: 1 },
+  nameLine: {
+    height: 13,
+    width: '45%',
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  subLine: {
+    height: 11,
+    width: '30%',
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+  },
+  bodyLine: {
+    height: 12,
+    width: '95%',
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  bodyLineMid: { width: '80%' },
+  bodyLineShort: { width: '55%' },
+});
 
 interface FeedItem {
   id: number;
@@ -192,17 +265,20 @@ export const FeedScreen: React.FC = () => {
   const feedQuery = useQuery({
     queryKey: ['feed', filter],
     queryFn: async () => {
-      const data = await apiRequest<FeedItem[]>(`/api/feed?filter=${filter}`);
-      if (Array.isArray(data) && data.length > 0) {
-        const realIds = new Set(data.map(p => p.id));
-        const extras = PLACEHOLDER_FEED.filter(p => !realIds.has(p.id));
-        return [...data, ...extras];
+      try {
+        const data = await apiRequest<FeedItem[]>(`/api/feed?filter=${filter}`);
+        if (Array.isArray(data) && data.length > 0) {
+          const realIds = new Set(data.map(p => p.id));
+          const extras = PLACEHOLDER_FEED.filter(p => !realIds.has(p.id));
+          return [...data, ...extras];
+        }
+      } catch {
+        // silently fall back to placeholder on error
       }
-      return data ?? [];
+      return PLACEHOLDER_FEED;
     },
-    placeholderData: PLACEHOLDER_FEED,
     staleTime: 30000,
-    retry: 2,
+    retry: 1,
   });
 
   const likeMutation = useMutation({
@@ -436,46 +512,55 @@ export const FeedScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={filteredItems}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },
-        ]}
-        renderItem={renderItem}
-        ItemSeparatorComponent={renderDivider}
-        refreshControl={
-          <RefreshControl
-            tintColor="#fff"
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-          />
-        }
-        ListEmptyComponent={
-          feedQuery.isLoading ? (
-            <View style={styles.emptyState}>
-              <Text variant="body" color="muted">
-                Loading feed...
-              </Text>
-            </View>
-          ) : feedQuery.isError ? (
-            <View style={styles.emptyState}>
-              <Text variant="body" color="muted" style={styles.emptyStateText}>
-                {unauthorized
-                  ? 'Please log in to view your community feed.'
-                  : 'Unable to load the feed right now. Pull to refresh.'}
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Text variant="body" color="muted" style={styles.emptyStateText}>
-                No posts to show yet. Be the first to share something!
-              </Text>
-            </View>
-          )
-        }
-      />
+      {feedQuery.isLoading ? (
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) }}
+          showsVerticalScrollIndicator={false}
+        >
+          {[1, 2, 3, 4, 5].map((i) => (
+            <React.Fragment key={i}>
+              <SkeletonPostCard />
+              {i < 5 && <View style={styles.divider} />}
+            </React.Fragment>
+          ))}
+        </ScrollView>
+      ) : (
+        <FlatList
+          data={filteredItems}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },
+          ]}
+          renderItem={renderItem}
+          ItemSeparatorComponent={renderDivider}
+          refreshControl={
+            <RefreshControl
+              tintColor="#fff"
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+            />
+          }
+          ListEmptyComponent={
+            feedQuery.isError ? (
+              <View style={styles.emptyState}>
+                <Text variant="body" color="muted" style={styles.emptyStateText}>
+                  {unauthorized
+                    ? 'Please log in to view your community feed.'
+                    : 'Unable to load the feed right now. Pull to refresh.'}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text variant="body" color="muted" style={styles.emptyStateText}>
+                  No posts to show yet. Be the first to share something!
+                </Text>
+              </View>
+            )
+          }
+        />
+      )}
 
       {canInteract && (
         <TouchableOpacity

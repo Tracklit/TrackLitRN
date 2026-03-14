@@ -46,12 +46,6 @@ const navItems: NavItem[] = [
     IconComponent: Barbell,
   },
   {
-    title: 'Sprinthia',
-    key: 'sprinthia',
-    isStack: true,
-    IconComponent: ChatCircleDots,
-  },
-  {
     title: 'Feed',
     routeName: 'Feed',
     key: 'feed',
@@ -62,6 +56,12 @@ const navItems: NavItem[] = [
     routeName: 'Tools',
     key: 'tools',
     IconComponent: Timer,
+  },
+  {
+    title: 'Sprinthia',
+    key: 'sprinthia',
+    isStack: true,
+    IconComponent: ChatCircleDots,
   },
 ];
 
