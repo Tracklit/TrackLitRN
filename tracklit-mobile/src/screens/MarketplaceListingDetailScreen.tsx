@@ -25,7 +25,6 @@ import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
-import { goBackOrNavigateToScreen } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type RouteT = RouteProp<RootStackParamList, 'MarketplaceListingDetail'>;
@@ -119,15 +118,12 @@ export const MarketplaceListingDetailScreen: React.FC = () => {
 
   const listing = listingQuery.data;
   const reviewCount = (reviewsQuery.data ?? []).length;
-  const handleBackPress = () => {
-    goBackOrNavigateToScreen(navigation, 'Marketplace');
-  };
 
   return (
     <LinearGradient colors={theme.gradient.background} locations={theme.gradient.locations} style={styles.container}>
       <ScrollView style={{ paddingTop: insets.top }} contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.iconBtn} onPress={handleBackPress}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: 'center' }}>
@@ -294,4 +290,5 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
   },
 });
+
 

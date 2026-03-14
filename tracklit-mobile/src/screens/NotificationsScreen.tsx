@@ -29,7 +29,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
-import { goBackOrNavigateToTab, navigateToTab } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -214,12 +213,12 @@ export const NotificationsScreen: React.FC = () => {
     }
 
     if (url.startsWith('/programs')) {
-      navigateToTab(navigation, 'Programs');
+      navigation.navigate('MainTabs', { screen: 'Programs' } as any);
       return;
     }
 
     if (url.startsWith('/tools') || url.startsWith('/training-tools')) {
-      navigateToTab(navigation, 'Tools');
+      navigation.navigate('MainTabs', { screen: 'Tools' } as any);
       return;
     }
   };
@@ -235,14 +234,10 @@ export const NotificationsScreen: React.FC = () => {
     }
   }, [notificationsError?.status, logout]);
 
-  const handleBackPress = () => {
-    goBackOrNavigateToTab(navigation, 'Home');
-  };
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <CaretLeft size={18} color={C.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>

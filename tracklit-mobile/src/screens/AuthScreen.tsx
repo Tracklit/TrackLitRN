@@ -24,7 +24,6 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 import { googleSignInStatusCodes, useGoogleAuthRequest, handleGoogleResponse } from '@/lib/googleSignIn';
-import { getQueryParam } from '@/utils/url';
 
 const COLORS = {
   bg: '#0E0F14',
@@ -57,10 +56,14 @@ export const AuthScreen: React.FC = () => {
   useEffect(() => {
     const handleUrl = async (url: string | null) => {
       if (!url) return;
-      const tokenFromUrl = getQueryParam(url, 'resetToken');
-      if (tokenFromUrl) {
-        setResetToken(tokenFromUrl);
-        setActiveTab('reset-password');
+      try {
+        const parsed = new URL(url);
+        const tokenFromUrl = parsed.searchParams.get('resetToken');
+        if (tokenFromUrl) {
+          setResetToken(tokenFromUrl);
+          setActiveTab('reset-password');
+        }
+      } catch {
       }
     };
 

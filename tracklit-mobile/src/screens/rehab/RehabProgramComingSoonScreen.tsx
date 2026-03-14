@@ -8,7 +8,6 @@ import { Clock, ArrowLeft } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import type { RootStackParamList } from '@/navigation/types';
-import { goBackOrNavigateToScreen } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'RehabProgramComingSoon'>;
@@ -18,14 +17,11 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
   const route = useRoute<Route>();
   const insets = useSafeAreaInsets();
   const { title } = route.params;
-  const handleBackPress = () => {
-    goBackOrNavigateToScreen(navigation, 'Rehab');
-  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.headerBar}>
-        <TouchableOpacity style={styles.backBtn} onPress={handleBackPress} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
           <ArrowLeft size={18} color="#FFFFFF" weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Rehabilitation</Text>
@@ -44,7 +40,7 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
           <Text style={styles.cardSubtext}>
             This rehabilitation protocol is being finalized for mobile. Check back soon for the complete program.
           </Text>
-          <TouchableOpacity style={styles.goBackBtn} onPress={handleBackPress} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.goBackBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
             <ArrowLeft size={14} color="#FFFFFF" weight="bold" />
             <Text style={styles.goBackText}>Back to Rehab</Text>
           </TouchableOpacity>

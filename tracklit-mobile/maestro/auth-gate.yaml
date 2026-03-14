@@ -1,8 +1,0 @@
-appId: com.tracklit.app
----
-- launchApp:
-    clearState: true
-- assertVisible: "Welcome to TrackLit"
-- assertVisible: "Login"
-- assertVisible: "Register"
-- assertVisible: "Continue with Google"

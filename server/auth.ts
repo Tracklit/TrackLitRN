@@ -680,25 +680,6 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.get("/api/mobile/web-session", (req, res, next) => {
-    const redirectTarget =
-      typeof req.query.redirect === "string" && req.query.redirect.startsWith("/")
-        ? req.query.redirect
-        : "/";
-
-    if (!req.user) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-
-    req.login(req.user, (error) => {
-      if (error) {
-        return next(error);
-      }
-
-      return res.redirect(302, redirectTarget);
-    });
-  });
-
   app.post("/api/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);

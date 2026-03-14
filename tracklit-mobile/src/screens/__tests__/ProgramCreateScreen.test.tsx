@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import * as DocumentPicker from 'expo-document-picker';
 
 const mockedApiRequest = apiRequest as jest.MockedFunction<typeof apiRequest>;
 const mockedUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
@@ -34,7 +35,6 @@ beforeEach(() => {
     logout: jest.fn(),
     continueAsGuest: jest.fn(),
     refreshUser: jest.fn(),
-    setUserAndPersist: jest.fn(),
   });
 });
 
@@ -43,25 +43,31 @@ function loadProgramCreateScreen() {
 }
 
 describe('ProgramCreateScreen', () => {
-  it('shows the current creation methods', () => {
+  // ─── Method selection ───
+  it('shows all creation methods', () => {
     const Screen = loadProgramCreateScreen();
     const { getByText } = render(<Screen />, { wrapper: Wrapper });
-
-    expect(getByText('Import / Upload')).toBeTruthy();
+    expect(getByText('Upload Document')).toBeTruthy();
     expect(getByText('Program Builder')).toBeTruthy();
     expect(getByText('Text Based')).toBeTruthy();
-    expect(getByText('Sprinthia AI')).toBeTruthy();
+    expect(getByText('Build With Sprinthia')).toBeTruthy();
+    expect(getByText('Import from Sheets')).toBeTruthy();
   });
 
-  it('shows header and page title', () => {
+  it('shows "Create Program" header', () => {
     const Screen = loadProgramCreateScreen();
     const { getByText } = render(<Screen />, { wrapper: Wrapper });
-
     expect(getByText('Create Program')).toBeTruthy();
+  });
+
+  it('shows "Create New Program" page title', () => {
+    const Screen = loadProgramCreateScreen();
+    const { getByText } = render(<Screen />, { wrapper: Wrapper });
     expect(getByText('Create New Program')).toBeTruthy();
   });
 
-  it('shows the builder form after selecting Program Builder', () => {
+  // ─── Builder method ───
+  it('selecting builder method shows builder form', () => {
     const Screen = loadProgramCreateScreen();
     const { getAllByText, getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
 
@@ -72,10 +78,11 @@ describe('ProgramCreateScreen', () => {
     expect(getByPlaceholderText('Description')).toBeTruthy();
     expect(getByText('Visibility')).toBeTruthy();
     expect(getByText('Duration')).toBeTruthy();
+    // "Create Program" appears in both header and form button
     expect(getAllByText('Create Program').length).toBeGreaterThanOrEqual(2);
   });
 
-  it('creates a builder program with the expected payload', async () => {
+  it('builder Create button calls API with correct payload', async () => {
     mockedApiRequest.mockResolvedValue({ id: 99 });
     const Screen = loadProgramCreateScreen();
     const { getAllByText, getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
@@ -84,6 +91,7 @@ describe('ProgramCreateScreen', () => {
     fireEvent.changeText(getByPlaceholderText('Program title'), 'My Sprint Plan');
     fireEvent.changeText(getByPlaceholderText('Description'), 'A custom plan');
 
+    // Press Create Program button (the last one is the form button, first is header)
     const createButtons = getAllByText('Create Program');
     fireEvent.press(createButtons[createButtons.length - 1]);
 
@@ -99,7 +107,7 @@ describe('ProgramCreateScreen', () => {
     });
   });
 
-  it('replaces to ProgramEditor after builder creation succeeds', async () => {
+  it('builder navigates to ProgramEditor on success', async () => {
     mockedApiRequest.mockResolvedValue({ id: 99 });
     const Screen = loadProgramCreateScreen();
     const { getAllByText, getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
@@ -115,7 +123,8 @@ describe('ProgramCreateScreen', () => {
     });
   });
 
-  it('shows the text-based form when selected', () => {
+  // ─── Text method ───
+  it('selecting text method shows text content form', () => {
     const Screen = loadProgramCreateScreen();
     const { getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
 
@@ -125,7 +134,7 @@ describe('ProgramCreateScreen', () => {
     expect(getByPlaceholderText('Program content')).toBeTruthy();
   });
 
-  it('creates a text-based program', async () => {
+  it('text method creates text-based program', async () => {
     mockedApiRequest.mockResolvedValue({ id: 88 });
     const Screen = loadProgramCreateScreen();
     const { getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
@@ -133,6 +142,7 @@ describe('ProgramCreateScreen', () => {
     fireEvent.press(getByText('Text Based'));
     fireEvent.changeText(getByPlaceholderText('Program title'), 'Text Plan');
     fireEvent.changeText(getByPlaceholderText('Program content'), 'Week 1 content');
+
     fireEvent.press(getByText('Create Text Program'));
 
     await waitFor(() => {
@@ -145,20 +155,77 @@ describe('ProgramCreateScreen', () => {
     });
   });
 
-  it('routes import/upload selection to ProgramImport', () => {
+  // ─── Upload method ───
+  it('selecting upload method shows upload form', () => {
     const Screen = loadProgramCreateScreen();
     const { getByText } = render(<Screen />, { wrapper: Wrapper });
 
-    fireEvent.press(getByText('Import / Upload'));
+    fireEvent.press(getByText('Upload Document'));
 
-    expect((global as any).__mockNavigate).toHaveBeenCalledWith('ProgramImport');
+    expect(getByText('Upload Program Document')).toBeTruthy();
+    expect(getByText('Choose file')).toBeTruthy();
   });
 
-  it('shows the Sprinthia form when selected', () => {
+  it('picking file updates UI with filename', async () => {
+    (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ name: 'training.pdf', uri: 'file:///training.pdf', size: 1024 }],
+    });
+
+    const Screen = loadProgramCreateScreen();
+    const { getByText } = render(<Screen />, { wrapper: Wrapper });
+
+    fireEvent.press(getByText('Upload Document'));
+    fireEvent.press(getByText('Choose file'));
+
+    expect(await waitFor(() => getByText('training.pdf'))).toBeTruthy();
+  });
+
+  // ─── Import method ───
+  it('selecting import opens import modal', () => {
+    const Screen = loadProgramCreateScreen();
+    const { getByText } = render(<Screen />, { wrapper: Wrapper });
+
+    fireEvent.press(getByText('Import from Sheets'));
+
+    expect(getByText('Import Program from Google Sheet')).toBeTruthy();
+  });
+
+  it('import modal has required fields', () => {
     const Screen = loadProgramCreateScreen();
     const { getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
 
-    fireEvent.press(getByText('Sprinthia AI'));
+    fireEvent.press(getByText('Import from Sheets'));
+
+    expect(getByPlaceholderText('Program title')).toBeTruthy();
+    expect(getByPlaceholderText('Google Sheet URL')).toBeTruthy();
+    expect(getByPlaceholderText('Duration (days)')).toBeTruthy();
+  });
+
+  it('import button calls correct API', async () => {
+    mockedApiRequest.mockResolvedValue({ program: { id: 77 }, importedSessions: 10 });
+    const Screen = loadProgramCreateScreen();
+    const { getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
+
+    fireEvent.press(getByText('Import from Sheets'));
+    fireEvent.changeText(getByPlaceholderText('Program title'), 'Sheet Program');
+    fireEvent.changeText(getByPlaceholderText('Google Sheet URL'), 'https://docs.google.com/spreadsheets/d/abc');
+
+    fireEvent.press(getByText('Import Program'));
+
+    await waitFor(() => {
+      expect(mockedApiRequest).toHaveBeenCalledWith('/api/programs/import-sheet', expect.objectContaining({
+        method: 'POST',
+      }));
+    });
+  });
+
+  // ─── Sprinthia method ───
+  it('selecting sprinthia method shows AI form', () => {
+    const Screen = loadProgramCreateScreen();
+    const { getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
+
+    fireEvent.press(getByText('Build With Sprinthia'));
 
     expect(getByText('Build With Sprinthia AI')).toBeTruthy();
     expect(getByText('Program Length')).toBeTruthy();
@@ -166,14 +233,15 @@ describe('ProgramCreateScreen', () => {
     expect(getByPlaceholderText('Describe your goals and AI prompt')).toBeTruthy();
   });
 
-  it('calls the Sprinthia generation API', async () => {
+  it('generate button calls Sprinthia API', async () => {
     mockedApiRequest.mockResolvedValue({ content: 'Generated program content...' });
     const Screen = loadProgramCreateScreen();
     const { getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
 
-    fireEvent.press(getByText('Sprinthia AI'));
+    fireEvent.press(getByText('Build With Sprinthia'));
     fireEvent.changeText(getByPlaceholderText('Program title'), 'AI Plan');
     fireEvent.changeText(getByPlaceholderText('Describe your goals and AI prompt'), 'Build speed');
+
     fireEvent.press(getByText('Generate Training Program'));
 
     await waitFor(() => {
@@ -183,12 +251,12 @@ describe('ProgramCreateScreen', () => {
     });
   });
 
-  it('shows generated program content after AI generation', async () => {
+  it('shows generated program content after generation', async () => {
     mockedApiRequest.mockResolvedValue({ content: 'Week 1: Speed drills...' });
     const Screen = loadProgramCreateScreen();
     const { getByText, getByPlaceholderText, findByText } = render(<Screen />, { wrapper: Wrapper });
 
-    fireEvent.press(getByText('Sprinthia AI'));
+    fireEvent.press(getByText('Build With Sprinthia'));
     fireEvent.changeText(getByPlaceholderText('Program title'), 'AI Plan');
     fireEvent.changeText(getByPlaceholderText('Describe your goals and AI prompt'), 'Build speed');
     fireEvent.press(getByText('Generate Training Program'));
@@ -198,12 +266,14 @@ describe('ProgramCreateScreen', () => {
     expect(await findByText('Rewrite')).toBeTruthy();
   });
 
-  it('shows an error when a builder title is missing', async () => {
+  // ─── Validation ───
+  it('shows error when builder title is empty', async () => {
     mockedApiRequest.mockRejectedValue(new Error('Program title is required'));
     const Screen = loadProgramCreateScreen();
     const { getAllByText, getByText } = render(<Screen />, { wrapper: Wrapper });
 
     fireEvent.press(getByText('Program Builder'));
+    // Don't fill title
     const createButtons = getAllByText('Create Program');
     fireEvent.press(createButtons[createButtons.length - 1]);
 
@@ -212,7 +282,7 @@ describe('ProgramCreateScreen', () => {
     });
   });
 
-  it('shows an error when the create API fails', async () => {
+  it('shows error on API failure', async () => {
     mockedApiRequest.mockRejectedValue(new Error('Server error'));
     const Screen = loadProgramCreateScreen();
     const { getAllByText, getByText, getByPlaceholderText } = render(<Screen />, { wrapper: Wrapper });
@@ -227,17 +297,28 @@ describe('ProgramCreateScreen', () => {
     });
   });
 
-  it('returns to the method grid after choosing a different method', () => {
+  // ─── Choose Different Method button ───
+  it('shows "Choose Different Method" after selecting a method', () => {
+    const Screen = loadProgramCreateScreen();
+    const { getByText } = render(<Screen />, { wrapper: Wrapper });
+
+    fireEvent.press(getByText('Program Builder'));
+    expect(getByText('Choose Different Method')).toBeTruthy();
+  });
+
+  it('pressing "Choose Different Method" returns to method grid', () => {
     const Screen = loadProgramCreateScreen();
     const { getByText } = render(<Screen />, { wrapper: Wrapper });
 
     fireEvent.press(getByText('Program Builder'));
     fireEvent.press(getByText('Choose Different Method'));
 
-    expect(getByText('Import / Upload')).toBeTruthy();
+    // Method grid should be visible again
+    expect(getByText('Upload Document')).toBeTruthy();
     expect(getByText('Program Builder')).toBeTruthy();
   });
 
+  // ─── Visibility and pricing ───
   it('shows pricing fields when visibility is premium', () => {
     const Screen = loadProgramCreateScreen();
     const { getByText } = render(<Screen />, { wrapper: Wrapper });
@@ -250,7 +331,17 @@ describe('ProgramCreateScreen', () => {
     expect(getByText('money')).toBeTruthy();
   });
 
-  it('shows a guest helper message when an unauthenticated guest tries to create', () => {
+  it('hides pricing fields when visibility is public', () => {
+    const Screen = loadProgramCreateScreen();
+    const { getByText, queryByText } = render(<Screen />, { wrapper: Wrapper });
+
+    fireEvent.press(getByText('Program Builder'));
+    // Default is public
+    expect(queryByText('Pricing')).toBeNull();
+  });
+
+  // ─── Guest user ───
+  it('shows "Sign in to create programs" for guest', () => {
     mockedUseAuth.mockReturnValue({
       user: { id: 'guest', name: 'Guest' },
       isAuthenticated: true,
@@ -262,14 +353,12 @@ describe('ProgramCreateScreen', () => {
       logout: jest.fn(),
       continueAsGuest: jest.fn(),
       refreshUser: jest.fn(),
-      setUserAndPersist: jest.fn(),
     });
 
     const Screen = loadProgramCreateScreen();
     const { getByText } = render(<Screen />, { wrapper: Wrapper });
 
     fireEvent.press(getByText('Program Builder'));
-
     expect(getByText('Sign in to create programs.')).toBeTruthy();
   });
 });

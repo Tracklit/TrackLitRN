@@ -14,7 +14,6 @@ import { apiRequest } from '@/lib/api';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
-import { goBackOrNavigateToScreen } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -43,9 +42,6 @@ export const ResultsScreen: React.FC = () => {
   });
 
   const items = useMemo(() => resultsQuery.data ?? [], [resultsQuery.data]);
-  const handleBackPress = () => {
-    goBackOrNavigateToScreen(navigation, 'Meets');
-  };
 
   return (
     <LinearGradient
@@ -62,7 +58,7 @@ export const ResultsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.iconBtn} onPress={handleBackPress}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: 'center' }}>
@@ -148,4 +144,5 @@ const styles = StyleSheet.create({
   list: { gap: theme.spacing.md },
   card: { marginBottom: 0 },
 });
+
 

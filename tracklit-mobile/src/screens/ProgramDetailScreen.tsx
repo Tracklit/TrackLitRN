@@ -22,7 +22,6 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import { goBackOrNavigateToTab } from '@/navigation/appNavigation';
 import theme from '../utils/theme';
 
 type ProgramDetailRouteProp = RouteProp<RootStackParamList, 'ProgramDetail'>;
@@ -118,10 +117,7 @@ export const ProgramDetailScreen: React.FC = () => {
         locations={theme.gradient.locations}
         style={styles.container}
       >
-        <View
-          style={[styles.loadingContainer, { paddingTop: insets.top }]}
-          testID="program-detail-loading"
-        >
+        <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
           <SkeletonBlock />
         </View>
       </LinearGradient>
@@ -136,12 +132,7 @@ export const ProgramDetailScreen: React.FC = () => {
         style={styles.container}
       >
         <View style={[styles.header, { paddingTop: insets.top }]}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => goBackOrNavigateToTab(navigation, 'Programs')}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} />
           </TouchableOpacity>
         </View>
@@ -166,12 +157,7 @@ export const ProgramDetailScreen: React.FC = () => {
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => goBackOrNavigateToTab(navigation, 'Programs')}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} />
         </TouchableOpacity>
         <Text variant="h4" weight="bold" color="foreground" style={styles.headerTitle} numberOfLines={1}>
@@ -534,3 +520,4 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.xs,
   },
 });
+

@@ -15,7 +15,6 @@ import {
   BookOpen,
   Newspaper,
   Timer,
-  type Icon,
 } from 'phosphor-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
@@ -28,7 +27,7 @@ interface NavItem {
   title: string;
   routeName: TabRoute;
   key: string;
-  IconComponent: Icon;
+  IconComponent: React.ComponentType<{ size?: number; color?: string; weight?: string }>;
 }
 
 const navItems: NavItem[] = [

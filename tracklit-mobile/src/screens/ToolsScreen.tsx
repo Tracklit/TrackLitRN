@@ -24,7 +24,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text } from '../components/ui/Text';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import { MainScreenHeader } from '@/components/MainScreenHeader';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -180,8 +179,10 @@ export const ToolsScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <MainScreenHeader />
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>Tools</Text>
+      </View>
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -204,6 +205,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: C.bg,
+  },
+  headerRow: {
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: C.textPrimary,
+    letterSpacing: 0.3,
   },
   scrollContent: {
     paddingHorizontal: 20,

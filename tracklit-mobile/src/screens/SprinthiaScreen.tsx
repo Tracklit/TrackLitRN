@@ -18,11 +18,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { ArrowLeft } from 'phosphor-react-native';
 import { Mic, StopCircle, Volume2, VolumeX, Languages } from 'lucide-react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 // import Voice from '@react-native-voice/voice';
 const Voice = {
   start: async (_: any) => { Alert.alert('Feature Disabled', 'Voice input is temporarily disabled on Android.'); },
@@ -48,8 +46,6 @@ import { FormattedSprinthiaText } from '../utils/sprinthiaFormat';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '../utils/layoutPadding';
 import { cleanSpeechText } from '../utils/speechText';
 import poweredByAria from '../assets/powered-by-aria.png';
-import type { RootStackParamList } from '@/navigation/types';
-import { goBackOrNavigateToScreen, goBackOrNavigateToTab } from '@/navigation/appNavigation';
 
 type Role = 'user' | 'assistant';
 
@@ -72,18 +68,11 @@ interface ChatResponse {
   conversationId: number;
 }
 
-const DEFAULT_SUGGESTIONS = [
+const suggestions = [
   'Create a sprint workout',
   'Race strategy for 400m',
   'Hamstring injury recovery',
   'Pre-race nutrition',
-];
-
-const REHAB_SUGGESTIONS = [
-  'Build a 2-week rehab plan for a hamstring strain',
-  'What questions should I answer before returning to sprinting?',
-  'How do I progress rehab safely after pain decreases?',
-  'Give me a checklist for red flags and physician follow-up',
 ];
 
 const languageOptions = [
@@ -162,12 +151,10 @@ const TypingDots: React.FC = () => {
 
 export const SprinthiaScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const route = useRoute<RouteProp<RootStackParamList, 'Sprinthia'>>();
+  const navigation = useNavigation<any>();
   const { user, isAuthenticated, refreshUser } = useAuth();
   const isGuest = user?.id === 'guest';
   const isStar = user?.subscriptionTier === 'star';
-  const entryContext = route.params?.entryContext ?? 'default';
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -190,25 +177,12 @@ export const SprinthiaScreen: React.FC = () => {
 
   const remainingPrompts = isStar ? 'Unlimited' : user?.sprinthiaPrompts ?? 0;
   const isOutOfPrompts = !isStar && ((user?.sprinthiaPrompts ?? 0) <= 0);
-  const suggestionChips = entryContext === 'rehab' ? REHAB_SUGGESTIONS : DEFAULT_SUGGESTIONS;
 
   useEffect(() => {
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 50);
   }, [messages, isThinking]);
-
-  useEffect(() => {
-    if (!route.params?.initialPrompt) {
-      return;
-    }
-
-    if (messages.length > 0 || inputText.trim().length > 0) {
-      return;
-    }
-
-    setInputText(route.params.initialPrompt);
-  }, [inputText, messages.length, route.params?.initialPrompt]);
 
   useEffect(() => {
     if (!isListening) {
@@ -522,18 +496,6 @@ export const SprinthiaScreen: React.FC = () => {
     typeof remainingPrompts === 'number' ? `${remainingPrompts} prompts` : remainingPrompts;
 
   const showGreeting = messages.length === 0 && !isThinking;
-  const headerSubtitle =
-    entryContext === 'rehab'
-      ? 'Your AI rehabilitation consultant • Recovery-first guidance'
-      : 'Your AI track and field coach • Always available';
-  const greetingTitle =
-    entryContext === 'rehab'
-      ? `Hi ${user?.name?.split(' ')[0] || 'there'}, let’s work through your recovery.`
-      : `Hi ${user?.name?.split(' ')[0] || 'there'}, how can I help you today?`;
-  const greetingSubtitle =
-    entryContext === 'rehab'
-      ? 'Share the injury, pain pattern, and timeline. I can help you structure a safer return-to-run plan.'
-      : 'Ask me about training plans, race preparation, injury rehabilitation, or nutrition advice.';
 
   const { isRefreshing, onRefresh } = usePullToRefresh(async () => {
     await Promise.all([
@@ -541,15 +503,6 @@ export const SprinthiaScreen: React.FC = () => {
       refreshUser(),
     ]);
   });
-
-  const handleBackPress = () => {
-    if (entryContext === 'rehab') {
-      goBackOrNavigateToScreen(navigation, 'Rehab');
-      return;
-    }
-
-    goBackOrNavigateToTab(navigation, 'Home');
-  };
 
   return (
     <View
@@ -564,13 +517,11 @@ export const SprinthiaScreen: React.FC = () => {
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
           <View style={styles.headerTopRow}>
             <TouchableOpacity
-              onPress={handleBackPress}
+              onPress={() => navigation.goBack()}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel={entryContext === 'rehab' ? 'Back to Rehabilitation' : 'Go back'}
             >
-              <ArrowLeft size={20} color="#fff" weight="bold" />
+              <FontAwesome5 name="chevron-left" size={16} color="#fff" />
             </TouchableOpacity>
             <View style={styles.titleGroup}>
               <Image source={poweredByAria} style={styles.poweredBy} resizeMode="contain" />
@@ -579,7 +530,7 @@ export const SprinthiaScreen: React.FC = () => {
 
           <View style={styles.headerBottomRow}>
             <Text color="muted" style={styles.subtitle} numberOfLines={1}>
-              {headerSubtitle}
+              Your AI track and field coach • Always available
             </Text>
 
             <View style={styles.headerControls}>
@@ -738,7 +689,7 @@ export const SprinthiaScreen: React.FC = () => {
             styles.messagesContent,
             {
               paddingBottom: getScreenContentBottomPadding(insets.bottom, {
-                includeBottomNav: false,
+                includeBottomNav: true,
                 extra: 80, // space for composer above tab bar
               }),
             },
@@ -757,13 +708,13 @@ export const SprinthiaScreen: React.FC = () => {
           {showGreeting && (
             <View style={styles.greetingCard}>
               <Text weight="semiBold" color="foreground" style={styles.greetingTitle}>
-                {greetingTitle}
+                Hi {user?.name?.split(' ')[0] || 'there'}, how can I help you today?
               </Text>
               <Text color="muted" style={styles.greetingSubtitle}>
-                {greetingSubtitle}
+                Ask me about training plans, race preparation, injury rehabilitation, or nutrition advice.
               </Text>
               <View style={styles.suggestionsGrid}>
-                {suggestionChips.map((s) => (
+                {suggestions.map((s) => (
                   <TouchableOpacity
                     key={s}
                     style={styles.suggestionGridItem}
@@ -859,7 +810,7 @@ export const SprinthiaScreen: React.FC = () => {
         <View
           style={[
             styles.inputWrapper,
-            { paddingBottom: insets.bottom + 12 },
+            { paddingBottom: getBottomNavOverlayHeight(insets.bottom) + 12 },
           ]}
         >
           <View style={styles.inputRow}>
@@ -982,7 +933,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     gap: theme.spacing.sm,
   },
   titleText: {

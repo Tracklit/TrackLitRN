@@ -21,7 +21,6 @@ import { Text } from '@/components/ui/Text';
 import { LinearGradient } from '@/components/LinearGradient';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { goBackOrNavigateToTab } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -139,19 +138,10 @@ export const RehabScreen: React.FC = () => {
     });
   };
 
-  const handleBackPress = () => {
-    goBackOrNavigateToTab(navigation, 'Home');
-  };
-
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBackPress}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Rehabilitation</Text>
@@ -194,12 +184,7 @@ export const RehabScreen: React.FC = () => {
           </Text>
           <TouchableOpacity
             style={styles.aiButton}
-            onPress={() =>
-              navigation.navigate('Sprinthia', {
-                entryContext: 'rehab',
-                initialPrompt: 'I need help building a rehab plan for my current injury.',
-              })
-            }
+            onPress={() => navigation.navigate('Sprinthia')}
             activeOpacity={0.8}
           >
             <LinearGradient

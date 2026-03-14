@@ -72,7 +72,6 @@ beforeEach(() => {
     logout: jest.fn(),
     continueAsGuest: jest.fn(),
     refreshUser: jest.fn(),
-    setUserAndPersist: jest.fn(),
   });
 });
 
@@ -81,84 +80,109 @@ function loadProgramEditorScreen() {
 }
 
 describe('ProgramEditorScreen', () => {
-  it('shows the loading skeleton while fetching the program', () => {
+  // ─── Loading / Error ───
+  it('shows loading while fetching program', () => {
     mockedApiRequest.mockImplementation(() => new Promise(() => {}));
     const Screen = loadProgramEditorScreen();
-    const { getByTestId } = render(<Screen />, { wrapper: Wrapper });
-
-    expect(getByTestId('program-editor-loading')).toBeTruthy();
+    const { getByText } = render(<Screen />, { wrapper: Wrapper });
+    expect(getByText('Loading program...')).toBeTruthy();
   });
 
-  it('shows error state with retry when fetch fails', async () => {
+  it('shows error with retry when fetch fails', async () => {
     mockedApiRequest.mockRejectedValue(new Error('fail'));
     const Screen = loadProgramEditorScreen();
-    const { findByText, findByLabelText } = render(<Screen />, { wrapper: Wrapper });
-
+    const { findByText } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByText('Unable to load program.')).toBeTruthy();
     expect(await findByText('Retry')).toBeTruthy();
-    expect(await findByLabelText('Go back')).toBeTruthy();
   });
 
-  it('pre-fills title, description and category from the program', async () => {
+  // ─── Form display ───
+  it('pre-fills title from program data', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
     const { findByDisplayValue } = render(<Screen />, { wrapper: Wrapper });
-
     expect(await findByDisplayValue('Editor Test Program')).toBeTruthy();
+  });
+
+  it('pre-fills description from program data', async () => {
+    mockedApiRequest.mockResolvedValue(mockProgram);
+    const Screen = loadProgramEditorScreen();
+    const { findByDisplayValue } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByDisplayValue('Test description')).toBeTruthy();
+  });
+
+  it('pre-fills category and level', async () => {
+    mockedApiRequest.mockResolvedValue(mockProgram);
+    const Screen = loadProgramEditorScreen();
+    const { findByDisplayValue } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByDisplayValue('sprint')).toBeTruthy();
+    expect(await findByDisplayValue('beginner')).toBeTruthy();
   });
 
-  it('shows the derived start date and session count summary', async () => {
+  it('pre-fills duration', async () => {
+    mockedApiRequest.mockResolvedValue(mockProgram);
+    const Screen = loadProgramEditorScreen();
+    const { findByDisplayValue } = render(<Screen />, { wrapper: Wrapper });
+    expect(await findByDisplayValue('14')).toBeTruthy();
+  });
+
+  it('shows "Program Editor" header', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
-
-    expect(await findByText('Jun 1, 2025')).toBeTruthy();
-    expect(await findByText(/14 days/)).toBeTruthy();
-  });
-
-  it('shows the editor header and section titles', async () => {
-    mockedApiRequest.mockResolvedValue(mockProgram);
-    const Screen = loadProgramEditorScreen();
-    const { findByText } = render(<Screen />, { wrapper: Wrapper });
-
     expect(await findByText('Program Editor')).toBeTruthy();
+  });
+
+  it('shows "Program Details" card title', async () => {
+    mockedApiRequest.mockResolvedValue(mockProgram);
+    const Screen = loadProgramEditorScreen();
+    const { findByText } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByText('Program Details')).toBeTruthy();
+  });
+
+  it('shows "Sessions" card title', async () => {
+    mockedApiRequest.mockResolvedValue(mockProgram);
+    const Screen = loadProgramEditorScreen();
+    const { findByText } = render(<Screen />, { wrapper: Wrapper });
     expect(await findByText('Sessions')).toBeTruthy();
   });
 
-  it('shows day labels across the calendar grid', async () => {
+  it('shows day labels (Sun-Sat)', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
-
     expect(await findByText('Sun')).toBeTruthy();
     expect(await findByText('Mon')).toBeTruthy();
     expect(await findByText('Sat')).toBeTruthy();
   });
 
-  it('shows Save button for editable programs', async () => {
+  // ─── Save button ───
+  it('shows Save button for owner of non-uploaded program', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
-
     expect(await findByText('Save')).toBeTruthy();
   });
 
-  it('shows uploaded programs as read-only with a web CTA', async () => {
+  it('hides Save button for uploaded programs', async () => {
     mockedUseRoute.mockReturnValue({ params: { id: 20 }, key: 'test', name: 'ProgramEditor' } as any);
     mockedApiRequest.mockResolvedValue(uploadedProgram);
     const Screen = loadProgramEditorScreen();
     const { findByText, queryByText } = render(<Screen />, { wrapper: Wrapper });
-
-    expect(await findByText('Program Editor')).toBeTruthy();
-    expect(await findByText('Read only')).toBeTruthy();
-    expect(await findByText('View on web')).toBeTruthy();
+    await findByText('Program Editor');
     expect(queryByText('Save')).toBeNull();
   });
 
-  it('shows read-only status for non-owners', async () => {
+  it('shows "View on web" button for uploaded programs', async () => {
+    mockedUseRoute.mockReturnValue({ params: { id: 20 }, key: 'test', name: 'ProgramEditor' } as any);
+    mockedApiRequest.mockResolvedValue(uploadedProgram);
+    const Screen = loadProgramEditorScreen();
+    const { findByText } = render(<Screen />, { wrapper: Wrapper });
+    expect(await findByText('View on web')).toBeTruthy();
+  });
+
+  // ─── Read-only badge for non-owners ───
+  it('shows "Read only" badge for non-owners', async () => {
     mockedUseAuth.mockReturnValue({
       user: { id: 999, name: 'Other' },
       isAuthenticated: true,
@@ -170,53 +194,56 @@ describe('ProgramEditorScreen', () => {
       logout: jest.fn(),
       continueAsGuest: jest.fn(),
       refreshUser: jest.fn(),
-      setUserAndPersist: jest.fn(),
     });
-    mockedApiRequest.mockResolvedValue(mockProgram);
 
+    mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
-
     expect(await findByText('Read only')).toBeTruthy();
   });
 
-  it('shows session summaries and rest days in the grid', async () => {
+  // ─── Session summaries ───
+  it('shows session summaries in grid cells', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
     const { findByText } = render(<Screen />, { wrapper: Wrapper });
-
-    expect(await findByText(/3x60m/)).toBeTruthy();
+    // Day 1 session should show the shortDistanceWorkout as summary
+    expect(await findByText('3x60m')).toBeTruthy();
+    // Day 3 rest session
     expect(await findByText('Rest day')).toBeTruthy();
   });
 
-  it('shows Add session for empty days', async () => {
+  it('shows "Add session" for empty days', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
     const { findAllByText } = render(<Screen />, { wrapper: Wrapper });
-
     const addCells = await findAllByText('Add session');
     expect(addCells.length).toBeGreaterThan(0);
   });
 
-  it('opens the day editor modal from an empty day', async () => {
+  // ─── Day editor modal ───
+  it('opens day editor modal when day cell is pressed', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
     const { findAllByText, findByText } = render(<Screen />, { wrapper: Wrapper });
 
+    // Press an empty day cell ("Add session")
     const addButtons = await findAllByText('Add session');
     fireEvent.press(addButtons[0]);
 
-    expect(await findByText('Day 2')).toBeTruthy();
-    expect(await findByText('Save Day')).toBeTruthy();
+    // Modal should show a day title
+    expect(await findByText(/Day \d+/)).toBeTruthy();
+    expect(await findByText('Save day')).toBeTruthy();
     expect(await findByText('Cancel')).toBeTruthy();
   });
 
-  it('pre-fills the day editor with the selected session data', async () => {
+  it('pre-fills day editor with existing session data', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
     const { findByText, findByDisplayValue } = render(<Screen />, { wrapper: Wrapper });
 
-    fireEvent.press(await findByText('Day 1 Speed'));
+    // Press on day 1 which has "3x60m" summary
+    fireEvent.press(await findByText('3x60m'));
 
     expect(await findByText('Day 1')).toBeTruthy();
     expect(await findByDisplayValue('Day 1 Speed')).toBeTruthy();
@@ -224,15 +251,13 @@ describe('ProgramEditorScreen', () => {
     expect(await findByDisplayValue('3x60m')).toBeTruthy();
   });
 
-  it('uses the back button action from the header', async () => {
+  // ─── Back button ───
+  it('back button calls goBack', async () => {
     mockedApiRequest.mockResolvedValue(mockProgram);
     const Screen = loadProgramEditorScreen();
-    const { findByLabelText } = render(<Screen />, { wrapper: Wrapper });
-
-    fireEvent.press(await findByLabelText('Go back'));
-
-    await waitFor(() => {
-      expect((global as any).__mockGoBack).toHaveBeenCalled();
-    });
+    const { findByText } = render(<Screen />, { wrapper: Wrapper });
+    // Our mock renders icon name as text
+    fireEvent.press(await findByText('arrow-left'));
+    expect((global as any).__mockGoBack).toHaveBeenCalled();
   });
 });

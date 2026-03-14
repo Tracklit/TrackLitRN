@@ -47,12 +47,7 @@ export type RootStackParamList = {
   Coaches: undefined;
   Athletes: undefined;
   MyAthletes: undefined;
-  Sprinthia:
-    | {
-        entryContext?: 'default' | 'rehab';
-        initialPrompt?: string;
-      }
-    | undefined;
+  Sprinthia: undefined;
   Rehab: undefined;
   RehabHamstringProgram: undefined;
   RehabFootProgram: undefined;
@@ -62,11 +57,6 @@ export type RootStackParamList = {
   SpikesProgress: undefined;
   Subscriptions: undefined;
   PhotoFinishAnalysis: { uri?: string; fileName?: string };
-  AdminPanelWebView:
-    | {
-        redirectPath?: string;
-      }
-    | undefined;
 };
 
 export type AuthStackParamList = {

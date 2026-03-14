@@ -23,7 +23,6 @@ import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import { goBackOrNavigateToScreen } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -158,14 +157,10 @@ export const HamstringRehabProgramScreen: React.FC = () => {
     Alert.alert('Phase Updated', `Moved to ${rehabProgram.phases[phaseIndex].name}. Please consult your physician or coach before advancing phases.`);
   };
 
-  const handleBackPress = () => {
-    goBackOrNavigateToScreen(navigation, 'Rehab');
-  };
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.headerBar}>
-        <TouchableOpacity style={styles.backBtn} onPress={handleBackPress} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
           <ArrowLeft size={18} color="#FFFFFF" weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hamstring Rehab</Text>

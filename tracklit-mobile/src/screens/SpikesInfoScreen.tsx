@@ -7,7 +7,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   CaretLeft,
   Lightning,
@@ -24,8 +23,6 @@ import { LinearGradient } from '@/components/LinearGradient';
 
 import { Text } from '@/components/ui/Text';
 import theme from '@/utils/theme';
-import type { RootStackParamList } from '@/navigation/types';
-import { goBackOrNavigateToScreen } from '@/navigation/appNavigation';
 
 const C = {
   orange: '#FF7A00',
@@ -114,10 +111,7 @@ const TIERS: Tier[] = [
 
 export const SpikesInfoScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const handleBackPress = () => {
-    goBackOrNavigateToScreen(navigation, 'Spikes');
-  };
+  const navigation = useNavigation();
 
   return (
     <LinearGradient
@@ -127,10 +121,8 @@ export const SpikesInfoScreen: React.FC = () => {
     >
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
-          onPress={handleBackPress}
+          onPress={() => navigation.goBack()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
         >
           <CaretLeft size={22} color="#fff" weight="bold" />
         </TouchableOpacity>

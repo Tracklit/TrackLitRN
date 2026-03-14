@@ -8,13 +8,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from 'react-native';
 import {
   NavigationContainer,
   createNavigationContainerRef,
   type NavigationState,
   type PartialState,
-  type NavigationProp,
 } from '@react-navigation/native';
 import { createBottomTabNavigator, type BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -44,7 +44,6 @@ import {
   ArrowLeft,
   X,
   UserCircle,
-  type Icon,
 } from 'phosphor-react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -106,9 +105,7 @@ import { ExerciseLibraryScreen } from './src/screens/ExerciseLibraryScreen';
 import { ExerciseLibraryAddScreen } from './src/screens/ExerciseLibraryAddScreen';
 import { VelocityTrackerScreen } from './src/screens/VelocityTrackerScreen';
 import { SprintTimePredictionScreen } from './src/screens/SprintTimePredictionScreen';
-import { AdminPanelWebViewScreen } from './src/screens/AdminPanelWebViewScreen';
 import type { TabParamList, RootStackParamList, AuthStackParamList } from './src/navigation/types';
-import { navigateToTab } from './src/navigation/appNavigation';
 import { queryClient } from './src/lib/queryClient';
 
 import theme from './src/utils/theme';
@@ -117,10 +114,7 @@ import { OnboardingOverlay } from './src/onboarding/OnboardingOverlay';
 const Tab = createBottomTabNavigator<TabParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
-type DrawerParamList = {
-  AppStack: undefined;
-};
-const Drawer = createDrawerNavigator<DrawerParamList>();
+const Drawer = createDrawerNavigator();
 const navigationRef = createNavigationContainerRef();
 const TAB_ROUTE_NAMES = new Set(['Home', 'Practice', 'Programs', 'Feed', 'Tools', 'Profile']);
 const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
@@ -165,7 +159,6 @@ const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'SpikesInfo',
   'SpikesProgress',
   'Subscriptions',
-  'AdminPanelWebView',
 ]);
 
 type AnyNavState = NavigationState | PartialState<NavigationState>;
@@ -204,19 +197,24 @@ type HomeTabProps = BottomTabScreenProps<TabParamList, 'Home'>;
 const HomeTabScreen: React.FC<HomeTabProps> = ({ navigation }) => (
   <HomeScreen
     onNavigate={(routeName) => {
-      const rootNavigation = navigation.getParent<NavigationProp<RootStackParamList>>();
-      if (!rootNavigation) {
+      // Some destinations are now stack screens (not bottom tabs).
+      if (routeName === 'Marketplace') {
+        (navigation.getParent() as any)?.navigate?.('Marketplace');
         return;
       }
-
-      if (routeName === 'Marketplace' || routeName === 'Chat' || routeName === 'Notifications' || routeName === 'Sprinthia' || routeName === 'Rehab' || routeName === 'Spikes') {
-        rootNavigation.navigate(routeName);
+      if (routeName === 'Chat') {
+        (navigation.getParent() as any)?.navigate?.('Chat');
         return;
       }
-
-      if (TAB_ROUTE_NAMES.has(routeName)) {
-        navigateToTab(rootNavigation, routeName as keyof TabParamList);
+      if (routeName === 'Notifications') {
+        (navigation.getParent() as any)?.navigate?.('Notifications');
+        return;
       }
+      if (routeName === 'Sprinthia') {
+        (navigation.getParent() as any)?.navigate?.('Sprinthia');
+        return;
+      }
+      navigation.navigate(routeName as keyof TabParamList);
     }}
   />
 );
@@ -287,7 +285,6 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="SpikesInfo" component={SpikesInfoScreen} />
     <RootStack.Screen name="SpikesProgress" component={SpikesProgressScreen} />
     <RootStack.Screen name="Subscriptions" component={SubscriptionsScreen} />
-    <RootStack.Screen name="AdminPanelWebView" component={AdminPanelWebViewScreen} />
   </RootStack.Navigator>
 );
 
@@ -297,6 +294,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const isGuest = user?.id === 'guest';
   const isCoach = (user as any)?.isCoach === true;
   const isAdmin = (user as any)?.role === 'admin';
+
   const navigateIntoAppStack = (params: any) => {
     (props.navigation as any).navigate('AppStack', params);
     props.navigation.closeDrawer();
@@ -304,13 +302,12 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
   type MenuItem = {
     label: string;
-    IconComponent: Icon;
+    IconComponent: React.ComponentType<{ size?: number; color?: string; weight?: string }>;
     onPress?: () => void;
     disabled?: boolean;
     comingSoon?: boolean;
     requiresCoach?: boolean;
     requiresAdmin?: boolean;
-    destructive?: boolean;
   };
 
   const MenuRow: React.FC<MenuItem> = ({
@@ -319,14 +316,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     onPress,
     disabled,
     comingSoon,
-    destructive,
   }) => {
-    const iconColor = disabled
-      ? theme.colors.muted
-      : destructive
-        ? theme.colors.destructive
-        : theme.colors.sidebarForeground;
-
     const content = (
       <View
         style={[
@@ -338,7 +328,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <View style={styles.menuRowIcon}>
             <IconComponent
               size={14}
-              color={iconColor}
+              color={disabled ? theme.colors.muted : theme.colors.sidebarForeground}
               weight="fill"
             />
           </View>
@@ -346,7 +336,6 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             variant="small"
             weight="medium"
             color={disabled ? 'muted' : 'foreground'}
-            style={destructive && !disabled ? styles.menuRowTextDestructive : undefined}
           >
             {label}
           </Text>
@@ -513,11 +502,10 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Admin Panel',
           IconComponent: ShieldCheck,
           requiresAdmin: true,
-          onPress: () =>
-            navigateIntoAppStack({
-              screen: 'AdminPanelWebView',
-              params: { redirectPath: '/admin-panel' },
-            }),
+          onPress: () => {
+            props.navigation.closeDrawer();
+            Linking.openURL('https://app-tracklit-prod-tnrusd.azurewebsites.net/admin-panel');
+          },
         },
       ],
     },
@@ -577,52 +565,67 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         </TouchableOpacity>
       </View>
       <ScrollView
-        style={styles.drawerScrollView}
-        contentContainerStyle={styles.drawerScroll}
+        contentContainerStyle={[
+          styles.drawerScroll,
+          {
+            paddingBottom: Math.max(insets.bottom, theme.spacing.lg),
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        {sections.map((section) => {
-          const filteredItems = section.items.filter((item) => {
-            if (item.comingSoon) return false;
-            if (item.requiresCoach && !isCoach) return false;
-            if (item.requiresAdmin && !isAdmin) return false;
-            return true;
-          });
 
-          if (!filteredItems.length) return null;
+      {sections.map((section) => {
+        const filteredItems = section.items.filter((item) => {
+          if (item.comingSoon) return false;
+          if (item.requiresCoach && !isCoach) return false;
+          if (item.requiresAdmin && !isAdmin) return false;
+          return true;
+        });
 
-          return (
-            <View style={styles.drawerSection} key={section.title}>
-              <Text variant="small" color="muted" style={styles.drawerSectionLabel}>
-                {section.title}
+        if (!filteredItems.length) return null;
+
+        return (
+          <View style={styles.drawerSection} key={section.title}>
+        <Text variant="small" color="muted" style={styles.drawerSectionLabel}>
+              {section.title}
+        </Text>
+            {filteredItems.map((item) => (
+              <MenuRow key={item.label} {...item} />
+            ))}
+      </View>
+        );
+      })}
+
+      </ScrollView>
+      <View style={styles.drawerFooter}>
+        <TouchableOpacity
+          onPress={() => logout()}
+          activeOpacity={0.7}
+        >
+          <View style={styles.menuRow}>
+            <View style={styles.menuRowLeft}>
+              <View style={styles.menuRowIcon}>
+                <SignOut
+                  size={14}
+                  color={theme.colors.destructive}
+                  weight="fill"
+                />
+              </View>
+              <Text
+                variant="small"
+                weight="medium"
+                style={{ color: theme.colors.destructive }}
+              >
+                {isGuest ? 'Exit Guest' : 'Sign Out'}
               </Text>
-              {filteredItems.map((item) => (
-                <MenuRow key={item.label} {...item} />
-              ))}
             </View>
-          );
-        })}
-
+          </View>
+        </TouchableOpacity>
         {isGuest && (
           <Text variant="small" color="muted" style={styles.drawerGuestNote}>
             Guest mode limits community, chat, and posting features.
           </Text>
         )}
-      </ScrollView>
-      <View
-        style={[
-          styles.drawerFooter,
-          {
-            paddingBottom: Math.max(insets.bottom, theme.spacing.md),
-          },
-        ]}
-      >
-        <MenuRow
-          label={isGuest ? 'Exit Guest' : 'Sign Out'}
-          IconComponent={SignOut}
-          destructive
-          onPress={() => logout()}
-        />
       </View>
     </View>
   );
@@ -635,6 +638,7 @@ const DrawerNavigator: React.FC = () => (
       drawerType: 'front',
       swipeEnabled: false,
       overlayColor: 'rgba(0,0,0,0.6)',
+      sceneContainerStyle: { backgroundColor: 'transparent' },
       drawerStyle: {
         width: '60%',
         backgroundColor: '#1a1a1a',
@@ -783,11 +787,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  drawerScrollView: {
-    flex: 1,
-  },
   drawerScroll: {
-    paddingBottom: theme.spacing.sm,
+    flexGrow: 1,
   },
   drawerHeader: {
     paddingHorizontal: theme.spacing.lg,
@@ -836,18 +837,19 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.lg,
   },
+  drawerFooter: {
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    paddingTop: theme.spacing.sm,
+  },
   drawerGuestNote: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
     lineHeight: 18,
-  },
-  drawerFooter: {
-    backgroundColor: '#1a1a1a',
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-    marginTop: 'auto',
-    paddingTop: theme.spacing.sm,
   },
   menuRowTouchable: {
   },
@@ -869,9 +871,6 @@ const styles = StyleSheet.create({
   },
   menuRowDisabled: {
     opacity: 0.4,
-  },
-  menuRowTextDestructive: {
-    color: theme.colors.destructive,
   },
   comingSoonPill: {
     paddingHorizontal: theme.spacing.sm,

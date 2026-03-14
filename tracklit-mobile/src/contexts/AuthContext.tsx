@@ -4,13 +4,12 @@ import React, {
   useState,
   useEffect,
   useCallback,
-  useRef,
   ReactNode,
 } from 'react';
 import { Linking } from 'react-native';
 
 import { apiRequest } from '@/lib/api';
-import {
+import { 
   getToken, 
   setToken, 
   clearAuthStorage, 
@@ -19,7 +18,6 @@ import {
   debugAuthStorage,
   clearStoredUser,
 } from '@/lib/tokenStorage';
-import { getQueryParam } from '@/utils/url';
 
 const DEBUG_AUTH = __DEV__;
 
@@ -81,7 +79,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasValidToken, setHasValidToken] = useState(false);
-  const authRequestIdRef = useRef(0);
 
   const setUserAndPersist = useCallback(async (nextUser: User | null) => {
     setUser(nextUser);
@@ -93,21 +90,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   // Fetch user from API (validates token)
-  const fetchUser = useCallback(async (tokenOverride?: string | null) => {
-    const requestId = ++authRequestIdRef.current;
-
+  const fetchUser = useCallback(async () => {
     if (DEBUG_AUTH) {
-      console.log('[AUTH] Starting fetchUser...', {
-        requestId,
-        hasTokenOverride: !!tokenOverride,
-      });
+      console.log('[AUTH] Starting fetchUser...');
     }
     
     try {
       // First check if we have a stored token
-      const token = tokenOverride ?? await getToken();
-
-      const isStaleRequest = () => authRequestIdRef.current !== requestId;
+      const token = await getToken();
       
       if (DEBUG_AUTH) {
         console.log('[AUTH] Token exists:', !!token, token ? `${token.substring(0, 20)}...` : 'none');
@@ -116,10 +106,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (!token) {
         // No token - check if there's a stored user
         const storedUser = await getStoredUser();
-
-        if (isStaleRequest()) {
-          return;
-        }
         
         if (storedUser && storedUser.id === 'guest') {
           // Guest user doesn't need a token
@@ -144,6 +130,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(null);
           setHasValidToken(false);
         }
+        setIsLoading(false);
         return;
       }
 
@@ -159,10 +146,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           Pragma: 'no-cache',
         },
       });
-
-      if (isStaleRequest()) {
-        return;
-      }
       
       if (DEBUG_AUTH) {
         console.log('[AUTH] Token valid, user:', response.id, response.username);
@@ -173,10 +156,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Update stored user data
       await setStoredUser(response);
     } catch (error) {
-      if (authRequestIdRef.current !== requestId) {
-        return;
-      }
-
       if (DEBUG_AUTH) {
         console.log('[AUTH] Token validation failed:', error);
       }
@@ -185,20 +164,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       setHasValidToken(false);
     } finally {
-      if (authRequestIdRef.current === requestId) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   }, []);
+
+  // Initialize auth state on mount
+  useEffect(() => {
+    // Debug: Check what's in storage
+    if (DEBUG_AUTH) {
+      debugAuthStorage();
+    }
+    fetchUser();
+  }, [fetchUser]);
 
   const loginWithToken = useCallback(async (token: string) => {
     try {
       if (!token) return false;
-      setIsLoading(true);
       await setToken(token);
       setHasValidToken(true);
       // Validate token & populate user
-      await fetchUser(token);
+      await fetchUser();
       return true;
     } catch (error) {
       console.error('[AUTH] loginWithToken failed:', error);
@@ -210,9 +195,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const handleUrl = async (url: string | null) => {
       if (!url) return;
-      const token = getQueryParam(url, 'token');
-      if (token) {
-        await loginWithToken(token);
+      try {
+        const parsed = new URL(url);
+        const token = parsed.searchParams.get('token');
+        if (token) {
+          await loginWithToken(token);
+        }
+      } catch {
+        // ignore invalid URLs
       }
     };
 
@@ -220,15 +210,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const sub = Linking.addEventListener('url', (event) => handleUrl(event.url));
     return () => sub.remove();
   }, [loginWithToken]);
-
-  // Initialize auth state on mount
-  useEffect(() => {
-    // Debug: Check what's in storage
-    if (DEBUG_AUTH) {
-      debugAuthStorage();
-    }
-    fetchUser();
-  }, [fetchUser]);
 
   const login = useCallback(async (usernameOrEmail: string, password: string) => {
     if (DEBUG_AUTH) {

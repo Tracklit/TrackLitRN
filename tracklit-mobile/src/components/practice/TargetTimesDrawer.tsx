@@ -216,12 +216,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
               <Timer size={20} color={COLORS.accent} weight="fill" />
               <Text style={styles.drawerTitle}>Target Times</Text>
             </View>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close target times"
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <X size={14} color={COLORS.textSecondary} weight="bold" />
             </TouchableOpacity>
           </View>
@@ -301,7 +296,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                         timingMethod === method && styles.toggleTextActive,
                       ]}
                     >
-                      {method === 'reaction' ? 'Reaction' : method === 'firstFoot' ? 'First Foot' : 'On Movement'}
+                      {method === 'reaction' ? 'Reaction' : method === 'firstFoot' ? 'First Foot' : 'Movement'}
                     </Text>
                   </TouchableOpacity>
                 ))}

@@ -4,7 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Text as RNText,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -22,7 +21,6 @@ import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import { goBackOrNavigateToTab } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -42,20 +40,12 @@ export const SpikesScreen: React.FC = () => {
   const navigation = useNavigation<Navigation>();
   const { user } = useAuth();
   const spikesBalance = Number((user as any)?.spikes ?? 0);
-  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false });
-  const handleBackPress = () => {
-    goBackOrNavigateToTab(navigation, 'Home');
-  };
+  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBackPress}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <CaretLeft size={18} color={C.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Spikes</Text>
@@ -73,9 +63,7 @@ export const SpikesScreen: React.FC = () => {
           <View style={styles.balanceIconWrap}>
             <Lightning size={28} color={C.orange} weight="fill" />
           </View>
-          <RNText allowFontScaling={false} style={styles.balanceValue}>
-            {spikesBalance.toLocaleString()}
-          </RNText>
+          <Text style={styles.balanceValue}>{spikesBalance.toLocaleString()}</Text>
           <Text style={styles.balanceLabel}>Spikes</Text>
           <Text style={styles.balanceSub}>
             Earn spikes by training, competing, and staying active.
@@ -87,8 +75,6 @@ export const SpikesScreen: React.FC = () => {
             style={styles.card}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('SpikesInfo')}
-            accessibilityRole="button"
-            accessibilityLabel="Learn about Spikes"
           >
             <View style={styles.cardIconWrap}>
               <Info size={22} color={C.orange} weight="fill" />
@@ -106,8 +92,6 @@ export const SpikesScreen: React.FC = () => {
             style={styles.card}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('SpikesProgress')}
-            accessibilityRole="button"
-            accessibilityLabel="View My Progress"
           >
             <View style={styles.cardIconWrap}>
               <ChartLineUp size={22} color={C.orange} weight="fill" />
@@ -193,7 +177,6 @@ const styles = StyleSheet.create({
   },
   balanceValue: {
     fontSize: 42,
-    lineHeight: 50,
     fontWeight: '700',
     color: C.textPrimary,
     letterSpacing: -1,

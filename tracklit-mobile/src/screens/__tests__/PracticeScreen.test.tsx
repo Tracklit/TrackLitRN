@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -81,32 +81,39 @@ beforeEach(() => {
     logout: jest.fn(),
     continueAsGuest: jest.fn(),
     refreshUser: jest.fn(),
-    setUserAndPersist: jest.fn(),
   });
 });
 
+// Lazy-import PracticeScreen to pick up fresh mocks each time
 function loadPracticeScreen() {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   return require('../PracticeScreen').PracticeScreen;
 }
 
 describe('PracticeScreen', () => {
-  it('shows the program picker trigger', () => {
+  // ─── Render states ───
+  it('shows "Practice" header', async () => {
     mockedApiRequest.mockResolvedValue([]);
     const PracticeScreen = loadPracticeScreen();
     const { getByText } = render(<PracticeScreen />, { wrapper: Wrapper });
-
-    expect(getByText('Assign Program')).toBeTruthy();
+    expect(getByText('Practice')).toBeTruthy();
   });
 
-  it('shows the target times FAB button', () => {
+  it('shows "Your Programs" button', async () => {
     mockedApiRequest.mockResolvedValue([]);
     const PracticeScreen = loadPracticeScreen();
     const { getByText } = render(<PracticeScreen />, { wrapper: Wrapper });
+    expect(getByText('Your Programs')).toBeTruthy();
+  });
 
+  it('shows target times FAB button with % text', async () => {
+    mockedApiRequest.mockResolvedValue([]);
+    const PracticeScreen = loadPracticeScreen();
+    const { getByText } = render(<PracticeScreen />, { wrapper: Wrapper });
     expect(getByText('%')).toBeTruthy();
   });
 
-  it('shows empty state when no programs are assigned to a guest user', () => {
+  it('shows empty state when no programs (guest user)', async () => {
     mockedUseAuth.mockReturnValue({
       user: { id: 'guest', name: 'Guest' },
       isAuthenticated: true,
@@ -118,16 +125,14 @@ describe('PracticeScreen', () => {
       logout: jest.fn(),
       continueAsGuest: jest.fn(),
       refreshUser: jest.fn(),
-      setUserAndPersist: jest.fn(),
     });
 
     const PracticeScreen = loadPracticeScreen();
     const { getByText } = render(<PracticeScreen />, { wrapper: Wrapper });
-
     expect(getByText('No training program assigned')).toBeTruthy();
   });
 
-  it('shows the empty assigned-program state when no purchases are available', async () => {
+  it('shows empty state when no purchased programs (authenticated)', async () => {
     mockedApiRequest.mockResolvedValue([]);
     const PracticeScreen = loadPracticeScreen();
     const { getByText } = render(<PracticeScreen />, { wrapper: Wrapper });
@@ -137,28 +142,37 @@ describe('PracticeScreen', () => {
     });
   });
 
-  it('auto-selects the first assigned program when programs load', async () => {
+  // ─── Program selection ───
+  it('auto-selects first program when loaded', async () => {
+    // First call: purchased-programs, subsequent calls: program sessions API
     mockedApiRequest
       .mockResolvedValueOnce(mockPrograms)
       .mockResolvedValue({ sessions: [] });
 
     const PracticeScreen = loadPracticeScreen();
-    const { findByText } = render(<PracticeScreen />, { wrapper: Wrapper });
+    const { getByText } = render(<PracticeScreen />, { wrapper: Wrapper });
 
-    expect(await findByText('No workout sessions available')).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText('No workout sessions available')).toBeTruthy();
+    });
   });
 
-  it('renders assigned programs inside the picker dropdown content', async () => {
-    mockedApiRequest
-      .mockResolvedValueOnce(mockPrograms)
-      .mockResolvedValue({ sessions: [] });
+  it('opens ProgramPickerModal when "Your Programs" pressed', async () => {
+    mockedApiRequest.mockResolvedValue([]);
     const PracticeScreen = loadPracticeScreen();
-    const { findAllByText } = render(<PracticeScreen />, { wrapper: Wrapper });
+    const { getByText } = render(<PracticeScreen />, { wrapper: Wrapper });
 
-    expect((await findAllByText('Distance Plan')).length).toBeGreaterThan(0);
+    fireEvent.press(getByText('Your Programs'));
+    // The modal with "Your Programs" as title should now be visible
+    await waitFor(() => {
+      expect(getByText('Select a training program to view or switch between your assigned programs.')).toBeTruthy();
+    });
   });
 
-  it('does not render unmatched historical sessions as the current workout', async () => {
+  // ─── Content rendering ───
+  it('shows "Rest Day" when session data is null', async () => {
+    // Provide sessions that exist but won't match any current dates,
+    // so workoutCards are built but findSessionForDate returns null for each card
     const sessionsWithUnmatchedDates = {
       sessions: [
         { id: 1, date: 'Jan-1', dayNumber: 1, title: 'Old Session' },
@@ -169,59 +183,81 @@ describe('PracticeScreen', () => {
       .mockResolvedValue(sessionsWithUnmatchedDates);
 
     const PracticeScreen = loadPracticeScreen();
-    const { queryByText } = render(<PracticeScreen />, { wrapper: Wrapper });
+    const { findAllByText } = render(<PracticeScreen />, { wrapper: Wrapper });
 
-    await waitFor(() => {
-      expect(queryByText('Old Session')).toBeNull();
-    });
+    // With sessions present but no date matches, cards show "Rest Day"
+    const restDays = await findAllByText('Rest Day');
+    expect(restDays.length).toBeGreaterThan(0);
   });
 
-  it('shows the no-sessions card when the selected program has no sessions', async () => {
+  it('shows "No workout sessions available" when sessions empty', async () => {
     mockedApiRequest
       .mockResolvedValueOnce(mockPrograms)
       .mockResolvedValue({ sessions: [] });
 
     const PracticeScreen = loadPracticeScreen();
     const { findByText } = render(<PracticeScreen />, { wrapper: Wrapper });
-
     expect(await findByText('No workout sessions available')).toBeTruthy();
   });
 
-  it('shows the text-based program title and content', async () => {
+  // ─── Text-based program ───
+  it('shows text content card when program is text-based', async () => {
     mockedApiRequest.mockResolvedValueOnce(mockTextProgram);
 
     const PracticeScreen = loadPracticeScreen();
-    const { findAllByText, findByText } = render(<PracticeScreen />, { wrapper: Wrapper });
+    const { findByText } = render(<PracticeScreen />, { wrapper: Wrapper });
 
-    expect((await findAllByText('Text Program')).length).toBeGreaterThan(0);
+    expect(await findByText('Program Content')).toBeTruthy();
     expect(await findByText('Week 1: Run 5km daily')).toBeTruthy();
   });
 
-  it('shows the uploaded program in the embedded document viewer', async () => {
+  it('shows scroll instruction note for text programs', async () => {
+    mockedApiRequest.mockResolvedValueOnce(mockTextProgram);
+
+    const PracticeScreen = loadPracticeScreen();
+    const { findByText } = render(<PracticeScreen />, { wrapper: Wrapper });
+
+    expect(
+      await findByText(/Scroll through the content above/)
+    ).toBeTruthy();
+  });
+
+  // ─── Uploaded program ───
+  it('shows document card when program is uploaded', async () => {
     mockedApiRequest.mockResolvedValueOnce(mockUploadedProgram);
 
     const PracticeScreen = loadPracticeScreen();
-    const { findAllByText, findByText, getByTestId } = render(<PracticeScreen />, { wrapper: Wrapper });
+    const { findByText } = render(<PracticeScreen />, { wrapper: Wrapper });
 
-    expect((await findAllByText('Uploaded Program')).length).toBeGreaterThan(0);
-    expect(await findByText('Loading document...')).toBeTruthy();
-    expect(getByTestId('webview')).toBeTruthy();
+    expect(await findByText('Program Document')).toBeTruthy();
   });
 
-  it('shows View Available Programs in the empty state', async () => {
+  it('shows "open on web" note for uploaded programs', async () => {
+    mockedApiRequest.mockResolvedValueOnce(mockUploadedProgram);
+
+    const PracticeScreen = loadPracticeScreen();
+    const { findByText } = render(<PracticeScreen />, { wrapper: Wrapper });
+
+    expect(
+      await findByText(/Open the document on web/)
+    ).toBeTruthy();
+  });
+
+  // ─── View Available Programs button in empty state ───
+  it('shows View Available Programs button in empty state', async () => {
     mockedApiRequest.mockResolvedValue([]);
     const PracticeScreen = loadPracticeScreen();
     const { getByText } = render(<PracticeScreen />, { wrapper: Wrapper });
-
     await waitFor(() => {
       expect(getByText('View Available Programs')).toBeTruthy();
     });
   });
 
+  // ─── Loading state ───
   it('shows loading state while fetching sessions', async () => {
     mockedApiRequest
       .mockResolvedValueOnce(mockPrograms)
-      .mockImplementation(() => new Promise(() => {}));
+      .mockImplementation(() => new Promise(() => {})); // Never resolves
 
     const PracticeScreen = loadPracticeScreen();
     const { findByText } = render(<PracticeScreen />, { wrapper: Wrapper });
