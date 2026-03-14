@@ -26,7 +26,9 @@ The Tracklit mobile app is built using React Native (Expo SDK 54) with TypeScrip
 - **Stopwatch:** Enhanced accuracy using `Date.now()` and optional volume-up button control.
 - **Profile Screens:** A unified design for public and personal profiles, featuring a dark aesthetic, stadium hero backgrounds, gradient borders, glass summary panels, and editable personal bests/season bests.
 - **Onboarding & Authentication:** Redesigned with a dark AAA theme, orange accents, and social authentication options.
-- **Program Management:** Features for creating, editing, and assigning training programs with a calendar view, session editing, program duplication, and day-swap reordering (long-press to select, tap to swap).
+- **Program Management:** Features for creating, editing, and assigning training programs with a calendar view, session editing, program duplication, and day-swap reordering (long-press to select, tap to swap). Programs page supports card/list view toggle (SquaresFour/List icons). PracticeScreen has a dynamic scrolling program picker that sticks to the top of the page and collapses/reappears on scroll.
+- **Sprinthia (AI Assistant) Context:** Accepts optional `entryContext` param (`'rehab'` or `'default'`) and `initialPrompt`. Rehab entry shows `REHAB_SUGGESTIONS` focused on injury recovery.
+- **AdminPanelWebViewScreen:** Opens the Azure admin panel (`/admin-panel`) in a full-screen WebView. Navigated via `AdminPanelWebView` route in the RootStack.
 - **Ticker/Feed:** Displays a horizontal carousel of notifications and messages with interactive elements like liking and saving to a journal.
 - **Chat:** Telegram-style chat interface with dark themes, merged group/DM views, and expressive icons.
 
@@ -81,6 +83,8 @@ The `ProgramCreateScreen` offers 4 methods: Import/Upload (navigates to ProgramI
 
 ## Navigation Utilities
 - **ScreenTabBar** (`src/components/ScreenTabBar.tsx`): Reusable bottom tab bar component for RootStack screens that are not tabs. Used on Rehab and Spikes screens. Navigates via `navigation.navigate('MainTabs', { screen: tab })`. Drawer button uses `DrawerActions.openDrawer()`.
+- **MainScreenHeader** (`src/components/MainScreenHeader.tsx`): Consistent top navigation bar shown on main tab screens (Practice, Programs, Feed, Tools). Shows notification badge (Bell) and unread message count (PaperPlaneTilt). Uses `paddingTop: insets.top` and renders inside ScreenHeader.
+- **appNavigation.ts** (`src/navigation/appNavigation.ts`): Navigation utility functions — `navigateToTab`, `goBackOrNavigateToTab`, `goBackOrNavigateToScreen`. Used by screens to navigate between tabs/stack screens safely.
 
 ## Settings Screen
 - Account Details: Full Name, Username, Email, Change Password

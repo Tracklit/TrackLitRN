@@ -36,7 +36,7 @@ export const IntervalTimerScreen: React.FC = () => {
   const [currentInterval, setCurrentInterval] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -411,4 +411,3 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
 });
-

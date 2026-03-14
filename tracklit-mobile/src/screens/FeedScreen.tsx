@@ -17,12 +17,13 @@ import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { PencilSimpleLine, Heart, ChatCircle, ArrowLeft, Book } from 'phosphor-react-native';
+import { PencilSimpleLine, Heart, ChatCircle, Book } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
+import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
@@ -400,19 +401,7 @@ export const FeedScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.md }]}>
-        <InlineRefreshHeader visible={isRefreshing} />
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <ArrowLeft size={22} color="#e2e8f0" weight="bold" />
-        </TouchableOpacity>
-        <Text variant="body" weight="semiBold" color="foreground">
-          Feed
-        </Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <MainScreenHeader />
 
       <View style={styles.filterRow}>
         <TouchableOpacity
@@ -594,13 +583,6 @@ export const FeedScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.sm,
   },
   filterRow: {
     flexDirection: 'row',
