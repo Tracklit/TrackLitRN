@@ -71,7 +71,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   return (
     <View style={[avatarStyle, styles.fallback]}>
       {initials ? (
-        <Text variant={textSize} weight="medium" color="primaryForeground">
+        <Text variant={textSize} weight="medium" color="primary-foreground">
           {initials}
         </Text>
       ) : (

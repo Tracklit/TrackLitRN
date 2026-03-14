@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -25,6 +26,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import theme from '@/utils/theme';
+import type { RootStackParamList } from '@/navigation/types';
+import { goBackOrNavigateToScreen } from '@/navigation/appNavigation';
 
 const C = {
   orange: '#FF7A00',
@@ -59,7 +62,7 @@ interface UserAchievement {
 
 export const SpikesProgressScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, isAuthenticated, refreshUser } = useAuth();
   const isGuest = user?.id === 'guest';
   const spikesBalance = Number((user as any)?.spikes ?? 0);
@@ -96,6 +99,9 @@ export const SpikesProgressScreen: React.FC = () => {
 
   const completedCount = achievements.filter((a) => a.isCompleted).length;
   const proProgress = Math.min((spikesBalance / 1000) * 100, 100);
+  const handleBackPress = () => {
+    goBackOrNavigateToScreen(navigation, 'Spikes');
+  };
 
   return (
     <LinearGradient
@@ -105,8 +111,10 @@ export const SpikesProgressScreen: React.FC = () => {
     >
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={handleBackPress}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <CaretLeft size={22} color="#fff" weight="bold" />
         </TouchableOpacity>

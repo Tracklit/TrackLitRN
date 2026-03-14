@@ -24,6 +24,7 @@ import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { SkeletonListRows } from '@/components/Skeleton';
 import theme from '../utils/theme';
+import { goBackOrNavigateToTab } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -48,7 +49,10 @@ export const MeetsScreen: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
   const [filter, setFilter] = useState<MeetFilter>('upcoming');
-  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
+  const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false });
+  const handleBackPress = () => {
+    goBackOrNavigateToTab(navigation, 'Home');
+  };
 
   // Fetch meets
   const meetsQuery = useQuery({
@@ -122,7 +126,7 @@ export const MeetsScreen: React.FC = () => {
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} />
         </TouchableOpacity>
         <Text variant="h3" weight="bold" color="foreground">
@@ -402,4 +406,3 @@ const styles = StyleSheet.create({
     ...theme.shadows.lg,
   },
 });
-

@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  Modal,
 } from 'react-native';
 import { ClipboardText, CheckCircle, CaretDown } from 'phosphor-react-native';
 
@@ -33,6 +34,18 @@ interface ProgramPickerDropdownProps {
   isLoading?: boolean;
 }
 
+interface ProgramPickerModalProps extends ProgramPickerDropdownProps {
+  visible?: boolean;
+  onClose: () => void;
+}
+
+const sortPrograms = (programs: PurchasedProgramItem[]) =>
+  [...programs].sort((a, b) => {
+    const titleA = (a.program?.title || '').toLowerCase();
+    const titleB = (b.program?.title || '').toLowerCase();
+    return titleA.localeCompare(titleB);
+  });
+
 export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   programs,
   selectedProgramId,
@@ -42,20 +55,7 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const animValue = useRef(new Animated.Value(0)).current;
 
-  const sortedPrograms = useMemo(() => {
-    const sorted = [...programs].sort((a, b) => {
-      const titleA = (a.program?.title || '').toLowerCase();
-      const titleB = (b.program?.title || '').toLowerCase();
-      return titleA.localeCompare(titleB);
-    });
-    console.warn('[Dropdown] Sorted programs:', sorted.map((p, i) => ({
-      index: i,
-      purchaseId: p.id,
-      programId: p.programId,
-      title: p.program?.title,
-    })));
-    return sorted;
-  }, [programs]);
+  const sortedPrograms = useMemo(() => sortPrograms(programs), [programs]);
 
   const selectedTitle = useMemo(() => {
     if (!selectedProgramId || programs.length === 0) return 'Assign Program';
@@ -77,11 +77,6 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   });
 
   const handleSelect = (assignment: PurchasedProgramItem) => {
-    console.warn('[Dropdown] User tapped program:', {
-      purchaseId: assignment.id,
-      programId: assignment.programId,
-      title: assignment.program?.title,
-    });
     onSelect(assignment);
     setIsOpen(false);
   };
@@ -165,9 +160,110 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   );
 };
 
+export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
+  visible = true,
+  onClose,
+  programs,
+  selectedProgramId,
+  onSelect,
+  isLoading,
+}) => {
+  const sortedPrograms = useMemo(() => sortPrograms(programs), [programs]);
+
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalCard}>
+          <Text variant="body" weight="semiBold" color="foreground">
+            Your Programs
+          </Text>
+          <Text variant="small" color="muted" style={styles.modalSubtitle}>
+            Select a training program to view or switch between your assigned programs.
+          </Text>
+
+          {isLoading ? (
+            <View style={styles.loadingState}>
+              <Text variant="small" color="muted">Loading programs...</Text>
+            </View>
+          ) : sortedPrograms.length > 0 ? (
+            <View style={styles.programList}>
+              {sortedPrograms.map((assignment, idx) => {
+                const isSelected = String(selectedProgramId) === String(assignment.id);
+                return (
+                  <TouchableOpacity
+                    key={`${assignment.id}-${assignment.programId}-${idx}`}
+                    style={[styles.programRow, isSelected && styles.programRowSelected]}
+                    onPress={() => onSelect(assignment)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.programIcon, isSelected && styles.programIconSelected]}>
+                      <ClipboardText
+                        size={14}
+                        color={isSelected ? 'white' : 'rgba(255,255,255,0.7)'}
+                        weight="fill"
+                      />
+                    </View>
+                    <View style={styles.programInfo}>
+                      <Text
+                        variant="small"
+                        weight={isSelected ? 'semiBold' : 'medium'}
+                        color="foreground"
+                        numberOfLines={1}
+                      >
+                        {assignment.program?.title || 'Unnamed Program'}
+                      </Text>
+                      <Text variant="caption" color="muted" numberOfLines={1}>
+                        {assignment.program?.category || 'Training Program'}
+                        {assignment.program?.duration ? ` • ${assignment.program.duration}` : ''}
+                      </Text>
+                    </View>
+                    {isSelected ? <CheckCircle size={18} color={theme.colors.primary} weight="fill" /> : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text variant="small" color="muted">No programs assigned yet</Text>
+            </View>
+          )}
+
+          <TouchableOpacity style={styles.modalCloseButton} onPress={onClose} activeOpacity={0.7}>
+            <Text variant="small" weight="semiBold" color="foreground">
+              Close
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 const styles = StyleSheet.create({
   wrapper: {
     zIndex: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    padding: theme.spacing.lg,
+  },
+  modalCard: {
+    borderRadius: 16,
+    backgroundColor: 'rgba(15, 23, 42, 0.98)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    padding: theme.spacing.lg,
+  },
+  modalSubtitle: {
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+    lineHeight: 18,
   },
   row: {
     flexDirection: 'row',
@@ -233,5 +329,14 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: theme.spacing.lg,
+  },
+  modalCloseButton: {
+    marginTop: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.sm,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
 });

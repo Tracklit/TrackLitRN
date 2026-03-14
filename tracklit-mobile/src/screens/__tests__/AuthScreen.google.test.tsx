@@ -1,20 +1,16 @@
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
-import { Alert } from 'react-native';
-import { apiRequest } from '@/lib/api';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { useAuth } from '@/contexts/AuthContext';
 
-const mockedApiRequest = apiRequest as jest.MockedFunction<typeof apiRequest>;
 const mockedUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-
-jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
 const mockPromptAsync = jest.fn();
 let mockResponse: any = null;
+let mockGoogleRequest: any = {};
 
 jest.mock('@/lib/googleSignIn', () => ({
   useGoogleAuthRequest: () => ({
-    request: {},
+    request: mockGoogleRequest,
     response: mockResponse,
     promptAsync: mockPromptAsync,
   }),
@@ -22,12 +18,11 @@ jest.mock('@/lib/googleSignIn', () => ({
   googleSignInStatusCodes: { SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED' },
 }));
 
-const { handleGoogleResponse } = require('@/lib/googleSignIn');
-
 describe('AuthScreen (Google Expo auth-session sign-in)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockResponse = null;
+    mockGoogleRequest = {};
     mockedUseAuth.mockReturnValue({
       user: null as any,
       isAuthenticated: false,
@@ -39,6 +34,7 @@ describe('AuthScreen (Google Expo auth-session sign-in)', () => {
       logout: jest.fn(),
       continueAsGuest: jest.fn(),
       refreshUser: jest.fn(),
+      setUserAndPersist: jest.fn(),
     });
   });
 
@@ -53,18 +49,8 @@ describe('AuthScreen (Google Expo auth-session sign-in)', () => {
     });
   });
 
-  it('does not crash when Google button is pressed with no request', async () => {
-    jest.resetModules();
-    jest.doMock('@/lib/googleSignIn', () => ({
-      useGoogleAuthRequest: () => ({
-        request: null,
-        response: null,
-        promptAsync: mockPromptAsync,
-      }),
-      handleGoogleResponse: jest.fn(),
-      googleSignInStatusCodes: { SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED' },
-    }));
-
+  it('does not call promptAsync when the Google request is unavailable', () => {
+    mockGoogleRequest = null;
     const Screen = require('../AuthScreen').AuthScreen;
     const { getByText } = render(<Screen />);
 

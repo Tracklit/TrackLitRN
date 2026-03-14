@@ -17,12 +17,13 @@ import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { PencilSimpleLine, Heart, ChatCircle, ArrowLeft, Book } from 'phosphor-react-native';
+import { PencilSimpleLine, Heart, ChatCircle, Book } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
+import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
@@ -400,19 +401,7 @@ export const FeedScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.md }]}>
-        <InlineRefreshHeader visible={isRefreshing} />
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <ArrowLeft size={22} color="#e2e8f0" weight="bold" />
-        </TouchableOpacity>
-        <Text variant="body" weight="semiBold" color="foreground">
-          Feed
-        </Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <MainScreenHeader />
 
       <View style={styles.filterRow}>
         <TouchableOpacity
@@ -495,10 +484,16 @@ export const FeedScreen: React.FC = () => {
             { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg },
           ]}
           onPress={() => setIsComposerOpen(true)}
+          activeOpacity={0.8}
         >
-          <View style={styles.fabCircle}>
+          <LinearGradient
+            colors={['#FF7A00', '#FF9A3C']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.fabGradient}
+          >
             <PencilSimpleLine size={22} color="white" weight="fill" />
-          </View>
+          </LinearGradient>
         </TouchableOpacity>
       )}
 
@@ -595,13 +590,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.sm,
-  },
   filterRow: {
     flexDirection: 'row',
     marginBottom: theme.spacing.sm,
@@ -682,17 +670,19 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    right: theme.spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    zIndex: 50,
-    elevation: 20,
+    right: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    shadowColor: '#FF7A00',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
-  fabCircle: {
+  fabGradient: {
     flex: 1,
-    borderRadius: 28,
-    backgroundColor: '#FF9800',
     alignItems: 'center',
     justifyContent: 'center',
   },

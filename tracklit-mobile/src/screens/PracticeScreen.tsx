@@ -28,6 +28,7 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import { ProgramPickerDropdown } from '@/components/practice/ProgramPickerModal';
@@ -35,6 +36,7 @@ import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { TargetTimesDrawer } from '@/components/practice/TargetTimesDrawer';
 import type { RootStackParamList } from '@/navigation/types';
 import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
+import { navigateToTab } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -237,11 +239,12 @@ export const PracticeScreen: React.FC = () => {
         locations={theme.gradient.locations}
         style={styles.container}
       >
+        <MainScreenHeader />
         <ScrollView
           contentInsetAdjustmentBehavior="never"
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: insets.top, paddingBottom: contentBottomPadding },
+            { paddingBottom: contentBottomPadding },
           ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -364,7 +367,7 @@ export const PracticeScreen: React.FC = () => {
               <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
                 Contact your coach to get a program assigned to your account.
               </Text>
-              <Button variant="outline" onPress={() => navigation.navigate('Programs' as any)} style={styles.emptyButton}>
+              <Button variant="outline" onPress={() => navigateToTab(navigation, 'Programs')} style={styles.emptyButton}>
                 <Text variant="small" weight="medium" color="primary-foreground">
                   View Available Programs
                 </Text>
@@ -378,15 +381,12 @@ export const PracticeScreen: React.FC = () => {
           onPress={() => setShowTargetTimes(true)}
         >
           <LinearGradient
-            colors={theme.gradients.webPurple.colors}
-            start={theme.gradients.webPurple.start}
-            end={theme.gradients.webPurple.end}
+            colors={['#FF7A00', '#FF9A3C']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
             style={styles.targetTimesButtonInner}
           >
             <Timer size={20} color="white" weight="fill" />
-            <Text variant="small" weight="bold" color="primary-foreground">
-              %
-            </Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -830,19 +830,22 @@ const styles = StyleSheet.create({
   },
   targetTimesButton: {
     position: 'absolute',
-    right: theme.spacing.lg,
-    bottom: theme.spacing.xl * 2,
+    right: 24,
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: 32,
     overflow: 'hidden',
-    ...theme.shadows.lg,
+    shadowColor: '#FF7A00',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
   targetTimesButtonInner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    borderRadius: 16,
+    borderRadius: 32,
   },
 });

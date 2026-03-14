@@ -34,6 +34,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
 import { SkeletonProgramList } from '@/components/Skeleton';
+import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
@@ -264,13 +265,14 @@ export const ProgramsScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
+      <MainScreenHeader />
       <KeyboardAwareScreenScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top, paddingBottom: contentBottomPadding },
+          { paddingBottom: contentBottomPadding },
         ]}
         showsVerticalScrollIndicator={false}
         extraScrollHeight={80}
@@ -309,6 +311,8 @@ export const ProgramsScreen: React.FC = () => {
             <TouchableOpacity
               style={[styles.viewToggleButton, viewMode === 'cards' && styles.viewToggleActive]}
               onPress={() => setViewMode('cards')}
+              accessibilityRole="button"
+              accessibilityLabel="Card view"
             >
               <SquaresFour
                 size={14}
@@ -319,6 +323,8 @@ export const ProgramsScreen: React.FC = () => {
             <TouchableOpacity
               style={[styles.viewToggleButton, viewMode === 'list' && styles.viewToggleActive]}
               onPress={() => setViewMode('list')}
+              accessibilityRole="button"
+              accessibilityLabel="List view"
             >
               <List
                 size={14}
@@ -414,6 +420,8 @@ export const ProgramsScreen: React.FC = () => {
           style={[styles.fab, { bottom: getBottomNavOverlayHeight(insets.bottom) + 16 }]}
           onPress={handleCreateAction}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Create program"
         >
           <LinearGradient
             colors={[C.orange, C.orangeLight]}

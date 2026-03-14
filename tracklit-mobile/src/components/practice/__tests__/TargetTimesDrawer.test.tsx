@@ -22,16 +22,19 @@ describe('TargetTimesDrawer', () => {
     const { getByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
+
     expect(getByText('Track Type')).toBeTruthy();
     expect(getByText('Timing Method')).toBeTruthy();
     expect(getByText('Goal Times')).toBeTruthy();
     expect(getByText('Target Times')).toBeTruthy();
+    expect(getByText('Calculated Targets')).toBeTruthy();
   });
 
-  it('shows track type toggles (Indoor/Outdoor)', () => {
+  it('shows track type toggles', () => {
     const { getByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
+
     expect(getByText('Outdoor')).toBeTruthy();
     expect(getByText('Indoor')).toBeTruthy();
   });
@@ -40,15 +43,17 @@ describe('TargetTimesDrawer', () => {
     const { getByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
+
     expect(getByText('Reaction')).toBeTruthy();
     expect(getByText('First Foot')).toBeTruthy();
     expect(getByText('On Movement')).toBeTruthy();
   });
 
-  it('shows goal time inputs for 100m, 200m, 400m, Hurdles, 400H', () => {
+  it('shows goal time inputs for sprint events and hurdles', () => {
     const { getAllByText, getByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
+
     expect(getAllByText('100m').length).toBeGreaterThanOrEqual(1);
     expect(getAllByText('200m').length).toBeGreaterThanOrEqual(1);
     expect(getAllByText('400m').length).toBeGreaterThanOrEqual(1);
@@ -56,19 +61,20 @@ describe('TargetTimesDrawer', () => {
     expect(getByText('400H')).toBeTruthy();
   });
 
-  it('shows "Adjust for Track Type" toggle', () => {
+  it('shows the adjust-for-track-type toggle', () => {
     const { getByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
+
     expect(getByText('Adjust for Track Type')).toBeTruthy();
     expect(getByText('Apply track-specific timing adjustments')).toBeTruthy();
   });
 
-  it('shows distance labels in target times table', () => {
+  it('shows distance labels in the target times table', () => {
     const { getByText, getAllByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
-    // Default goal100m = 11.0 should generate distances
+
     expect(getByText('Dist')).toBeTruthy();
     expect(getByText('50m')).toBeTruthy();
     expect(getByText('60m')).toBeTruthy();
@@ -79,6 +85,7 @@ describe('TargetTimesDrawer', () => {
     const { getByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
+
     expect(getByText('100%')).toBeTruthy();
     expect(getByText('95%')).toBeTruthy();
     expect(getByText('60%')).toBeTruthy();
@@ -88,13 +95,11 @@ describe('TargetTimesDrawer', () => {
     const { getAllByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
-    // With default goal100m = 11.0 and firstFoot timing method:
-    // adjusted100m = 11.0 - 0.55 = 10.45
-    // 100m time at 100% = 10.45 -> "10.45"
+
     expect(getAllByText('10.45').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('saves values to AsyncStorage when track type changed', async () => {
+  it('saves track type to AsyncStorage when changed', async () => {
     const { getByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
@@ -109,7 +114,7 @@ describe('TargetTimesDrawer', () => {
     });
   });
 
-  it('saves values to AsyncStorage when timing method changed', async () => {
+  it('saves timing method to AsyncStorage when changed', async () => {
     const { getByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
@@ -124,12 +129,11 @@ describe('TargetTimesDrawer', () => {
     });
   });
 
-  it('saves goal time to AsyncStorage when changed', async () => {
+  it('saves a goal time to AsyncStorage when changed', async () => {
     const { getByDisplayValue } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
 
-    // Default 100m goal is "11.0"
     const input = getByDisplayValue('11.0');
     fireEvent.changeText(input, '10.5');
 
@@ -157,14 +161,13 @@ describe('TargetTimesDrawer', () => {
     });
   });
 
-  it('calls onClose when close button pressed', () => {
+  it('calls onClose when the close button is pressed', () => {
     const onClose = jest.fn();
-    const { getByText } = render(
+    const { getByLabelText } = render(
       <TargetTimesDrawer visible={true} onClose={onClose} />,
     );
 
-    // The close button renders FontAwesome5 "times" which renders as text
-    fireEvent.press(getByText('times'));
+    fireEvent.press(getByLabelText('Close target times'));
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -183,20 +186,22 @@ describe('TargetTimesDrawer', () => {
     expect(await findByDisplayValue('10.2')).toBeTruthy();
   });
 
-  it('shows estimates note at bottom', () => {
+  it('shows the estimates note at the bottom', () => {
     const { getByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
+
     expect(
       getByText('Times are estimates based on selected track type and timing method.'),
     ).toBeTruthy();
   });
 
-  it('shows "sec" unit label for each input', () => {
+  it('shows sec as the unit label for each input', () => {
     const { getAllByText } = render(
       <TargetTimesDrawer visible={true} onClose={jest.fn()} />,
     );
+
     const secLabels = getAllByText('sec');
-    expect(secLabels.length).toBe(5); // 100m, 200m, 400m, Hurdles, 400H
+    expect(secLabels.length).toBe(5);
   });
 });

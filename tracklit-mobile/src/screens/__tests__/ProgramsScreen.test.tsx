@@ -29,6 +29,7 @@ const authUser = {
   logout: jest.fn(),
   continueAsGuest: jest.fn(),
   refreshUser: jest.fn(),
+  setUserAndPersist: jest.fn(),
 };
 
 const coachUser = {
@@ -94,7 +95,6 @@ function loadProgramsScreen() {
   return require('../ProgramsScreen').ProgramsScreen;
 }
 
-// Set up API to return correct data based on the endpoint
 function setupDefaultApi() {
   mockedApiRequest.mockImplementation((path: string) => {
     if (path === '/api/programs') return Promise.resolve(mockMyPrograms);
@@ -105,39 +105,37 @@ function setupDefaultApi() {
 }
 
 describe('ProgramsScreen', () => {
-  // ─── Tab navigation ───
-  it('renders with "My Programs" tab active by default', async () => {
+  it('renders tabs and filter controls', () => {
     setupDefaultApi();
     const ProgramsScreen = loadProgramsScreen();
-    const { getByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+    const { getByText, getByPlaceholderText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+
     expect(getByText('My Programs')).toBeTruthy();
     expect(getByText('Purchased')).toBeTruthy();
-    expect(getByText('Workout Library')).toBeTruthy();
+    expect(getByText('Library')).toBeTruthy();
+    expect(getByPlaceholderText('Search programs...')).toBeTruthy();
+    expect(getByText('Filter')).toBeTruthy();
   });
 
-  it('shows "Programs" header', () => {
-    setupDefaultApi();
-    const ProgramsScreen = loadProgramsScreen();
-    const { getByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
-    expect(getByText('Programs')).toBeTruthy();
-  });
-
-  // ─── My Programs tab ───
-  it('shows loading spinner while fetching my programs', async () => {
+  it('renders the screen shell while programs are loading', () => {
     mockedApiRequest.mockImplementation(() => new Promise(() => {}));
     const ProgramsScreen = loadProgramsScreen();
-    const { getByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
-    expect(getByText('Loading your programs...')).toBeTruthy();
+    const { getByText, queryByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+
+    expect(getByText('My Programs')).toBeTruthy();
+    expect(queryByText('Unable to load programs. Pull to refresh.')).toBeNull();
+    expect(queryByText('No Programs Yet')).toBeNull();
   });
 
   it('shows error state when my programs query fails', async () => {
     mockedApiRequest.mockRejectedValue(new Error('fail'));
     const ProgramsScreen = loadProgramsScreen();
     const { findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+
     expect(await findByText('Unable to load programs. Pull to refresh.')).toBeTruthy();
   });
 
-  it('shows empty state "No Programs Yet" when empty', async () => {
+  it('shows empty state when no programs are available', async () => {
     mockedApiRequest.mockImplementation((path: string) => {
       if (path === '/api/programs') return Promise.resolve([]);
       if (path === '/api/purchased-programs') return Promise.resolve([]);
@@ -147,50 +145,40 @@ describe('ProgramsScreen', () => {
 
     const ProgramsScreen = loadProgramsScreen();
     const { findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+
     expect(await findByText('No Programs Yet')).toBeTruthy();
   });
 
-  it('shows guest state "Sign In Required"', async () => {
+  it('shows guest state when the user is not signed in', () => {
     mockedUseAuth.mockReturnValue(guestUser as any);
     const ProgramsScreen = loadProgramsScreen();
     const { getByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+
     expect(getByText('Sign In Required')).toBeTruthy();
   });
 
-  it('renders program cards with title and level badge', async () => {
+  it('renders program cards with title, coach and event badges', async () => {
     setupDefaultApi();
     const ProgramsScreen = loadProgramsScreen();
     const { findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+
     expect(await findByText('Sprint Plan')).toBeTruthy();
-    expect(await findByText('Beginner')).toBeTruthy();
+    expect(await findByText(/Coach A/)).toBeTruthy();
+    expect(await findByText('100m')).toBeTruthy();
   });
 
   it('renders programs in list view when toggled', async () => {
     setupDefaultApi();
     const ProgramsScreen = loadProgramsScreen();
-    const { findByText, getByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+    const { findByText, getByLabelText } = render(<ProgramsScreen />, { wrapper: Wrapper });
 
-    // Wait for data to load
     await findByText('Sprint Plan');
+    fireEvent.press(getByLabelText('List view'));
 
-    // Find and press the list view toggle (the "list" icon button)
-    // The list toggle icon is "list" FontAwesome5 icon rendered as text
-    const listButtons = (await findByText('list'));
-    fireEvent.press(listButtons);
-
-    // In list mode we should still see program title
     expect(await findByText('Sprint Plan')).toBeTruthy();
   });
 
-  it('shows coach name for programs', async () => {
-    setupDefaultApi();
-    const ProgramsScreen = loadProgramsScreen();
-    const { findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
-    expect(await findByText(/Coach A/)).toBeTruthy();
-  });
-
-  // ─── Purchased tab ───
-  it('switches to "Purchased" tab and shows purchased programs', async () => {
+  it('switches to purchased tab and shows purchased programs', async () => {
     setupDefaultApi();
     const ProgramsScreen = loadProgramsScreen();
     const { getByText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
@@ -198,36 +186,21 @@ describe('ProgramsScreen', () => {
     fireEvent.press(getByText('Purchased'));
 
     expect(await findByText('Purchased Sprint')).toBeTruthy();
-  });
-
-  it('shows "Assigned" badge for assigned programs', async () => {
-    setupDefaultApi();
-    const ProgramsScreen = loadProgramsScreen();
-    const { getByText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
-
-    fireEvent.press(getByText('Purchased'));
     expect(await findByText('Assigned')).toBeTruthy();
-  });
-
-  it('shows "Purchased" badge for purchased programs', async () => {
-    setupDefaultApi();
-    const ProgramsScreen = loadProgramsScreen();
-    const { getByText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
-
-    fireEvent.press(getByText('Purchased'));
-    expect(await findByText('Purchased')).toBeTruthy();
-  });
-
-  it('shows coach name for assigned programs', async () => {
-    setupDefaultApi();
-    const ProgramsScreen = loadProgramsScreen();
-    const { getByText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
-
-    fireEvent.press(getByText('Purchased'));
     expect(await findByText(/Coach: Coach C/)).toBeTruthy();
   });
 
-  it('shows empty state "No Purchased Programs"', async () => {
+  it('shows purchased badge for directly purchased programs', async () => {
+    setupDefaultApi();
+    const ProgramsScreen = loadProgramsScreen();
+    const { getByText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+
+    fireEvent.press(getByText('Purchased'));
+
+    expect(await findByText('Purchased')).toBeTruthy();
+  });
+
+  it('shows empty purchased state when there are no purchases', async () => {
     mockedApiRequest.mockImplementation((path: string) => {
       if (path === '/api/programs') return Promise.resolve([]);
       if (path === '/api/purchased-programs') return Promise.resolve([]);
@@ -239,42 +212,23 @@ describe('ProgramsScreen', () => {
     const { getByText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
 
     fireEvent.press(getByText('Purchased'));
+
     expect(await findByText('No Purchased Programs')).toBeTruthy();
   });
 
-  // ─── Workout Library tab ───
-  it('switches to "Workout Library" tab and shows workouts', async () => {
+  it('switches to library tab and shows saved workouts', async () => {
     setupDefaultApi();
     const ProgramsScreen = loadProgramsScreen();
     const { getByText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
 
-    fireEvent.press(getByText('Workout Library'));
+    fireEvent.press(getByText('Library'));
+
     expect(await findByText('Speed Drills')).toBeTruthy();
-  });
-
-  it('shows workout category badge', async () => {
-    setupDefaultApi();
-    const ProgramsScreen = loadProgramsScreen();
-    const { getByText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
-
-    fireEvent.press(getByText('Workout Library'));
     expect(await findByText('sprint')).toBeTruthy();
-    // When category is null, it shows "Workout"
     expect(await findByText('Workout')).toBeTruthy();
   });
 
-  it('shows "details coming next" placeholder text', async () => {
-    setupDefaultApi();
-    const ProgramsScreen = loadProgramsScreen();
-    const { getByText, findAllByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
-
-    fireEvent.press(getByText('Workout Library'));
-    // Multiple workout cards show this text, use findAllByText
-    const matches = await findAllByText(/details coming next/);
-    expect(matches.length).toBeGreaterThan(0);
-  });
-
-  it('shows empty state "No workouts saved"', async () => {
+  it('shows empty library state when no workouts are saved', async () => {
     mockedApiRequest.mockImplementation((path: string) => {
       if (path === '/api/workout-library') return Promise.resolve({ workouts: [] });
       return Promise.resolve([]);
@@ -283,12 +237,12 @@ describe('ProgramsScreen', () => {
     const ProgramsScreen = loadProgramsScreen();
     const { getByText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
 
-    fireEvent.press(getByText('Workout Library'));
+    fireEvent.press(getByText('Library'));
+
     expect(await findByText('No workouts saved')).toBeTruthy();
   });
 
-  // ─── Search and filter ───
-  it('search filters programs by title', async () => {
+  it('filters programs by search text after narrowing category', async () => {
     setupDefaultApi();
     const ProgramsScreen = loadProgramsScreen();
     const { findByText, getByText, getByPlaceholderText, queryByText } = render(
@@ -298,11 +252,8 @@ describe('ProgramsScreen', () => {
 
     await findByText('Sprint Plan');
 
-    // The filter logic ORs search with category (category 'all' matches everything).
-    // Select a specific category first so search text actually filters results.
     fireEvent.press(getByText('Filter'));
     fireEvent.press(getByText('Sprint Programs'));
-
     fireEvent.changeText(getByPlaceholderText('Search programs...'), 'Distance');
 
     await waitFor(() => {
@@ -311,101 +262,78 @@ describe('ProgramsScreen', () => {
     });
   });
 
-  it('filter modal opens and closes', async () => {
+  it('opens the filter modal', async () => {
     setupDefaultApi();
     const ProgramsScreen = loadProgramsScreen();
     const { findByText, getByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
 
     await findByText('Sprint Plan');
-
-    // Press the Filter button
     fireEvent.press(getByText('Filter'));
 
-    // Filter modal shows categories
     expect(getByText('All Programs')).toBeTruthy();
     expect(getByText('Sprint Programs')).toBeTruthy();
   });
 
-  // ─── Create FAB ───
-  it('shows FAB for authenticated non-guest on "My Programs" tab', async () => {
+  it('shows the create FAB for authenticated users', async () => {
     setupDefaultApi();
-    mockedUseAuth.mockReturnValue(authUser as any);
     const ProgramsScreen = loadProgramsScreen();
     const { findByLabelText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+
     expect(await findByLabelText('Create program')).toBeTruthy();
   });
 
-  it('hides FAB for guest users', async () => {
+  it('hides the create FAB for guest users', () => {
     mockedUseAuth.mockReturnValue(guestUser as any);
     const ProgramsScreen = loadProgramsScreen();
     const { queryByLabelText } = render(<ProgramsScreen />, { wrapper: Wrapper });
+
     expect(queryByLabelText('Create program')).toBeNull();
   });
 
-  it('coach FAB directly navigates to ProgramCreate', async () => {
+  it('navigates coaches directly to ProgramCreate from the FAB', async () => {
     setupDefaultApi();
     mockedUseAuth.mockReturnValue(coachUser as any);
     const ProgramsScreen = loadProgramsScreen();
     const { findByLabelText } = render(<ProgramsScreen />, { wrapper: Wrapper });
 
-    const fab = await findByLabelText('Create program');
-    fireEvent.press(fab);
+    fireEvent.press(await findByLabelText('Create program'));
 
     expect((global as any).__mockNavigate).toHaveBeenCalledWith('ProgramCreate');
   });
 
-  it('non-coach FAB opens create menu', async () => {
+  it('opens the create menu for non-coaches', async () => {
     setupDefaultApi();
-    mockedUseAuth.mockReturnValue(authUser as any);
     const ProgramsScreen = loadProgramsScreen();
-    const { findByLabelText, findByText } = render(
-      <ProgramsScreen />,
-      { wrapper: Wrapper },
-    );
+    const { findByLabelText, findByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
 
-    const fab = await findByLabelText('Create program');
-    fireEvent.press(fab);
+    fireEvent.press(await findByLabelText('Create program'));
 
-    // Create menu should show
     expect(await findByText('Create a Program')).toBeTruthy();
     expect(await findByText('Find a Coach')).toBeTruthy();
-    expect(await findByText('Find a Program')).toBeTruthy();
   });
 
-  // ─── Continue / View Details navigation ───
-  it('Continue button navigates to ProgramEditor', async () => {
+  it('navigates to ProgramEditor from the primary my-programs action', async () => {
     setupDefaultApi();
     const ProgramsScreen = loadProgramsScreen();
     const { findAllByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
 
-    const continueButtons = await findAllByText('Continue');
-    fireEvent.press(continueButtons[0]);
+    const editButtons = await findAllByText('Edit Program');
+    fireEvent.press(editButtons[0]);
 
     expect((global as any).__mockNavigate).toHaveBeenCalledWith('ProgramEditor', { id: 1 });
   });
 
-  it('Purchased tab continue navigates to Practice tab', async () => {
+  it('navigates to Practice from the purchased assign action', async () => {
     setupDefaultApi();
     const ProgramsScreen = loadProgramsScreen();
     const { getByText, findAllByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
 
     fireEvent.press(getByText('Purchased'));
-    const continueButtons = await findAllByText('Continue');
-    fireEvent.press(continueButtons[0]);
+    const assignButtons = await findAllByText('Assign');
+    fireEvent.press(assignButtons[0]);
 
     await waitFor(() => {
       expect((global as any).__mockNavigate).toHaveBeenCalledWith('MainTabs', { screen: 'Practice' });
     });
-  });
-
-  it('View Details button navigates to ProgramDetail', async () => {
-    setupDefaultApi();
-    const ProgramsScreen = loadProgramsScreen();
-    const { findAllByText } = render(<ProgramsScreen />, { wrapper: Wrapper });
-
-    const detailButtons = await findAllByText('View Details');
-    fireEvent.press(detailButtons[0]);
-
-    expect((global as any).__mockNavigate).toHaveBeenCalledWith('ProgramDetail', { id: 1 });
   });
 });

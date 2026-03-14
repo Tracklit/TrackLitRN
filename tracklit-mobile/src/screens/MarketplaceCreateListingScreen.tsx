@@ -18,6 +18,7 @@ import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import theme from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
+import { goBackOrNavigateToScreen } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type ListingType = 'program' | 'consulting';
@@ -88,7 +89,7 @@ export const MarketplaceCreateListingScreen: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['marketplace-listings'] });
       Alert.alert('Created', 'Listing created successfully.');
-      navigation.goBack();
+      goBackOrNavigateToScreen(navigation, 'Marketplace');
     },
     onError: (error: Error) => {
       Alert.alert('Create failed', error.message || 'Please try again.');
@@ -99,6 +100,9 @@ export const MarketplaceCreateListingScreen: React.FC = () => {
     () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
     [insets.bottom],
   );
+  const handleBackPress = () => {
+    goBackOrNavigateToScreen(navigation, 'Marketplace');
+  };
 
   return (
     <LinearGradient colors={theme.gradient.background} locations={theme.gradient.locations} style={styles.container}>
@@ -111,7 +115,7 @@ export const MarketplaceCreateListingScreen: React.FC = () => {
         extraScrollHeight={80}
       >
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.iconBtn} onPress={handleBackPress}>
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: 'center' }}>

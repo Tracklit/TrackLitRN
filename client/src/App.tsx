@@ -112,7 +112,7 @@ const VideoPlayerPageLazy = lazy(() => import("@/pages/video-player-page").then(
 const ArcadePageLazy = lazy(() => import("@/pages/arcade-page"));
 
 // Admin & Management
-const AdminPanelPageLazy = lazy(() => import("@/pages/admin-panel-page"));
+const AdminPanelPageLazy = lazy(() => import("@/pages/admin-panel"));
 const AdminAffiliateSubmissionsLazy = lazy(() => import("@/pages/admin-affiliate-submissions"));
 
 // Onboarding & Auth

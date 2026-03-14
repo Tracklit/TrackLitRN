@@ -28,7 +28,18 @@ export const ScreenHeader: React.FC<Props> = ({ title, subtitle, right, containe
         <List size={20} color={theme.colors.foreground} weight="bold" />
       </TouchableOpacity>
 
-      <View style={styles.center} />
+      <View style={styles.center}>
+        {title ? (
+          <Text variant="body" weight="semiBold" color="foreground" style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+        ) : null}
+        {subtitle ? (
+          <Text variant="small" color="muted" style={styles.subtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
 
       <View style={styles.rightContainer}>
         {right ?? null}
@@ -42,6 +53,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: theme.spacing.lg,
+    minHeight: 72,
   },
   sideButton: {
     width: 44,
@@ -62,6 +74,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     textAlign: 'center',
