@@ -484,10 +484,16 @@ export const FeedScreen: React.FC = () => {
             { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg },
           ]}
           onPress={() => setIsComposerOpen(true)}
+          activeOpacity={0.8}
         >
-          <View style={styles.fabCircle}>
+          <LinearGradient
+            colors={['#FF7A00', '#FF9A3C']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.fabGradient}
+          >
             <PencilSimpleLine size={22} color="white" weight="fill" />
-          </View>
+          </LinearGradient>
         </TouchableOpacity>
       )}
 
@@ -664,17 +670,19 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    right: theme.spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    zIndex: 50,
-    elevation: 20,
+    right: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    shadowColor: '#FF7A00',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
-  fabCircle: {
+  fabGradient: {
     flex: 1,
-    borderRadius: 28,
-    backgroundColor: '#FF9800',
     alignItems: 'center',
     justifyContent: 'center',
   },

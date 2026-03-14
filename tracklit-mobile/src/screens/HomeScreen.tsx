@@ -27,8 +27,6 @@ import {
   X,
   CaretRight,
   Star,
-  Minus,
-  Plus,
   Book,
   Users,
   CalendarBlank,
@@ -184,7 +182,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [selectedActivity, setSelectedActivity] = useState<CommunityActivity | null>(null);
   const [likedActivities, setLikedActivities] = useState<Set<number>>(new Set());
   const [readActivities, setReadActivities] = useState<Set<number>>(new Set());
-  const [carouselCollapsed, setCarouselCollapsed] = useState(false);
   const [carouselHidden, setCarouselHidden] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [selectionLoaded, setSelectionLoaded] = useState(false);
@@ -867,20 +864,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       {/* Activity Carousel — fixed above scroll */}
       {carouselEntries.length > 0 && !carouselHidden && (
         <View style={styles.carouselContainer}>
-          <TouchableOpacity
-            style={styles.carouselToggle}
-            activeOpacity={0.6}
-            onPress={() => setCarouselCollapsed(prev => !prev)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            {carouselCollapsed ? (
-              <Plus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
-            ) : (
-              <Minus size={14} color="rgba(255,255,255,0.35)" weight="bold" />
-            )}
-          </TouchableOpacity>
-          {!carouselCollapsed && (
-            <FlatList
+          <FlatList
               data={carouselEntries}
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -952,7 +936,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 );
               }}
             />
-          )}
           <View style={styles.carouselDivider} />
         </View>
       )}
@@ -1738,7 +1721,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   practiceCardWrapper: {
-    marginBottom: theme.spacing.xxxl,
+    marginBottom: theme.spacing.xxxl + 15,
   },
   practiceCard: {
     borderRadius: 16,

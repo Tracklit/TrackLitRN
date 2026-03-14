@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { ArrowLeft } from 'phosphor-react-native';
 import { Mic, StopCircle, Volume2, VolumeX, Languages } from 'lucide-react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
@@ -569,7 +570,7 @@ export const SprinthiaScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel={entryContext === 'rehab' ? 'Back to Rehabilitation' : 'Go back'}
             >
-              <FontAwesome5 name="chevron-left" size={16} color="#fff" />
+              <ArrowLeft size={20} color="#fff" weight="bold" />
             </TouchableOpacity>
             <View style={styles.titleGroup}>
               <Image source={poweredByAria} style={styles.poweredBy} resizeMode="contain" />
@@ -981,7 +982,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     gap: theme.spacing.sm,
   },
   titleText: {
