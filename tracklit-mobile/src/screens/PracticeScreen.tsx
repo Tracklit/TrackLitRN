@@ -604,9 +604,7 @@ const SessionCard = ({
   const hasSession = !!card.sessionData;
   const isRestDay = card.sessionData?.isRestDay;
 
-  const headerLabel = card.dayNumber
-    ? (card.dayOfWeek ? `${card.dayOfWeek} · Day ${card.dayNumber}` : `Day ${card.dayNumber}`)
-    : (card.dayOfWeek || '');
+  const headerLabel = card.dayOfWeek || '';
 
   if (!hasSession) {
     return (
@@ -704,13 +702,42 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
   const gymNumber = extractGymNumber();
   const hasGymData = gymData.length > 0;
 
-  const sessionTitle = sessionData.title && sessionData.title !== 'Day Training' ? sessionData.title : null;
-  const sessionDescription = sessionData.description && sessionData.description !== 'Training Session' ? sessionData.description : null;
+  const isDayXPattern = (str?: string | null) =>
+    !!str && /^Day\s*\d*\s*(Training|Session)?\s*$/i.test(str.trim());
 
-  const isSimple = sessionData.isSimpleTemplate || !!sessionData.sessionText;
+  const sessionTitle =
+    sessionData.title &&
+    !isDayXPattern(sessionData.title) &&
+    sessionData.title !== 'Training Session' &&
+    sessionData.title !== 'Rest Day'
+      ? sessionData.title
+      : null;
+
+  const hasNoWorkoutFields =
+    !sessionData.preActivation1 &&
+    !sessionData.preActivation2 &&
+    !sessionData.shortDistanceWorkout &&
+    !sessionData.mediumDistanceWorkout &&
+    !sessionData.longDistanceWorkout &&
+    !sessionData.extraSession;
+
+  const isSimple =
+    sessionData.isSimpleTemplate ||
+    !!sessionData.sessionText ||
+    (hasNoWorkoutFields && !!sessionData.description && !isDayXPattern(sessionData.description));
+
+  const simpleText = sessionData.sessionText || (isSimple ? sessionData.description : null);
+
+  const sessionDescription =
+    !isSimple &&
+    sessionData.description &&
+    !isDayXPattern(sessionData.description) &&
+    sessionData.description !== 'Training Session'
+      ? sessionData.description
+      : null;
 
   const contentSections = isSimple
-    ? [{ label: 'Session', value: sessionData.sessionText }]
+    ? [{ label: 'Session', value: simpleText }]
     : [
         { label: 'PA1', value: sessionData.preActivation1 },
         { label: 'PA2', value: sessionData.preActivation2 },
@@ -720,7 +747,12 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
         { label: 'Extra', value: sessionData.extraSession },
       ];
 
-  const hasAnyContent = hasGymData || contentSections.some((s) => !!s.value) || sessionTitle || sessionData.notes;
+  const hasAnyContent =
+    hasGymData ||
+    contentSections.some((s) => !!s.value) ||
+    sessionTitle ||
+    sessionDescription ||
+    sessionData.notes;
 
   return (
     <View style={styles.cardSections}>
@@ -761,7 +793,7 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
       {!hasAnyContent && (
         <View style={styles.sessionPlaceholder}>
           <Text variant="small" weight="medium" color="primary-foreground">
-            Day {sessionData.dayNumber || '—'} Session
+            Scheduled Session
           </Text>
           <Text variant="caption" color="primary-foreground" style={{ opacity: 0.7, marginTop: 4 }}>
             No workout details added yet

@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   House,
   Barbell,
+  ChatCircleDots,
   Newspaper,
   Timer,
   type Icon,
@@ -25,9 +26,10 @@ type TabRoute = 'Home' | 'Training' | 'Feed' | 'Tools';
 
 interface NavItem {
   title: string;
-  routeName: TabRoute;
   key: string;
   IconComponent: Icon;
+  routeName?: TabRoute;
+  isStack?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -42,6 +44,12 @@ const navItems: NavItem[] = [
     routeName: 'Training',
     key: 'training',
     IconComponent: Barbell,
+  },
+  {
+    title: 'Sprinthia',
+    key: 'sprinthia',
+    isStack: true,
+    IconComponent: ChatCircleDots,
   },
   {
     title: 'Feed',
@@ -115,6 +123,7 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
 
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
   const isFeedActive = state.routeNames[state.index] === 'Feed';
+  const isSprinthiaActive = parentRoute?.name === 'Sprinthia';
 
   const feedCheckQuery = useQuery({
     queryKey: ['feed-badge-check'],
@@ -155,7 +164,7 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
     }
   }, [isFeedActive]);
 
-  if (parentRoute?.name && parentRoute.name !== 'MainTabs') {
+  if (parentRoute?.name && parentRoute.name !== 'MainTabs' && !isSprinthiaActive) {
     return null;
   }
 
@@ -166,23 +175,30 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
     ]}>
       <View style={styles.navBar}>
         {navItems.map((item) => {
-          const route = state.routes.find((r) => r.name === item.routeName);
-          const isActive = state.routeNames[state.index] === item.routeName;
+          const isActive = item.isStack
+            ? isSprinthiaActive
+            : state.routeNames[state.index] === item.routeName;
 
           const handlePress = () => {
+            if (item.isStack) {
+              parent?.navigate('Sprinthia' as never);
+              return;
+            }
+            const route = state.routes.find((r) => r.name === item.routeName);
             if (!route) return;
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,
               canPreventDefault: true,
             });
-
             if (!isActive && !event.defaultPrevented) {
-              navigation.navigate(item.routeName);
+              navigation.navigate(item.routeName as string);
             }
           };
 
           const handleLongPress = () => {
+            if (item.isStack) return;
+            const route = state.routes.find((r) => r.name === item.routeName);
             if (!route) return;
             navigation.emit({
               type: 'tabLongPress',
