@@ -432,100 +432,119 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
 // Create new chat group
 router.post("/api/chat/groups", upload.single('image'), async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
-  
+
   try {
-    const userId = req.user!.id;
-    const { name, description, isPrivate = false, members } = req.body;
+    const creatorId = Number(req.user!.id);
+    const creatorUsername: string = (req.user as any).username || '';
 
-    console.log('[CreateGroup Server] Request body:', { name, description, isPrivate, members: members ? 'present' : 'none', userId });
-
-    if (!name?.trim()) {
-      return res.status(400).json({ error: "Group name is required" });
+    // ── 1. Validate name ───────────────────────────────────────────────────
+    const name: string = (req.body.name || '').trim();
+    if (!name) {
+      return res.status(400).json({ error: 'Group name is required' });
     }
 
-    let inviteMembers: any[] = [];
-    if (members) {
+    const description: string = (req.body.description || '').trim();
+    const rawPrivate = req.body.isPrivate;
+    const isPrivate: boolean = rawPrivate === true || rawPrivate === 'true';
+
+    console.log('[CreateGroup] creatorId=%d name=%s isPrivate=%s', creatorId, name, isPrivate);
+
+    // ── 2. Parse invited members ────────────────────────────────────────────
+    let rawMembers: any[] = [];
+    if (req.body.members) {
       try {
-        inviteMembers = JSON.parse(members);
-      } catch (e) {
-        console.error("[CreateGroup Server] Error parsing members:", e);
+        rawMembers = JSON.parse(req.body.members);
+        if (!Array.isArray(rawMembers)) rawMembers = [];
+      } catch {
+        rawMembers = [];
       }
     }
 
-    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
+    // ── 3. Handle optional image upload ────────────────────────────────────
     let imageUrl: string | null = null;
     if (req.file) {
       try {
-        imageUrl = await uploadChatImage(req.file.buffer, userId, 'group', 96);
-      } catch (error) {
-        console.error('[CreateGroup Server] Error uploading group image:', error);
+        imageUrl = await uploadChatImage(req.file.buffer, creatorId, 'group', 96);
+      } catch (imgErr: any) {
+        console.error('[CreateGroup] Image upload failed (non-fatal):', imgErr?.message);
       }
     }
 
-    const allMemberIds = [userId];
-    const validInviteMembers: any[] = [];
+    // ── 4. Resolve invited usernames to DB rows ─────────────────────────────
+    interface ResolvedMember { id: number; name: string; username: string }
+    const resolvedMembers: ResolvedMember[] = [];
 
-    for (const member of inviteMembers) {
-      if (member.username && member.username !== req.user!.username) {
-        const userResult = await db.execute(sql`
-          SELECT id, name, username FROM users WHERE username = ${member.username}
-        `);
-        if (userResult.rows.length > 0) {
-          const foundUser = userResult.rows[0] as any;
-          allMemberIds.push(Number(foundUser.id));
-          validInviteMembers.push(foundUser);
-        }
+    for (const m of rawMembers) {
+      const uname: string = (m.username || '').trim();
+      if (!uname || uname === creatorUsername) continue;
+      const r = await db.execute(sql`
+        SELECT id, name, username FROM users WHERE username = ${uname} LIMIT 1
+      `);
+      if (r.rows.length > 0) {
+        const u = r.rows[0] as any;
+        resolvedMembers.push({
+          id: Number(u.id),
+          name: String(u.name || u.username),
+          username: String(u.username),
+        });
       }
     }
 
-    console.log('[CreateGroup Server] Inserting group via raw SQL...');
+    // ── 5. Build PostgreSQL integer[] literals ──────────────────────────────
+    const allIds: number[] = [creatorId, ...resolvedMembers.map(m => m.id)];
+    const adminLit  = `{${creatorId}}`;
+    const memberLit = `{${allIds.join(',')}}`;
+    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    const isPrivateBool = isPrivate === 'true' || isPrivate === true;
-    const adminIdsLiteral = `{${Number(userId)}}`;
-    const memberIdsLiteral = `{${allMemberIds.map(Number).join(',')}}`;
+    console.log('[CreateGroup] adminLit=%s memberLit=%s', adminLit, memberLit);
 
-    const insertResult = await db.execute(sql`
-      INSERT INTO chat_groups (name, description, image, creator_id, admin_ids, member_ids, is_private, invite_code)
-      VALUES (
-        ${name.trim()},
-        ${description || ''},
-        ${imageUrl},
-        ${Number(userId)},
-        ${adminIdsLiteral}::integer[],
-        ${memberIdsLiteral}::integer[],
-        ${isPrivateBool},
-        ${inviteCode}
-      )
+    // ── 6. Insert the group ─────────────────────────────────────────────────
+    const groupRes = await db.execute(sql`
+      INSERT INTO chat_groups
+        (name, description, image, creator_id, admin_ids, member_ids, is_private, invite_code)
+      VALUES
+        (${name}, ${description}, ${imageUrl}, ${creatorId},
+         ${adminLit}::integer[], ${memberLit}::integer[],
+         ${isPrivate}, ${inviteCode})
       RETURNING *
     `);
 
-    const group = insertResult.rows[0] as any;
+    const group = groupRes.rows[0] as any;
+    if (!group || !group.id) {
+      throw new Error('INSERT returned no row — check table constraints');
+    }
 
-    console.log('[CreateGroup Server] Group created:', group.id);
+    console.log('[CreateGroup] group.id=%d', group.id);
 
+    // ── 7. Insert creator into chat_group_members ───────────────────────────
     await db.execute(sql`
       INSERT INTO chat_group_members (group_id, user_id, role)
-      VALUES (${group.id}, ${Number(userId)}, 'creator')
+      VALUES (${group.id}, ${creatorId}, 'creator')
+      ON CONFLICT DO NOTHING
     `);
 
-    for (const member of validInviteMembers) {
+    // ── 8. Insert invited members ───────────────────────────────────────────
+    for (const m of resolvedMembers) {
       await db.execute(sql`
         INSERT INTO chat_group_members (group_id, user_id, role)
-        VALUES (${group.id}, ${Number(member.id)}, 'member')
+        VALUES (${group.id}, ${m.id}, 'member')
+        ON CONFLICT DO NOTHING
       `);
-
       await db.execute(sql`
-        INSERT INTO chat_group_messages (group_id, sender_id, sender_name, text, message_type)
-        VALUES (${group.id}, ${Number(userId)}, 'System', ${`${member.name} was added to the group`}, 'system')
+        INSERT INTO chat_group_messages
+          (group_id, sender_id, sender_name, text, message_type)
+        VALUES
+          (${group.id}, ${creatorId}, 'System',
+           ${m.name + ' was added to the group'}, 'system')
       `);
     }
 
     res.json(group);
-  } catch (error: any) {
-    console.error("[CreateGroup Server] Error creating chat group:", error?.message || error);
-    console.error("[CreateGroup Server] Stack:", error?.stack);
-    res.status(500).json({ error: "Failed to create group", details: error?.message });
+  } catch (err: any) {
+    const detail = String(err?.message || err || 'unknown');
+    console.error('[CreateGroup] FAILED:', detail);
+    console.error('[CreateGroup] Stack:', err?.stack);
+    res.status(500).json({ error: 'Failed to create group', details: detail });
   }
 });
 

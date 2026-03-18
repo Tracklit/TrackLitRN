@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import {
   CaretLeft,
@@ -35,22 +35,7 @@ import { env } from '@/config/env';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 
-type Navigation = NativeStackNavigationProp<RootStackParamList>;
-
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.4)',
-  border: 'rgba(255,255,255,0.06)',
-  iconBg: 'rgba(255,255,255,0.05)',
-  inputBg: 'rgba(255,255,255,0.04)',
-  red: '#ef4444',
-};
-
-const MAX_GROUP_SIZE = 10;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 interface Friend {
   id: number;
@@ -59,188 +44,174 @@ interface Friend {
   profileImageUrl?: string | null;
 }
 
+const C = {
+  bg:            '#0E0F14',
+  card:          '#1C1F2B',
+  orange:        '#FF7A00',
+  textPrimary:   '#FFFFFF',
+  textSecondary: 'rgba(255,255,255,0.7)',
+  textMuted:     'rgba(255,255,255,0.4)',
+  border:        'rgba(255,255,255,0.06)',
+  iconBg:        'rgba(255,255,255,0.05)',
+  inputBg:       'rgba(255,255,255,0.04)',
+};
+
+const MAX_MEMBERS = 10;
+
 export const CreateGroupScreen: React.FC = () => {
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation<Navigation>();
+  const insets    = useSafeAreaInsets();
+  const nav       = useNavigation<Nav>();
   const { user, isAuthenticated } = useAuth();
-  const isGuest = user?.id === 'guest';
-  const canUse = isAuthenticated && !isGuest;
+  const isGuest   = user?.id === 'guest';
+  const canUse    = isAuthenticated && !isGuest;
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [selectedMembers, setSelectedMembers] = useState<Friend[]>([]);
+  const [name,            setName]            = useState('');
+  const [description,     setDescription]     = useState('');
+  const [isPrivate,       setIsPrivate]       = useState(false);
+  const [imageUri,        setImageUri]        = useState<string | null>(null);
+  const [selected,        setSelected]        = useState<Friend[]>([]);
+  const [submitting,      setSubmitting]      = useState(false);
 
+  // ── load connections ──────────────────────────────────────────────────────
   const friendsQuery = useQuery({
     queryKey: ['friends'],
-    queryFn: () => apiRequest<Friend[]>('/api/friends'),
-    enabled: canUse,
+    queryFn:  () => apiRequest<Friend[]>('/api/friends'),
+    enabled:  canUse,
   });
+  const friends = friendsQuery.data ?? [];
 
-  const friends = useMemo(() => friendsQuery.data ?? [], [friendsQuery.data]);
-
+  // ── pick image ────────────────────────────────────────────────────────────
   const pickImage = useCallback(async () => {
-    try {
-      const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permResult.status !== 'granted') {
-        Alert.alert('Permission needed', 'Photo library permission is required to choose a group photo.');
-        return;
-      }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets?.[0]) {
-        setImageUri(result.assets[0].uri);
-      }
-    } catch {
-      Alert.alert('Error', 'Could not open photo library.');
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (perm.status !== 'granted') {
+      Alert.alert('Permission needed', 'Photo library access is required.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets?.[0]) {
+      setImageUri(result.assets[0].uri);
     }
   }, []);
 
-  const removeImage = useCallback(() => {
-    setImageUri(null);
-  }, []);
-
+  // ── toggle member ─────────────────────────────────────────────────────────
   const toggleMember = useCallback((friend: Friend) => {
-    setSelectedMembers((prev) => {
-      const exists = prev.some((m) => m.id === friend.id);
-      if (exists) return prev.filter((m) => m.id !== friend.id);
-      if (prev.length >= MAX_GROUP_SIZE - 1) {
-        Alert.alert('Limit reached', `Groups are limited to ${MAX_GROUP_SIZE} members.`);
+    setSelected(prev => {
+      if (prev.some(m => m.id === friend.id)) {
+        return prev.filter(m => m.id !== friend.id);
+      }
+      if (prev.length >= MAX_MEMBERS - 1) {
+        Alert.alert('Limit reached', `Groups are limited to ${MAX_MEMBERS} members.`);
         return prev;
       }
       return [...prev, friend];
     });
   }, []);
 
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      if (!canUse) throw new Error('Login required');
-      if (!name.trim()) throw new Error('Group name is required.');
+  // ── submit ────────────────────────────────────────────────────────────────
+  const handleCreate = useCallback(async () => {
+    if (!canUse || !name.trim() || submitting) return;
+    setSubmitting(true);
 
+    try {
       const token = await getToken();
-      if (!token) throw new Error('Missing auth token');
+      if (!token) throw new Error('Not signed in — please log in again.');
 
-      const members = selectedMembers.map((m) => ({
-        id: m.id,
-        name: m.name,
-        username: m.username,
+      const members = selected.map(m => ({
+        id:              m.id,
+        name:            m.name,
+        username:        m.username,
         profileImageUrl: m.profileImageUrl,
       }));
 
-      const hasImage = !!imageUri;
-
-      console.log('[CreateGroup] POST /api/chat/groups', {
-        name: name.trim(),
-        isPrivate: isPrivate ? 'true' : 'false',
-        hasImage,
-        memberCount: members.length,
-        mode: hasImage ? 'FormData' : 'JSON',
-      });
-
       let response: Response;
 
-      if (hasImage) {
-        const formData = new FormData();
-        formData.append('name', name.trim());
-        formData.append('description', description.trim() || '');
-        formData.append('isPrivate', isPrivate ? 'true' : 'false');
+      if (imageUri) {
+        // multipart/form-data when there is an image
+        const form = new FormData();
+        form.append('name',        name.trim());
+        form.append('description', description.trim());
+        form.append('isPrivate',   isPrivate ? 'true' : 'false');
+        if (members.length > 0) form.append('members', JSON.stringify(members));
 
-        const uriParts = imageUri!.split('.');
-        const ext = uriParts[uriParts.length - 1] || 'jpg';
-        formData.append('image', {
-          uri: imageUri,
-          name: `group.${ext}`,
-          type: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
-        } as any);
-
-        if (members.length > 0) {
-          formData.append('members', JSON.stringify(members));
-        }
+        const ext = imageUri.split('.').pop() || 'jpg';
+        form.append('image', { uri: imageUri, name: `group.${ext}`, type: `image/${ext === 'png' ? 'png' : 'jpeg'}` } as any);
 
         response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
-          method: 'POST',
+          method:  'POST',
           headers: { Authorization: `Bearer ${token}` },
-          body: formData,
+          body:    form,
         });
       } else {
-        const jsonBody: Record<string, any> = {
-          name: name.trim(),
-          description: description.trim() || '',
-          isPrivate: isPrivate ? 'true' : 'false',
-        };
-        if (members.length > 0) {
-          jsonBody.members = JSON.stringify(members);
-        }
-
+        // plain JSON when no image
         response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
-          method: 'POST',
+          method:  'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization:  `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(jsonBody),
+          body: JSON.stringify({
+            name:        name.trim(),
+            description: description.trim(),
+            isPrivate:   isPrivate ? 'true' : 'false',
+            ...(members.length > 0 && { members: JSON.stringify(members) }),
+          }),
         });
       }
 
-      const responseText = await response.text();
-      console.log('[CreateGroup] Response:', response.status, responseText.substring(0, 2000));
+      const text = await response.text();
+      console.log('[CreateGroup] status=%d body=%s', response.status, text.slice(0, 500));
 
       if (!response.ok) {
-        let errorMsg = `HTTP ${response.status}`;
+        let msg = `Server error (${response.status})`;
         try {
-          const json = JSON.parse(responseText);
-          errorMsg = json.details || json.message || json.error || JSON.stringify(json);
+          const j = JSON.parse(text);
+          msg = j.details || j.message || j.error || msg;
         } catch {
-          errorMsg = responseText.substring(0, 500) || errorMsg;
+          if (text) msg = text.slice(0, 300);
         }
-        throw new Error(errorMsg);
+        throw new Error(msg);
       }
 
-      try {
-        return JSON.parse(responseText);
-      } catch {
-        return { success: true };
-      }
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chat-groups'] });
       queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
-      Alert.alert('Group Created', 'Your group has been created.');
-      navigation.goBack();
-    },
-    onError: (error: Error) => {
-      console.log('[CreateGroup] Error:', error.message);
-      const msg = error.message || 'Unknown error';
-      Alert.alert('Create failed', msg);
-    },
-  });
+      Alert.alert('Group Created', 'Your group has been created successfully.', [
+        { text: 'OK', onPress: () => nav.goBack() },
+      ]);
+    } catch (err: any) {
+      Alert.alert('Could not create group', err?.message || 'Unknown error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [canUse, name, description, isPrivate, imageUri, selected, submitting, nav]);
 
-  const canCreate = canUse && name.trim().length > 0 && !createMutation.isPending;
+  const canSubmit = canUse && name.trim().length > 0 && !submitting;
 
+  // ── render ────────────────────────────────────────────────────────────────
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+
+      {/* header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
           <CaretLeft size={18} color={C.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Group</Text>
         <View style={{ flex: 1 }} />
         <TouchableOpacity
-          style={[styles.createBtn, !canCreate && styles.createBtnDisabled]}
-          onPress={() => createMutation.mutate()}
-          disabled={!canCreate}
+          style={[styles.createBtn, !canSubmit && styles.createBtnDisabled]}
+          onPress={handleCreate}
+          disabled={!canSubmit}
           activeOpacity={0.7}
         >
-          {createMutation.isPending ? (
-            <ActivityIndicator size="small" color="#000" />
-          ) : (
-            <Text style={[styles.createBtnText, !canCreate && styles.createBtnTextDisabled]}>Create</Text>
-          )}
+          {submitting
+            ? <ActivityIndicator size="small" color="#000" />
+            : <Text style={[styles.createBtnText, !canSubmit && styles.createBtnTextDim]}>Create</Text>
+          }
         </TouchableOpacity>
       </View>
 
@@ -251,17 +222,18 @@ export const CreateGroupScreen: React.FC = () => {
         keyboardDismissMode="on-drag"
       >
         {!canUse ? (
-          <View style={styles.emptyContainer}>
+          <View style={styles.centred}>
             <UsersThree size={40} color={C.textMuted} weight="fill" />
             <Text style={styles.emptyText}>Sign in to create a group.</Text>
           </View>
         ) : (
           <>
-            <TouchableOpacity style={styles.imagePickerRow} onPress={pickImage} activeOpacity={0.6}>
+            {/* image picker */}
+            <TouchableOpacity style={styles.imageRow} onPress={pickImage} activeOpacity={0.6}>
               {imageUri ? (
-                <View style={styles.imagePreviewWrap}>
-                  <Image source={{ uri: imageUri }} style={styles.imagePreview} />
-                  <TouchableOpacity style={styles.removeImageBtn} onPress={removeImage}>
+                <View style={styles.imageWrap}>
+                  <Image source={{ uri: imageUri }} style={styles.imageThumb} />
+                  <TouchableOpacity style={styles.removeImg} onPress={() => setImageUri(null)}>
                     <X size={12} color={C.textPrimary} weight="bold" />
                   </TouchableOpacity>
                 </View>
@@ -270,12 +242,13 @@ export const CreateGroupScreen: React.FC = () => {
                   <Camera size={22} color={C.textMuted} weight="fill" />
                 </View>
               )}
-              <View style={styles.imagePickerText}>
+              <View style={{ flex: 1, gap: 2 }}>
                 <Text style={styles.imageLabel}>Group Photo</Text>
-                <Text style={styles.imageSub}>Tap to choose an image</Text>
+                <Text style={styles.imageSub}>Tap to choose</Text>
               </View>
             </TouchableOpacity>
 
+            {/* name */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Name</Text>
               <TextInput
@@ -288,6 +261,7 @@ export const CreateGroupScreen: React.FC = () => {
               />
             </View>
 
+            {/* description */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Description</Text>
               <TextInput
@@ -301,6 +275,7 @@ export const CreateGroupScreen: React.FC = () => {
               />
             </View>
 
+            {/* private toggle */}
             <View style={styles.switchRow}>
               <View style={styles.switchLabel}>
                 <Lock size={16} color={C.textSecondary} weight="fill" />
@@ -316,43 +291,39 @@ export const CreateGroupScreen: React.FC = () => {
 
             <View style={styles.divider} />
 
+            {/* members header */}
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                Add Members
-              </Text>
-              <Text style={styles.sectionCount}>
-                {selectedMembers.length}/{MAX_GROUP_SIZE - 1}
-              </Text>
+              <Text style={styles.sectionTitle}>Add Members</Text>
+              <Text style={styles.sectionCount}>{selected.length}/{MAX_MEMBERS - 1}</Text>
             </View>
 
-            {selectedMembers.length >= MAX_GROUP_SIZE - 1 && (
+            {selected.length >= MAX_MEMBERS - 1 && (
               <View style={styles.limitBanner}>
                 <Warning size={14} color={C.orange} weight="fill" />
-                <Text style={styles.limitText}>
-                  Group limit of {MAX_GROUP_SIZE} members reached
-                </Text>
+                <Text style={styles.limitText}>Member limit reached ({MAX_MEMBERS})</Text>
               </View>
             )}
 
+            {/* members list */}
             {friendsQuery.isLoading ? (
-              <View style={styles.loadingRow}>
+              <View style={styles.centredRow}>
                 <ActivityIndicator size="small" color={C.orange} />
-                <Text style={styles.loadingText}>Loading connections...</Text>
+                <Text style={styles.mutedText}>Loading connections…</Text>
               </View>
             ) : friends.length === 0 ? (
-              <View style={styles.emptyMembers}>
+              <View style={styles.centred}>
                 <Users size={24} color={C.textMuted} weight="fill" />
-                <Text style={styles.emptyMembersText}>
+                <Text style={styles.emptyText}>
                   No connections to invite yet.{'\n'}Connect with athletes first.
                 </Text>
               </View>
             ) : (
-              <View style={styles.membersList}>
-                {friends.map((friend, index) => {
-                  const selected = selectedMembers.some((m) => m.id === friend.id);
+              <View>
+                {friends.map((friend, i) => {
+                  const isSelected = selected.some(m => m.id === friend.id);
                   return (
                     <View key={friend.id}>
-                      {index > 0 && <View style={styles.memberDivider} />}
+                      {i > 0 && <View style={styles.memberDivider} />}
                       <TouchableOpacity
                         style={styles.memberRow}
                         onPress={() => toggleMember(friend)}
@@ -363,7 +334,7 @@ export const CreateGroupScreen: React.FC = () => {
                           fallback={(friend.name || friend.username || 'U').slice(0, 2)}
                           src={friend.profileImageUrl || undefined}
                         />
-                        <View style={styles.memberInfo}>
+                        <View style={{ flex: 1, gap: 1 }}>
                           <Text style={styles.memberName} numberOfLines={1}>
                             {friend.name || friend.username}
                           </Text>
@@ -371,8 +342,8 @@ export const CreateGroupScreen: React.FC = () => {
                             @{friend.username}
                           </Text>
                         </View>
-                        <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
-                          {selected && <CheckCircle size={18} color={C.orange} weight="fill" />}
+                        <View style={[styles.checkbox, isSelected && styles.checkboxOn]}>
+                          {isSelected && <CheckCircle size={18} color={C.orange} weight="fill" />}
                         </View>
                       </TouchableOpacity>
                     </View>
@@ -388,246 +359,88 @@ export const CreateGroupScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+  container:    { flex: 1, backgroundColor: C.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection:    'row',
+    alignItems:       'center',
     paddingHorizontal: 20,
-    paddingVertical: 14,
-    gap: 10,
+    paddingVertical:  14,
+    gap:              10,
     borderBottomWidth: 0.5,
     borderBottomColor: C.border,
   },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  backBtn: {
+    width: 36, height: 36, borderRadius: 18,
     backgroundColor: C.iconBg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: C.textPrimary,
-    letterSpacing: 0.3,
-  },
+  headerTitle:   { fontSize: 16, fontWeight: '700', color: C.textPrimary, letterSpacing: 0.3 },
   createBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: C.orange,
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderRadius: 8, backgroundColor: C.orange,
   },
-  createBtnDisabled: {
-    backgroundColor: 'rgba(255,122,0,0.25)',
-  },
-  createBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#000',
-  },
-  createBtnTextDisabled: {
-    color: 'rgba(0,0,0,0.4)',
-  },
-  content: {
-    padding: 20,
-    gap: 20,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-    gap: 12,
-  },
-  emptyText: {
-    fontSize: 13,
-    color: C.textMuted,
-    textAlign: 'center',
-  },
-  imagePickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
+  createBtnDisabled: { backgroundColor: 'rgba(255,122,0,0.25)' },
+  createBtnText:     { fontSize: 12, fontWeight: '700', color: '#000' },
+  createBtnTextDim:  { color: 'rgba(0,0,0,0.4)' },
+  content:    { padding: 20, gap: 20 },
+  centred:    { alignItems: 'center', paddingVertical: 40, gap: 12 },
+  centredRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 20 },
+  emptyText:  { fontSize: 13, color: C.textMuted, textAlign: 'center', lineHeight: 20 },
+  mutedText:  { fontSize: 12, color: C.textMuted },
+  imageRow:   { flexDirection: 'row', alignItems: 'center', gap: 14 },
   imagePlaceholder: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 56, height: 56, borderRadius: 28,
     backgroundColor: C.iconBg,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1, borderColor: C.border, borderStyle: 'dashed',
+    alignItems: 'center', justifyContent: 'center',
   },
-  imagePreviewWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  imagePreview: {
-    width: 56,
-    height: 56,
-  },
-  removeImageBtn: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  imageWrap:   { width: 56, height: 56, borderRadius: 28, overflow: 'hidden' },
+  imageThumb:  { width: 56, height: 56 },
+  removeImg: {
+    position: 'absolute', top: -2, right: -2,
+    width: 20, height: 20, borderRadius: 10,
     backgroundColor: 'rgba(0,0,0,0.7)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: C.border,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: C.border,
   },
-  imagePickerText: {
-    flex: 1,
-    gap: 2,
-  },
-  imageLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.textPrimary,
-  },
-  imageSub: {
-    fontSize: 11,
-    color: C.textMuted,
-  },
-  inputGroup: {
-    gap: 6,
-  },
+  imageLabel:  { fontSize: 13, fontWeight: '600', color: C.textPrimary },
+  imageSub:    { fontSize: 11, color: C.textMuted },
+  inputGroup:  { gap: 6 },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontSize: 11, fontWeight: '600', color: C.textSecondary,
+    textTransform: 'uppercase', letterSpacing: 0.8,
   },
   input: {
     backgroundColor: C.inputBg,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: C.textPrimary,
-    fontSize: 14,
+    borderWidth: 0.5, borderColor: C.border, borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 12,
+    color: C.textPrimary, fontSize: 14,
   },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  switchLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  switchText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: C.textPrimary,
-  },
-  divider: {
-    height: 0.5,
-    backgroundColor: C.border,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.textPrimary,
-  },
-  sectionCount: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.textMuted,
-  },
+  textArea:    { minHeight: 80, textAlignVertical: 'top' },
+  switchRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  switchLabel: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  switchText:  { fontSize: 13, fontWeight: '500', color: C.textPrimary },
+  divider:     { height: 0.5, backgroundColor: C.border },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sectionTitle: { fontSize: 13, fontWeight: '600', color: C.textPrimary },
+  sectionCount: { fontSize: 11, fontWeight: '600', color: C.textMuted },
   limitBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: 'rgba(255,122,0,0.08)',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
   },
-  limitText: {
-    fontSize: 11,
-    color: C.orange,
-    fontWeight: '500',
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 20,
-  },
-  loadingText: {
-    fontSize: 12,
-    color: C.textMuted,
-  },
-  emptyMembers: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    gap: 8,
-  },
-  emptyMembersText: {
-    fontSize: 12,
-    color: C.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  membersList: {
-    gap: 0,
-  },
-  memberDivider: {
-    height: 0.5,
-    backgroundColor: C.border,
-    marginLeft: 48,
-  },
+  limitText:      { fontSize: 11, color: C.orange, fontWeight: '500' },
+  memberDivider:  { height: 0.5, backgroundColor: C.border, marginLeft: 48 },
   memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'center',
+    gap: 12, paddingVertical: 10,
   },
-  memberInfo: {
-    flex: 1,
-    gap: 1,
-  },
-  memberName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.textPrimary,
-  },
-  memberUsername: {
-    fontSize: 11,
-    color: C.textMuted,
-  },
+  memberName:     { fontSize: 13, fontWeight: '600', color: C.textPrimary },
+  memberUsername: { fontSize: 11, color: C.textMuted },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 22, height: 22, borderRadius: 11,
+    borderWidth: 1, borderColor: C.border,
+    alignItems: 'center', justifyContent: 'center',
   },
-  checkboxSelected: {
-    borderColor: C.orange,
-    backgroundColor: 'rgba(255,122,0,0.1)',
-  },
+  checkboxOn: { borderColor: C.orange, backgroundColor: 'rgba(255,122,0,0.1)' },
 });
