@@ -873,16 +873,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           onPress={() => handleCardPress('Practice')}
           style={styles.practiceCardWrapper}
         >
-          <LinearGradient
-            colors={['#6d28d9', '#c084fc']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.practiceCard}
-          >
-            <View style={styles.practiceTopRow}>
-              <View style={styles.practiceLabelPill}>
-                <Text style={styles.practiceLabelText}>{isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}</Text>
+          <View style={styles.practiceCard}>
+            {/* Header row */}
+            <View style={styles.practiceCardHeader}>
+              <View style={styles.practiceCardHeaderLeft}>
+                <View style={styles.practiceCardIconWrap}>
+                  <Barbell size={12} color="#FF7A00" weight="fill" />
+                </View>
+                <Text style={styles.practiceCardLabel}>
+                  {isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}
+                </Text>
               </View>
+              <CaretRight size={13} color="rgba(255,255,255,0.25)" weight="bold" />
             </View>
 
             {isTextBasedProgram ? (
@@ -902,10 +904,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               </>
             ) : (
               <Text style={styles.practiceNoSession}>
-                No Session Scheduled — add a Program to get started
+                No session scheduled — add a program to get started
               </Text>
             )}
-          </LinearGradient>
+          </View>
         </TouchableOpacity>
 
         {/* Training Stats Carousel */}
@@ -1386,12 +1388,11 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
 
 const hwStyles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.07)',
     borderRadius: 10,
     padding: 12,
-    gap: 6,
+    gap: 7,
     marginTop: 8,
-    marginBottom: 8,
   },
   row: {
     flexDirection: 'row',
@@ -1634,56 +1635,56 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xxxl,
   },
   practiceCard: {
-    borderRadius: 16,
-    padding: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-    height: 240,
+    backgroundColor: '#1C1F2B',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    padding: theme.spacing.xl,
   },
-  practiceTopRow: {
+  practiceCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.lg,
+    marginBottom: 12,
   },
-  practiceLabelPill: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+  practiceCardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  practiceLabelText: {
-    color: '#ffffff',
-    fontSize: 11,
+  practiceCardIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  practiceCardLabel: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 10,
     fontWeight: '700' as const,
-    letterSpacing: 1,
-  },
-  practiceFireIcon: {
-    fontSize: 22,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1.2,
   },
   practiceSessionTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '800' as const,
-    marginBottom: 4,
-  },
-  practiceSessionDesc: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 13,
-    fontWeight: '500' as const,
-    lineHeight: 18,
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700' as const,
     marginBottom: 8,
+    lineHeight: 21,
   },
   practiceNoSession: {
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.35)',
     fontSize: 12,
     fontWeight: '500' as const,
     fontStyle: 'italic' as const,
   },
   practiceTapPrompt: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700' as const,
-    marginTop: 8,
+    fontSize: 15,
+    fontWeight: '600' as const,
+    marginTop: 4,
     letterSpacing: 0.2,
   },
   workoutContentContainer: {
