@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -17,7 +17,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { X, Timer, Target, MapPin, Gauge } from 'phosphor-react-native';
+import { X, Timer, Target, MapPin, Gauge, CaretDown, CaretRight } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import theme from '@/utils/theme';
@@ -70,6 +70,40 @@ interface TargetTimesDrawerProps {
   onClose: () => void;
 }
 
+interface CollapsibleSectionProps {
+  icon: React.ReactNode;
+  title: string;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
+  icon,
+  title,
+  expanded,
+  onToggle,
+  children,
+}) => (
+  <View style={styles.section}>
+    <TouchableOpacity
+      style={styles.sectionHeader}
+      onPress={onToggle}
+      activeOpacity={0.7}
+    >
+      {icon}
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionCaret}>
+        {expanded
+          ? <CaretDown size={12} color={COLORS.textMuted} weight="bold" />
+          : <CaretRight size={12} color={COLORS.textMuted} weight="bold" />
+        }
+      </View>
+    </TouchableOpacity>
+    {expanded && <View style={styles.sectionBody}>{children}</View>}
+  </View>
+);
+
 export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, onClose }) => {
   const insets = useSafeAreaInsets();
   const [adjustForTrackType, setAdjustForTrackType] = useState(false);
@@ -81,6 +115,12 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
   const [goalHurdles100, setGoalHurdles100] = useState('13.5');
   const [goalHurdles400, setGoalHurdles400] = useState('54.0');
   const [isRendered, setIsRendered] = useState(false);
+
+  const [trackTypeExpanded, setTrackTypeExpanded] = useState(false);
+  const [timingMethodExpanded, setTimingMethodExpanded] = useState(false);
+  const [goalTimesExpanded, setGoalTimesExpanded] = useState(false);
+
+  const tableScrollRef = useRef<ScrollView>(null);
 
   const translateX = useSharedValue(DRAWER_WIDTH);
   const backdropOpacity = useSharedValue(0);
@@ -210,14 +250,16 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
         <Animated.View style={[styles.backdrop, backdropStyle]} />
       </TouchableWithoutFeedback>
       <Animated.View style={[styles.drawer, drawerStyle]}>
-        <View style={[styles.drawerContent, { paddingTop: insets.top + 16 }]}>
+        <View style={[styles.drawerContent, { paddingTop: insets.top + 6 }]}>
+
+          {/* Compact header */}
           <View style={styles.drawerHeader}>
             <View style={styles.drawerTitleRow}>
-              <Timer size={20} color={COLORS.accent} weight="fill" />
+              <Timer size={16} color={COLORS.accent} weight="fill" />
               <Text style={styles.drawerTitle}>Target Times</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <X size={14} color={COLORS.textSecondary} weight="bold" />
+              <X size={13} color={COLORS.textSecondary} weight="bold" />
             </TouchableOpacity>
           </View>
 
@@ -228,11 +270,13 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
             contentContainerStyle={styles.scrollContent}
             extraScrollHeight={80}
           >
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <MapPin size={14} color={COLORS.accent} weight="fill" />
-                <Text style={styles.sectionTitle}>Track Type</Text>
-              </View>
+            {/* Track Type — collapsible */}
+            <CollapsibleSection
+              icon={<MapPin size={13} color={COLORS.accent} weight="fill" />}
+              title="Track Type"
+              expanded={trackTypeExpanded}
+              onToggle={() => setTrackTypeExpanded((v) => !v)}
+            >
               <View style={styles.toggleRow}>
                 {(['outdoor', 'indoor'] as TrackType[]).map((type) => (
                   <TouchableOpacity
@@ -243,43 +287,37 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                       saveString(STORAGE_KEYS.currentTrackType, type);
                     }}
                   >
-                    <Text
-                      style={[
-                        styles.toggleText,
-                        currentTrackType === type && styles.toggleTextActive,
-                      ]}
-                    >
+                    <Text style={[styles.toggleText, currentTrackType === type && styles.toggleTextActive]}>
                       {type === 'outdoor' ? 'Outdoor' : 'Indoor'}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-            </View>
-
-            <View style={styles.inlineRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.inlineLabel}>Adjust for Track Type</Text>
-                <Text style={styles.inlineHint}>
-                  Apply track-specific timing adjustments
-                </Text>
+              <View style={styles.inlineRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inlineLabel}>Adjust for Track Type</Text>
+                  <Text style={styles.inlineHint}>Apply track-specific timing adjustments</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.switch, adjustForTrackType && styles.switchActive]}
+                  onPress={() => {
+                    const next = !adjustForTrackType;
+                    setAdjustForTrackType(next);
+                    saveBoolean(STORAGE_KEYS.adjustForTrackType, next);
+                  }}
+                >
+                  <View style={[styles.switchKnob, adjustForTrackType && styles.switchKnobActive]} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={[styles.switch, adjustForTrackType && styles.switchActive]}
-                onPress={() => {
-                  const next = !adjustForTrackType;
-                  setAdjustForTrackType(next);
-                  saveBoolean(STORAGE_KEYS.adjustForTrackType, next);
-                }}
-              >
-                <View style={[styles.switchKnob, adjustForTrackType && styles.switchKnobActive]} />
-              </TouchableOpacity>
-            </View>
+            </CollapsibleSection>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Gauge size={14} color={COLORS.accent} weight="fill" />
-                <Text style={styles.sectionTitle}>Timing Method</Text>
-              </View>
+            {/* Timing Method — collapsible */}
+            <CollapsibleSection
+              icon={<Gauge size={13} color={COLORS.accent} weight="fill" />}
+              title="Timing Method"
+              expanded={timingMethodExpanded}
+              onToggle={() => setTimingMethodExpanded((v) => !v)}
+            >
               <View style={styles.toggleRow}>
                 {(['reaction', 'firstFoot', 'onMovement'] as TimingMethod[]).map((method) => (
                   <TouchableOpacity
@@ -290,24 +328,21 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                       saveString(STORAGE_KEYS.timingMethod, method);
                     }}
                   >
-                    <Text
-                      style={[
-                        styles.toggleText,
-                        timingMethod === method && styles.toggleTextActive,
-                      ]}
-                    >
+                    <Text style={[styles.toggleText, timingMethod === method && styles.toggleTextActive]}>
                       {method === 'reaction' ? 'Reaction' : method === 'firstFoot' ? 'First Foot' : 'Movement'}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-            </View>
+            </CollapsibleSection>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Target size={14} color={COLORS.accent} weight="fill" />
-                <Text style={styles.sectionTitle}>Goal Times</Text>
-              </View>
+            {/* Goal Times — collapsible */}
+            <CollapsibleSection
+              icon={<Target size={13} color={COLORS.accent} weight="fill" />}
+              title="Goal Times"
+              expanded={goalTimesExpanded}
+              onToggle={() => setGoalTimesExpanded((v) => !v)}
+            >
               <View style={styles.inputGroup}>
                 {[
                   { label: '100m', value: goal100m, setter: setGoal100m, key: STORAGE_KEYS.goal100m },
@@ -333,19 +368,18 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                   </View>
                 ))}
               </View>
-            </View>
+            </CollapsibleSection>
 
+            {/* Calculated Targets — always visible, table scrolls from right */}
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Timer size={14} color={COLORS.accent} weight="fill" />
+              <View style={styles.sectionHeaderStatic}>
+                <Timer size={13} color={COLORS.accent} weight="fill" />
                 <Text style={styles.sectionTitle}>Calculated Targets</Text>
               </View>
               <View style={styles.tableContainer}>
                 {calculateTargetTimes.distances.length === 0 ? (
                   <View style={styles.tableEmpty}>
-                    <Text style={styles.tableEmptyText}>
-                      Enter goal times above to see targets
-                    </Text>
+                    <Text style={styles.tableEmptyText}>Enter goal times above to see targets</Text>
                   </View>
                 ) : (
                   <View style={styles.tableWrapper}>
@@ -363,10 +397,14 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                       ))}
                     </View>
                     <ScrollView
+                      ref={tableScrollRef}
                       keyboardShouldPersistTaps="handled"
                       keyboardDismissMode="on-drag"
                       horizontal
                       showsHorizontalScrollIndicator={false}
+                      onContentSizeChange={() => {
+                        tableScrollRef.current?.scrollToEnd({ animated: false });
+                      }}
                     >
                       <View style={styles.tableScrollable}>
                         {calculateTargetTimes.percentages.map((percentage) => (
@@ -428,32 +466,32 @@ const styles = StyleSheet.create({
   drawerContent: {
     flex: 1,
     backgroundColor: COLORS.bg,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   drawerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingBottom: 16,
+    marginBottom: 4,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.surfaceBorder,
   },
   drawerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   drawerTitle: {
     color: COLORS.textPrimary,
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
@@ -461,17 +499,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scrollContent: {
-    paddingTop: 8,
-    paddingBottom: 40,
-    gap: 20,
+    paddingTop: 6,
+    paddingBottom: 32,
+    gap: 14,
   },
   section: {
-    gap: 10,
+    gap: 8,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
+    paddingVertical: 4,
+  },
+  sectionHeaderStatic: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingVertical: 4,
   },
   sectionTitle: {
     color: COLORS.textSecondary,
@@ -479,6 +524,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
+    flex: 1,
+  },
+  sectionCaret: {
+    width: 16,
+    alignItems: 'center',
+  },
+  sectionBody: {
+    gap: 8,
   },
   toggleRow: {
     flexDirection: 'row',
@@ -486,7 +539,7 @@ const styles = StyleSheet.create({
   },
   toggleButton: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 9,
     alignItems: 'center',
     borderRadius: 10,
     backgroundColor: COLORS.surface,
@@ -499,7 +552,7 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     color: COLORS.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   toggleTextActive: {
@@ -511,26 +564,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: COLORS.card,
     borderRadius: 12,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
   },
   inlineLabel: {
     color: COLORS.textPrimary,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   inlineHint: {
     color: COLORS.textMuted,
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 2,
   },
   switch: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
+    width: 40,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: COLORS.switchTrack,
-    padding: 3,
+    padding: 2,
   },
   switchActive: {
     backgroundColor: COLORS.switchActive,
@@ -543,7 +596,7 @@ const styles = StyleSheet.create({
     transform: [{ translateX: 0 }],
   },
   switchKnobActive: {
-    transform: [{ translateX: 18 }],
+    transform: [{ translateX: 16 }],
   },
   inputGroup: {
     backgroundColor: COLORS.card,
@@ -555,17 +608,17 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
   },
   inputRowBorder: {
     borderTopWidth: 1,
     borderTopColor: COLORS.surfaceBorder,
   },
   inputLabel: {
-    width: 56,
+    width: 52,
     color: COLORS.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   input: {
@@ -573,19 +626,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     color: COLORS.textPrimary,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     backgroundColor: COLORS.inputBg,
   },
   inputUnit: {
     color: COLORS.textMuted,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
-    marginLeft: 8,
-    width: 24,
+    marginLeft: 7,
+    width: 22,
   },
   tableContainer: {
     borderWidth: 1,
@@ -595,18 +648,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
   },
   tableEmpty: {
-    padding: 24,
+    padding: 20,
     alignItems: 'center',
   },
   tableEmptyText: {
     color: COLORS.textMuted,
-    fontSize: 13,
+    fontSize: 12,
   },
   tableWrapper: {
     flexDirection: 'row',
   },
   tableFrozenColumn: {
-    width: 56,
+    width: 52,
     borderRightWidth: 1,
     borderRightColor: COLORS.surfaceBorder,
   },
@@ -614,10 +667,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   tableColumn: {
-    width: 52,
+    width: 50,
   },
   tableHeaderCell: {
-    paddingVertical: 8,
+    paddingVertical: 7,
     alignItems: 'center',
     backgroundColor: COLORS.tableHeaderBg,
     borderBottomWidth: 1,
@@ -633,7 +686,7 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
   },
   tableCell: {
-    paddingVertical: 7,
+    paddingVertical: 6,
     alignItems: 'center',
   },
   tableRowEven: {
@@ -657,8 +710,8 @@ const styles = StyleSheet.create({
   },
   footnote: {
     color: COLORS.textMuted,
-    fontSize: 11,
+    fontSize: 10,
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 15,
   },
 });
