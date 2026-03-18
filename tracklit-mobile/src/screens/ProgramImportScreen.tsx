@@ -10,7 +10,6 @@ import {
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   Link as LinkIcon,
   FileArrowUp,
   Paperclip,
@@ -355,9 +354,6 @@ export const ProgramImportScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Import / Upload</Text>
         <View style={{ flex: 1 }} />
         <TouchableOpacity
@@ -621,17 +617,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: C.glass,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
   },
   headerTitle: {
     fontSize: 18,

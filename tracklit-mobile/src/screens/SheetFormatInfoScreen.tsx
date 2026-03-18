@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Table, Columns, CheckCircle, ArrowRight } from 'phosphor-react-native';
+import { Table, Columns, CheckCircle, ArrowRight } from 'phosphor-react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from '@/components/LinearGradient';
@@ -43,11 +43,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Sheet Formats</Text>
-        <View style={{ flex: 1 }} />
       </View>
 
       <ScrollView
@@ -217,17 +213,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: C.glass,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
   },
   headerTitle: {
     fontSize: 18,
