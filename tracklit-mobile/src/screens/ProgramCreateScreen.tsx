@@ -172,7 +172,6 @@ export const ProgramCreateScreen: React.FC = () => {
 
   const methods = [
     { id: 'import' as const, title: 'Import / Upload', description: 'PDF, Sheets, CSV or DOCX.', Icon: FileArrowUp },
-    { id: 'builder' as const, title: 'Program Builder', description: 'Structured sessions & exercises.', Icon: ClipboardText },
     { id: 'text' as const, title: 'Text Based', description: 'Simple text-based program.', Icon: Keyboard },
     { id: 'sprinthia' as const, title: 'Sprinthia AI', description: 'Generate with AI assistance.', Icon: Robot },
   ];
