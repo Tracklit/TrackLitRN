@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  Dimensions,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { DocumentViewer } from '@/components/DocumentViewer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -274,6 +276,10 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
     );
   };
 
+  const [currentSnapIndex, setCurrentSnapIndex] = useState(0);
+  const [snapContainerHeight, setSnapContainerHeight] = useState(Dimensions.get('window').height * 0.6);
+  const snapScrollRef = useRef<ScrollView>(null);
+
   const EXPANDED_H = 92;
   const COLLAPSED_H = 50;
   const COLLAPSE_RANGE = 50;
@@ -309,6 +315,15 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
   });
 
   const selectedTitle = selectedProgram?.program?.title ?? null;
+
+  const isSnapProgram =
+    !!selectedProgram &&
+    !selectedProgram.program?.isTextBased &&
+    !selectedProgram.program?.isUploadedProgram;
+
+  const snapCards = isSnapProgram
+    ? workoutCards.filter((c) => c.sessionData != null)
+    : [];
 
   return (
       <LinearGradient
@@ -403,135 +418,173 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
           </Animated.View>
         </View>
 
-        <ScrollView
-          contentInsetAdjustmentBehavior="never"
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: contentBottomPadding },
-          ]}
-          showsVerticalScrollIndicator={false}
-          scrollEventThrottle={16}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
-          )}
-          refreshControl={
-            <RefreshControl
-              tintColor="#fff"
-              refreshing={isRefreshing}
-              onRefresh={onRefresh}
-            />
-          }
-        >
-          <InlineRefreshHeader visible={isRefreshing} />
-
-          {selectedProgram ? (
-            <View style={styles.contentContainer}>
-              {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent ? (
-                <View style={styles.textProgramFullContainer}>
-                  <View style={styles.textProgramHeader}>
-                    <ClipboardText size={18} color="#FF7A00" weight="fill" />
-                    <Text variant="body" weight="bold" color="foreground">
-                      {selectedProgram.program?.title || 'Program Content'}
-                    </Text>
-                  </View>
-                  <ScrollView style={styles.textProgramScrollArea} showsVerticalScrollIndicator={true}>
-                    <Text variant="small" color="foreground" style={styles.monoText}>
-                      {selectedProgram.program.textContent}
-                    </Text>
-                  </ScrollView>
-                </View>
-              ) : selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl ? (
-                docViewerUrl ? (
-                  <DocumentViewer
-                    url={docViewerUrl}
-                    title={selectedProgram.program?.title || 'Program Document'}
-                    onClose={() => setDocViewerUrl(null)}
-                  />
-                ) : (
-                  <Card style={styles.collapsedDocCard}>
-                    <CardContent style={styles.collapsedDocContent}>
-                      <View style={styles.collapsedDocLeft}>
-                        <Upload size={16} color={theme.colors.primary} weight="fill" />
-                        <Text variant="small" weight="semiBold" color="foreground" numberOfLines={1}>
-                          {selectedProgram.program?.title || 'Assigned Program'}
-                        </Text>
-                      </View>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onPress={() => setDocViewerUrl(selectedProgram.program.programFileUrl!)}
-                        style={styles.collapsedDocOpenBtn}
-                      >
-                        <Text variant="small" weight="bold" color="primary-foreground">
-                          Open
-                        </Text>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )
-              ) : (
-                <>
-              {(isLoadingCards || isLoadingProgramSessions) && (
-                <View style={styles.cardsList}>
-                  <SkeletonSessionList count={4} />
-                </View>
-              )}
-
-              {!isLoadingCards && !isLoadingProgramSessions && workoutCards.length > 0 && (
-                <View style={styles.cardsList}>
-                  {workoutCards.map((card) => (
-                    <SessionCard
-                      key={card.id}
-                      card={card}
-                      programId={selectedProgramId}
-                      onFinish={(date: string) => navigation.navigate('JournalEntry', { date })}
-                    />
-                  ))}
-                </View>
-              )}
-
-              {!isLoadingCards && !isLoadingProgramSessions && programSessions.length === 0 && (
-                <View style={styles.cardsList}>
-                  <LinearGradient
-                    colors={['#1e40af', '#c084fc']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.emptyGradientCard}
-                  >
-                    <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
-                      No workout sessions available
-                    </Text>
-                    <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
-                      Check back later or contact your coach for program updates.
-                    </Text>
-                  </LinearGradient>
-                </View>
-              )}
-                </>
-              )}
-            </View>
-          ) : (
-            <LinearGradient
-              colors={['#1e40af', '#c084fc']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.emptyGradientCard}
+        {/* Snap pager for sheet/created programs with loaded cards */}
+        {isSnapProgram && !isLoadingCards && !isLoadingProgramSessions && snapCards.length > 0 ? (
+          <View
+            style={styles.snapScrollContainer}
+            onLayout={(e) => setSnapContainerHeight(e.nativeEvent.layout.height)}
+          >
+            <ScrollView
+              ref={snapScrollRef}
+              pagingEnabled
+              showsVerticalScrollIndicator={false}
+              style={{ flex: 1 }}
+              refreshControl={
+                <RefreshControl tintColor="#fff" refreshing={isRefreshing} onRefresh={onRefresh} />
+              }
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.y / snapContainerHeight);
+                setCurrentSnapIndex(index);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
             >
-              <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
-                No program assigned
-              </Text>
-              <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
-                Assign a Program or Create a Program to start tracking your training.
-              </Text>
-              <Button variant="outline" onPress={() => navigation.navigate('ProgramCreate')} style={styles.emptyButton}>
-                <Text variant="small" weight="medium" color="primary-foreground">
-                  Create a Program
+              {snapCards.map((card) => (
+                <View
+                  key={card.id}
+                  style={[styles.snapCardPage, { height: snapContainerHeight }]}
+                >
+                  <SessionCard
+                    card={card}
+                    programId={selectedProgramId}
+                    isToday={card.isToday}
+                    onFinish={(date: string) => navigation.navigate('JournalEntry', { date })}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* Dot indicator */}
+            {snapCards.length > 1 && (
+              <View style={styles.dotIndicatorRow}>
+                {snapCards.slice(0, 8).map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.dot,
+                      i === currentSnapIndex && styles.dotActive,
+                      i === 0 && currentSnapIndex === 0 && styles.dotToday,
+                    ]}
+                  />
+                ))}
+                {snapCards.length > 8 && (
+                  <View style={[styles.dot, styles.dotEllipsis]} />
+                )}
+              </View>
+            )}
+          </View>
+        ) : (
+          <ScrollView
+            contentInsetAdjustmentBehavior="never"
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: contentBottomPadding },
+            ]}
+            showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+              { useNativeDriver: false }
+            )}
+            refreshControl={
+              <RefreshControl tintColor="#fff" refreshing={isRefreshing} onRefresh={onRefresh} />
+            }
+          >
+            <InlineRefreshHeader visible={isRefreshing} />
+
+            {selectedProgram ? (
+              <View style={styles.contentContainer}>
+                {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent ? (
+                  <View style={styles.textProgramFullContainer}>
+                    <View style={styles.textProgramHeader}>
+                      <ClipboardText size={18} color="#FF7A00" weight="fill" />
+                      <Text variant="body" weight="bold" color="foreground">
+                        {selectedProgram.program?.title || 'Program Content'}
+                      </Text>
+                    </View>
+                    <ScrollView style={styles.textProgramScrollArea} showsVerticalScrollIndicator={true}>
+                      <Text variant="small" color="foreground" style={styles.monoText}>
+                        {selectedProgram.program.textContent}
+                      </Text>
+                    </ScrollView>
+                  </View>
+                ) : selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl ? (
+                  docViewerUrl ? (
+                    <DocumentViewer
+                      url={docViewerUrl}
+                      title={selectedProgram.program?.title || 'Program Document'}
+                      onClose={() => setDocViewerUrl(null)}
+                    />
+                  ) : (
+                    <Card style={styles.collapsedDocCard}>
+                      <CardContent style={styles.collapsedDocContent}>
+                        <View style={styles.collapsedDocLeft}>
+                          <Upload size={16} color={theme.colors.primary} weight="fill" />
+                          <Text variant="small" weight="semiBold" color="foreground" numberOfLines={1}>
+                            {selectedProgram.program?.title || 'Assigned Program'}
+                          </Text>
+                        </View>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onPress={() => setDocViewerUrl(selectedProgram.program.programFileUrl!)}
+                          style={styles.collapsedDocOpenBtn}
+                        >
+                          <Text variant="small" weight="bold" color="primary-foreground">
+                            Open
+                          </Text>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )
+                ) : (
+                  <>
+                    {(isLoadingCards || isLoadingProgramSessions) && (
+                      <View style={styles.cardsList}>
+                        <SkeletonSessionList count={4} />
+                      </View>
+                    )}
+                    {!isLoadingCards && !isLoadingProgramSessions && programSessions.length === 0 && (
+                      <View style={styles.cardsList}>
+                        <LinearGradient
+                          colors={['#1e40af', '#c084fc']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.emptyGradientCard}
+                        >
+                          <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
+                            No workout sessions available
+                          </Text>
+                          <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
+                            Check back later or contact your coach for program updates.
+                          </Text>
+                        </LinearGradient>
+                      </View>
+                    )}
+                  </>
+                )}
+              </View>
+            ) : (
+              <LinearGradient
+                colors={['#1e40af', '#c084fc']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.emptyGradientCard}
+              >
+                <Text variant="small" weight="semiBold" color="primary-foreground" style={styles.emptyTitle}>
+                  No program assigned
                 </Text>
-              </Button>
-            </LinearGradient>
-          )}
-        </ScrollView>
+                <Text variant="caption" color="primary-foreground" style={styles.emptyText}>
+                  Assign a Program or Create a Program to start tracking your training.
+                </Text>
+                <Button variant="outline" onPress={() => navigation.navigate('ProgramCreate')} style={styles.emptyButton}>
+                  <Text variant="small" weight="medium" color="primary-foreground">
+                    Create a Program
+                  </Text>
+                </Button>
+              </LinearGradient>
+            )}
+          </ScrollView>
+        )}
 
         <TouchableOpacity
           style={[styles.targetTimesButton, { top: '65%' }]}
@@ -591,10 +644,12 @@ const SessionCard = ({
   card,
   programId,
   onFinish,
+  isToday = false,
 }: {
   card: any;
   programId: number | string | null;
   onFinish: (date: string) => void;
+  isToday?: boolean;
 }) => {
   const sessionId = card.sessionData?.id;
   const dayNumber = card.sessionData?.dayNumber || card.dayNumber;
@@ -604,21 +659,18 @@ const SessionCard = ({
   const hasSession = !!card.sessionData;
   const isRestDay = card.sessionData?.isRestDay;
 
-  const headerLabel = card.dayOfWeek || '';
+  const dayLabel = card.dayOfWeek || '';
+  const sessionLabel = isToday ? "TODAY'S SESSION" : "COMING SESSION";
 
   if (!hasSession) {
     return (
       <View style={styles.emptyDayCard}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.cardHeaderLeft}>
-            <Text variant="small" weight="medium" color="muted">
-              {headerLabel}
-            </Text>
+            <Text variant="small" weight="medium" color="muted">{dayLabel}</Text>
           </View>
           {card.dateString ? (
-            <Text variant="small" color="muted" style={styles.dateText}>
-              {card.dateString}
-            </Text>
+            <Text variant="small" color="muted" style={styles.dateText}>{card.dateString}</Text>
           ) : null}
         </View>
       </View>
@@ -630,15 +682,16 @@ const SessionCard = ({
       <View style={styles.restDayCard}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.cardHeaderLeft}>
-            <Text variant="small" weight="medium" color="muted">
-              {headerLabel}
+            <Text style={[styles.sessionTypeLabel, isToday ? styles.sessionTypeLabelToday : styles.sessionTypeLabelComing]}>
+              {sessionLabel}
             </Text>
           </View>
-          {card.dateString ? (
-            <Text variant="small" color="muted" style={styles.dateText}>
-              {card.dateString}
-            </Text>
-          ) : null}
+          <View style={styles.cardHeaderRight}>
+            {card.dateString ? (
+              <Text variant="small" color="muted" style={styles.dateText}>{card.dateString}</Text>
+            ) : null}
+            <Text variant="caption" color="muted">{dayLabel}</Text>
+          </View>
         </View>
         <View style={styles.restDay}>
           <Text variant="body" weight="semiBold" color="muted">Rest Day</Text>
@@ -648,24 +701,21 @@ const SessionCard = ({
   }
 
   return (
-    <View style={styles.workoutCard}>
+    <View style={[styles.workoutCard, styles.snapWorkoutCard]}>
       <View style={styles.cardHeaderRow}>
         <View style={styles.cardHeaderLeft}>
-          <Text variant="small" weight="medium" color="foreground">
-            {headerLabel}
+          <Text style={[styles.sessionTypeLabel, isToday ? styles.sessionTypeLabelToday : styles.sessionTypeLabelComing]}>
+            {sessionLabel}
           </Text>
         </View>
         <View style={styles.cardHeaderRight}>
           <TouchableOpacity style={styles.finishButton} onPress={() => onFinish(finishDate)}>
-            <Text variant="small" color="primary">
-              Finish
-            </Text>
+            <Text variant="small" color="primary">Finish</Text>
           </TouchableOpacity>
           {card.dateString ? (
-            <Text variant="small" color="muted" style={styles.dateText}>
-              {card.dateString}
-            </Text>
+            <Text variant="small" color="muted" style={styles.dateText}>{card.dateString}</Text>
           ) : null}
+          <Text variant="caption" color="muted">{dayLabel}</Text>
         </View>
       </View>
 
@@ -921,6 +971,61 @@ const styles = StyleSheet.create({
   dropdownEmptyText: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.35)',
+  },
+  snapScrollContainer: {
+    flex: 1,
+  },
+  snapCardPage: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.md,
+    paddingBottom: 40,
+  },
+  snapWorkoutCard: {
+    flex: 1,
+  },
+  dotIndicatorRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    position: 'absolute',
+    bottom: 8,
+    left: 0,
+    right: 0,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  dotActive: {
+    width: 18,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,122,0,0.75)',
+  },
+  dotToday: {
+    backgroundColor: '#FF7A00',
+  },
+  dotEllipsis: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  sessionTypeLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.3,
+    textTransform: 'uppercase',
+  },
+  sessionTypeLabelToday: {
+    color: '#FF7A00',
+  },
+  sessionTypeLabelComing: {
+    color: 'rgba(255,255,255,0.38)',
   },
   contentContainer: {
     marginTop: theme.spacing.md,
