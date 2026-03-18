@@ -70,39 +70,7 @@ interface TargetTimesDrawerProps {
   onClose: () => void;
 }
 
-interface CollapsibleSectionProps {
-  icon: React.ReactNode;
-  title: string;
-  expanded: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}
-
-const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
-  icon,
-  title,
-  expanded,
-  onToggle,
-  children,
-}) => (
-  <View style={styles.section}>
-    <TouchableOpacity
-      style={styles.sectionHeader}
-      onPress={onToggle}
-      activeOpacity={0.7}
-    >
-      {icon}
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.sectionCaret}>
-        {expanded
-          ? <CaretDown size={12} color={COLORS.textMuted} weight="bold" />
-          : <CaretRight size={12} color={COLORS.textMuted} weight="bold" />
-        }
-      </View>
-    </TouchableOpacity>
-    {expanded && <View style={styles.sectionBody}>{children}</View>}
-  </View>
-);
+type OptionsSubPage = 'trackType' | 'timingMethod' | 'goalTimes';
 
 export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, onClose }) => {
   const insets = useSafeAreaInsets();
@@ -116,9 +84,8 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
   const [goalHurdles400, setGoalHurdles400] = useState('54.0');
   const [isRendered, setIsRendered] = useState(false);
 
-  const [trackTypeExpanded, setTrackTypeExpanded] = useState(false);
-  const [timingMethodExpanded, setTimingMethodExpanded] = useState(false);
-  const [goalTimesExpanded, setGoalTimesExpanded] = useState(false);
+  const [optionsExpanded, setOptionsExpanded] = useState(false);
+  const [optionsSubPage, setOptionsSubPage] = useState<OptionsSubPage>('trackType');
 
   const tableScrollRef = useRef<ScrollView>(null);
 
@@ -270,105 +237,137 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
             contentContainerStyle={styles.scrollContent}
             extraScrollHeight={80}
           >
-            {/* Track Type — collapsible */}
-            <CollapsibleSection
-              icon={<MapPin size={13} color={COLORS.accent} weight="fill" />}
-              title="Track Type"
-              expanded={trackTypeExpanded}
-              onToggle={() => setTrackTypeExpanded((v) => !v)}
-            >
-              <View style={styles.toggleRow}>
-                {(['outdoor', 'indoor'] as TrackType[]).map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[styles.toggleButton, currentTrackType === type && styles.toggleButtonActive]}
-                    onPress={() => {
-                      setCurrentTrackType(type);
-                      saveString(STORAGE_KEYS.currentTrackType, type);
-                    }}
-                  >
-                    <Text style={[styles.toggleText, currentTrackType === type && styles.toggleTextActive]}>
-                      {type === 'outdoor' ? 'Outdoor' : 'Indoor'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <View style={styles.inlineRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.inlineLabel}>Adjust for Track Type</Text>
-                  <Text style={styles.inlineHint}>Apply track-specific timing adjustments</Text>
+            {/* Options — single collapsible with sub-page tabs */}
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.sectionHeader}
+                onPress={() => setOptionsExpanded((v) => !v)}
+                activeOpacity={0.7}
+              >
+                <Gauge size={13} color={COLORS.accent} weight="fill" />
+                <Text style={styles.sectionTitle}>Options</Text>
+                <View style={styles.sectionCaret}>
+                  {optionsExpanded
+                    ? <CaretDown size={12} color={COLORS.textMuted} weight="bold" />
+                    : <CaretRight size={12} color={COLORS.textMuted} weight="bold" />
+                  }
                 </View>
-                <TouchableOpacity
-                  style={[styles.switch, adjustForTrackType && styles.switchActive]}
-                  onPress={() => {
-                    const next = !adjustForTrackType;
-                    setAdjustForTrackType(next);
-                    saveBoolean(STORAGE_KEYS.adjustForTrackType, next);
-                  }}
-                >
-                  <View style={[styles.switchKnob, adjustForTrackType && styles.switchKnobActive]} />
-                </TouchableOpacity>
-              </View>
-            </CollapsibleSection>
+              </TouchableOpacity>
 
-            {/* Timing Method — collapsible */}
-            <CollapsibleSection
-              icon={<Gauge size={13} color={COLORS.accent} weight="fill" />}
-              title="Timing Method"
-              expanded={timingMethodExpanded}
-              onToggle={() => setTimingMethodExpanded((v) => !v)}
-            >
-              <View style={styles.toggleRow}>
-                {(['reaction', 'firstFoot', 'onMovement'] as TimingMethod[]).map((method) => (
-                  <TouchableOpacity
-                    key={method}
-                    style={[styles.toggleButton, timingMethod === method && styles.toggleButtonActive]}
-                    onPress={() => {
-                      setTimingMethod(method);
-                      saveString(STORAGE_KEYS.timingMethod, method);
-                    }}
-                  >
-                    <Text style={[styles.toggleText, timingMethod === method && styles.toggleTextActive]}>
-                      {method === 'reaction' ? 'Reaction' : method === 'firstFoot' ? 'First Foot' : 'Movement'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </CollapsibleSection>
-
-            {/* Goal Times — collapsible */}
-            <CollapsibleSection
-              icon={<Target size={13} color={COLORS.accent} weight="fill" />}
-              title="Goal Times"
-              expanded={goalTimesExpanded}
-              onToggle={() => setGoalTimesExpanded((v) => !v)}
-            >
-              <View style={styles.inputGroup}>
-                {[
-                  { label: '100m', value: goal100m, setter: setGoal100m, key: STORAGE_KEYS.goal100m },
-                  { label: '200m', value: goal200m, setter: setGoal200m, key: STORAGE_KEYS.goal200m },
-                  { label: '400m', value: goal400m, setter: setGoal400m, key: STORAGE_KEYS.goal400m },
-                  { label: 'Hurdles', value: goalHurdles100, setter: setGoalHurdles100, key: STORAGE_KEYS.goalHurdles100 },
-                  { label: '400H', value: goalHurdles400, setter: setGoalHurdles400, key: STORAGE_KEYS.goalHurdles400 },
-                ].map((item, idx) => (
-                  <View key={item.label} style={[styles.inputRow, idx > 0 && styles.inputRowBorder]}>
-                    <Text style={styles.inputLabel}>{item.label}</Text>
-                    <TextInput
-                      style={styles.input}
-                      keyboardType="numeric"
-                      value={item.value}
-                      placeholderTextColor={COLORS.textMuted}
-                      onChangeText={(text) => {
-                        const normalized = text.replace(',', '.');
-                        item.setter(normalized);
-                        saveString(item.key, normalized);
-                      }}
-                    />
-                    <Text style={styles.inputUnit}>sec</Text>
+              {optionsExpanded && (
+                <View style={styles.sectionBody}>
+                  {/* Sub-page tab bar */}
+                  <View style={styles.subTabBar}>
+                    {([
+                      { key: 'trackType', label: 'Track', icon: <MapPin size={11} color={optionsSubPage === 'trackType' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
+                      { key: 'timingMethod', label: 'Timing', icon: <Gauge size={11} color={optionsSubPage === 'timingMethod' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
+                      { key: 'goalTimes', label: 'Goals', icon: <Target size={11} color={optionsSubPage === 'goalTimes' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
+                    ] as { key: OptionsSubPage; label: string; icon: React.ReactNode }[]).map((tab) => (
+                      <TouchableOpacity
+                        key={tab.key}
+                        style={[styles.subTab, optionsSubPage === tab.key && styles.subTabActive]}
+                        onPress={() => setOptionsSubPage(tab.key)}
+                        activeOpacity={0.7}
+                      >
+                        {tab.icon}
+                        <Text style={[styles.subTabText, optionsSubPage === tab.key && styles.subTabTextActive]}>
+                          {tab.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                ))}
-              </View>
-            </CollapsibleSection>
+
+                  {/* Sub-page content */}
+                  {optionsSubPage === 'trackType' && (
+                    <View style={styles.subPageContent}>
+                      <View style={styles.toggleRow}>
+                        {(['outdoor', 'indoor'] as TrackType[]).map((type) => (
+                          <TouchableOpacity
+                            key={type}
+                            style={[styles.toggleButton, currentTrackType === type && styles.toggleButtonActive]}
+                            onPress={() => {
+                              setCurrentTrackType(type);
+                              saveString(STORAGE_KEYS.currentTrackType, type);
+                            }}
+                          >
+                            <Text style={[styles.toggleText, currentTrackType === type && styles.toggleTextActive]}>
+                              {type === 'outdoor' ? 'Outdoor' : 'Indoor'}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                      <View style={styles.inlineRow}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.inlineLabel}>Adjust for Track Type</Text>
+                          <Text style={styles.inlineHint}>Apply track-specific timing adjustments</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={[styles.switch, adjustForTrackType && styles.switchActive]}
+                          onPress={() => {
+                            const next = !adjustForTrackType;
+                            setAdjustForTrackType(next);
+                            saveBoolean(STORAGE_KEYS.adjustForTrackType, next);
+                          }}
+                        >
+                          <View style={[styles.switchKnob, adjustForTrackType && styles.switchKnobActive]} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+
+                  {optionsSubPage === 'timingMethod' && (
+                    <View style={styles.subPageContent}>
+                      <View style={styles.toggleRow}>
+                        {(['reaction', 'firstFoot', 'onMovement'] as TimingMethod[]).map((method) => (
+                          <TouchableOpacity
+                            key={method}
+                            style={[styles.toggleButton, timingMethod === method && styles.toggleButtonActive]}
+                            onPress={() => {
+                              setTimingMethod(method);
+                              saveString(STORAGE_KEYS.timingMethod, method);
+                            }}
+                          >
+                            <Text style={[styles.toggleText, timingMethod === method && styles.toggleTextActive]}>
+                              {method === 'reaction' ? 'Reaction' : method === 'firstFoot' ? 'First Foot' : 'Movement'}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {optionsSubPage === 'goalTimes' && (
+                    <View style={styles.subPageContent}>
+                      <View style={styles.inputGroup}>
+                        {[
+                          { label: '100m', value: goal100m, setter: setGoal100m, key: STORAGE_KEYS.goal100m },
+                          { label: '200m', value: goal200m, setter: setGoal200m, key: STORAGE_KEYS.goal200m },
+                          { label: '400m', value: goal400m, setter: setGoal400m, key: STORAGE_KEYS.goal400m },
+                          { label: 'Hurdles', value: goalHurdles100, setter: setGoalHurdles100, key: STORAGE_KEYS.goalHurdles100 },
+                          { label: '400H', value: goalHurdles400, setter: setGoalHurdles400, key: STORAGE_KEYS.goalHurdles400 },
+                        ].map((item, idx) => (
+                          <View key={item.label} style={[styles.inputRow, idx > 0 && styles.inputRowBorder]}>
+                            <Text style={styles.inputLabel}>{item.label}</Text>
+                            <TextInput
+                              style={styles.input}
+                              keyboardType="numeric"
+                              value={item.value}
+                              placeholderTextColor={COLORS.textMuted}
+                              onChangeText={(text) => {
+                                const normalized = text.replace(',', '.');
+                                item.setter(normalized);
+                                saveString(item.key, normalized);
+                              }}
+                            />
+                            <Text style={styles.inputUnit}>sec</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
 
             {/* Calculated Targets — always visible, table scrolls from right */}
             <View style={styles.section}>
@@ -531,6 +530,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionBody: {
+    gap: 8,
+  },
+  subTabBar: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+    padding: 3,
+    gap: 2,
+  },
+  subTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  subTabActive: {
+    backgroundColor: COLORS.accentMuted,
+    borderWidth: 1,
+    borderColor: COLORS.accentBorder,
+  },
+  subTabText: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  subTabTextActive: {
+    color: COLORS.accent,
+  },
+  subPageContent: {
     gap: 8,
   },
   toggleRow: {
