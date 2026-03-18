@@ -188,15 +188,15 @@ export const CreateGroupScreen: React.FC = () => {
       }
 
       const responseText = await response.text();
-      console.log('[CreateGroup] Response:', response.status, responseText.substring(0, 1000));
+      console.log('[CreateGroup] Response:', response.status, responseText.substring(0, 2000));
 
       if (!response.ok) {
-        let errorMsg = 'Failed to create group';
+        let errorMsg = `HTTP ${response.status}`;
         try {
           const json = JSON.parse(responseText);
-          errorMsg = json.details || json.message || json.error || errorMsg;
+          errorMsg = json.details || json.message || json.error || JSON.stringify(json);
         } catch {
-          if (responseText) errorMsg = responseText;
+          errorMsg = responseText.substring(0, 500) || errorMsg;
         }
         throw new Error(errorMsg);
       }
@@ -216,13 +216,7 @@ export const CreateGroupScreen: React.FC = () => {
     onError: (error: Error) => {
       console.log('[CreateGroup] Error:', error.message);
       const msg = error.message || 'Unknown error';
-      const isGeneric = msg === 'Request failed' || msg === 'Failed to create group';
-      Alert.alert(
-        'Create failed',
-        isGeneric
-          ? 'Unable to create group. Check your connection and try again.'
-          : msg,
-      );
+      Alert.alert('Create failed', msg);
     },
   });
 
