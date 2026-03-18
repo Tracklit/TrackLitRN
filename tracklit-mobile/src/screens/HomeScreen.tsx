@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -281,77 +280,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       programId: resolvedProgramId,
     };
   }, [todayDayNumber, sessionsByDay, programSessions, resolvedProgramId]);
-
-  const [practiceSnapIndex, setPracticeSnapIndex] = useState(0);
-  const [cardScrollHeight, setCardScrollHeight] = useState(180);
-  const practiceSnapRef = useRef<ScrollView>(null);
-
-  const MONTH_ABBR_H = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-  const upcomingSessionCards = useMemo(() => {
-    if (!programSessions || programSessions.length === 0 || isTextBasedProgram || isUploadedProgram) return [];
-
-    const byDateKey: Record<string, any> = {};
-    programSessions.forEach((s: any) => {
-      if (!s.date) return;
-      const shortM = String(s.date).match(/^([A-Za-z]{3})-(\d{1,2})$/);
-      if (shortM) {
-        const mon = shortM[1][0].toUpperCase() + shortM[1].slice(1).toLowerCase();
-        byDateKey[`${mon}-${parseInt(shortM[2])}`] = s;
-      }
-      const isoM = String(s.date).match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (isoM) {
-        const d = new Date(parseInt(isoM[1]), parseInt(isoM[2]) - 1, parseInt(isoM[3]));
-        byDateKey[`${MONTH_ABBR_H[d.getMonth()]}-${d.getDate()}`] = s;
-      }
-    });
-
-    const allDates = programSessions
-      .map((s: any) => {
-        if (!s.date) return null;
-        const shortM = String(s.date).match(/^([A-Za-z]{3})-(\d{1,2})$/);
-        if (shortM) {
-          const mon = MONTH_ABBR_H.indexOf(shortM[1][0].toUpperCase() + shortM[1].slice(1).toLowerCase());
-          if (mon >= 0) return new Date(new Date().getFullYear(), mon, parseInt(shortM[2]));
-        }
-        const isoM = String(s.date).match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (isoM) return new Date(parseInt(isoM[1]), parseInt(isoM[2]) - 1, parseInt(isoM[3]));
-        return null;
-      })
-      .filter(Boolean) as Date[];
-    allDates.sort((a, b) => a.getTime() - b.getTime());
-    const programStartDate = allDates[0] ?? null;
-
-    const dayNums = Object.keys(sessionsByDay).map(Number).filter(n => !isNaN(n));
-    const totalDays = dayNums.length > 0 ? Math.max(...dayNums) : programSessions.length;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const cards: Array<{ session: any; isToday: boolean; dateString: string }> = [];
-    for (let offset = 0; offset < 45 && cards.length < 8; offset++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + offset);
-
-      let dayNum: number | null = null;
-      if (programStartDate) {
-        const diff = Math.round((d.getTime() - programStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        if (diff >= 1 && diff <= totalDays) dayNum = diff;
-      }
-
-      const dateKey = `${MONTH_ABBR_H[d.getMonth()]}-${d.getDate()}`;
-      const session = byDateKey[dateKey] ?? (dayNum != null ? sessionsByDay[dayNum] ?? null : null);
-
-      if (session && !session.isRestDay) {
-        cards.push({
-          session: { ...session, programId: resolvedProgramId },
-          isToday: offset === 0,
-          dateString: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        });
-      }
-    }
-    return cards;
-  }, [programSessions, sessionsByDay, resolvedProgramId, isTextBasedProgram, isUploadedProgram]);
 
   const screenOpacity = useSharedValue(0);
   useEffect(() => {
@@ -940,107 +868,45 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         )}
 
         {/* Practice Card */}
-        {upcomingSessionCards.length > 0 ? (
-          <View style={styles.practiceCardWrapper}>
-            <LinearGradient
-              colors={['#6d28d9', '#c084fc']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.practiceCard, { padding: 0, overflow: 'hidden' }]}
-            >
-              <ScrollView
-                ref={practiceSnapRef}
-                pagingEnabled
-                showsVerticalScrollIndicator={false}
-                style={{ flex: 1 }}
-                onLayout={(e) => setCardScrollHeight(e.nativeEvent.layout.height)}
-                onMomentumScrollEnd={(e) => {
-                  const idx = Math.round(e.nativeEvent.contentOffset.y / cardScrollHeight);
-                  setPracticeSnapIndex(Math.max(0, Math.min(idx, upcomingSessionCards.length - 1)));
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
-              >
-                {upcomingSessionCards.map((item, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    activeOpacity={0.9}
-                    onPress={() => handleCardPress('Practice')}
-                    style={{ height: cardScrollHeight, padding: theme.spacing.lg, paddingBottom: theme.spacing.xl }}
-                  >
-                    <View style={styles.practiceTopRow}>
-                      <View style={[
-                        styles.practiceLabelPill,
-                        item.isToday && { backgroundColor: 'rgba(255,122,0,0.35)' },
-                      ]}>
-                        <Text style={[
-                          styles.practiceLabelText,
-                          item.isToday && { color: '#FF9A40' },
-                        ]}>
-                          {item.isToday ? "TODAY'S SESSION" : "COMING SESSION"}
-                        </Text>
-                      </View>
-                      <Text style={styles.practiceDateLabel}>{item.dateString}</Text>
-                    </View>
-                    <HomeWorkoutContent session={item.session} gymData={item.isToday ? todayGymData : []} />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              {upcomingSessionCards.length > 1 && (
-                <View style={styles.practiceSnapDots}>
-                  {upcomingSessionCards.slice(0, 7).map((_, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.practiceSnapDot,
-                        i === practiceSnapIndex && styles.practiceSnapDotActive,
-                      ]}
-                    />
-                  ))}
-                </View>
-              )}
-            </LinearGradient>
-          </View>
-        ) : (
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => handleCardPress('Practice')}
-            style={styles.practiceCardWrapper}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => handleCardPress('Practice')}
+          style={styles.practiceCardWrapper}
+        >
+          <LinearGradient
+            colors={['#6d28d9', '#c084fc']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.practiceCard}
           >
-            <LinearGradient
-              colors={['#6d28d9', '#c084fc']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.practiceCard}
-            >
-              <View style={styles.practiceTopRow}>
-                <View style={styles.practiceLabelPill}>
-                  <Text style={styles.practiceLabelText}>{isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : "TODAY'S SESSION"}</Text>
-                </View>
+            <View style={styles.practiceTopRow}>
+              <View style={styles.practiceLabelPill}>
+                <Text style={styles.practiceLabelText}>{isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}</Text>
               </View>
+            </View>
 
-              {isTextBasedProgram ? (
-                <Text style={styles.practiceTapPrompt}>
-                  Tap to open your program
+            {isTextBasedProgram ? (
+              <Text style={styles.practiceTapPrompt}>
+                Tap to open your program
+              </Text>
+            ) : isUploadedProgram ? (
+              <Text style={styles.practiceTapPrompt}>
+                Tap to open {selectedPurchase?.program?.title || 'your program'}
+              </Text>
+            ) : todaySession ? (
+              <>
+                <Text style={styles.practiceSessionTitle} numberOfLines={2}>
+                  {todaySession.title && !/^Day\s*\d*\s*(Training|Session)?\s*$/i.test(todaySession.title.trim()) ? todaySession.title : 'Today\'s Session'}
                 </Text>
-              ) : isUploadedProgram ? (
-                <Text style={styles.practiceTapPrompt}>
-                  Tap to open {selectedPurchase?.program?.title || 'your program'}
-                </Text>
-              ) : todaySession ? (
-                <>
-                  <Text style={styles.practiceSessionTitle} numberOfLines={2}>
-                    {todaySession.title && !/^Day\s*\d*\s*(Training|Session)?\s*$/i.test(todaySession.title.trim()) ? todaySession.title : "Today's Session"}
-                  </Text>
-                  <HomeWorkoutContent session={todaySession} gymData={todayGymData} />
-                </>
-              ) : (
-                <Text style={styles.practiceNoSession}>
-                  No Session Scheduled — add a Program to get started
-                </Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
+                <HomeWorkoutContent session={todaySession} gymData={todayGymData} />
+              </>
+            ) : (
+              <Text style={styles.practiceNoSession}>
+                No Session Scheduled — add a Program to get started
+              </Text>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* Training Stats Carousel */}
         <TrainingStatsCarousel data={trainingStats} onNavigate={onNavigate} />
@@ -1793,33 +1659,6 @@ const styles = StyleSheet.create({
   },
   practiceFireIcon: {
     fontSize: 22,
-  },
-  practiceDateLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 11,
-    fontWeight: '600' as const,
-  },
-  practiceSnapDots: {
-    position: 'absolute' as const,
-    right: 8,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
-    flexDirection: 'column' as const,
-    gap: 5,
-  },
-  practiceSnapDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-  },
-  practiceSnapDotActive: {
-    width: 4,
-    height: 16,
-    borderRadius: 2,
-    backgroundColor: '#FF7A00',
   },
   practiceSessionTitle: {
     color: '#ffffff',
