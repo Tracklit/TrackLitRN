@@ -870,15 +870,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         {/* Practice Card */}
         <TouchableOpacity
           activeOpacity={0.85}
-          onPress={() => handleCardPress('Practice')}
+          onPress={() => handleCardPress('Training')}
           style={styles.practiceCardWrapper}
         >
-          <View style={styles.practiceCard}>
+          <LinearGradient
+            colors={['#1d1333', '#1C1F2B']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.practiceCard}
+          >
             {/* Header row */}
             <View style={styles.practiceCardHeader}>
               <View style={styles.practiceCardHeaderLeft}>
                 <View style={styles.practiceCardIconWrap}>
-                  <Barbell size={12} color="#FF7A00" weight="fill" />
+                  <Image
+                    source={require('../../assets/tracklit-logo.png')}
+                    style={styles.practiceCardLogo}
+                    resizeMode="contain"
+                  />
                 </View>
                 <Text style={styles.practiceCardLabel}>
                   {isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}
@@ -907,7 +916,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 No session scheduled — add a program to get started
               </Text>
             )}
-          </View>
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* Training Stats Carousel */}
@@ -1115,7 +1124,11 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
         <View style={tsStyles.row}>
           <View style={tsStyles.statCell}>
             <View style={tsStyles.iconWrap}>
-              <Barbell size={14} color="#fff" weight="fill" />
+              <Image
+                source={require('../../assets/tracklit-logo.png')}
+                style={tsStyles.statLogo}
+                resizeMode="contain"
+              />
             </View>
             <View style={tsStyles.statText}>
               <RNText style={tsStyles.statValue}>{item.sessions}<RNText style={tsStyles.statTotal}>/{item.weeklyTotal}</RNText></RNText>
@@ -1290,6 +1303,10 @@ const tsStyles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  statLogo: {
+    width: 16,
+    height: 16,
   },
   statText: {
     flex: 1,
@@ -1635,11 +1652,11 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xxxl,
   },
   practiceCard: {
-    backgroundColor: '#1C1F2B',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(109,40,217,0.3)',
     padding: theme.spacing.xl,
+    overflow: 'hidden',
   },
   practiceCardHeader: {
     flexDirection: 'row',
@@ -1656,9 +1673,13 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 7,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: 'rgba(109,40,217,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  practiceCardLogo: {
+    width: 15,
+    height: 15,
   },
   practiceCardLabel: {
     color: 'rgba(255,255,255,0.4)',
