@@ -994,7 +994,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         onRequestClose={() => setTickerModalVisible(false)}
       >
         <TouchableOpacity
-          style={[styles.modalOverlay, { paddingTop: insets.top + 60 }]}
+          style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setTickerModalVisible(false)}
         >
@@ -1742,7 +1742,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     paddingHorizontal: theme.spacing.container,
   },
   modalContent: {

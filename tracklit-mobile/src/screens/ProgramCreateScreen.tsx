@@ -282,7 +282,7 @@ export const ProgramCreateScreen: React.FC = () => {
                 activeOpacity={0.85}
                 onPress={() => {
                   if (item.id === 'import') {
-                    navigation.navigate('ProgramImport');
+                    navigation.replace('ProgramImport');
                   } else {
                     setSelectedMethod(item.id);
                   }

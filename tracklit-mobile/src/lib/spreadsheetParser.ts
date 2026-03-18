@@ -1,5 +1,7 @@
 import * as XLSX from 'xlsx';
 
+export type SheetTemplate = 'simple' | 'advanced';
+
 export interface ParsedSession {
   dayNumber: number;
   date: string;
@@ -26,6 +28,7 @@ export interface ParsedSpreadsheet {
   title: string;
   totalSessions: number;
   sessions: ParsedSession[];
+  detectedTemplate: SheetTemplate;
 }
 
 export function containsGymReference(text: string): {
@@ -91,7 +94,54 @@ function parseCSV(csv: string): string[][] {
   return rows;
 }
 
-function mapRowsToSessions(dataRows: string[][]): ParsedSession[] {
+export function detectTemplateFromRows(dataRows: string[][]): SheetTemplate {
+  const sample = dataRows.slice(0, 10);
+  if (sample.length === 0) return 'advanced';
+
+  let advancedCount = 0;
+  for (const row of sample) {
+    const hasAdvancedCols = (row[2] || '').trim() !== '' ||
+      (row[3] || '').trim() !== '' ||
+      (row[4] || '').trim() !== '' ||
+      (row[5] || '').trim() !== '' ||
+      (row[6] || '').trim() !== '';
+    if (hasAdvancedCols) advancedCount++;
+  }
+
+  return advancedCount >= Math.ceil(sample.length * 0.3) ? 'advanced' : 'simple';
+}
+
+function mapSimpleRowsToSessions(dataRows: string[][]): ParsedSession[] {
+  return dataRows.map((row, index) => {
+    const dateValue = (row[0] || '').replace(/^"|"$/g, '').trim();
+    const sessionText = (row[1] || '').replace(/^"|"$/g, '').trim();
+    const isRestDay = !dateValue || !sessionText;
+
+    return {
+      dayNumber: index + 1,
+      date: dateValue,
+      columnA: dateValue,
+      columnB: sessionText,
+      columnC: '',
+      columnD: '',
+      columnE: '',
+      columnF: '',
+      columnG: '',
+      preActivation1: '',
+      preActivation2: '',
+      shortDistanceWorkout: '',
+      mediumDistanceWorkout: '',
+      longDistanceWorkout: '',
+      extraSession: '',
+      gymData: [],
+      isRestDay,
+      title: dateValue ? `${dateValue} Training` : `Day ${index + 1}`,
+      description: sessionText || (isRestDay ? 'Rest and Recovery' : ''),
+    };
+  });
+}
+
+function mapAdvancedRowsToSessions(dataRows: string[][]): ParsedSession[] {
   return dataRows.map((row, index) => {
     const dateValue = row[0] || '';
     let preActivation1 = row[1] || '';
@@ -172,12 +222,16 @@ export function parseCSVString(csvString: string, title?: string): ParsedSpreads
   }
 
   const dataRows = rows.length > 1 ? rows.slice(1) : rows;
-  const sessions = mapRowsToSessions(dataRows);
+  const detectedTemplate = detectTemplateFromRows(dataRows);
+  const sessions = detectedTemplate === 'simple'
+    ? mapSimpleRowsToSessions(dataRows)
+    : mapAdvancedRowsToSessions(dataRows);
 
   return {
     title: title || 'My Training Program',
     totalSessions: sessions.length,
     sessions,
+    detectedTemplate,
   };
 }
 
@@ -193,11 +247,15 @@ export function parseXLSXBase64(base64: string, title?: string): ParsedSpreadshe
 
   const stringRows = rows.map((row) => row.map((cell) => String(cell ?? '')));
   const dataRows = stringRows.length > 1 ? stringRows.slice(1) : stringRows;
-  const sessions = mapRowsToSessions(dataRows);
+  const detectedTemplate = detectTemplateFromRows(dataRows);
+  const sessions = detectedTemplate === 'simple'
+    ? mapSimpleRowsToSessions(dataRows)
+    : mapAdvancedRowsToSessions(dataRows);
 
   return {
     title: title || sheetName || 'My Training Program',
     totalSessions: sessions.length,
     sessions,
+    detectedTemplate,
   };
 }

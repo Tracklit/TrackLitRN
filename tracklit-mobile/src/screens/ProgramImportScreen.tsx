@@ -19,6 +19,7 @@ import {
   FilePdf,
   Warning,
   Info,
+  Lightbulb,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -31,7 +32,7 @@ import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwa
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { uploadProgramFile } from '@/lib/upload';
-import { parseCSVString, parseXLSXBase64, type ParsedSession } from '@/lib/spreadsheetParser';
+import { parseCSVString, parseXLSXBase64, type ParsedSession, type SheetTemplate } from '@/lib/spreadsheetParser';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 
@@ -53,7 +54,6 @@ const C = {
 type Visibility = 'public' | 'private' | 'premium';
 type PriceType = 'spikes' | 'money';
 type DetectedType = 'google_sheet' | 'document' | 'spreadsheet' | null;
-type SheetTemplate = 'simple' | 'advanced';
 
 const GOOGLE_SHEET_REGEX = /docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/;
 
@@ -124,6 +124,7 @@ export const ProgramImportScreen: React.FC = () => {
   const [importCategory, setImportCategory] = useState('');
   const [importLevel, setImportLevel] = useState('');
   const [sheetTemplate, setSheetTemplate] = useState<SheetTemplate>('simple');
+  const [detectedLocalTemplate, setDetectedLocalTemplate] = useState<SheetTemplate | null>(null);
 
   const handleLinkChange = useCallback((text: string) => {
     setLinkInput(text);
@@ -146,11 +147,29 @@ export const ProgramImportScreen: React.FC = () => {
       const picked = result.assets[0];
       setFile(picked);
       setLinkInput('');
+      setDetectedLocalTemplate(null);
       const type = detectFileType(picked);
       setDetectedType(type);
       if (!title.trim()) {
         const nameWithoutExt = picked.name.replace(/\.[^.]+$/, '');
         setTitle(nameWithoutExt);
+      }
+      if (type === 'spreadsheet') {
+        try {
+          const ext = (picked.name || '').split('.').pop()?.toLowerCase() || '';
+          const baseName = picked.name.replace(/\.[^.]+$/, '');
+          let parsed;
+          if (ext === 'xlsx' || ext === 'xls') {
+            const base64 = await FileSystem.readAsStringAsync(picked.uri, { encoding: 'base64' });
+            parsed = parseXLSXBase64(base64, baseName);
+          } else {
+            const content = await FileSystem.readAsStringAsync(picked.uri);
+            parsed = parseCSVString(content, baseName);
+          }
+          setDetectedLocalTemplate(parsed.detectedTemplate);
+        } catch {
+          // detection failed silently — will retry on submit
+        }
       }
     } catch {
       Alert.alert('File selection failed', 'Unable to select a document.');
@@ -161,6 +180,7 @@ export const ProgramImportScreen: React.FC = () => {
     setFile(null);
     setLinkInput('');
     setDetectedType(null);
+    setDetectedLocalTemplate(null);
     setTitle('');
     setDescription('');
   };
@@ -340,6 +360,13 @@ export const ProgramImportScreen: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Import / Upload</Text>
         <View style={{ flex: 1 }} />
+        <TouchableOpacity
+          style={styles.infoButton}
+          onPress={() => navigation.navigate('SheetFormatInfo')}
+          activeOpacity={0.7}
+        >
+          <Info size={18} color={C.textMuted} weight="fill" />
+        </TouchableOpacity>
       </View>
 
       <KeyboardAwareScreenScrollView
@@ -391,6 +418,17 @@ export const ProgramImportScreen: React.FC = () => {
             <TouchableOpacity onPress={clearInput} style={styles.clearBtn}>
               <Text style={styles.clearBtnText}>Clear</Text>
             </TouchableOpacity>
+          </View>
+        )}
+
+        {detectedType === 'spreadsheet' && detectedLocalTemplate && (
+          <View style={styles.detectedTemplateBanner}>
+            <Lightbulb size={14} color={C.orange} weight="fill" />
+            <Text style={styles.detectedTemplateText}>
+              Detected format: <Text style={styles.detectedTemplateBold}>
+                {detectedLocalTemplate === 'simple' ? 'Simple (Date + Session)' : 'Advanced (7 columns)'}
+              </Text>
+            </Text>
           </View>
         )}
 
@@ -597,6 +635,36 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  infoButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: C.glass,
+    borderWidth: 0.5,
+    borderColor: C.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detectedTemplateBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,122,0,0.08)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
+  },
+  detectedTemplateText: {
+    fontSize: 13,
+    color: C.textMuted,
+    flex: 1,
+  },
+  detectedTemplateBold: {
     fontWeight: '700',
     color: C.textPrimary,
   },
