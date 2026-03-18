@@ -534,7 +534,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
         </ScrollView>
 
         <TouchableOpacity
-          style={[styles.targetTimesButton, { top: '40%' }]}
+          style={[styles.targetTimesButton, { top: '65%' }]}
           onPress={() => setShowTargetTimes(true)}
           activeOpacity={0.85}
         >
@@ -1127,8 +1127,8 @@ const styles = StyleSheet.create({
   targetTimesButton: {
     position: 'absolute',
     right: 0,
-    width: 32,
-    height: 48,
+    width: 43,
+    height: 64,
     borderTopLeftRadius: 14,
     borderBottomLeftRadius: 14,
     borderTopRightRadius: 0,
