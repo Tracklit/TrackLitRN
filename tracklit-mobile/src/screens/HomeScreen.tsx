@@ -985,20 +985,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+              {upcomingSessionCards.length > 1 && (
+                <View style={styles.practiceSnapDots}>
+                  {upcomingSessionCards.slice(0, 7).map((_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.practiceSnapDot,
+                        i === practiceSnapIndex && styles.practiceSnapDotActive,
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
             </LinearGradient>
-            {upcomingSessionCards.length > 1 && (
-              <View style={styles.practiceSnapDots}>
-                {upcomingSessionCards.slice(0, 7).map((_, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.practiceSnapDot,
-                      i === practiceSnapIndex && styles.practiceSnapDotActive,
-                    ]}
-                  />
-                ))}
-              </View>
-            )}
           </View>
         ) : (
           <TouchableOpacity
@@ -1800,23 +1800,25 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   practiceSnapDots: {
-    flexDirection: 'row' as const,
+    position: 'absolute' as const,
+    right: 8,
+    top: 0,
+    bottom: 0,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
+    flexDirection: 'column' as const,
     gap: 5,
-    paddingTop: 8,
-    paddingBottom: 4,
   },
   practiceSnapDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.25)',
   },
   practiceSnapDotActive: {
-    width: 18,
-    height: 6,
-    borderRadius: 3,
+    width: 4,
+    height: 16,
+    borderRadius: 2,
     backgroundColor: '#FF7A00',
   },
   practiceSessionTitle: {
