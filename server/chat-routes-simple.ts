@@ -479,41 +479,46 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
       }
     }
 
-    console.log('[CreateGroup Server] Inserting group via Drizzle ORM...');
+    console.log('[CreateGroup Server] Inserting group via raw SQL...');
 
-    const [group] = await db.insert(chatGroups).values({
-      name: name.trim(),
-      description: description || '',
-      image: imageUrl,
-      creatorId: userId,
-      adminIds: [userId],
-      memberIds: allMemberIds,
-      isPrivate: isPrivate === 'true' || isPrivate === true,
-      inviteCode,
-    }).returning();
+    const isPrivateBool = isPrivate === 'true' || isPrivate === true;
+    const adminIdsLiteral = `{${Number(userId)}}`;
+    const memberIdsLiteral = `{${allMemberIds.map(Number).join(',')}}`;
+
+    const insertResult = await db.execute(sql`
+      INSERT INTO chat_groups (name, description, image, creator_id, admin_ids, member_ids, is_private, invite_code)
+      VALUES (
+        ${name.trim()},
+        ${description || ''},
+        ${imageUrl},
+        ${Number(userId)},
+        ${adminIdsLiteral}::integer[],
+        ${memberIdsLiteral}::integer[],
+        ${isPrivateBool},
+        ${inviteCode}
+      )
+      RETURNING *
+    `);
+
+    const group = insertResult.rows[0] as any;
 
     console.log('[CreateGroup Server] Group created:', group.id);
 
-    await db.insert(chatGroupMembers).values({
-      groupId: group.id,
-      userId: userId,
-      role: 'creator',
-    });
+    await db.execute(sql`
+      INSERT INTO chat_group_members (group_id, user_id, role)
+      VALUES (${group.id}, ${Number(userId)}, 'creator')
+    `);
 
     for (const member of validInviteMembers) {
-      await db.insert(chatGroupMembers).values({
-        groupId: group.id,
-        userId: Number(member.id),
-        role: 'member',
-      });
+      await db.execute(sql`
+        INSERT INTO chat_group_members (group_id, user_id, role)
+        VALUES (${group.id}, ${Number(member.id)}, 'member')
+      `);
 
-      await db.insert(chatGroupMessages).values({
-        groupId: group.id,
-        senderId: userId,
-        senderName: 'System',
-        text: `${member.name} was added to the group`,
-        messageType: 'system',
-      });
+      await db.execute(sql`
+        INSERT INTO chat_group_messages (group_id, sender_id, sender_name, text, message_type)
+        VALUES (${group.id}, ${Number(userId)}, 'System', ${`${member.name} was added to the group`}, 'system')
+      `);
     }
 
     res.json(group);
