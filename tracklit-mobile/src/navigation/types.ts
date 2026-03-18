@@ -32,7 +32,7 @@ export type RootStackParamList = {
   ProgramDetail: { id: number | string };
   ProgramCreate: undefined;
   ProgramImport: undefined;
-  SheetFormatInfo: undefined;
+  SheetFormatInfo: { showContinue?: boolean } | undefined;
   ProgramEditor: { id: number | string };
   Meets: undefined;
   CreateMeet: undefined;

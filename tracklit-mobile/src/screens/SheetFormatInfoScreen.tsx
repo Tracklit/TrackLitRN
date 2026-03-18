@@ -1,14 +1,21 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Table, Columns, CheckCircle } from 'phosphor-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { ArrowLeft, Table, Columns, CheckCircle, ArrowRight } from 'phosphor-react-native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
+import type { RootStackParamList } from '@/navigation/types';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+type Route = RouteProp<RootStackParamList, 'SheetFormatInfo'>;
 
 const C = {
   bg: '#0E0F14',
   card: '#1C1F2B',
   orange: '#FF7A00',
+  orangeLight: '#FF9D00',
   textPrimary: '#FFFFFF',
   textSecondary: '#B8C0FF',
   textMuted: '#8A90B5',
@@ -17,9 +24,21 @@ const C = {
   green: '#22c55e',
 };
 
+const ADVANCED_COLUMNS = [
+  { col: 'A', label: 'Date', eg: 'Feb-24' },
+  { col: 'B', label: 'Pre-Act 1', eg: 'A-skips' },
+  { col: 'C', label: 'Pre-Act 2', eg: 'Med ball' },
+  { col: 'D', label: 'Short', eg: '6×30m' },
+  { col: 'E', label: 'Medium', eg: '4×150m' },
+  { col: 'F', label: 'Long', eg: '2×300m' },
+  { col: 'G', label: 'Extra', eg: 'Gym 3' },
+];
+
 export const SheetFormatInfoScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<Nav>();
+  const route = useRoute<Route>();
+  const showContinue = route.params?.showContinue ?? false;
 
   return (
     <View style={styles.container}>
@@ -32,7 +51,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + (showContinue ? 100 : 40) }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.intro}>
@@ -51,15 +70,15 @@ export const SheetFormatInfoScreen: React.FC = () => {
           </View>
 
           <Text style={styles.formatDesc}>
-            The simplest option. One row per training day. Column A holds the date and Column B holds the full session description as free text.
+            One row per training day. Column A holds the date and Column B holds the full session description as free text.
           </Text>
 
           <View style={styles.table}>
             <View style={styles.tableRow}>
-              <View style={[styles.tableCell, styles.tableHeader, { flex: 1 }]}>
+              <View style={[styles.tableCell, styles.tableHeaderCell, { flex: 1 }]}>
                 <Text style={styles.tableHeaderText}>A — Date</Text>
               </View>
-              <View style={[styles.tableCell, styles.tableHeader, { flex: 3 }]}>
+              <View style={[styles.tableCell, styles.tableHeaderCell, { flex: 3, borderRightWidth: 0 }]}>
                 <Text style={styles.tableHeaderText}>B — Session</Text>
               </View>
             </View>
@@ -67,7 +86,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
               <View style={[styles.tableCell, { flex: 1 }]}>
                 <Text style={styles.tableCellText}>Feb-24</Text>
               </View>
-              <View style={[styles.tableCell, { flex: 3 }]}>
+              <View style={[styles.tableCell, { flex: 3, borderRightWidth: 0 }]}>
                 <Text style={styles.tableCellText}>Warm up, 4×60m, 3×150m, cool down</Text>
               </View>
             </View>
@@ -75,7 +94,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
               <View style={[styles.tableCell, { flex: 1 }]}>
                 <Text style={styles.tableCellText}>Feb-25</Text>
               </View>
-              <View style={[styles.tableCell, { flex: 3 }]}>
+              <View style={[styles.tableCell, { flex: 3, borderRightWidth: 0 }]}>
                 <Text style={styles.tableCellText}>Tempo 6×200m, core circuit</Text>
               </View>
             </View>
@@ -83,7 +102,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
               <View style={[styles.tableCell, { flex: 1 }]}>
                 <Text style={styles.tableCellText}>Feb-26</Text>
               </View>
-              <View style={[styles.tableCell, { flex: 3 }]}>
+              <View style={[styles.tableCell, { flex: 3, borderRightWidth: 0 }]}>
                 <Text style={styles.tableCellText}>Rest day</Text>
               </View>
             </View>
@@ -110,41 +129,83 @@ export const SheetFormatInfoScreen: React.FC = () => {
             Designed for coaches who structure sessions across multiple workout categories. Each column maps to a specific component of the training day.
           </Text>
 
-          <View style={styles.columnList}>
-            {[
-              { col: 'A', label: 'Date', eg: 'Feb-24' },
-              { col: 'B', label: 'Pre-Activation 1', eg: 'Drills, A-skips' },
-              { col: 'C', label: 'Pre-Activation 2', eg: 'Medicine ball circuit' },
-              { col: 'D', label: 'Short Distance', eg: '6×30m fly' },
-              { col: 'E', label: 'Medium Distance', eg: '4×150m' },
-              { col: 'F', label: 'Long Distance', eg: '2×300m' },
-              { col: 'G', label: 'Extra Session', eg: 'Gym 3 — squats, RDL' },
-            ].map(({ col, label, eg }) => (
-              <View key={col} style={styles.columnRow}>
-                <View style={styles.colBadge}>
-                  <Text style={styles.colBadgeText}>{col}</Text>
+          <View style={styles.table}>
+            <View style={[styles.tableRow, styles.tableHeaderCell]}>
+              {ADVANCED_COLUMNS.map(({ col }, i) => (
+                <View
+                  key={col}
+                  style={[
+                    styles.advCell,
+                    i === ADVANCED_COLUMNS.length - 1 && { borderRightWidth: 0 },
+                  ]}
+                >
+                  <View style={styles.colLetterBadge}>
+                    <Text style={styles.colLetterText}>{col}</Text>
+                  </View>
                 </View>
-                <View style={styles.colInfo}>
-                  <Text style={styles.colLabel}>{label}</Text>
-                  <Text style={styles.colExample}>{eg}</Text>
+              ))}
+            </View>
+            <View style={styles.tableRow}>
+              {ADVANCED_COLUMNS.map(({ col, label }, i) => (
+                <View
+                  key={col}
+                  style={[
+                    styles.advCell,
+                    i === ADVANCED_COLUMNS.length - 1 && { borderRightWidth: 0 },
+                  ]}
+                >
+                  <Text style={styles.advLabelText} numberOfLines={2}>{label}</Text>
                 </View>
-              </View>
-            ))}
+              ))}
+            </View>
+            <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+              {ADVANCED_COLUMNS.map(({ col, eg }, i) => (
+                <View
+                  key={col}
+                  style={[
+                    styles.advCell,
+                    i === ADVANCED_COLUMNS.length - 1 && { borderRightWidth: 0 },
+                  ]}
+                >
+                  <Text style={styles.advExampleText} numberOfLines={2}>{eg}</Text>
+                </View>
+              ))}
+            </View>
           </View>
 
           <View style={styles.tipRow}>
             <CheckCircle size={14} color={C.green} weight="fill" />
-            <Text style={styles.tipText}>Google Sheets import also supports this format via the Advanced tab selector.</Text>
+            <Text style={styles.tipText}>Google Sheets import also supports this format via the Advanced selector.</Text>
           </View>
         </View>
 
         <View style={styles.autoDetectCard}>
           <Text style={styles.autoDetectTitle}>Auto-detection</Text>
           <Text style={styles.autoDetectBody}>
-            When uploading a CSV or XLSX file, Tracklit inspects the first few rows and automatically selects the correct format. If columns C–G are empty, it uses Simple. Otherwise it uses Advanced. No manual selection needed.
+            When uploading a CSV or XLSX file, Tracklit inspects the first few rows and automatically selects the correct format. If columns C–G are empty, it uses Simple. Otherwise it uses Advanced.
           </Text>
         </View>
       </ScrollView>
+
+      {showContinue && (
+        <View style={[styles.continueBar, { paddingBottom: insets.bottom + 12 }]}>
+          <TouchableOpacity
+            style={styles.continueBtn}
+            activeOpacity={0.85}
+            onPress={() => navigation.replace('ProgramImport')}
+          >
+            <LinearGradient
+              colors={[C.orange, C.orangeLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.continueBtnInner}
+            >
+              <Text style={styles.continueBtnText}>Continue to Import</Text>
+              <ArrowRight size={16} color="white" weight="bold" />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -231,7 +292,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: C.border,
   },
-  tableHeader: {
+  tableHeaderCell: {
     backgroundColor: 'rgba(255,255,255,0.04)',
   },
   tableHeaderText: {
@@ -251,6 +312,42 @@ const styles = StyleSheet.create({
     color: C.textSecondary,
     lineHeight: 18,
   },
+  advCell: {
+    flex: 1,
+    paddingHorizontal: 5,
+    paddingVertical: 7,
+    borderRightWidth: 0.5,
+    borderRightColor: C.border,
+    alignItems: 'center',
+  },
+  colLetterBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,122,0,0.15)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colLetterText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: C.orange,
+  },
+  advLabelText: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: C.textMuted,
+    textAlign: 'center',
+    lineHeight: 13,
+  },
+  advExampleText: {
+    fontSize: 9,
+    color: C.textSecondary,
+    textAlign: 'center',
+    lineHeight: 13,
+  },
   tipRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -261,46 +358,6 @@ const styles = StyleSheet.create({
     color: C.textMuted,
     lineHeight: 18,
     flex: 1,
-  },
-  columnList: {
-    gap: 8,
-  },
-  columnRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  colBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
-    backgroundColor: 'rgba(255,122,0,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,122,0,0.3)',
-  },
-  colBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: C.orange,
-  },
-  colInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  colLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.textPrimary,
-  },
-  colExample: {
-    fontSize: 12,
-    color: C.textMuted,
-    flex: 1,
-    textAlign: 'right',
   },
   autoDetectCard: {
     backgroundColor: 'rgba(255,122,0,0.06)',
@@ -319,5 +376,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: C.textSecondary,
     lineHeight: 20,
+  },
+  continueBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    backgroundColor: C.bg,
+    borderTopWidth: 0.5,
+    borderTopColor: C.border,
+  },
+  continueBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  continueBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+  },
+  continueBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'white',
   },
 });

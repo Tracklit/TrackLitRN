@@ -282,7 +282,7 @@ export const ProgramCreateScreen: React.FC = () => {
                 activeOpacity={0.85}
                 onPress={() => {
                   if (item.id === 'import') {
-                    navigation.replace('ProgramImport');
+                    navigation.replace('SheetFormatInfo', { showContinue: true });
                   } else {
                     setSelectedMethod(item.id);
                   }
