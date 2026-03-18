@@ -38,6 +38,7 @@ import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/util
 import theme from '@/utils/theme';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { TargetTimesDrawer } from '@/components/practice/TargetTimesDrawer';
+import { SkeletonSessionList } from '@/components/Skeleton';
 import type { RootStackParamList } from '@/navigation/types';
 import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
 
@@ -473,9 +474,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
                 <>
               {(isLoadingCards || isLoadingProgramSessions) && (
                 <View style={styles.cardsList}>
-                  <View style={styles.loadingState}>
-                    <Text variant="body" color="muted">Loading sessions...</Text>
-                  </View>
+                  <SkeletonSessionList count={4} />
                 </View>
               )}
 
@@ -535,8 +534,9 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
         </ScrollView>
 
         <TouchableOpacity
-          style={[styles.targetTimesButton, { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg }]}
+          style={[styles.targetTimesButton, { top: '40%' }]}
           onPress={() => setShowTargetTimes(true)}
+          activeOpacity={0.85}
         >
           <LinearGradient
             colors={['#FF7A00', '#FF9A3C']}
@@ -544,7 +544,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
             end={{ x: 1, y: 0 }}
             style={styles.targetTimesButtonInner}
           >
-            <Timer size={20} color="white" weight="fill" />
+            <Timer size={16} color="white" weight="fill" />
           </LinearGradient>
         </TouchableOpacity>
 
@@ -1126,22 +1126,26 @@ const styles = StyleSheet.create({
   },
   targetTimesButton: {
     position: 'absolute',
-    right: 24,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    right: 0,
+    width: 32,
+    height: 48,
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
     overflow: 'hidden',
+    zIndex: 200,
+    elevation: 20,
     shadowColor: '#FF7A00',
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    shadowOffset: { width: -2, height: 0 },
   },
   targetTimesButtonInner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    borderRadius: 32,
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
   },
 });

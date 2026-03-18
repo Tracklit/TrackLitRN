@@ -212,6 +212,11 @@ const HomeTabScreen: React.FC<HomeTabProps> = ({ navigation }) => (
         return;
       }
 
+      if (routeName === 'Programs') {
+        navigation.navigate('Training', { tab: 'programs' });
+        return;
+      }
+
       if (TAB_ROUTE_NAMES.has(routeName)) {
         navigateToTab(rootNavigation, routeName as keyof TabParamList);
       }

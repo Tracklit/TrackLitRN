@@ -6,6 +6,8 @@ import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { PracticeScreen } from './PracticeScreen';
 import { ProgramsScreen } from './ProgramsScreen';
 import theme from '@/utils/theme';
+import { useRoute, useFocusEffect, type RouteProp } from '@react-navigation/native';
+import type { TabParamList } from '@/navigation/types';
 
 const C = {
   orange: '#FF7A00',
@@ -16,7 +18,18 @@ const C = {
 };
 
 export const TrainingScreen: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'practice' | 'programs'>('practice');
+  const route = useRoute<RouteProp<TabParamList, 'Training'>>();
+  const [activeTab, setActiveTab] = useState<'practice' | 'programs'>(
+    route.params?.tab ?? 'practice'
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (route.params?.tab) {
+        setActiveTab(route.params.tab);
+      }
+    }, [route.params?.tab])
+  );
 
   return (
     <LinearGradient

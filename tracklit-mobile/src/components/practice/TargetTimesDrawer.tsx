@@ -408,7 +408,8 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 20,
+    zIndex: 1000,
+    elevation: 100,
     flexDirection: 'row',
   },
   backdrop: {

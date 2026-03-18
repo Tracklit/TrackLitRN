@@ -1122,8 +1122,8 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
           </View>
           <View style={tsStyles.vDivider} />
           <View style={tsStyles.statCell}>
-            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(251,191,36,0.25)' }]}>
-              <PencilLine size={14} color="#fbbf24" weight="fill" />
+            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(0,0,0,0.25)' }]}>
+              <PencilLine size={14} color="#fff" weight="fill" />
             </View>
             <View style={tsStyles.statText}>
               <RNText style={tsStyles.statValue}>{item.journal}</RNText>
@@ -1149,8 +1149,8 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
           </TouchableOpacity>
           <View style={tsStyles.vDivider} />
           <View style={tsStyles.statCell}>
-            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(250,204,21,0.25)' }]}>
-              <Lightning size={14} color="#facc15" weight="fill" />
+            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(0,0,0,0.25)' }]}>
+              <Lightning size={14} color="#fff" weight="fill" />
             </View>
             <View style={tsStyles.statText}>
               <RNText style={tsStyles.statValue}>{item.spikes.toLocaleString()}</RNText>

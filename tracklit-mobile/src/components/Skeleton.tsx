@@ -55,6 +55,26 @@ export const SkeletonCard: React.FC<{ style?: ViewStyle }> = ({ style }) => (
   </View>
 );
 
+export const SkeletonSessionCard: React.FC = () => (
+  <View style={styles.sessionCard}>
+    <View style={styles.sessionHeader}>
+      <Skeleton height={10} width="20%" borderRadius={4} />
+    </View>
+    <Skeleton height={14} width="60%" borderRadius={6} style={{ marginBottom: 10 }} />
+    <Skeleton height={10} width="90%" borderRadius={4} style={{ marginBottom: 6 }} />
+    <Skeleton height={10} width="75%" borderRadius={4} style={{ marginBottom: 6 }} />
+    <Skeleton height={10} width="50%" borderRadius={4} />
+  </View>
+);
+
+export const SkeletonSessionList: React.FC<{ count?: number }> = ({ count = 4 }) => (
+  <View style={{ gap: 12 }}>
+    {Array.from({ length: count }).map((_, i) => (
+      <SkeletonSessionCard key={i} />
+    ))}
+  </View>
+);
+
 export const SkeletonNotificationRow: React.FC = () => (
   <View style={styles.notifRow}>
     <Skeleton width={32} height={32} borderRadius={10} />
@@ -185,6 +205,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  sessionCard: {
+    borderRadius: 12,
+    padding: 16,
+    backgroundColor: '#1C1F2B',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  sessionHeader: {
+    marginBottom: 10,
   },
   notifRow: {
     flexDirection: 'row',
