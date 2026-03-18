@@ -906,9 +906,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               </Text>
             ) : todaySession ? (
               <>
-                <Text style={styles.practiceSessionTitle} numberOfLines={2}>
-                  {todaySession.title && !/^Day\s*\d*\s*(Training|Session)?\s*$/i.test(todaySession.title.trim()) ? todaySession.title : 'Today\'s Session'}
-                </Text>
+                {todaySession.title && !/^Day\s*\d*\s*(Training|Session)?\s*$/i.test(todaySession.title.trim()) && (
+                  <Text style={styles.practiceSessionTitle} numberOfLines={2}>
+                    {todaySession.title}
+                  </Text>
+                )}
                 <HomeWorkoutContent session={todaySession} gymData={todayGymData} />
               </>
             ) : (
@@ -1226,7 +1228,7 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
 const tsStyles = StyleSheet.create({
   wrapper: {
     marginBottom: theme.spacing.xxxl,
-    marginTop: -theme.spacing.xl,
+    marginTop: 0,
   },
   card: {
     borderRadius: 16,
