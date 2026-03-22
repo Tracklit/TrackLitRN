@@ -9,6 +9,7 @@ import {
   Linking,
 } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoogleLogo, AppleLogo } from 'phosphor-react-native';
@@ -23,7 +24,6 @@ import { env } from '@/config/env';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
-import { googleSignInStatusCodes, useGoogleAuthRequest, handleGoogleResponse } from '@/lib/googleSignIn';
 import { getQueryParam } from '@/utils/url';
 
 const COLORS = {
@@ -52,7 +52,6 @@ export const AuthScreen: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const insets = useSafeAreaInsets();
   const { loginWithToken } = useAuth();
-  const { request: googleRequest, response: googleResponse, promptAsync: googlePromptAsync } = useGoogleAuthRequest();
 
   useEffect(() => {
     const handleUrl = async (url: string | null) => {
@@ -89,47 +88,6 @@ export const AuthScreen: React.FC = () => {
     };
     verify();
   }, [resetToken]);
-
-  useEffect(() => {
-    if (!googleResponse) return;
-    (async () => {
-      try {
-        setIsGoogleLoading(true);
-        const result = await handleGoogleResponse(googleResponse);
-        if (!result) return;
-
-        const response = await apiRequest<{ token?: string; user?: { token?: string } }>(
-          '/api/auth/google/mobile',
-          {
-            method: 'POST',
-            data: { idToken: result.idToken },
-            skipAuth: true,
-          },
-        );
-
-        const token = response?.token || response?.user?.token;
-        if (!token) {
-          Alert.alert('Google Sign In Failed', 'Unable to start your session.');
-          return;
-        }
-
-        const success = await loginWithToken(token);
-        if (!success) {
-          Alert.alert('Google Sign In Failed', 'Unable to start your session.');
-        }
-      } catch (error: any) {
-        if (error?.code === googleSignInStatusCodes.SIGN_IN_CANCELLED) {
-          return;
-        }
-        Alert.alert(
-          'Google Sign In Failed',
-          error?.message || 'Something went wrong. Please try again.',
-        );
-      } finally {
-        setIsGoogleLoading(false);
-      }
-    })();
-  }, [googleResponse]);
 
   useEffect(() => {
     if (Platform.OS !== 'ios') {
@@ -201,8 +159,42 @@ export const AuthScreen: React.FC = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    if (isGoogleLoading || !googleRequest) return;
-    await googlePromptAsync();
+    if (isGoogleLoading) return;
+
+    try {
+      setIsGoogleLoading(true);
+
+      const authUrl = `${env.API_BASE_URL}/api/auth/google/mobile`;
+      const redirectUrl = 'tracklitmobile://auth';
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+
+      if (result.type === 'cancel' || result.type === 'dismiss') {
+        return;
+      }
+
+      if (result.type !== 'success' || !result.url) {
+        Alert.alert('Google Sign In Failed', 'Unable to complete Google sign in.');
+        return;
+      }
+
+      const token = getQueryParam(result.url, 'token');
+      if (!token) {
+        Alert.alert('Google Sign In Failed', 'Unable to start your session.');
+        return;
+      }
+
+      const success = await loginWithToken(token);
+      if (!success) {
+        Alert.alert('Google Sign In Failed', 'Unable to start your session.');
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Google Sign In Failed',
+        error?.message || 'Something went wrong. Please try again.',
+      );
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -281,7 +273,7 @@ export const AuthScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.socialBtn}
               onPress={handleGoogleSignIn}
-              disabled={!googleRequest || isGoogleLoading}
+              disabled={isGoogleLoading}
               activeOpacity={0.7}
             >
               <GoogleLogo size={18} color={COLORS.textPrimary} weight="bold" />

@@ -22,13 +22,122 @@ const getTableColumns = async (tableName: string): Promise<Set<string>> => {
     FROM information_schema.columns
     WHERE table_name = ${tableName}
   `);
-  const columns = new Set(result.rows.map((row: any) => row.column_name));
+  const columns = new Set<string>(result.rows.map((row: any) => String(row.column_name)));
   tableColumnsCache.set(tableName, columns);
   return columns;
 };
 
 const getChatGroupColumns = async (): Promise<Set<string>> =>
   getTableColumns("chat_groups");
+
+const getChatGroupMemberTable = async () => {
+  const chatGroupMemberColumns = await getTableColumns("chat_group_members");
+  if (chatGroupMemberColumns.size > 0) {
+    return { tableName: "chat_group_members", columns: chatGroupMemberColumns };
+  }
+
+  const legacyGroupMemberColumns = await getTableColumns("group_members");
+  if (legacyGroupMemberColumns.size > 0) {
+    return { tableName: "group_members", columns: legacyGroupMemberColumns };
+  }
+
+  return { tableName: null, columns: new Set<string>() };
+};
+
+const getChatGroupMessageTable = async () => {
+  const chatGroupMessageColumns = await getTableColumns("chat_group_messages");
+  if (chatGroupMessageColumns.size > 0) {
+    return { tableName: "chat_group_messages", columns: chatGroupMessageColumns };
+  }
+
+  const legacyMessageColumns = await getTableColumns("messages");
+  if (legacyMessageColumns.size > 0) {
+    return { tableName: "messages", columns: legacyMessageColumns };
+  }
+
+  return { tableName: null, columns: new Set<string>() };
+};
+
+async function insertGroupMembershipCompat(groupId: number, userId: number, role: 'creator' | 'member') {
+  const { tableName, columns } = await getChatGroupMemberTable();
+  if (!tableName) {
+    console.warn('[CreateGroup] No group member table found; relying on member_ids array only');
+    return;
+  }
+
+  const memberUserIdColumn = columns.has("user_id")
+    ? "user_id"
+    : columns.has("athlete_id")
+      ? "athlete_id"
+      : null;
+
+  if (!memberUserIdColumn || !columns.has("group_id")) {
+    console.warn('[CreateGroup] Member table missing expected columns:', tableName);
+    return;
+  }
+
+  const insertColumns = [sql.raw("group_id"), sql.raw(memberUserIdColumn)];
+  const insertValues = [sql`${groupId}`, sql`${userId}`];
+
+  if (columns.has("role")) {
+    const storedRole = tableName === "group_members" && role === "creator" ? "admin" : role;
+    insertColumns.push(sql.raw("role"));
+    insertValues.push(sql`${storedRole}`);
+  }
+
+  if (columns.has("status")) {
+    insertColumns.push(sql.raw("status"));
+    insertValues.push(sql`accepted`);
+  }
+
+  await db.execute(sql`
+    INSERT INTO ${sql.raw(tableName)} (${sql.join(insertColumns, sql`, `)})
+    VALUES (${sql.join(insertValues, sql`, `)})
+  `);
+}
+
+async function insertGroupSystemMessageCompat(groupId: number, senderId: number, text: string) {
+  const { tableName, columns } = await getChatGroupMessageTable();
+  if (!tableName || !columns.has("group_id") || !columns.has("sender_id")) {
+    return;
+  }
+
+  const textColumn = columns.has("text")
+    ? "text"
+    : columns.has("content")
+      ? "content"
+      : null;
+
+  if (!textColumn) {
+    return;
+  }
+
+  const insertColumns = [
+    sql.raw("group_id"),
+    sql.raw("sender_id"),
+    sql.raw(textColumn),
+  ];
+  const insertValues = [
+    sql`${groupId}`,
+    sql`${senderId}`,
+    sql`${text}`,
+  ];
+
+  if (columns.has("sender_name")) {
+    insertColumns.push(sql.raw("sender_name"));
+    insertValues.push(sql`System`);
+  }
+
+  if (columns.has("message_type")) {
+    insertColumns.push(sql.raw("message_type"));
+    insertValues.push(sql`system`);
+  }
+
+  await db.execute(sql`
+    INSERT INTO ${sql.raw(tableName)} (${sql.join(insertColumns, sql`, `)})
+    VALUES (${sql.join(insertValues, sql`, `)})
+  `);
+}
 
 // Configure multer for image uploads - use memory storage for Azure Blob upload
 const upload = multer({ 
@@ -473,6 +582,7 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
     // ── 4. Resolve invited usernames to DB rows ─────────────────────────────
     interface ResolvedMember { id: number; name: string; username: string }
     const resolvedMembers: ResolvedMember[] = [];
+    const seenMemberIds = new Set<number>();
 
     for (const m of rawMembers) {
       const uname: string = (m.username || '').trim();
@@ -482,8 +592,11 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
       `);
       if (r.rows.length > 0) {
         const u = r.rows[0] as any;
+        const resolvedId = Number(u.id);
+        if (seenMemberIds.has(resolvedId)) continue;
+        seenMemberIds.add(resolvedId);
         resolvedMembers.push({
-          id: Number(u.id),
+          id: resolvedId,
           name: String(u.name || u.username),
           username: String(u.username),
         });
@@ -498,14 +611,59 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
 
     console.log('[CreateGroup] adminLit=%s memberLit=%s', adminLit, memberLit);
 
-    // ── 6. Insert the group ─────────────────────────────────────────────────
+    // ── 6. Insert the group using whichever chat_groups columns exist ──────
+    const groupColumns = await getChatGroupColumns();
+    const groupInsertColumns = [sql.raw("name")];
+    const groupInsertValues = [sql`${name}`];
+
+    if (groupColumns.has("description")) {
+      groupInsertColumns.push(sql.raw("description"));
+      groupInsertValues.push(sql`${description}`);
+    }
+
+    if (groupColumns.has("image")) {
+      groupInsertColumns.push(sql.raw("image"));
+      groupInsertValues.push(sql`${imageUrl}`);
+    } else if (groupColumns.has("avatar_url")) {
+      groupInsertColumns.push(sql.raw("avatar_url"));
+      groupInsertValues.push(sql`${imageUrl}`);
+    }
+
+    if (groupColumns.has("creator_id")) {
+      groupInsertColumns.push(sql.raw("creator_id"));
+      groupInsertValues.push(sql`${creatorId}`);
+    } else if (groupColumns.has("created_by")) {
+      groupInsertColumns.push(sql.raw("created_by"));
+      groupInsertValues.push(sql`${creatorId}`);
+    }
+
+    if (groupColumns.has("admin_ids")) {
+      groupInsertColumns.push(sql.raw("admin_ids"));
+      groupInsertValues.push(sql`${adminLit}::integer[]`);
+    }
+
+    if (groupColumns.has("member_ids")) {
+      groupInsertColumns.push(sql.raw("member_ids"));
+      groupInsertValues.push(sql`${memberLit}::integer[]`);
+    }
+
+    if (groupColumns.has("is_private")) {
+      groupInsertColumns.push(sql.raw("is_private"));
+      groupInsertValues.push(sql`${isPrivate}`);
+    } else if (groupColumns.has("is_direct")) {
+      // Older schemas used is_direct instead of group privacy. Group chats are never direct.
+      groupInsertColumns.push(sql.raw("is_direct"));
+      groupInsertValues.push(sql`${false}`);
+    }
+
+    if (groupColumns.has("invite_code")) {
+      groupInsertColumns.push(sql.raw("invite_code"));
+      groupInsertValues.push(sql`${inviteCode}`);
+    }
+
     const groupRes = await db.execute(sql`
-      INSERT INTO chat_groups
-        (name, description, image, creator_id, admin_ids, member_ids, is_private, invite_code)
-      VALUES
-        (${name}, ${description}, ${imageUrl}, ${creatorId},
-         ${adminLit}::integer[], ${memberLit}::integer[],
-         ${isPrivate}, ${inviteCode})
+      INSERT INTO chat_groups (${sql.join(groupInsertColumns, sql`, `)})
+      VALUES (${sql.join(groupInsertValues, sql`, `)})
       RETURNING *
     `);
 
@@ -516,27 +674,17 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
 
     console.log('[CreateGroup] group.id=%d', group.id);
 
-    // ── 7. Insert creator into chat_group_members ───────────────────────────
-    await db.execute(sql`
-      INSERT INTO chat_group_members (group_id, user_id, role)
-      VALUES (${group.id}, ${creatorId}, 'creator')
-      ON CONFLICT DO NOTHING
-    `);
+    // ── 7. Insert creator into the compatible member table if one exists ───
+    await insertGroupMembershipCompat(Number(group.id), creatorId, 'creator');
 
     // ── 8. Insert invited members ───────────────────────────────────────────
     for (const m of resolvedMembers) {
-      await db.execute(sql`
-        INSERT INTO chat_group_members (group_id, user_id, role)
-        VALUES (${group.id}, ${m.id}, 'member')
-        ON CONFLICT DO NOTHING
-      `);
-      await db.execute(sql`
-        INSERT INTO chat_group_messages
-          (group_id, sender_id, sender_name, text, message_type)
-        VALUES
-          (${group.id}, ${creatorId}, 'System',
-           ${m.name + ' was added to the group'}, 'system')
-      `);
+      await insertGroupMembershipCompat(Number(group.id), m.id, 'member');
+      await insertGroupSystemMessageCompat(
+        Number(group.id),
+        creatorId,
+        `${m.name} was added to the group`,
+      );
     }
 
     res.json(group);

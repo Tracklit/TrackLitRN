@@ -144,6 +144,12 @@ jest.mock('expo-linking', () => ({
   addEventListener: jest.fn(() => ({ remove: jest.fn() })),
 }));
 
+jest.mock('expo-web-browser', () => ({
+  openAuthSessionAsync: jest.fn(() => Promise.resolve({ type: 'cancel' })),
+  openBrowserAsync: jest.fn(() => Promise.resolve()),
+  maybeCompleteAuthSession: jest.fn(),
+}));
+
 // ──────────────────────── DateTimePicker ────────────────────────
 jest.mock('@react-native-community/datetimepicker', () => {
   const { View } = require('react-native');

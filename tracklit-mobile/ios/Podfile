@@ -59,28 +59,5 @@ target 'TrackLitMobile' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
-
-    # Ensure dSYMs are generated for pod-built frameworks in Release builds.
-    # This helps avoid "Upload Symbols Failed" warnings for React/Hermes frameworks
-    # and improves symbolication for TestFlight/App Store crash logs.
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        next unless config.name.to_s.downcase.include?('release')
-        config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
-        config.build_settings['GCC_GENERATE_DEBUGGING_SYMBOLS'] = 'YES'
-      end
-    end
-
-    # Avoid folly coroutine headers which aren't shipped in RCT-Folly.
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || ['$(inherited)']
-        defs = Array(defs)
-        unless defs.include?('FOLLY_CFG_NO_COROUTINES=1')
-          defs << 'FOLLY_CFG_NO_COROUTINES=1'
-        end
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs
-      end
-    end
   end
 end
