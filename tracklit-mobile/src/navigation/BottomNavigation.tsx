@@ -32,7 +32,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: 'Home',      routeName: 'Home',      key: 'dashboard', IconComponent: House },
-  { title: 'Training',  routeName: 'Training',  key: 'training',  IconComponent: Barbell },
+  { title: 'Trainings', routeName: 'Training',  key: 'training',  IconComponent: Barbell },
   { title: 'Feed',      routeName: 'Feed',       key: 'feed',      IconComponent: Newspaper },
   { title: 'Tools',     routeName: 'Tools',      key: 'tools',     IconComponent: Timer },
   { title: 'Sprinthia', routeName: 'Sprinthia',  key: 'sprinthia', IconComponent: ChatCircleDots },
