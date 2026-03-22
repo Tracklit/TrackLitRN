@@ -3,7 +3,7 @@
     "name": "TrackLit Mobile",
     "slug": "tracklit-mobile",
     "scheme": "tracklitmobile",
-    "version": "1.0.1",
+    "version": "1.0.5",
     "icon": "./assets/icon.png",
     "platforms": [
       "ios",
@@ -11,6 +11,7 @@
     ],
     "ios": {
       "bundleIdentifier": "com.tracklit.app",
+      "buildNumber": "11",
       "supportsTablet": true,
       "icon": "./assets/icon.png",
       "infoPlist": {
