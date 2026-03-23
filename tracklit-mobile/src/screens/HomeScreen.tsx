@@ -463,33 +463,63 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   // This works regardless of which backend is in use (Azure or dev), since journal entries
   // are fetched separately and always available in HomeScreen.
   const ownActivity: CommunityActivity | null = useMemo(() => {
-    if (!user || !userId || userId === 'guest') return null;
-    const entries = (journalEntriesEarly as any[]);
-    if (!entries.length) return null;
-    const latest = entries
+    if (!user || !userId || userId === 'guest' || !numericUserId) return null;
+
+    const ownUserInfo = {
+      id: numericUserId,
+      username: (user as any).username || '',
+      name: (user as any).name || (user as any).username || 'You',
+      profileImageUrl: normalizeProfileImageUrl(
+        ownStoredAvatarUri || (user as any).profileImageUrl || null
+      ),
+    };
+
+    // Most recent own feed post
+    const ownFeedPost = (feedPostsQuery.data ?? [])
+      .filter((p: any) => p.userId === numericUserId && p.content && !p.isJournalEntry)
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+    // Most recent own public journal entry
+    const latestJournal = (journalEntriesEarly as any[])
       .filter((e: any) => e.isPublic !== false)
       .sort((a: any, b: any) =>
         new Date(b.createdAt ?? b.date ?? 0).getTime() -
         new Date(a.createdAt ?? a.date ?? 0).getTime()
       )[0];
-    if (!latest) return null;
+
+    if (!ownFeedPost && !latestJournal) return null;
+
+    const feedTime = ownFeedPost ? new Date(ownFeedPost.createdAt).getTime() : 0;
+    const journalTime = latestJournal
+      ? new Date(latestJournal.createdAt ?? latestJournal.date ?? 0).getTime()
+      : 0;
+
+    // Feed post wins if it's newer
+    if (ownFeedPost && feedTime >= journalTime) {
+      return {
+        id: -(ownFeedPost.id + 100000),
+        userId: numericUserId,
+        activityType: 'feed_post' as const,
+        title: String(ownFeedPost.content ?? '').slice(0, 80),
+        description: ownFeedPost.content ?? '',
+        createdAt: ownFeedPost.createdAt,
+        feedPostId: ownFeedPost.id,
+        user: ownUserInfo,
+      };
+    }
+
+    // Fall back to journal entry
+    if (!latestJournal) return null;
     return {
-      id: -(latest.id ?? 1),
-      userId: Number(userId),
-      activityType: 'journal_entry',
-      title: latest.title || 'Journal Entry',
-      description: latest.notes ? String(latest.notes).slice(0, 140) : undefined,
-      createdAt: latest.createdAt || new Date().toISOString(),
-      user: {
-        id: Number(userId),
-        username: (user as any).username || '',
-        name: (user as any).name || (user as any).username || 'You',
-        profileImageUrl: normalizeProfileImageUrl(
-          ownStoredAvatarUri || (user as any).profileImageUrl || null
-        ),
-      },
+      id: -(latestJournal.id ?? 1),
+      userId: numericUserId,
+      activityType: 'journal_entry' as const,
+      title: latestJournal.title || 'Journal Entry',
+      description: latestJournal.notes ? String(latestJournal.notes).slice(0, 140) : undefined,
+      createdAt: latestJournal.createdAt || new Date().toISOString(),
+      user: ownUserInfo,
     };
-  }, [journalEntriesEarly, ownStoredAvatarUri, user, userId]);
+  }, [journalEntriesEarly, feedPostsQuery.data, ownStoredAvatarUri, user, userId, numericUserId]);
 
   const carouselAvatarLookupUserIds = useMemo(() => {
     const ids: number[] = [];
