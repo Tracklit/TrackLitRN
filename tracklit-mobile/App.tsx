@@ -212,8 +212,13 @@ const HomeTabScreen: React.FC<HomeTabProps> = ({ navigation }) => (
         return;
       }
 
-      if (routeName === 'Marketplace' || routeName === 'Chat' || routeName === 'Notifications' || routeName === 'Sprinthia' || routeName === 'Rehab' || routeName === 'Spikes') {
-        rootNavigation.navigate(routeName);
+      const rootStackScreens = new Set([
+        'Marketplace', 'Chat', 'Notifications', 'Sprinthia', 'Rehab', 'Spikes',
+        'PhotoFinish', 'StartGun', 'Stopwatch', 'IntervalTimer', 'Journal', 'ExerciseLibrary',
+        'VelocityTracker', 'Subscriptions', 'Athletes', 'Coaches', 'AdminPanelWebView',
+      ]);
+      if (rootStackScreens.has(routeName)) {
+        rootNavigation.navigate(routeName as any);
         return;
       }
 
