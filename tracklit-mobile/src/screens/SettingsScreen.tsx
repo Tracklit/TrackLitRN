@@ -136,12 +136,9 @@ export const SettingsScreen: React.FC = () => {
       apiRequest('/api/user', { method: 'PATCH', data: payload }),
     onSuccess: async (data: any) => {
       if (data?.token) await setToken(String(data.token));
-      if (data && typeof data === 'object') {
-        const nextUser = { ...(user as any), ...(data as any) };
-        delete nextUser.token;
-        await setUserAndPersist(nextUser);
-      }
-      await refreshUser();
+      const nextUser = { ...(user as any), ...(typeof data === 'object' && data ? data : {}) };
+      delete nextUser.token;
+      await setUserAndPersist(nextUser);
       setHasChanges(false);
       Alert.alert('Saved', 'Account details updated.');
     },
@@ -178,7 +175,6 @@ export const SettingsScreen: React.FC = () => {
     updateSettingsMutation.mutate({
       username: usernameTrim || undefined,
       name: fullName.trim() || undefined,
-      email: email.trim() || undefined,
       isPrivate,
       age: age.trim() ? parseInt(age.trim(), 10) : undefined,
       height: height.trim() ? parseFloat(height.trim()) : undefined,

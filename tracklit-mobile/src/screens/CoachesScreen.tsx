@@ -105,12 +105,7 @@ export const CoachesScreen: React.FC = () => {
     mutationFn: async (coachId: number) => {
       return apiRequest<{ success: boolean }>('/api/coaching-requests', {
         method: 'POST',
-        data: {
-          fromUserId: Number(user!.id),
-          toUserId: coachId,
-          requestType: 'athlete_request',
-          message: "I'd like to request your coaching",
-        },
+        data: { toUserId: coachId },
       });
     },
     onMutate: (coachId: number) => {

@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -191,7 +192,15 @@ export const NotificationsScreen: React.FC = () => {
 
   const deleteNotificationMutation = useMutation({
     mutationFn: async (id: number) => {
+      setDeletingIds((prev) => new Set(prev).add(id));
       await apiRequest(`/api/notifications/${id}`, { method: 'DELETE' });
+    },
+    onSettled: (_data, _err, id) => {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -237,6 +246,7 @@ export const NotificationsScreen: React.FC = () => {
     }
   };
 
+  const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const hasForcedLogout = useRef(false);
   const notificationsError = notificationsQuery.error as (Error & { status?: number }) | null;
@@ -334,12 +344,16 @@ export const NotificationsScreen: React.FC = () => {
                       </View>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => deleteNotificationMutation.mutate(n.id)}
+                      onPress={() => !deletingIds.has(n.id) && deleteNotificationMutation.mutate(n.id)}
                       style={styles.deleteBtn}
                       activeOpacity={0.6}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      disabled={deletingIds.has(n.id)}
                     >
-                      <Trash size={14} color={C.textMuted} weight="fill" />
+                      {deletingIds.has(n.id)
+                        ? <ActivityIndicator size={14} color={C.textMuted} />
+                        : <Trash size={14} color={C.textMuted} weight="fill" />
+                      }
                     </TouchableOpacity>
                   </View>
                 </View>

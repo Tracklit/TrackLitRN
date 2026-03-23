@@ -517,7 +517,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Admin Panel',
           IconComponent: ShieldCheck,
           requiresAdmin: true,
-          onPress: () => Linking.openURL(`${env.API_BASE_URL}/admin-panel`),
+          onPress: () => navigateIntoAppStack({ screen: 'AdminPanelWebView' }),
         },
       ],
     },

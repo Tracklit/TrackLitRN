@@ -146,9 +146,11 @@ export const AthletesScreen: React.FC = () => {
   }, [sendFriendRequestMutation]);
 
   const handleAthletePress = useCallback((athlete: Athlete) => {
-    navigation.navigate('ChatConversation', {
-      conversationId: athlete.id,
-      type: 'direct',
+    navigation.navigate('PublicProfile', {
+      userId: athlete.id,
+      name: athlete.name ?? null,
+      username: athlete.username ?? null,
+      profileImageUrl: (athlete as any).profileImageUrl ?? null,
     });
   }, [navigation]);
 

@@ -108,7 +108,7 @@ export const SpikesScreen: React.FC = () => {
 
         <View style={styles.quickStats}>
           <View style={styles.statBox}>
-            <Trophy size={16} color={C.orange} weight="fill" />
+            <Trophy size={16} color={C.orange} weight="fill" style={{ marginBottom: 6 }} />
             <Text style={styles.statValue}>
               {spikesBalance >= 1000 ? 'Pro' : 'Free'}
             </Text>
@@ -116,7 +116,7 @@ export const SpikesScreen: React.FC = () => {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Lightning size={16} color={C.orange} weight="fill" />
+            <Lightning size={16} color={C.orange} weight="fill" style={{ marginBottom: 6 }} />
             <Text style={styles.statValue}>
               {spikesBalance >= 1000 ? '0' : `${1000 - spikesBalance}`}
             </Text>
@@ -164,7 +164,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 32,
     paddingBottom: 8,
-    gap: 12,
   },
   balanceIconWrap: {
     width: 56,
@@ -173,19 +172,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,122,0,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 16,
   },
   balanceValue: {
     fontSize: 42,
     fontWeight: '700',
     color: C.textPrimary,
     letterSpacing: -1,
-    marginTop: 0,
   },
   balanceLabel: {
     fontSize: 15,
     fontWeight: '600',
     color: C.orange,
-    marginTop: 2,
+    marginTop: 6,
   },
   balanceSub: {
     fontSize: 13,
@@ -238,7 +237,6 @@ const styles = StyleSheet.create({
   statBox: {
     flex: 1,
     alignItems: 'center',
-    gap: 4,
   },
   statDivider: {
     width: 1,
