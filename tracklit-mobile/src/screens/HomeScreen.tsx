@@ -1008,10 +1008,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     style={styles.carouselItem}
                     activeOpacity={0.7}
                     onPress={() => {
-                      if (item.isSelf) {
-                        openOwnProfile();
-                        return;
-                      }
                       handleTickerTap(item);
                     }}
                   >
