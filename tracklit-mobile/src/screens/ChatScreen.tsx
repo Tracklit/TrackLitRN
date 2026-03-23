@@ -54,6 +54,25 @@ interface ChatGroup {
   unreadCount?: number;
 }
 
+interface ChatGroupApi {
+  channel_type?: string;
+  id: number;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  avatar_url?: string | null;
+  memberCount?: number | null;
+  member_count?: number | null;
+  member_ids?: number[] | null;
+  members?: unknown[] | null;
+  lastMessage?: string | null;
+  last_message?: string | null;
+  lastMessageAt?: string | null;
+  last_message_at?: string | null;
+  unreadCount?: number | null;
+  unread_count?: number | null;
+}
+
 interface Conversation {
   id: number;
   otherUserId: number;
@@ -78,6 +97,23 @@ const formatChatTime = (dateStr?: string) => {
   return format(d, 'dd/MM/yy');
 };
 
+const normalizeChatGroup = (group: ChatGroupApi): ChatGroup => {
+  const memberIds = Array.isArray(group.member_ids) ? group.member_ids : [];
+  const members = Array.isArray(group.members) ? group.members : [];
+  const derivedMemberCount = memberIds.length > 0 ? memberIds.length : members.length;
+
+  return {
+    id: group.id,
+    name: group.name,
+    description: group.description ?? undefined,
+    imageUrl: group.imageUrl ?? group.avatar_url ?? undefined,
+    memberCount: group.memberCount ?? group.member_count ?? derivedMemberCount,
+    lastMessage: group.lastMessage ?? group.last_message ?? undefined,
+    lastMessageAt: group.lastMessageAt ?? group.last_message_at ?? undefined,
+    unreadCount: group.unreadCount ?? group.unread_count ?? 0,
+  };
+};
+
 export const ChatScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -92,7 +128,12 @@ export const ChatScreen: React.FC = () => {
 
   const groupsQuery = useQuery({
     queryKey: ['chat-groups'],
-    queryFn: () => apiRequest<ChatGroup[]>('/api/chat/groups'),
+    queryFn: async () => {
+      const response = await apiRequest<ChatGroupApi[]>('/api/chat/groups');
+      return response
+        .filter((item) => item.channel_type !== 'direct')
+        .map(normalizeChatGroup);
+    },
     enabled: isAuthenticated && !isGuest && hasValidToken,
   });
 

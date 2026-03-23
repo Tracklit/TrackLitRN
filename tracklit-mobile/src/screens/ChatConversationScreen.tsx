@@ -74,6 +74,18 @@ interface GroupInfo {
   memberCount?: number;
 }
 
+interface GroupInfoApi {
+  id: number;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  avatar_url?: string | null;
+  memberCount?: number | null;
+  member_count?: number | null;
+  member_ids?: number[] | null;
+  members?: unknown[] | null;
+}
+
 const formatMsgTime = (dateStr: string) => {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return '';
@@ -86,6 +98,20 @@ const formatDateSeparator = (dateStr: string) => {
   if (isToday(d)) return 'Today';
   if (isYesterday(d)) return 'Yesterday';
   return format(d, 'MMMM d');
+};
+
+const normalizeGroupInfo = (group: GroupInfoApi): GroupInfo => {
+  const memberIds = Array.isArray(group.member_ids) ? group.member_ids : [];
+  const members = Array.isArray(group.members) ? group.members : [];
+  const derivedMemberCount = memberIds.length > 0 ? memberIds.length : members.length;
+
+  return {
+    id: group.id,
+    name: group.name,
+    description: group.description ?? undefined,
+    imageUrl: group.imageUrl ?? group.avatar_url ?? undefined,
+    memberCount: group.memberCount ?? group.member_count ?? derivedMemberCount,
+  };
 };
 
 export const ChatConversationScreen: React.FC = () => {
@@ -135,7 +161,7 @@ export const ChatConversationScreen: React.FC = () => {
     queryKey: ['chat-info', type, conversationId],
     queryFn: () => {
       if (type === 'group') {
-        return apiRequest<GroupInfo>(`/api/chat/groups/${conversationId}`);
+        return apiRequest<GroupInfoApi>(`/api/chat/groups/${conversationId}`).then(normalizeGroupInfo);
       }
       return null;
     },
