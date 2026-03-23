@@ -13,6 +13,9 @@ import {
   Image,
   Text as RNText,
   Dimensions,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
@@ -47,6 +50,7 @@ import {
   VideoCamera,
   FirstAidKit,
   Brain,
+  Plus,
 } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -199,8 +203,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const queryClient = useQueryClient();
   const [tickerModalVisible, setTickerModalVisible] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<CommunityActivity | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<CarouselUserEntry | null>(null);
   const [likedActivities, setLikedActivities] = useState<Set<number>>(new Set());
   const [readActivities, setReadActivities] = useState<Set<number>>(new Set());
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [composerText, setComposerText] = useState('');
   const [carouselHidden, setCarouselHidden] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [selectionLoaded, setSelectionLoaded] = useState(false);
@@ -738,10 +745,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     return `${Math.floor(diff / 86400)}d ago`;
   };
 
-  const handleTickerTap = (activity: CommunityActivity | undefined) => {
-    if (!activity) return;
-    setReadActivities(prev => new Set(prev).add(activity.id));
-    setSelectedActivity(activity);
+  const createPostMutation = useMutation({
+    mutationFn: (content: string) =>
+      apiRequest('/api/feed/posts', { method: 'POST', data: { content } }),
+    onSuccess: () => {
+      setComposerText('');
+      setIsComposerOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['feed-home'] });
+      queryClient.invalidateQueries({ queryKey: ['community-activities'] });
+    },
+    onError: (error: Error) => {
+      Alert.alert('Unable to post', error.message || 'Please try again.');
+    },
+  });
+
+  const handleTickerTap = (entry: CarouselUserEntry) => {
+    if (!entry.activity) return;
+    setReadActivities(prev => new Set(prev).add(entry.activity!.id));
+    setSelectedActivity(entry.activity);
+    setSelectedEntry(entry);
     setTickerModalVisible(true);
   };
 
@@ -918,6 +941,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 offset: CAROUSEL_ITEM_WIDTH * index,
                 index,
               })}
+              ListFooterComponent={() => (
+                <TouchableOpacity
+                  style={styles.carouselItem}
+                  activeOpacity={0.7}
+                  onPress={() => setIsComposerOpen(true)}
+                >
+                  <View style={[styles.carouselRing, styles.carouselRingRead]}>
+                    <View style={[styles.carouselCircle, styles.carouselPlusCircle]}>
+                      <Plus size={20} color="#FF7A00" weight="bold" />
+                    </View>
+                  </View>
+                  <Text
+                    variant="caption"
+                    color="secondary"
+                    numberOfLines={1}
+                    style={styles.carouselUsername}
+                  >
+                    Post
+                  </Text>
+                </TouchableOpacity>
+              )}
               renderItem={({ item }) => {
                 const badge = item.isSelf ? 'profile' : getActivityBadge(item.activity?.activityType ?? 'workout');
                 const initial = (item.displayName?.[0] || item.username?.[0] || '?').toUpperCase();
@@ -933,8 +977,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                         openOwnProfile();
                         return;
                       }
-
-                      handleTickerTap(item.activity ?? undefined);
+                      handleTickerTap(item);
                     }}
                   >
                     <View style={[
@@ -1119,26 +1162,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               <X size={16} color="#94a3b8" weight="bold" />
             </TouchableOpacity>
 
-            {selectedActivity && (
+            {selectedActivity && selectedEntry && (
               <>
                 <View style={styles.modalHeader}>
                   <TouchableOpacity
                     style={styles.modalAvatar}
-                    activeOpacity={selectedActivity.user?.id ? 0.7 : 1}
+                    activeOpacity={selectedEntry.userId ? 0.7 : 1}
                     onPress={() => {
-                      if (!selectedActivity.user?.id) return;
+                      if (!selectedEntry.userId) return;
                       setTickerModalVisible(false);
                       navigation.navigate('PublicProfile', {
-                        userId: selectedActivity.user.id,
-                        name: selectedActivity.user.name || null,
-                        username: selectedActivity.user.username || null,
-                        profileImageUrl: selectedActivity.user.profileImageUrl || null,
+                        userId: selectedEntry.userId,
+                        name: selectedEntry.displayName || null,
+                        username: selectedEntry.username || null,
+                        profileImageUrl: selectedEntry.profileImageUrl || null,
                       });
                     }}
                   >
-                    {selectedActivity.user?.profileImageUrl ? (
+                    {selectedEntry.profileImageUrl ? (
                       <Image
-                        source={{ uri: selectedActivity.user.profileImageUrl }}
+                        source={{ uri: selectedEntry.profileImageUrl }}
                         style={{ width: 36, height: 36, borderRadius: 18 }}
                       />
                     ) : (
@@ -1150,11 +1193,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                   </TouchableOpacity>
                   <View style={{ flex: 1 }}>
                     <Text variant="body" weight="bold" color="foreground">
-                      {selectedActivity.user?.name || selectedActivity.user?.username || selectedActivity.title}
+                      {selectedEntry.displayName || selectedEntry.username || selectedActivity.title}
                     </Text>
-                    {!!selectedActivity.user?.username && (
+                    {!!selectedEntry.username && (
                       <Text variant="caption" color="secondary">
-                        @{selectedActivity.user.username} · {formatTimeAgo(selectedActivity.createdAt)}
+                        @{selectedEntry.username} · {formatTimeAgo(selectedActivity.createdAt)}
                       </Text>
                     )}
                   </View>
@@ -1219,6 +1262,54 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             )}
           </TouchableOpacity>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Feed post composer — opened by carousel + button */}
+      <Modal
+        transparent
+        visible={isComposerOpen}
+        animationType="slide"
+        onRequestClose={() => setIsComposerOpen(false)}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.composerBackdrop}>
+            <View style={styles.composerCard}>
+              <View style={styles.composerHeader}>
+                <TouchableOpacity onPress={() => { setIsComposerOpen(false); setComposerText(''); }}>
+                  <Text variant="body" color="secondary">Cancel</Text>
+                </TouchableOpacity>
+                <Text variant="body" weight="semiBold" color="foreground">New Post</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (!composerText.trim()) return;
+                    createPostMutation.mutate(composerText.trim());
+                  }}
+                  disabled={createPostMutation.isPending || !composerText.trim()}
+                >
+                  <Text
+                    variant="body"
+                    weight="bold"
+                    color={composerText.trim() ? 'primary' : 'secondary'}
+                  >
+                    {createPostMutation.isPending ? 'Posting...' : 'Post'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={styles.composerInput}
+                placeholder="What's on your mind?"
+                placeholderTextColor={theme.colors.textMuted}
+                multiline
+                value={composerText}
+                onChangeText={setComposerText}
+                autoFocus
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </LinearGradient>
   );
@@ -1682,6 +1773,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  carouselPlusCircle: {
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,122,0,0.4)',
+    borderStyle: 'dashed',
+  },
   carouselImage: {
     width: 56,
     height: 56,
@@ -1944,5 +2041,34 @@ const styles = StyleSheet.create({
   modalActionButtonActive: {
     backgroundColor: 'rgba(239,68,68,0.1)',
     borderColor: 'rgba(239,68,68,0.3)',
+  },
+  composerBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  composerCard: {
+    backgroundColor: '#1C1F2B',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    minHeight: 240,
+    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  composerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  composerInput: {
+    color: '#e2e8f0',
+    fontSize: 15,
+    lineHeight: 22,
+    minHeight: 120,
+    textAlignVertical: 'top',
   },
 });
