@@ -151,7 +151,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (DEBUG_AUTH) {
         console.log('[AUTH] Validating token with /api/user...');
       }
-      
+
+      // Read stored user before API call so we can preserve any locally-stored
+      // fields (age, height, weight, gender, etc.) that the server may not always
+      // return in its profile response.
+      const storedUserBeforeFetch = await getStoredUser();
+
       // Cache-bust to avoid any intermediary caching of identity responses.
       const response = await apiRequest<User>(`/api/user?_=${Date.now()}`, {
         headers: {
@@ -167,11 +172,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (DEBUG_AUTH) {
         console.log('[AUTH] Token valid, user:', response.id, response.username);
       }
-      
-      setUser(response);
+
+      // Merge: API response fields take precedence (authoritative), but fields
+      // present in local storage that the server omits are preserved.
+      const mergedUser: User = storedUserBeforeFetch
+        ? { ...storedUserBeforeFetch, ...response }
+        : response;
+
+      setUser(mergedUser);
       setHasValidToken(true);
-      // Update stored user data
-      await setStoredUser(response);
+      // Update stored user data with merged object
+      await setStoredUser(mergedUser);
     } catch (error) {
       if (authRequestIdRef.current !== requestId) {
         return;

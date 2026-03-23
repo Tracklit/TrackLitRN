@@ -144,12 +144,25 @@ export const CoachesScreen: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['coaches'] });
     },
     onError: (error: Error, coachId: number) => {
-      setPendingConnects((prev) => {
-        const s = new Set(prev);
-        s.delete(coachId);
-        return s;
-      });
-      Alert.alert('Error', error.message || 'Failed to connect');
+      const msg = (error?.message ?? '').toLowerCase();
+      const alreadyFollowing =
+        msg.includes('already following') ||
+        msg.includes('already connected') ||
+        msg.includes('already friend') ||
+        msg.includes('duplicate') ||
+        msg.includes('conflict');
+      if (alreadyFollowing) {
+        setPendingConnects((prev) => new Set(prev).add(coachId));
+        queryClient.invalidateQueries({ queryKey: ['friends'] });
+        queryClient.invalidateQueries({ queryKey: ['coaches'] });
+      } else {
+        setPendingConnects((prev) => {
+          const s = new Set(prev);
+          s.delete(coachId);
+          return s;
+        });
+        Alert.alert('Error', error.message || 'Failed to connect');
+      }
     },
   });
 
