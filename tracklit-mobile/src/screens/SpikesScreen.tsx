@@ -169,6 +169,7 @@ const styles = StyleSheet.create({
   },
   balanceValue: {
     fontSize: 42,
+    lineHeight: 52,
     fontWeight: '700',
     color: C.textPrimary,
     letterSpacing: -1,

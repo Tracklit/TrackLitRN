@@ -21,6 +21,7 @@ import {
   Clock,
   MapPin,
   SealCheck,
+  UserCircle,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -53,6 +54,8 @@ interface Coach {
   location?: string | null;
   specialties?: string[] | null;
   isVerified?: boolean | null;
+  isFollowing?: boolean | null;
+  isFriend?: boolean | null;
 }
 
 interface CoachingRequest {
@@ -60,6 +63,12 @@ interface CoachingRequest {
   fromUserId: number;
   toUserId: number;
   status: string;
+}
+
+interface Friend {
+  id: number;
+  username: string;
+  name: string;
 }
 
 export const CoachesScreen: React.FC = () => {
@@ -70,7 +79,9 @@ export const CoachesScreen: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
-  const [pendingRequests, setPendingRequests] = useState<Set<number>>(new Set());
+
+  const [pendingConnects, setPendingConnects] = useState<Set<number>>(new Set());
+  const [pendingCoachRequests, setPendingCoachRequests] = useState<Set<number>>(new Set());
 
   const coachesQuery = useQuery({
     queryKey: ['coaches'],
@@ -90,32 +101,74 @@ export const CoachesScreen: React.FC = () => {
     enabled: isAuthenticated && !isGuest,
   });
 
+  const friendsQuery = useQuery({
+    queryKey: ['friends'],
+    queryFn: () => apiRequest<Friend[]>('/api/friends'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
   const myCoaches = useMemo(() => myCoachesQuery.data ?? [], [myCoachesQuery.data]);
   const sentRequests = useMemo(() => coachingRequestsQuery.data?.sent ?? [], [coachingRequestsQuery.data]);
+  const friendIds = useMemo(() => {
+    const set = new Set<number>();
+    (friendsQuery.data ?? []).forEach((f) => set.add(f.id));
+    return set;
+  }, [friendsQuery.data]);
 
   const isMyCoach = useCallback((coachId: number) => {
     return myCoaches.some((c) => c.id === coachId);
   }, [myCoaches]);
 
-  const hasPendingRequest = useCallback((coachId: number) => {
+  const hasPendingCoachRequest = useCallback((coachId: number) => {
     return sentRequests.some((r) => r.toUserId === coachId && r.status === 'pending');
   }, [sentRequests]);
 
-  const requestCoachingMutation = useMutation({
+  const isConnected = useCallback((coach: Coach) => {
+    return (
+      friendIds.has(coach.id) ||
+      !!coach.isFollowing ||
+      !!coach.isFriend ||
+      pendingConnects.has(coach.id)
+    );
+  }, [friendIds, pendingConnects]);
+
+  const connectMutation = useMutation({
     mutationFn: async (coachId: number) => {
       return apiRequest<{ success: boolean }>(`/api/follow/${coachId}`, { method: 'POST' });
     },
     onMutate: (coachId: number) => {
-      setPendingRequests((prev) => new Set(prev).add(coachId));
+      setPendingConnects((prev) => new Set(prev).add(coachId));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
+    },
+    onError: (error: Error, coachId: number) => {
+      setPendingConnects((prev) => {
+        const s = new Set(prev);
+        s.delete(coachId);
+        return s;
+      });
+      Alert.alert('Error', error.message || 'Failed to connect');
+    },
+  });
+
+  const requestCoachingMutation = useMutation({
+    mutationFn: async (coachId: number) => {
+      return apiRequest<{ success: boolean }>('/api/coaching-requests', {
+        method: 'POST',
+        data: { toUserId: coachId },
+      });
+    },
+    onMutate: (coachId: number) => {
+      setPendingCoachRequests((prev) => new Set(prev).add(coachId));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coaching-requests'] });
       queryClient.invalidateQueries({ queryKey: ['my-coaches'] });
-      queryClient.invalidateQueries({ queryKey: ['friend-requests-pending'] });
-      queryClient.invalidateQueries({ queryKey: ['coaches'] });
     },
     onError: (error: Error, coachId: number) => {
-      setPendingRequests((prev) => {
+      setPendingCoachRequests((prev) => {
         const s = new Set(prev);
         s.delete(coachId);
         return s;
@@ -123,6 +176,10 @@ export const CoachesScreen: React.FC = () => {
       Alert.alert('Error', error.message || 'Failed to send coaching request');
     },
   });
+
+  const handleConnect = useCallback((coachId: number) => {
+    connectMutation.mutate(coachId);
+  }, [connectMutation]);
 
   const handleRequestCoaching = useCallback((coachId: number) => {
     requestCoachingMutation.mutate(coachId);
@@ -153,11 +210,7 @@ export const CoachesScreen: React.FC = () => {
   }, [coachesQuery.data, search]);
 
   const renderCoachButton = useCallback((coach: Coach) => {
-    const isCoached = isMyCoach(coach.id);
-    const isPending = hasPendingRequest(coach.id) || pendingRequests.has(coach.id);
-    const isSending = pendingRequests.has(coach.id);
-
-    if (isCoached) {
+    if (isMyCoach(coach.id)) {
       return (
         <View style={styles.statusBadge}>
           <CheckCircle size={12} color={C.connected} weight="fill" />
@@ -166,7 +219,7 @@ export const CoachesScreen: React.FC = () => {
       );
     }
 
-    if (isPending) {
+    if (hasPendingCoachRequest(coach.id) || pendingCoachRequests.has(coach.id)) {
       return (
         <View style={styles.statusBadge}>
           <Clock size={12} color={C.requested} weight="fill" />
@@ -175,21 +228,62 @@ export const CoachesScreen: React.FC = () => {
       );
     }
 
+    if (isConnected(coach)) {
+      const isSending = requestCoachingMutation.isPending && pendingCoachRequests.has(coach.id);
+      return (
+        <TouchableOpacity
+          style={styles.requestButton}
+          onPress={() => handleRequestCoaching(coach.id)}
+          disabled={isSending}
+          activeOpacity={0.6}
+        >
+          {isSending ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            <Text style={styles.requestText}>Request Coaching</Text>
+          )}
+        </TouchableOpacity>
+      );
+    }
+
+    if (pendingConnects.has(coach.id)) {
+      return (
+        <View style={styles.statusBadge}>
+          <UserCircle size={12} color={C.connected} weight="fill" />
+          <Text style={[styles.statusText, { color: C.connected }]}>Connected</Text>
+        </View>
+      );
+    }
+
+    const isConnecting = connectMutation.isPending && pendingConnects.has(coach.id);
     return (
       <TouchableOpacity
-        style={styles.requestButton}
-        onPress={() => handleRequestCoaching(coach.id)}
-        disabled={isSending}
+        style={styles.connectButton}
+        onPress={() => handleConnect(coach.id)}
+        disabled={isConnecting}
         activeOpacity={0.6}
       >
-        {isSending ? (
+        {isConnecting ? (
           <ActivityIndicator size="small" color={C.orange} />
         ) : (
-          <Text style={styles.requestText}>Request</Text>
+          <>
+            <UserPlus size={10} color={C.orange} weight="bold" />
+            <Text style={styles.connectText}>Connect</Text>
+          </>
         )}
       </TouchableOpacity>
     );
-  }, [isMyCoach, hasPendingRequest, pendingRequests, handleRequestCoaching]);
+  }, [
+    isMyCoach,
+    hasPendingCoachRequest,
+    pendingCoachRequests,
+    isConnected,
+    pendingConnects,
+    handleRequestCoaching,
+    handleConnect,
+    connectMutation.isPending,
+    requestCoachingMutation.isPending,
+  ]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -212,6 +306,12 @@ export const CoachesScreen: React.FC = () => {
             onChangeText={setSearch}
           />
         </View>
+      </View>
+
+      <View style={styles.layerHint}>
+        <Text style={styles.layerHintText}>
+          Connect first, then request coaching from a connected coach.
+        </Text>
       </View>
 
       <ScrollView
@@ -325,6 +425,17 @@ const styles = StyleSheet.create({
     color: C.textPrimary,
     fontSize: 13,
   },
+  layerHint: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: C.border,
+  },
+  layerHintText: {
+    fontSize: 11,
+    color: C.textMuted,
+    lineHeight: 16,
+  },
   content: {
     padding: 16,
   },
@@ -388,6 +499,21 @@ const styles = StyleSheet.create({
     color: C.textSecondary,
     lineHeight: 15,
     marginTop: 1,
+  },
+  connectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: C.orange,
+  },
+  connectText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: C.orange,
   },
   requestButton: {
     paddingHorizontal: 10,
