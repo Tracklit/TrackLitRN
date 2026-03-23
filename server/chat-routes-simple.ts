@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import { db } from "./db";
 import { sql, eq, and } from "drizzle-orm";
-import { messageReactions, chatGroups, chatGroupMembers, chatGroupMessages, users } from "@shared/schema";
+import { messageReactions, chatGroups, chatGroupMembers, users } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -58,7 +58,161 @@ const getChatGroupMessageTable = async () => {
   return { tableName: null, columns: new Set<string>() };
 };
 
-async function insertGroupMembershipCompat(groupId: number, userId: number, role: 'creator' | 'member') {
+type SqlExecutor = {
+  execute: typeof db.execute;
+  insert: typeof db.insert;
+};
+
+const toNumberArray = (value: unknown): number[] => {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => Number(entry))
+      .filter((entry) => Number.isFinite(entry));
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    const inner = trimmed.startsWith("{") && trimmed.endsWith("}")
+      ? trimmed.slice(1, -1)
+      : trimmed.startsWith("[") && trimmed.endsWith("]")
+        ? trimmed.slice(1, -1)
+        : trimmed;
+
+    if (!inner) {
+      return [];
+    }
+
+    return inner
+      .split(",")
+      .map((entry) => Number(entry.replace(/"/g, "").trim()))
+      .filter((entry) => Number.isFinite(entry));
+  }
+
+  return [];
+};
+
+const toNullableNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toBooleanFlag = (value: unknown): boolean => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "t" || normalized === "1";
+  }
+  return false;
+};
+
+type CompatibleGroup = {
+  row: any;
+  createdBy: number | null;
+  adminIds: number[];
+  memberIds: number[];
+  isPrivate: boolean;
+  isMember: boolean;
+  isOwner: boolean;
+};
+
+async function getCompatibleGroup(groupId: number, userId?: number): Promise<CompatibleGroup | null> {
+  const groupColumns = await getChatGroupColumns();
+  const { tableName: memberTable, columns: memberColumns } = await getChatGroupMemberTable();
+
+  const memberUserIdColumn = memberColumns.has("user_id")
+    ? "user_id"
+    : memberColumns.has("athlete_id")
+      ? "athlete_id"
+      : null;
+
+  const createdByColumn = groupColumns.has("creator_id")
+    ? "cg.creator_id"
+    : groupColumns.has("created_by")
+      ? "cg.created_by"
+      : null;
+
+  const adminIdsColumn = groupColumns.has("admin_ids") ? "cg.admin_ids" : null;
+  const memberIdsColumn = groupColumns.has("member_ids") ? "cg.member_ids" : null;
+  const isPrivateColumn = groupColumns.has("is_private")
+    ? "cg.is_private"
+    : groupColumns.has("is_direct")
+      ? "cg.is_direct"
+      : null;
+
+  const memberJoin = !memberIdsColumn && memberTable && memberUserIdColumn
+    ? sql`
+      LEFT JOIN (
+        SELECT group_id, array_agg(${sql.raw(memberUserIdColumn)}) as member_ids
+        FROM ${sql.raw(memberTable)}
+        GROUP BY group_id
+      ) members ON members.group_id = cg.id
+    `
+    : sql``;
+
+  const adminJoin = !adminIdsColumn && memberTable && memberUserIdColumn && memberColumns.has("role")
+    ? sql`
+      LEFT JOIN (
+        SELECT group_id, array_agg(${sql.raw(memberUserIdColumn)}) as admin_ids
+        FROM ${sql.raw(memberTable)}
+        WHERE role IN ('creator', 'admin')
+        GROUP BY group_id
+      ) admin_members ON admin_members.group_id = cg.id
+    `
+    : sql``;
+
+  const result = await db.execute(sql`
+    SELECT
+      cg.*,
+      ${memberIdsColumn
+        ? sql.raw(memberIdsColumn)
+        : memberTable && memberUserIdColumn
+          ? sql.raw("COALESCE(members.member_ids, ARRAY[]::integer[])")
+          : sql.raw("ARRAY[]::integer[]")} as compatible_member_ids,
+      ${adminIdsColumn
+        ? sql.raw(adminIdsColumn)
+        : memberTable && memberUserIdColumn && memberColumns.has("role")
+          ? sql.raw("COALESCE(admin_members.admin_ids, ARRAY[]::integer[])")
+          : sql.raw("ARRAY[]::integer[]")} as compatible_admin_ids,
+      ${createdByColumn ? sql.raw(createdByColumn) : sql.raw("NULL")} as compatible_created_by,
+      ${isPrivateColumn ? sql.raw(isPrivateColumn) : sql.raw("false")} as compatible_is_private
+    FROM chat_groups cg
+    ${memberJoin}
+    ${adminJoin}
+    WHERE cg.id = ${groupId}
+    LIMIT 1
+  `);
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const row = result.rows[0] as any;
+  const memberIds = toNumberArray(row.compatible_member_ids);
+  const adminIds = toNumberArray(row.compatible_admin_ids);
+  const createdBy = toNullableNumber(row.compatible_created_by);
+  const isPrivate = toBooleanFlag(row.compatible_is_private);
+  const normalizedUserId = typeof userId === "number" ? Number(userId) : null;
+  const isOwner = normalizedUserId !== null && createdBy === normalizedUserId;
+  const isMember = normalizedUserId !== null && (memberIds.includes(normalizedUserId) || isOwner);
+
+  return {
+    row,
+    createdBy,
+    adminIds,
+    memberIds,
+    isPrivate,
+    isMember,
+    isOwner,
+  };
+}
+
+async function insertGroupMembershipCompat(
+  groupId: number,
+  userId: number,
+  role: 'creator' | 'member',
+  executor: SqlExecutor = db,
+) {
   const { tableName, columns } = await getChatGroupMemberTable();
   if (!tableName) {
     console.warn('[CreateGroup] No group member table found; relying on member_ids array only');
@@ -70,9 +224,24 @@ async function insertGroupMembershipCompat(groupId: number, userId: number, role
     : columns.has("athlete_id")
       ? "athlete_id"
       : null;
+  const storedRole = tableName === "group_members" && role === "creator" ? "admin" : role;
 
   if (!memberUserIdColumn || !columns.has("group_id")) {
     console.warn('[CreateGroup] Member table missing expected columns:', tableName);
+    return;
+  }
+
+  if (tableName === "chat_group_members") {
+    const values: Record<string, unknown> = {
+      groupId,
+      userId,
+    };
+
+    if (columns.has("role")) {
+      values.role = storedRole;
+    }
+
+    await executor.insert(chatGroupMembers).values(values as any);
     return;
   }
 
@@ -80,26 +249,66 @@ async function insertGroupMembershipCompat(groupId: number, userId: number, role
   const insertValues = [sql`${groupId}`, sql`${userId}`];
 
   if (columns.has("role")) {
-    const storedRole = tableName === "group_members" && role === "creator" ? "admin" : role;
     insertColumns.push(sql.raw("role"));
     insertValues.push(sql`${storedRole}`);
   }
 
   if (columns.has("status")) {
     insertColumns.push(sql.raw("status"));
-    insertValues.push(sql`accepted`);
+    insertValues.push(sql`${"accepted"}`);
   }
 
-  await db.execute(sql`
+  await executor.execute(sql`
     INSERT INTO ${sql.raw(tableName)} (${sql.join(insertColumns, sql`, `)})
     VALUES (${sql.join(insertValues, sql`, `)})
   `);
 }
 
-async function insertGroupSystemMessageCompat(groupId: number, senderId: number, text: string) {
+async function removeGroupMembershipCompat(
+  groupId: number,
+  userId: number,
+  executor: SqlExecutor = db,
+) {
+  const { tableName, columns } = await getChatGroupMemberTable();
+  if (!tableName) {
+    return;
+  }
+
+  const memberUserIdColumn = columns.has("user_id")
+    ? "user_id"
+    : columns.has("athlete_id")
+      ? "athlete_id"
+      : null;
+
+  if (!memberUserIdColumn || !columns.has("group_id")) {
+    return;
+  }
+
+  await executor.execute(sql`
+    DELETE FROM ${sql.raw(tableName)}
+    WHERE group_id = ${groupId} AND ${sql.raw(memberUserIdColumn)} = ${userId}
+  `);
+}
+
+type InsertGroupMessageInput = {
+  groupId: number;
+  senderId: number;
+  text: string;
+  senderName?: string | null;
+  senderProfileImage?: string | null;
+  messageType?: string | null;
+  mediaUrl?: string | null;
+  replyToId?: number | null;
+  setCreatedAtNow?: boolean;
+};
+
+async function insertGroupMessageCompat(
+  input: InsertGroupMessageInput,
+  executor: SqlExecutor = db,
+) {
   const { tableName, columns } = await getChatGroupMessageTable();
   if (!tableName || !columns.has("group_id") || !columns.has("sender_id")) {
-    return;
+    return null;
   }
 
   const textColumn = columns.has("text")
@@ -109,7 +318,7 @@ async function insertGroupSystemMessageCompat(groupId: number, senderId: number,
       : null;
 
   if (!textColumn) {
-    return;
+    return null;
   }
 
   const insertColumns = [
@@ -118,25 +327,67 @@ async function insertGroupSystemMessageCompat(groupId: number, senderId: number,
     sql.raw(textColumn),
   ];
   const insertValues = [
-    sql`${groupId}`,
-    sql`${senderId}`,
-    sql`${text}`,
+    sql`${input.groupId}`,
+    sql`${input.senderId}`,
+    sql`${input.text}`,
   ];
 
-  if (columns.has("sender_name")) {
+  if (columns.has("sender_name") && input.senderName !== undefined) {
     insertColumns.push(sql.raw("sender_name"));
-    insertValues.push(sql`System`);
+    insertValues.push(sql`${input.senderName}`);
   }
 
-  if (columns.has("message_type")) {
+  if (columns.has("sender_profile_image") && input.senderProfileImage !== undefined) {
+    insertColumns.push(sql.raw("sender_profile_image"));
+    insertValues.push(sql`${input.senderProfileImage}`);
+  }
+
+  if (columns.has("message_type") && input.messageType !== undefined) {
     insertColumns.push(sql.raw("message_type"));
-    insertValues.push(sql`system`);
+    insertValues.push(sql`${input.messageType}`);
   }
 
-  await db.execute(sql`
+  if (columns.has("media_url") && input.mediaUrl !== undefined) {
+    insertColumns.push(sql.raw("media_url"));
+    insertValues.push(sql`${input.mediaUrl}`);
+  }
+
+  if (columns.has("reply_to_id") && input.replyToId !== undefined) {
+    insertColumns.push(sql.raw("reply_to_id"));
+    insertValues.push(sql`${input.replyToId}`);
+  }
+
+  if (columns.has("created_at") && input.setCreatedAtNow) {
+    insertColumns.push(sql.raw("created_at"));
+    insertValues.push(sql`NOW()`);
+  }
+
+  const result = await executor.execute(sql`
     INSERT INTO ${sql.raw(tableName)} (${sql.join(insertColumns, sql`, `)})
     VALUES (${sql.join(insertValues, sql`, `)})
+    RETURNING *
   `);
+
+  return result.rows[0] ?? null;
+}
+
+async function insertGroupSystemMessageCompat(
+  groupId: number,
+  senderId: number,
+  text: string,
+  executor: SqlExecutor = db,
+) {
+  await insertGroupMessageCompat(
+    {
+      groupId,
+      senderId,
+      text,
+      senderName: "System",
+      messageType: "system",
+      setCreatedAtNow: true,
+    },
+    executor,
+  );
 }
 
 // Configure multer for image uploads - use memory storage for Azure Blob upload
@@ -661,36 +912,42 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
       groupInsertValues.push(sql`${inviteCode}`);
     }
 
-    const groupRes = await db.execute(sql`
-      INSERT INTO chat_groups (${sql.join(groupInsertColumns, sql`, `)})
-      VALUES (${sql.join(groupInsertValues, sql`, `)})
-      RETURNING *
-    `);
+    const group = await db.transaction(async (tx) => {
+      const groupRes = await tx.execute(sql`
+        INSERT INTO chat_groups (${sql.join(groupInsertColumns, sql`, `)})
+        VALUES (${sql.join(groupInsertValues, sql`, `)})
+        RETURNING *
+      `);
 
-    const group = groupRes.rows[0] as any;
-    if (!group || !group.id) {
-      throw new Error('INSERT returned no row — check table constraints');
-    }
+      const createdGroup = groupRes.rows[0] as any;
+      if (!createdGroup || !createdGroup.id) {
+        throw new Error('INSERT returned no row — check table constraints');
+      }
 
-    console.log('[CreateGroup] group.id=%d', group.id);
+      console.log('[CreateGroup] group.id=%d', createdGroup.id);
 
-    // ── 7. Insert creator into the compatible member table if one exists ───
-    await insertGroupMembershipCompat(Number(group.id), creatorId, 'creator');
+      // ── 7. Insert creator into the compatible member table if one exists ───
+      await insertGroupMembershipCompat(Number(createdGroup.id), creatorId, 'creator', tx as SqlExecutor);
 
-    // ── 8. Insert invited members ───────────────────────────────────────────
-    for (const m of resolvedMembers) {
-      await insertGroupMembershipCompat(Number(group.id), m.id, 'member');
-      await insertGroupSystemMessageCompat(
-        Number(group.id),
-        creatorId,
-        `${m.name} was added to the group`,
-      );
-    }
+      // ── 8. Insert invited members and initial system messages atomically ───
+      for (const m of resolvedMembers) {
+        await insertGroupMembershipCompat(Number(createdGroup.id), m.id, 'member', tx as SqlExecutor);
+        await insertGroupSystemMessageCompat(
+          Number(createdGroup.id),
+          creatorId,
+          `${m.name} was added to the group`,
+          tx as SqlExecutor,
+        );
+      }
+
+      return createdGroup;
+    });
 
     res.json(group);
   } catch (err: any) {
     const detail = String(err?.message || err || 'unknown');
     console.error('[CreateGroup] FAILED:', detail);
+    console.error('[CreateGroup] Error object:', err);
     console.error('[CreateGroup] Stack:', err?.stack);
     res.status(500).json({ error: 'Failed to create group', details: detail });
   }
@@ -708,29 +965,23 @@ router.get("/api/chat/groups/:groupId", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid group ID" });
     }
 
-    // Get group details
-    const groupResult = await db.execute(sql`
-      SELECT * FROM chat_groups WHERE id = ${groupId}
-    `);
-
-    if (groupResult.rows.length === 0) {
+    const group = await getCompatibleGroup(groupId, Number(userId));
+    if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
-
-    const group = groupResult.rows[0];
-
-    // Check if user is a member (handle both array and null cases)
-    const memberIds = (group as any).member_ids || [];
-    const isMember = Array.isArray(memberIds) ? memberIds.includes(userId) : false;
-    const isCreator = (group as any).creator_id === userId;
-    const isPublic = !(group as any).is_private;
     
-    // Allow access if user is member, creator, or group is public
-    if (!isMember && !isCreator && !isPublic) {
+    if (!group.isMember && group.isPrivate) {
       return res.status(403).json({ error: "Not a member of this group" });
     }
 
-    res.json(group);
+    res.json({
+      ...group.row,
+      member_ids: group.memberIds,
+      admin_ids: group.adminIds,
+      is_private: group.isPrivate,
+      created_by: group.createdBy,
+      creator_id: group.createdBy,
+    });
   } catch (error) {
     console.error("Error fetching group details:", error);
     res.status(500).json({ error: "Failed to fetch group" });
@@ -845,39 +1096,65 @@ router.get("/api/chat/groups/:groupId/members", async (req: Request, res: Respon
       return res.status(400).json({ error: "Invalid group ID" });
     }
 
-    // Check if user is a member
-    const groupResult = await db.execute(sql`
-      SELECT member_ids FROM chat_groups WHERE id = ${groupId}
-    `);
-
-    if (groupResult.rows.length === 0) {
+    const group = await getCompatibleGroup(groupId, Number(userId));
+    if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
 
-    const group = groupResult.rows[0];
-    if (!(group as any).member_ids.includes(userId)) {
+    if (!group.isMember) {
       return res.status(403).json({ error: "Not a member of this group" });
     }
 
-    // Get member details
+    const { tableName, columns } = await getChatGroupMemberTable();
+    if (!tableName) {
+      return res.json([]);
+    }
+
+    const memberUserIdColumn = columns.has("user_id")
+      ? "user_id"
+      : columns.has("athlete_id")
+        ? "athlete_id"
+        : null;
+
+    if (!memberUserIdColumn || !columns.has("group_id")) {
+      return res.json([]);
+    }
+
+    const roleSelect = columns.has("role") ? sql.raw("cgm.role") : sql.raw("'member'");
+    const joinedAtSelect = columns.has("joined_at")
+      ? sql.raw("cgm.joined_at")
+      : columns.has("created_at")
+        ? sql.raw("cgm.created_at")
+        : sql.raw("NULL");
+    const orderClauses = columns.has("role")
+      ? [
+          sql.raw("CASE cgm.role WHEN 'creator' THEN 1 WHEN 'admin' THEN 2 ELSE 3 END"),
+          columns.has("joined_at")
+            ? sql.raw("cgm.joined_at ASC")
+            : columns.has("created_at")
+              ? sql.raw("cgm.created_at ASC")
+              : sql.raw("u.name ASC"),
+        ]
+      : [
+          columns.has("joined_at")
+            ? sql.raw("cgm.joined_at ASC")
+            : columns.has("created_at")
+              ? sql.raw("cgm.created_at ASC")
+              : sql.raw("u.name ASC"),
+        ];
+
     const membersResult = await db.execute(sql`
       SELECT 
-        cgm.user_id,
-        cgm.role,
-        cgm.joined_at,
+        ${sql.raw(`cgm.${memberUserIdColumn}`)} as user_id,
+        ${roleSelect} as role,
+        ${joinedAtSelect} as joined_at,
         u.name,
         u.username,
         u.profile_image_url
-      FROM chat_group_members cgm
-      INNER JOIN users u ON cgm.user_id = u.id
+      FROM ${sql.raw(tableName)} cgm
+      INNER JOIN users u ON ${sql.raw(`cgm.${memberUserIdColumn}`)} = u.id
       WHERE cgm.group_id = ${groupId}
-      ORDER BY 
-        CASE cgm.role 
-          WHEN 'creator' THEN 1 
-          WHEN 'admin' THEN 2 
-          ELSE 3 
-        END,
-        cgm.joined_at ASC
+      ORDER BY ${sql.join(orderClauses, sql`, `)}
     `);
 
     console.log('=== GROUP MEMBERS API CALLED ===');
@@ -903,61 +1180,55 @@ router.post("/api/chat/groups/:groupId/members", async (req: Request, res: Respo
   try {
     const groupId = parseInt(req.params.groupId);
     const currentUserId = req.user!.id;
-    const { userId } = req.body;
+    const targetUserId = Number(req.body.userId);
 
-    if (isNaN(groupId) || !userId) {
+    if (isNaN(groupId) || !Number.isFinite(targetUserId)) {
       return res.status(400).json({ error: "Invalid group ID or user ID" });
     }
 
-    // Check if current user is admin or creator
-    const groupResult = await db.execute(sql`
-      SELECT * FROM chat_groups WHERE id = ${groupId}
-    `);
-
-    if (groupResult.rows.length === 0) {
+    const group = await getCompatibleGroup(groupId, Number(currentUserId));
+    if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
 
-    const group = groupResult.rows[0];
-    const adminIds = (group as any).admin_ids ? (Array.isArray((group as any).admin_ids) ? (group as any).admin_ids : []) : [];
-    const isAdmin = group.creator_id === currentUserId || adminIds.includes(currentUserId);
+    const isAdmin = group.isOwner || group.adminIds.includes(Number(currentUserId));
 
     if (!isAdmin) {
       return res.status(403).json({ error: "Only admins can add members" });
     }
 
-    // Check if user is already a member
-    if ((group as any).member_ids.includes(userId)) {
+    if (group.memberIds.includes(targetUserId)) {
       return res.status(400).json({ error: "User is already a member" });
     }
 
-    // Add user to group members array
-    await db.execute(sql`
-      UPDATE chat_groups 
-      SET member_ids = array_append(member_ids, ${userId})
-      WHERE id = ${groupId}
-    `);
-
-    // Add member record
-    await db.execute(sql`
-      INSERT INTO chat_group_members (group_id, user_id, role)
-      VALUES (${groupId}, ${userId}, 'member')
-    `);
-
-    // Get the added user's name for the system message
     const addedUserResult = await db.execute(sql`
-      SELECT name, username FROM users WHERE id = ${userId}
+      SELECT name, username FROM users WHERE id = ${targetUserId}
     `);
-    
-    if (addedUserResult.rows.length > 0) {
-      const addedUser = addedUserResult.rows[0];
-      
-      // Create system message announcing the new member
-      await db.execute(sql`
-        INSERT INTO chat_group_messages (group_id, sender_id, sender_name, text, message_type, created_at)
-        VALUES (${groupId}, ${currentUserId}, 'System', ${`${addedUser.name} was added to the group`}, 'system', NOW())
-      `);
+
+    if (addedUserResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
     }
+
+    const addedUser = addedUserResult.rows[0] as any;
+    const groupColumns = await getChatGroupColumns();
+
+    await db.transaction(async (tx) => {
+      if (groupColumns.has("member_ids")) {
+        await tx.execute(sql`
+          UPDATE chat_groups
+          SET member_ids = array_append(member_ids, ${targetUserId})
+          WHERE id = ${groupId}
+        `);
+      }
+
+      await insertGroupMembershipCompat(groupId, targetUserId, 'member', tx as SqlExecutor);
+      await insertGroupSystemMessageCompat(
+        groupId,
+        Number(currentUserId),
+        `${addedUser.name || addedUser.username} was added to the group`,
+        tx as SqlExecutor,
+      );
+    });
 
     res.json({ message: "Member added successfully" });
   } catch (error) {
@@ -979,56 +1250,54 @@ router.delete("/api/chat/groups/:groupId/members/:userId", async (req: Request, 
       return res.status(400).json({ error: "Invalid group ID or user ID" });
     }
 
-    // Check if current user is admin or creator
-    const groupResult = await db.execute(sql`
-      SELECT * FROM chat_groups WHERE id = ${groupId}
-    `);
-
-    if (groupResult.rows.length === 0) {
+    const group = await getCompatibleGroup(groupId, Number(currentUserId));
+    if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
 
-    const group = groupResult.rows[0];
-    const adminIds = group.admin_ids ? (Array.isArray(group.admin_ids) ? group.admin_ids : []) : [];
-    const isAdmin = group.creator_id === currentUserId || adminIds.includes(currentUserId);
+    const isAdmin = group.isOwner || group.adminIds.includes(Number(currentUserId));
 
     if (!isAdmin) {
       return res.status(403).json({ error: "Only admins can remove members" });
     }
 
-    // Cannot remove creator
-    if (group.creator_id === targetUserId) {
+    if (group.createdBy === targetUserId) {
       return res.status(400).json({ error: "Cannot remove group creator" });
     }
 
-    // Remove user from group members array
-    await db.execute(sql`
-      UPDATE chat_groups 
-      SET member_ids = array_remove(member_ids, ${targetUserId}),
-          admin_ids = array_remove(admin_ids, ${targetUserId})
-      WHERE id = ${groupId}
-    `);
-
-    // Get the removed user's name for the system message
     const removedUserResult = await db.execute(sql`
       SELECT name, username FROM users WHERE id = ${targetUserId}
     `);
+    const removedUser = removedUserResult.rows[0] as any;
+    const groupColumns = await getChatGroupColumns();
 
-    // Remove member record
-    await db.execute(sql`
-      DELETE FROM chat_group_members 
-      WHERE group_id = ${groupId} AND user_id = ${targetUserId}
-    `);
+    await db.transaction(async (tx) => {
+      if (groupColumns.has("member_ids") || groupColumns.has("admin_ids")) {
+        const assignments = [];
+        if (groupColumns.has("member_ids")) {
+          assignments.push(sql`member_ids = array_remove(member_ids, ${targetUserId})`);
+        }
+        if (groupColumns.has("admin_ids")) {
+          assignments.push(sql`admin_ids = array_remove(admin_ids, ${targetUserId})`);
+        }
+        await tx.execute(sql`
+          UPDATE chat_groups
+          SET ${sql.join(assignments, sql`, `)}
+          WHERE id = ${groupId}
+        `);
+      }
 
-    // Create system message announcing the member removal
-    if (removedUserResult.rows.length > 0) {
-      const removedUser = removedUserResult.rows[0];
-      
-      await db.execute(sql`
-        INSERT INTO chat_group_messages (group_id, sender_id, sender_name, text, message_type, created_at)
-        VALUES (${groupId}, ${currentUserId}, 'System', ${`${removedUser.name} was removed from the group`}, 'system', NOW())
-      `);
-    }
+      await removeGroupMembershipCompat(groupId, targetUserId, tx as SqlExecutor);
+
+      if (removedUser) {
+        await insertGroupSystemMessageCompat(
+          groupId,
+          Number(currentUserId),
+          `${removedUser.name || removedUser.username} was removed from the group`,
+          tx as SqlExecutor,
+        );
+      }
+    });
 
     res.json({ message: "Member removed successfully" });
   } catch (error) {
@@ -1203,43 +1472,79 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       return res.status(400).json({ error: "Invalid group ID" });
     }
 
-    // Check if user is a member OR if it's a public group
-    const groupCheck = await db.execute(sql`
-      SELECT member_ids, is_private FROM chat_groups 
-      WHERE id = ${groupId} AND (${userId} = ANY(member_ids) OR is_private = false)
-    `);
+    const group = await getCompatibleGroup(groupId, Number(userId));
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
 
-    if (groupCheck.rows.length === 0) {
+    if (!group.isMember && group.isPrivate) {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    // Get messages with sender info and reply-to message data - ORDER BY ASC for chronological order (oldest first)
+    const { tableName: messageTable, columns: messageColumns } = await getChatGroupMessageTable();
+    if (!messageTable || !messageColumns.has("group_id")) {
+      return res.json([]);
+    }
+
+    const textColumn = messageColumns.has("text")
+      ? "text"
+      : messageColumns.has("content")
+        ? "content"
+        : null;
+    const senderIdColumn = messageColumns.has("sender_id") ? "sender_id" : null;
+
+    if (!textColumn || !senderIdColumn) {
+      return res.json([]);
+    }
+
+    const createdAtSelect = messageColumns.has("created_at") ? sql.raw("cgm.created_at") : sql.raw("NULL");
+    const createdAtOrder = messageColumns.has("created_at") ? sql.raw("cgm.created_at ASC") : sql.raw("cgm.id ASC");
+    const messageTypeSelect = messageColumns.has("message_type") ? sql.raw("cgm.message_type") : sql.raw("'text'");
+    const mediaUrlSelect = messageColumns.has("media_url") ? sql.raw("cgm.media_url") : sql.raw("NULL");
+    const replyToIdSelect = messageColumns.has("reply_to_id") ? sql.raw("cgm.reply_to_id") : sql.raw("NULL");
+    const isEditedSelect = messageColumns.has("edited_at")
+      ? sql.raw("(cgm.edited_at IS NOT NULL)")
+      : messageColumns.has("is_edited")
+        ? sql.raw("cgm.is_edited")
+        : sql.raw("false");
+    const editedAtSelect = messageColumns.has("edited_at") ? sql.raw("cgm.edited_at") : sql.raw("NULL");
+    const senderNameSelect = messageColumns.has("sender_name")
+      ? sql.raw("COALESCE(cgm.sender_name, u.name)")
+      : sql.raw("u.name");
+    const senderProfileImageSelect = messageColumns.has("sender_profile_image")
+      ? sql.raw("COALESCE(cgm.sender_profile_image, u.profile_image_url)")
+      : sql.raw("u.profile_image_url");
+    const hasReplyTo = messageColumns.has("reply_to_id");
+
     const messages = await db.execute(sql`
       SELECT 
         cgm.id,
         cgm.group_id,
-        cgm.sender_id as user_id,
-        cgm.text,
-        cgm.created_at,
-        cgm.message_type,
-        cgm.media_url,
-        cgm.reply_to_id,
-        cgm.is_deleted as is_edited,
-        cgm.edited_at,
-        u.name,
+        ${sql.raw(`cgm.${senderIdColumn}`)} as user_id,
+        ${sql.raw(`cgm.${textColumn}`)} as text,
+        ${createdAtSelect} as created_at,
+        ${messageTypeSelect} as message_type,
+        ${mediaUrlSelect} as media_url,
+        ${replyToIdSelect} as reply_to_id,
+        ${isEditedSelect} as is_edited,
+        ${editedAtSelect} as edited_at,
+        ${senderNameSelect} as name,
         u.username,
-        u.profile_image_url,
-        -- Reply-to message data
-        reply_msg.text as reply_to_text,
-        reply_msg.message_type as reply_to_message_type,
-        reply_user.name as reply_to_user_name,
-        reply_user.id as reply_to_user_id
-      FROM chat_group_messages cgm
-      INNER JOIN users u ON cgm.sender_id = u.id
-      LEFT JOIN chat_group_messages reply_msg ON cgm.reply_to_id = reply_msg.id
-      LEFT JOIN users reply_user ON reply_msg.sender_id = reply_user.id
+        ${senderProfileImageSelect} as profile_image_url,
+        ${hasReplyTo ? sql.raw(`reply_msg.${textColumn}`) : sql.raw("NULL")} as reply_to_text,
+        ${hasReplyTo && messageColumns.has("message_type") ? sql.raw("reply_msg.message_type") : sql.raw("NULL")} as reply_to_message_type,
+        ${hasReplyTo && messageColumns.has("sender_name")
+          ? sql.raw("COALESCE(reply_msg.sender_name, reply_user.name)")
+          : hasReplyTo
+            ? sql.raw("reply_user.name")
+            : sql.raw("NULL")} as reply_to_user_name,
+        ${hasReplyTo ? sql.raw(`reply_msg.${senderIdColumn}`) : sql.raw("NULL")} as reply_to_user_id
+      FROM ${sql.raw(messageTable)} cgm
+      LEFT JOIN users u ON ${sql.raw(`cgm.${senderIdColumn}`)} = u.id
+      ${hasReplyTo ? sql`LEFT JOIN ${sql.raw(messageTable)} reply_msg ON cgm.reply_to_id = reply_msg.id` : sql``}
+      ${hasReplyTo ? sql`LEFT JOIN users reply_user ON ${sql.raw(`reply_msg.${senderIdColumn}`)} = reply_user.id` : sql``}
       WHERE cgm.group_id = ${groupId}
-      ORDER BY cgm.created_at ASC
+      ORDER BY ${createdAtOrder}
       LIMIT ${limit} OFFSET ${offset}
     `);
 
@@ -1248,19 +1553,21 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
     let reactionsData: any[] = [];
     
     if (messageIds.length > 0) {
-      // Use a simple IN clause instead of ANY to avoid type issues
-      const placeholders = messageIds.map(() => '?').join(',');
-      const reactionsResult = await db.execute(sql`
-        SELECT 
-          message_id,
-          emoji,
-          user_id,
-          created_at
-        FROM message_reactions 
-        WHERE message_id IN (${sql.raw(messageIds.join(','))}) AND message_type = 'group'
-        ORDER BY created_at ASC
-      `);
-      reactionsData = reactionsResult.rows;
+      try {
+        const reactionsResult = await db.execute(sql`
+          SELECT
+            message_id,
+            emoji,
+            user_id,
+            created_at
+          FROM message_reactions
+          WHERE message_id IN (${sql.raw(messageIds.join(','))}) AND message_type = 'group'
+          ORDER BY created_at ASC
+        `);
+        reactionsData = reactionsResult.rows;
+      } catch (reactionError) {
+        console.error("Error fetching group message reactions:", reactionError);
+      }
     }
 
     // Group reactions by message ID and emoji
@@ -1350,13 +1657,12 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('media'), async 
       return res.status(400).json({ error: "Message text or media is required" });
     }
 
-    // Check if user is a member OR if it's a public group (allow posting to public channels)
-    const groupCheck = await db.execute(sql`
-      SELECT member_ids, is_private FROM chat_groups 
-      WHERE id = ${groupId} AND (${userId} = ANY(member_ids) OR is_private = false)
-    `);
+    const group = await getCompatibleGroup(groupId, Number(userId));
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
 
-    if (groupCheck.rows.length === 0) {
+    if (!group.isMember && group.isPrivate) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -1415,25 +1721,43 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('media'), async 
 
     console.log('About to insert message:', { groupId, userId, messageText, finalMessageType, mediaUrl });
 
-    // Insert message
-    const messageResult = await db.execute(sql`
-      INSERT INTO chat_group_messages (group_id, sender_id, sender_name, sender_profile_image, text, message_type, media_url, reply_to_id)
-      VALUES (${groupId}, ${userId}, ${user.name || 'Unknown'}, ${user.profile_image_url || null}, ${messageText}, ${finalMessageType}, ${mediaUrl}, ${replyToId || null})
-      RETURNING *
-    `);
+    const message = await insertGroupMessageCompat({
+      groupId,
+      senderId: Number(userId),
+      text: messageText,
+      senderName: user?.name || 'Unknown',
+      senderProfileImage: user?.profile_image_url || null,
+      messageType: finalMessageType,
+      mediaUrl: mediaUrl ?? null,
+      replyToId: replyToId ? Number(replyToId) : null,
+      setCreatedAtNow: true,
+    });
 
-    const message = messageResult.rows[0];
+    if (!message) {
+      throw new Error("Compatible message insert failed");
+    }
 
-    // Update group's last message info
     const lastMessageText = text?.trim() || (file ? "📷 Photo" : "");
-    await db.execute(sql`
-      UPDATE chat_groups 
-      SET 
-        last_message = ${lastMessageText},
-        last_message_at = NOW(),
-        message_count = message_count + 1
-      WHERE id = ${groupId}
-    `);
+    const groupColumns = await getChatGroupColumns();
+    const groupAssignments = [];
+
+    if (groupColumns.has("last_message")) {
+      groupAssignments.push(sql`last_message = ${lastMessageText}`);
+    }
+    if (groupColumns.has("last_message_at")) {
+      groupAssignments.push(sql`last_message_at = NOW()`);
+    }
+    if (groupColumns.has("message_count")) {
+      groupAssignments.push(sql`message_count = COALESCE(message_count, 0) + 1`);
+    }
+
+    if (groupAssignments.length > 0) {
+      await db.execute(sql`
+        UPDATE chat_groups
+        SET ${sql.join(groupAssignments, sql`, `)}
+        WHERE id = ${groupId}
+      `);
+    }
 
     res.json(message);
   } catch (error) {
