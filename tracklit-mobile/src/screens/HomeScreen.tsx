@@ -956,13 +956,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               ref={carouselRef}
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.carouselContent}
+              contentContainerStyle={[
+                styles.carouselContent,
+                { minWidth: Dimensions.get('window').width + CAROUSEL_ITEM_WIDTH + 1 },
+              ]}
               snapToInterval={CAROUSEL_ITEM_WIDTH}
               decelerationRate="fast"
               onContentSizeChange={() => {
                 if (!carouselScrollSeeded.current) {
                   carouselScrollSeeded.current = true;
-                  carouselRef.current?.scrollTo({ x: CAROUSEL_ITEM_WIDTH, animated: false });
+                  setTimeout(() => {
+                    carouselRef.current?.scrollTo({ x: CAROUSEL_ITEM_WIDTH, animated: false });
+                  }, 50);
                 }
               }}
             >
