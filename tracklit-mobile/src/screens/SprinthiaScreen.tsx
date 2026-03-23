@@ -865,7 +865,7 @@ export const SprinthiaScreen: React.FC = () => {
         <View
           style={[
             styles.inputWrapper,
-            { paddingBottom: insets.bottom + 12 },
+            { paddingBottom: getBottomNavOverlayHeight(insets.bottom) },
           ]}
         >
           <View style={styles.inputRow}>

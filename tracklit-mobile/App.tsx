@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from 'react-native';
 import {
   NavigationContainer,
@@ -48,6 +49,7 @@ import {
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { env } from './src/config/env';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { OnboardingProvider, useOnboarding } from './src/contexts/OnboardingContext';
 import { Text } from './src/components/ui/Text';
@@ -512,11 +514,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           label: 'Admin Panel',
           IconComponent: ShieldCheck,
           requiresAdmin: true,
-          onPress: () =>
-            navigateIntoAppStack({
-              screen: 'AdminPanelWebView',
-              params: { redirectPath: '/admin-panel' },
-            }),
+          onPress: () => Linking.openURL(`${env.API_BASE_URL}/admin-panel`),
         },
       ],
     },

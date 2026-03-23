@@ -137,7 +137,7 @@ export const SettingsScreen: React.FC = () => {
     onSuccess: async (data: any) => {
       if (data?.token) await setToken(String(data.token));
       if (data && typeof data === 'object') {
-        const nextUser = { ...(data as any) };
+        const nextUser = { ...(user as any), ...(data as any) };
         delete nextUser.token;
         await setUserAndPersist(nextUser);
       }

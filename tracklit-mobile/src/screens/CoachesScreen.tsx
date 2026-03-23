@@ -134,11 +134,19 @@ export const CoachesScreen: React.FC = () => {
     requestCoachingMutation.mutate(coachId);
   }, [requestCoachingMutation]);
 
-  const handleCoachPress = useCallback((coach: Coach) => {
-    navigation.navigate('ChatConversation', {
-      conversationId: coach.id,
-      type: 'direct',
-    });
+  const handleCoachPress = useCallback(async (coach: Coach) => {
+    try {
+      const result = await apiRequest<{ conversationId: number }>('/api/conversations', {
+        method: 'POST',
+        data: { toUserId: coach.id },
+      });
+      navigation.navigate('ChatConversation', {
+        conversationId: result.conversationId,
+        type: 'direct',
+      });
+    } catch {
+      navigation.navigate('Chat');
+    }
   }, [navigation]);
 
   const filtered = useMemo(() => {

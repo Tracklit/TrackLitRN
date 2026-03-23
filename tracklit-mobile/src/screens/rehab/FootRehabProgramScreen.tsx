@@ -17,6 +17,7 @@ import { LinearGradient } from '@/components/LinearGradient';
 import { useMutation } from '@tanstack/react-query';
 
 import { Text } from '@/components/ui/Text';
+import { ScreenTabBar } from '@/components/ScreenTabBar';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
@@ -352,6 +353,7 @@ export const FootRehabProgramScreen: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
+      <ScreenTabBar />
     </View>
   );
 };

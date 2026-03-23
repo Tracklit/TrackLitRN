@@ -16,6 +16,7 @@ import {
   ChatDots,
   Barbell,
   MegaphoneSimple,
+  Trash,
 } from 'phosphor-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -170,6 +171,7 @@ export const NotificationsScreen: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-home'] });
     },
   });
 
@@ -179,9 +181,21 @@ export const NotificationsScreen: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-home'] });
+      queryClient.invalidateQueries({ queryKey: ['friend-requests-pending'] });
     },
     onError: () => {
       Alert.alert('Error', 'Unable to mark all as read.');
+    },
+  });
+
+  const deleteNotificationMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest(`/api/notifications/${id}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-home'] });
     },
   });
 
@@ -299,25 +313,35 @@ export const NotificationsScreen: React.FC = () => {
                     </View>
                   )}
                   {index > 0 && !showDivider && <View style={styles.itemSeparator} />}
-                  <TouchableOpacity
-                    onPress={() => handleNotificationPress(n)}
-                    activeOpacity={0.6}
-                    style={styles.itemRow}
-                  >
-                    <View style={[styles.itemIcon, { backgroundColor: `${color}15` }]}>
-                      <Icon size={16} color={color} weight="fill" />
-                    </View>
-                    <View style={styles.itemBody}>
-                      <View style={styles.itemHeaderRow}>
-                        <Text style={styles.itemTitle} numberOfLines={1}>{n.title}</Text>
-                        {!n.isRead && <View style={styles.unreadDot} />}
+                  <View style={styles.itemRowWrap}>
+                    <TouchableOpacity
+                      onPress={() => handleNotificationPress(n)}
+                      activeOpacity={0.6}
+                      style={styles.itemRow}
+                    >
+                      <View style={[styles.itemIcon, { backgroundColor: `${color}15` }]}>
+                        <Icon size={16} color={color} weight="fill" />
                       </View>
-                      <Text style={styles.itemMessage} numberOfLines={2}>{n.message}</Text>
-                      <Text style={styles.itemTime}>
-                        {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
+                      <View style={styles.itemBody}>
+                        <View style={styles.itemHeaderRow}>
+                          <Text style={styles.itemTitle} numberOfLines={1}>{n.title}</Text>
+                          {!n.isRead && <View style={styles.unreadDot} />}
+                        </View>
+                        <Text style={styles.itemMessage} numberOfLines={2}>{n.message}</Text>
+                        <Text style={styles.itemTime}>
+                          {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => deleteNotificationMutation.mutate(n.id)}
+                      style={styles.deleteBtn}
+                      activeOpacity={0.6}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Trash size={14} color={C.textMuted} weight="fill" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               );
             })}
@@ -420,10 +444,11 @@ const styles = StyleSheet.create({
     marginLeft: 56,
   },
   itemRow: {
+    flex: 1,
     flexDirection: 'row',
     gap: 12,
     paddingVertical: 14,
-    paddingHorizontal: 4,
+    paddingLeft: 4,
   },
   itemIcon: {
     width: 32,
@@ -464,5 +489,15 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 3.5,
     backgroundColor: C.unreadDot,
+  },
+  itemRowWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

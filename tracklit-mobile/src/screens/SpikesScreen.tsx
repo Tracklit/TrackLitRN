@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 32,
     paddingBottom: 8,
-    gap: 4,
+    gap: 12,
   },
   balanceIconWrap: {
     width: 56,
@@ -173,7 +173,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,122,0,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 36,
   },
   balanceValue: {
     fontSize: 42,

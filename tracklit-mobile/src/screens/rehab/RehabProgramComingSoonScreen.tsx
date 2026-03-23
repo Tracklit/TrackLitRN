@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Clock, ArrowLeft } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
+import { ScreenTabBar } from '@/components/ScreenTabBar';
 import type { RootStackParamList } from '@/navigation/types';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -46,6 +47,7 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <ScreenTabBar />
     </View>
   );
 };
