@@ -208,7 +208,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [readActivities, setReadActivities] = useState<Set<number>>(new Set());
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerText, setComposerText] = useState('');
-  const carouselRef = useRef<FlatList>(null);
+  const carouselRef = useRef<ScrollView>(null);
+  const carouselScrollSeeded = useRef(false);
   const [carouselHidden, setCarouselHidden] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [selectionLoaded, setSelectionLoaded] = useState(false);
@@ -773,7 +774,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       queryClient.invalidateQueries({ queryKey: ['community-activities'] });
       // Slide carousel back to hide the "+" card
       setTimeout(() => {
-        carouselRef.current?.scrollToOffset({ offset: CAROUSEL_ITEM_WIDTH, animated: true });
+        carouselRef.current?.scrollTo({ x: CAROUSEL_ITEM_WIDTH, animated: true });
       }, 300);
     },
     onError: (error: Error) => {
@@ -951,25 +952,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         {/* Activity Carousel — scrolls with page */}
         {carouselEntries.length > 0 && !carouselHidden && (
           <View style={styles.carouselContainer}>
-            <FlatList
+            <ScrollView
               ref={carouselRef}
-              data={carouselData}
               horizontal
               showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.key}
               contentContainerStyle={styles.carouselContent}
-              initialScrollIndex={1}
               snapToInterval={CAROUSEL_ITEM_WIDTH}
               decelerationRate="fast"
-              getItemLayout={(_, index) => ({
-                length: CAROUSEL_ITEM_WIDTH,
-                offset: CAROUSEL_ITEM_WIDTH * index,
-                index,
-              })}
-              renderItem={({ item }) => {
+              onContentSizeChange={() => {
+                if (!carouselScrollSeeded.current) {
+                  carouselScrollSeeded.current = true;
+                  carouselRef.current?.scrollTo({ x: CAROUSEL_ITEM_WIDTH, animated: false });
+                }
+              }}
+            >
+              {carouselData.map((item) => {
                 if (item.key === 'carousel-new-post') {
                   return (
                     <TouchableOpacity
+                      key={item.key}
                       style={styles.carouselItem}
                       activeOpacity={0.7}
                       onPress={() => setIsComposerOpen(true)}
@@ -998,6 +999,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
                 return (
                   <TouchableOpacity
+                    key={item.key}
                     style={styles.carouselItem}
                     activeOpacity={0.7}
                     onPress={() => {
@@ -1042,8 +1044,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     </Text>
                   </TouchableOpacity>
                 );
-              }}
-            />
+              })}
+            </ScrollView>
           </View>
         )}
 
