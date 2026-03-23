@@ -932,7 +932,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 );
               }}
             />
-            <View style={styles.carouselDivider} />
           </View>
         )}
 
@@ -1648,12 +1647,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: 'center',
     width: 72,
-  },
-  carouselDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    marginTop: 8,
-    marginHorizontal: theme.spacing.container,
   },
   categoryCard: {
     height: 90,
