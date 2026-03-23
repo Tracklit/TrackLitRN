@@ -208,6 +208,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [readActivities, setReadActivities] = useState<Set<number>>(new Set());
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerText, setComposerText] = useState('');
+  const carouselRef = useRef<FlatList>(null);
   const [carouselHidden, setCarouselHidden] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [selectionLoaded, setSelectionLoaded] = useState(false);
@@ -770,6 +771,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['feed-home'] });
       queryClient.invalidateQueries({ queryKey: ['community-activities'] });
+      // Slide carousel back to hide the "+" card
+      setTimeout(() => {
+        carouselRef.current?.scrollToOffset({ offset: CAROUSEL_ITEM_WIDTH, animated: true });
+      }, 300);
     },
     onError: (error: Error) => {
       Alert.alert('Unable to post', error.message || 'Please try again.');
@@ -947,12 +952,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         {carouselEntries.length > 0 && !carouselHidden && (
           <View style={styles.carouselContainer}>
             <FlatList
+              ref={carouselRef}
               data={carouselData}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.key}
               contentContainerStyle={styles.carouselContent}
               contentOffset={{ x: CAROUSEL_ITEM_WIDTH, y: 0 }}
+              snapToInterval={CAROUSEL_ITEM_WIDTH}
+              decelerationRate="fast"
               getItemLayout={(_, index) => ({
                 length: CAROUSEL_ITEM_WIDTH,
                 offset: CAROUSEL_ITEM_WIDTH * index,
@@ -1304,15 +1312,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 <Text variant="body" weight="semiBold" color="foreground">New Post</Text>
                 <TouchableOpacity
                   onPress={() => {
-                    if (!composerText.trim()) return;
+                    if (composerText.trim().length < 5) return;
                     createPostMutation.mutate(composerText.trim());
                   }}
-                  disabled={createPostMutation.isPending || !composerText.trim()}
+                  disabled={createPostMutation.isPending || composerText.trim().length < 5}
                 >
                   <Text
                     variant="body"
                     weight="bold"
-                    color={composerText.trim() ? 'primary' : 'secondary'}
+                    color={composerText.trim().length >= 5 ? 'primary' : 'secondary'}
                   >
                     {createPostMutation.isPending ? 'Posting...' : 'Post'}
                   </Text>
