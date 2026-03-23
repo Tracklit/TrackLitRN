@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -32,6 +33,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
+
+const CONNECTED_COACHES_KEY = 'connected_coach_ids';
 
 const C = {
   bg: '#0E0F14',
@@ -71,6 +74,23 @@ interface Friend {
   name: string;
 }
 
+async function loadConnectedCoachIds(): Promise<Set<number>> {
+  try {
+    const raw = await AsyncStorage.getItem(CONNECTED_COACHES_KEY);
+    if (!raw) return new Set();
+    const arr: number[] = JSON.parse(raw);
+    return new Set(arr);
+  } catch {
+    return new Set();
+  }
+}
+
+async function saveConnectedCoachIds(ids: Set<number>): Promise<void> {
+  try {
+    await AsyncStorage.setItem(CONNECTED_COACHES_KEY, JSON.stringify([...ids]));
+  } catch {}
+}
+
 export const CoachesScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -79,9 +99,23 @@ export const CoachesScreen: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
-
-  const [pendingConnects, setPendingConnects] = useState<Set<number>>(new Set());
+  const [connectedIds, setConnectedIds] = useState<Set<number>>(new Set());
   const [pendingCoachRequests, setPendingCoachRequests] = useState<Set<number>>(new Set());
+  const connectedIdsRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    loadConnectedCoachIds().then((ids) => {
+      setConnectedIds(ids);
+      connectedIdsRef.current = ids;
+    });
+  }, []);
+
+  const markConnected = useCallback(async (coachId: number) => {
+    const next = new Set(connectedIdsRef.current).add(coachId);
+    connectedIdsRef.current = next;
+    setConnectedIds(new Set(next));
+    await saveConnectedCoachIds(next);
+  }, []);
 
   const coachesQuery = useQuery({
     queryKey: ['coaches'],
@@ -125,42 +159,35 @@ export const CoachesScreen: React.FC = () => {
 
   const isConnected = useCallback((coach: Coach) => {
     return (
+      connectedIds.has(coach.id) ||
       friendIds.has(coach.id) ||
       !!coach.isFollowing ||
-      !!coach.isFriend ||
-      pendingConnects.has(coach.id)
+      !!coach.isFriend
     );
-  }, [friendIds, pendingConnects]);
+  }, [connectedIds, friendIds]);
 
   const connectMutation = useMutation({
     mutationFn: async (coachId: number) => {
       return apiRequest<{ success: boolean }>(`/api/follow/${coachId}`, { method: 'POST' });
     },
-    onMutate: (coachId: number) => {
-      setPendingConnects((prev) => new Set(prev).add(coachId));
-    },
-    onSuccess: () => {
+    onSuccess: async (_data, coachId) => {
+      await markConnected(coachId);
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['coaches'] });
     },
-    onError: (error: Error, coachId: number) => {
+    onError: async (error: Error, coachId: number) => {
       const msg = (error?.message ?? '').toLowerCase();
-      const alreadyFollowing =
+      const alreadyConnected =
         msg.includes('already following') ||
         msg.includes('already connected') ||
         msg.includes('already friend') ||
         msg.includes('duplicate') ||
         msg.includes('conflict');
-      if (alreadyFollowing) {
-        setPendingConnects((prev) => new Set(prev).add(coachId));
+      if (alreadyConnected) {
+        await markConnected(coachId);
         queryClient.invalidateQueries({ queryKey: ['friends'] });
         queryClient.invalidateQueries({ queryKey: ['coaches'] });
       } else {
-        setPendingConnects((prev) => {
-          const s = new Set(prev);
-          s.delete(coachId);
-          return s;
-        });
         Alert.alert('Error', error.message || 'Failed to connect');
       }
     },
@@ -244,31 +271,28 @@ export const CoachesScreen: React.FC = () => {
     if (isConnected(coach)) {
       const isSending = requestCoachingMutation.isPending && pendingCoachRequests.has(coach.id);
       return (
-        <TouchableOpacity
-          style={styles.requestButton}
-          onPress={() => handleRequestCoaching(coach.id)}
-          disabled={isSending}
-          activeOpacity={0.6}
-        >
-          {isSending ? (
-            <ActivityIndicator size="small" color="#000" />
-          ) : (
-            <Text style={styles.requestText}>Request Coaching</Text>
-          )}
-        </TouchableOpacity>
-      );
-    }
-
-    if (pendingConnects.has(coach.id)) {
-      return (
-        <View style={styles.statusBadge}>
-          <UserCircle size={12} color={C.connected} weight="fill" />
-          <Text style={[styles.statusText, { color: C.connected }]}>Connected</Text>
+        <View style={styles.connectedGroup}>
+          <View style={styles.connectedBadge}>
+            <UserCircle size={11} color={C.connected} weight="fill" />
+            <Text style={[styles.statusText, { color: C.connected }]}>Connected</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.requestButton}
+            onPress={() => handleRequestCoaching(coach.id)}
+            disabled={isSending}
+            activeOpacity={0.6}
+          >
+            {isSending ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <Text style={styles.requestText}>Request Coaching</Text>
+            )}
+          </TouchableOpacity>
         </View>
       );
     }
 
-    const isConnecting = connectMutation.isPending && pendingConnects.has(coach.id);
+    const isConnecting = connectMutation.variables === coach.id && connectMutation.isPending;
     return (
       <TouchableOpacity
         style={styles.connectButton}
@@ -291,10 +315,10 @@ export const CoachesScreen: React.FC = () => {
     hasPendingCoachRequest,
     pendingCoachRequests,
     isConnected,
-    pendingConnects,
     handleRequestCoaching,
     handleConnect,
     connectMutation.isPending,
+    connectMutation.variables,
     requestCoachingMutation.isPending,
   ]);
 
@@ -323,7 +347,7 @@ export const CoachesScreen: React.FC = () => {
 
       <View style={styles.layerHint}>
         <Text style={styles.layerHintText}>
-          Connect first, then request coaching from a connected coach.
+          Connect with a coach first, then request coaching from them.
         </Text>
       </View>
 
@@ -513,6 +537,15 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     marginTop: 1,
   },
+  connectedGroup: {
+    alignItems: 'flex-end',
+    gap: 5,
+  },
+  connectedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
   connectButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -529,8 +562,8 @@ const styles = StyleSheet.create({
     color: C.orange,
   },
   requestButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
     backgroundColor: C.orange,
   },

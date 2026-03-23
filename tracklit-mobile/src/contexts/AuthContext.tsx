@@ -173,11 +173,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('[AUTH] Token valid, user:', response.id, response.username);
       }
 
-      // Merge: API response fields take precedence (authoritative), but fields
-      // present in local storage that the server omits are preserved.
-      const mergedUser: User = storedUserBeforeFetch
-        ? { ...storedUserBeforeFetch, ...response }
-        : response;
+      // Merge: API response is authoritative for most fields, but certain
+      // athlete-profile fields (age, height, weight, gender) are saved locally
+      // after the user edits them and may not be returned by /api/user GET.
+      // Preserve stored values for those fields when the API returns null/undefined.
+      const PROFILE_FIELDS = ['age', 'height', 'weight', 'gender'] as const;
+      let mergedUser: User = response;
+      if (storedUserBeforeFetch && storedUserBeforeFetch.id === response.id) {
+        const overrides: Partial<User> = {};
+        for (const field of PROFILE_FIELDS) {
+          const storedVal = (storedUserBeforeFetch as any)[field];
+          const apiVal = (response as any)[field];
+          if (storedVal != null && storedVal !== '' && (apiVal == null || apiVal === '')) {
+            (overrides as any)[field] = storedVal;
+          }
+        }
+        mergedUser = { ...response, ...overrides };
+      }
 
       setUser(mergedUser);
       setHasValidToken(true);
