@@ -168,7 +168,7 @@ export const AthletesScreen: React.FC = () => {
     const isPending = hasPendingRequest(athlete.id) || pendingRequests.has(athlete.id);
     const isSending = pendingRequests.has(athlete.id);
 
-    if (isFriend) {
+    if (isFriend || athlete.isFollowing) {
       return (
         <View style={styles.statusBadge}>
           <CheckCircle size={12} color={C.connected} weight="fill" />

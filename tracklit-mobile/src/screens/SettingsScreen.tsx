@@ -136,7 +136,14 @@ export const SettingsScreen: React.FC = () => {
       apiRequest('/api/user', { method: 'PATCH', data: payload }),
     onSuccess: async (data: any) => {
       if (data?.token) await setToken(String(data.token));
-      const nextUser = { ...(user as any), ...(typeof data === 'object' && data ? data : {}) };
+      const nextUser: any = { ...(user as any) };
+      if (fullName.trim()) nextUser.name = fullName.trim();
+      if (username.trim()) nextUser.username = username.trim();
+      nextUser.isPrivate = isPrivate;
+      if (age.trim()) nextUser.age = parseInt(age.trim(), 10);
+      if (height.trim()) nextUser.height = parseFloat(height.trim());
+      if (weight.trim()) nextUser.weight = parseFloat(weight.trim());
+      if (gender) nextUser.gender = gender;
       delete nextUser.token;
       await setUserAndPersist(nextUser);
       setHasChanges(false);

@@ -9,8 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
-  Lightning,
-  Trophy,
   ArrowRight,
   CaretLeft,
   Info,
@@ -60,9 +58,6 @@ export const SpikesScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.balanceSection}>
-          <View style={styles.balanceIconWrap}>
-            <Lightning size={28} color={C.orange} weight="fill" />
-          </View>
           <Text style={styles.balanceValue}>{spikesBalance.toLocaleString()}</Text>
           <Text style={styles.balanceLabel}>Spikes</Text>
           <Text style={styles.balanceSub}>
@@ -108,7 +103,6 @@ export const SpikesScreen: React.FC = () => {
 
         <View style={styles.quickStats}>
           <View style={styles.statBox}>
-            <Trophy size={16} color={C.orange} weight="fill" style={{ marginBottom: 6 }} />
             <Text style={styles.statValue}>
               {spikesBalance >= 1000 ? 'Pro' : 'Free'}
             </Text>
@@ -116,7 +110,6 @@ export const SpikesScreen: React.FC = () => {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Lightning size={16} color={C.orange} weight="fill" style={{ marginBottom: 6 }} />
             <Text style={styles.statValue}>
               {spikesBalance >= 1000 ? '0' : `${1000 - spikesBalance}`}
             </Text>

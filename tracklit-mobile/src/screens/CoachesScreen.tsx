@@ -103,10 +103,7 @@ export const CoachesScreen: React.FC = () => {
 
   const requestCoachingMutation = useMutation({
     mutationFn: async (coachId: number) => {
-      return apiRequest<{ success: boolean }>('/api/coaching-requests', {
-        method: 'POST',
-        data: { toUserId: coachId },
-      });
+      return apiRequest<{ success: boolean }>(`/api/follow/${coachId}`, { method: 'POST' });
     },
     onMutate: (coachId: number) => {
       setPendingRequests((prev) => new Set(prev).add(coachId));
@@ -114,6 +111,8 @@ export const CoachesScreen: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coaching-requests'] });
       queryClient.invalidateQueries({ queryKey: ['my-coaches'] });
+      queryClient.invalidateQueries({ queryKey: ['friend-requests-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
     },
     onError: (error: Error, coachId: number) => {
       setPendingRequests((prev) => {

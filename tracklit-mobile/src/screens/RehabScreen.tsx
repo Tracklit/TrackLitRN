@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   ArrowLeft,
@@ -15,7 +15,6 @@ import {
   ArrowRight,
   ChatCircleDots,
   Info,
-  List,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -155,9 +154,6 @@ export const RehabScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.drawerButton} onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
-          <List size={20} color={C.textPrimary} weight="bold" />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
@@ -303,16 +299,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-  },
-  drawerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: C.glass,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   backButton: {
     width: 40,

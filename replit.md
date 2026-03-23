@@ -63,22 +63,21 @@ The `ProgramCreateScreen` offers 4 methods: Import/Upload (navigates to ProgramI
 **Practice Screen Session Mapping**: Sessions are matched to calendar dates using both a direct date-key lookup (Mon-DD format) and a sequential dayNumber offset from program start date. Date-key takes priority to handle sheets with rest days or gaps.
 
 ## Coaching & Social Features
-- **Athletes Screen**: Directory of all users, flat-list style, connect button changes to "Requested" state optimistically (no toast)
-- **Coaches Screen**: Directory of coaches, same optimistic button state pattern
+- **Athletes Screen**: Directory of all users. Connect button shows "Connected" (grayed out) for athletes where `isAlreadyFriend || athlete.isFollowing`. Tapping an athlete navigates to their PublicProfile. Connection uses `/api/follow/${id}`.
+- **Coaches Screen**: Directory of coaches. Request coaching uses `/api/follow/${coachId}` (same follow pattern as athletes). Optimistic "Requested" state via `pendingRequests` Set.
 - **My Athletes Screen** (`MyAthletesScreen`): Coach-only screen showing accepted athletes from `/api/coach/athletes`, accessible via drawer
 - **Subscriptions Screen**: Dark premium styled, 3 tabs (My Subscriptions, My Subscribers, My Offering)
 
 ## Rehabilitation Module
-- **RehabScreen**: Hub with 4 categories (Acute Muscle, Chronic, Back, Bone Breaks)
+- **RehabScreen**: Hub with 4 categories (Acute Muscle, Chronic, Back, Bone Breaks). No hamburger/drawer button — only a back arrow.
 - **Sub-screens** use `navigation.goBack()` (not `navigate('Rehab')`) to prevent navigation loops
 - All rehab screens use `@/components/LinearGradient` and Phosphor icons (not lucide or react-native-linear-gradient)
-- All rehab screens (RehabScreen, FootRehabProgramScreen, HamstringRehabProgramScreen, RehabProgramComingSoonScreen) include `ScreenTabBar` at the bottom and a drawer button (List icon) in the header
 - AI Consultation button in RehabScreen navigates directly to `navigation.navigate('Sprinthia')` (a RootStack screen)
 
 ## Spikes System
-- **SpikesScreen**: Clean hub showing balance, with two navigation cards to subpages
+- **SpikesScreen**: Clean hub showing balance (number only, no Lightning icon), with two navigation cards to subpages. Quick stats box shows tier/to-pro-tier text only (icons removed).
 - **SpikesInfoScreen**: Informational page explaining what spikes are, how to earn them, and tier unlock details
-- **SpikesProgressScreen**: User's progression — balance, tier progress bar, login streak with check-in, achievements list, and recent transaction history
+- **SpikesProgressScreen**: User's progression — balance row shows text only (Lightning icon removed from balance display; Lightning still used for transaction history +/- icons), tier progress bar, login streak with check-in, achievements list, and recent transaction history
 - All Spikes screens include `ScreenTabBar` at the bottom and a drawer button (List icon) in the header
 
 ## Navigation Utilities

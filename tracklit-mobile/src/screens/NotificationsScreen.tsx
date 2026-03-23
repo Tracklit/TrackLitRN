@@ -6,7 +6,9 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Text as RNText,
 } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Bell,
@@ -323,7 +325,23 @@ export const NotificationsScreen: React.FC = () => {
                     </View>
                   )}
                   {index > 0 && !showDivider && <View style={styles.itemSeparator} />}
-                  <View style={styles.itemRowWrap}>
+                  <Swipeable
+                    renderRightActions={() => (
+                      <TouchableOpacity
+                        style={styles.swipeDeleteAction}
+                        onPress={() => !deletingIds.has(n.id) && deleteNotificationMutation.mutate(n.id)}
+                        activeOpacity={0.85}
+                      >
+                        {deletingIds.has(n.id)
+                          ? <ActivityIndicator size="small" color="#fff" />
+                          : <Trash size={18} color="#fff" weight="fill" />
+                        }
+                        <RNText style={styles.swipeDeleteText}>Delete</RNText>
+                      </TouchableOpacity>
+                    )}
+                    rightThreshold={60}
+                    overshootRight={false}
+                  >
                     <TouchableOpacity
                       onPress={() => handleNotificationPress(n)}
                       activeOpacity={0.6}
@@ -343,19 +361,7 @@ export const NotificationsScreen: React.FC = () => {
                         </Text>
                       </View>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => !deletingIds.has(n.id) && deleteNotificationMutation.mutate(n.id)}
-                      style={styles.deleteBtn}
-                      activeOpacity={0.6}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      disabled={deletingIds.has(n.id)}
-                    >
-                      {deletingIds.has(n.id)
-                        ? <ActivityIndicator size={14} color={C.textMuted} />
-                        : <Trash size={14} color={C.textMuted} weight="fill" />
-                      }
-                    </TouchableOpacity>
-                  </View>
+                  </Swipeable>
                 </View>
               );
             })}
@@ -458,11 +464,11 @@ const styles = StyleSheet.create({
     marginLeft: 56,
   },
   itemRow: {
-    flex: 1,
     flexDirection: 'row',
     gap: 12,
     paddingVertical: 14,
-    paddingLeft: 4,
+    paddingHorizontal: 4,
+    backgroundColor: C.bg,
   },
   itemIcon: {
     width: 32,
@@ -504,14 +510,17 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
     backgroundColor: C.unreadDot,
   },
-  itemRowWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  deleteBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+  swipeDeleteAction: {
+    backgroundColor: '#ef4444',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 24,
+    gap: 5,
+  },
+  swipeDeleteText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });

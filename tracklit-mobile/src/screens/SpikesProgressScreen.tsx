@@ -119,7 +119,6 @@ export const SpikesProgressScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.balanceRow}>
-          <Lightning size={20} color={C.orange} weight="fill" />
           <Text style={styles.balanceText}>{spikesBalance.toLocaleString()} Spikes</Text>
         </View>
 

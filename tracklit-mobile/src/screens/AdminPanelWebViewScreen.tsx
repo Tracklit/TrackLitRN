@@ -31,18 +31,16 @@ export const AdminPanelWebViewScreen: React.FC = () => {
 
   const redirectPath = route.params?.redirectPath ?? '/admin-panel';
 
-  const source = useMemo(() => {
-    if (!token) {
-      return null;
-    }
+  const adminUrl = `${env.API_BASE_URL}${redirectPath}`;
 
-    return {
-      uri: `${env.API_BASE_URL}/api/mobile/web-session?redirect=${encodeURIComponent(redirectPath)}`,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-  }, [redirectPath, token]);
+  const injectedJS = token
+    ? `(function(){try{['token','auth_token','accessToken','authToken','jwt'].forEach(function(k){localStorage.setItem(k,'${token}');});}catch(e){}true;})();`
+    : 'true;';
+
+  const source = useMemo(() => {
+    if (!token) return null;
+    return { uri: adminUrl, headers: { Authorization: `Bearer ${token}` } };
+  }, [token, adminUrl]);
 
   useEffect(() => {
     let isMounted = true;
@@ -120,6 +118,8 @@ export const AdminPanelWebViewScreen: React.FC = () => {
       ) : (
         <WebView
           source={source}
+          injectedJavaScriptBeforeContentLoaded={injectedJS}
+          injectedJavaScript={injectedJS}
           sharedCookiesEnabled
           thirdPartyCookiesEnabled
           startInLoadingState
