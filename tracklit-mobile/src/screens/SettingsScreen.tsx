@@ -35,7 +35,7 @@ import {
 import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
-import { setToken } from '@/lib/tokenStorage';
+import { setToken, setProfileFields } from '@/lib/tokenStorage';
 import type { RootStackParamList } from '@/navigation/types';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -145,6 +145,13 @@ export const SettingsScreen: React.FC = () => {
       if (weight.trim()) nextUser.weight = parseFloat(weight.trim());
       if (gender) nextUser.gender = gender;
       delete nextUser.token;
+      // Persist athlete profile fields to the dedicated store — survives logout.
+      await setProfileFields({
+        age: nextUser.age ?? null,
+        height: nextUser.height ?? null,
+        weight: nextUser.weight ?? null,
+        gender: nextUser.gender ?? null,
+      });
       await setUserAndPersist(nextUser);
       setHasChanges(false);
       Alert.alert('Saved', 'Account details updated.');

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TOKEN_KEY = '@tracklit_auth_token';
 const USER_KEY = '@tracklit_user';
+const PROFILE_KEY = '@tracklit_profile_fields';
 
 const DEBUG_TOKEN = __DEV__;
 
@@ -119,6 +120,34 @@ export const clearAuthStorage = async (): Promise<void> => {
   } catch (error) {
     console.error('[TOKEN] Error clearing auth storage:', error);
     throw error;
+  }
+};
+
+export interface StoredProfileFields {
+  age?: number | null;
+  height?: number | null;
+  weight?: number | null;
+  gender?: string | null;
+}
+
+/**
+ * Persist athlete profile fields independently of auth session.
+ * These survive logout so the user doesn't have to re-enter them.
+ */
+export const getProfileFields = async (): Promise<StoredProfileFields | null> => {
+  try {
+    const json = await AsyncStorage.getItem(PROFILE_KEY);
+    return json ? JSON.parse(json) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const setProfileFields = async (fields: StoredProfileFields): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(fields));
+  } catch (error) {
+    console.error('[TOKEN] Error saving profile fields:', error);
   }
 };
 

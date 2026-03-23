@@ -11,13 +11,15 @@ import { Linking } from 'react-native';
 
 import { apiRequest } from '@/lib/api';
 import {
-  getToken, 
-  setToken, 
-  clearAuthStorage, 
+  getToken,
+  setToken,
+  clearAuthStorage,
   getStoredUser,
   setStoredUser,
   debugAuthStorage,
   clearStoredUser,
+  getProfileFields,
+  setProfileFields,
 } from '@/lib/tokenStorage';
 import { getQueryParam } from '@/utils/url';
 
@@ -152,10 +154,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('[AUTH] Validating token with /api/user...');
       }
 
-      // Read stored user before API call so we can preserve any locally-stored
-      // fields (age, height, weight, gender, etc.) that the server may not always
-      // return in its profile response.
-      const storedUserBeforeFetch = await getStoredUser();
+      // Read profile fields from the dedicated store (survives logout/re-login).
+      // This is separate from the auth user store so it is never wiped on logout.
+      const savedProfile = await getProfileFields();
 
       // Cache-bust to avoid any intermediary caching of identity responses.
       const response = await apiRequest<User>(`/api/user?_=${Date.now()}`, {
@@ -168,24 +169,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (isStaleRequest()) {
         return;
       }
-      
+
       if (DEBUG_AUTH) {
         console.log('[AUTH] Token valid, user:', response.id, response.username);
       }
 
-      // Merge: API response is authoritative for most fields, but certain
-      // athlete-profile fields (age, height, weight, gender) are saved locally
-      // after the user edits them and may not be returned by /api/user GET.
-      // Preserve stored values for those fields when the API returns null/undefined.
+      // Merge: API is authoritative but athlete-profile fields (age, height,
+      // weight, gender) may not be stored on the server. Use the dedicated
+      // profile store as a fallback so values survive logout / re-login.
       const PROFILE_FIELDS = ['age', 'height', 'weight', 'gender'] as const;
       let mergedUser: User = response;
-      if (storedUserBeforeFetch && storedUserBeforeFetch.id === response.id) {
+      if (savedProfile) {
         const overrides: Partial<User> = {};
         for (const field of PROFILE_FIELDS) {
-          const storedVal = (storedUserBeforeFetch as any)[field];
+          const saved = (savedProfile as any)[field];
           const apiVal = (response as any)[field];
-          if (storedVal != null && storedVal !== '' && (apiVal == null || apiVal === '')) {
-            (overrides as any)[field] = storedVal;
+          if (saved != null && saved !== '' && (apiVal == null || apiVal === '')) {
+            (overrides as any)[field] = saved;
           }
         }
         mergedUser = { ...response, ...overrides };
@@ -193,7 +193,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setUser(mergedUser);
       setHasValidToken(true);
-      // Update stored user data with merged object
       await setStoredUser(mergedUser);
     } catch (error) {
       if (authRequestIdRef.current !== requestId) {
