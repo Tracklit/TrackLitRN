@@ -125,6 +125,16 @@ export const RehabScreen: React.FC = () => {
     setShowDisclaimer(false);
   };
 
+  const getCategoryLabel = (categoryId: string): string => {
+    switch (categoryId) {
+      case 'acute-muscle': return 'Acute Muscle';
+      case 'chronic-injuries': return 'Chronic Injury';
+      case 'back-injuries': return 'Back Injury';
+      case 'bone-breaks': return 'Bone Break';
+      default: return 'Rehabilitation';
+    }
+  };
+
   const handleProgramPress = (categoryId: string, programId: string, programName: string) => {
     if (categoryId === 'acute-muscle' && programId === 'hamstring') {
       navigation.navigate('RehabHamstringProgram');
@@ -134,9 +144,11 @@ export const RehabScreen: React.FC = () => {
       navigation.navigate('RehabFootProgram');
       return;
     }
-    navigation.navigate('RehabProgramComingSoon', {
-      title: `${programName} Protocol`,
-      category: categoryId,
+    const programKey = `${categoryId.replace('acute-muscle', 'acute').replace('chronic-injuries', 'chronic').replace('back-injuries', 'back').replace('bone-breaks', 'bone')}-${programId}`;
+    navigation.navigate('RehabProgramDetail', {
+      programKey,
+      programName,
+      categoryLabel: getCategoryLabel(categoryId),
     });
   };
 

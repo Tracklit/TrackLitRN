@@ -58,6 +58,7 @@ export type RootStackParamList = {
   RehabHamstringProgram: undefined;
   RehabFootProgram: undefined;
   RehabProgramComingSoon: { title: string; category: string };
+  RehabProgramDetail: { programKey: string; programName: string; categoryLabel: string };
   Spikes: undefined;
   SpikesInfo: undefined;
   SpikesProgress: undefined;
