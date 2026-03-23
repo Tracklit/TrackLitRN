@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -28,12 +28,15 @@ import {
   LockSimple,
   ProhibitInset,
   DotsThreeVertical,
+  Warning,
+  SignOut,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import type { RootStackParamList } from '@/navigation/types';
 import { apiRequest } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { goBackOrNavigateToTab } from '@/navigation/appNavigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -81,7 +84,16 @@ async function fetchAdminUsers(): Promise<AdminUser[]> {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.users)) return response.users;
   if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.results)) return response.results;
   return [];
+}
+
+function getErrorStatus(error: unknown): number | null {
+  return (error as any)?.status ?? null;
+}
+
+function getErrorMessage(error: unknown): string {
+  return (error as any)?.message ?? 'Unknown error';
 }
 
 async function fetchAdminStats(): Promise<AdminStats> {
@@ -109,11 +121,19 @@ export const AdminPanelWebViewScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const queryClient = useQueryClient();
+  const { refreshUser, logout } = useAuth();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'users' | 'stats'>('users');
   const [refreshing, setRefreshing] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
+
+  useEffect(() => {
+    refreshUser().then(() => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+    }).catch(() => {});
+  }, []);
 
   const usersQuery = useQuery({
     queryKey: ['admin-users'],
@@ -323,10 +343,47 @@ export const AdminPanelWebViewScreen: React.FC = () => {
               </View>
             ) : usersQuery.isError ? (
               <View style={styles.center}>
-                <ShieldStar size={40} color={C.textMuted} weight="fill" />
-                <Text style={styles.mutedText}>
-                  Could not load users.{'\n'}Make sure this account has admin access.
+                <Warning size={40} color={C.red} weight="fill" />
+                <Text style={styles.errorHeading}>Could not load users</Text>
+                <Text style={styles.errorDetail}>
+                  {getErrorStatus(usersQuery.error) === 401 || getErrorStatus(usersQuery.error) === 403
+                    ? `Permission denied (${getErrorStatus(usersQuery.error)}). If you were recently promoted to admin, you need to log out and log back in to refresh your session.`
+                    : `Server returned: ${getErrorMessage(usersQuery.error)} (${getErrorStatus(usersQuery.error) ?? 'no status'})`
+                  }
                 </Text>
+                {(getErrorStatus(usersQuery.error) === 401 || getErrorStatus(usersQuery.error) === 403) && (
+                  <TouchableOpacity
+                    style={styles.logoutBtn}
+                    onPress={() => {
+                      Alert.alert(
+                        'Log out required',
+                        'You need to log out and log back in for your admin permissions to take effect.',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Log Out',
+                            style: 'destructive',
+                            onPress: () => {
+                              logout();
+                              navigation.goBack();
+                            },
+                          },
+                        ],
+                      );
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <SignOut size={15} color={C.textPrimary} weight="fill" />
+                    <Text style={styles.logoutBtnText}>Log Out & Re-login</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={styles.retryBtn}
+                  onPress={() => queryClient.invalidateQueries({ queryKey: ['admin-users'] })}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.retryBtnText}>Try Again</Text>
+                </TouchableOpacity>
               </View>
             ) : filteredUsers.length === 0 ? (
               <View style={styles.center}>
@@ -579,6 +636,12 @@ const styles = StyleSheet.create({
   scroll: { padding: 16 },
   center: { paddingVertical: 60, alignItems: 'center', gap: 12 },
   mutedText: { fontSize: 13, color: C.textMuted, textAlign: 'center', lineHeight: 20 },
+  errorHeading: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginTop: 12, textAlign: 'center' },
+  errorDetail: { fontSize: 13, color: C.textMuted, textAlign: 'center', lineHeight: 18, marginTop: 8, paddingHorizontal: 16, maxWidth: 300 },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.red, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, marginTop: 16 },
+  logoutBtnText: { fontSize: 13, fontWeight: '700', color: C.textPrimary },
+  retryBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, marginTop: 10, borderWidth: 1, borderColor: C.border },
+  retryBtnText: { fontSize: 13, fontWeight: '600', color: C.textMuted },
   countText: { fontSize: 11, color: C.textMuted, marginBottom: 10 },
   separator: { height: 0.5, backgroundColor: C.border, marginLeft: 52 },
   userRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
