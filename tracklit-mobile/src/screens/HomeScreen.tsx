@@ -83,6 +83,7 @@ interface CategoryCard {
 type ActivityType =
   | 'workout'
   | 'journal_entry'
+  | 'feed_post'
   | 'user_joined'
   | 'meet_created'
   | 'meet_results'
@@ -98,6 +99,7 @@ interface CommunityActivity {
   title: string;
   description?: string;
   createdAt: string;
+  feedPostId?: number;
   user?: {
     id: number;
     username: string;
@@ -399,6 +401,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     staleTime: 60000,
   });
 
+  const feedPostsQuery = useQuery({
+    queryKey: ['feed-home'],
+    queryFn: () => apiRequest<any[]>('/api/feed?filter=all'),
+    staleTime: 60000,
+    retry: false,
+  });
+
   // Fetched early so ownActivity (below) can reference it without a forward-declaration error
   const { data: journalEntriesEarly = [] } = useQuery({
     queryKey: ['journal-home'],
@@ -408,6 +417,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   });
 
   const rawActivities = activitiesQuery.data ?? [];
+
+  // Normalize feed posts into CommunityActivity shape and merge with community activities.
+  // Most recent entry per user wins so each user appears once in the carousel.
+  const allActivities = useMemo<CommunityActivity[]>(() => {
+    const feedPosts = (feedPostsQuery.data ?? [])
+      .filter((p: any) => p.userId && p.content)
+      .map((p: any): CommunityActivity => ({
+        id: -(p.id + 100000),
+        userId: p.userId,
+        activityType: p.isJournalEntry ? 'journal_entry' : 'feed_post',
+        title: String(p.content ?? '').slice(0, 80),
+        description: p.content ?? '',
+        createdAt: p.createdAt,
+        feedPostId: p.isJournalEntry ? undefined : p.id,
+        user: {
+          id: p.userId,
+          username: p.username || '',
+          name: p.name || p.username || '',
+          profileImageUrl: p.profileImageUrl,
+        },
+      }));
+    const combined = [...rawActivities, ...feedPosts];
+    combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // One entry per user — first (newest) wins
+    const seen = new Set<number>();
+    return combined.filter((a) => {
+      const uid = a.user?.id ?? a.userId;
+      if (!uid || seen.has(uid)) return false;
+      seen.add(uid);
+      return true;
+    });
+  }, [rawActivities, feedPostsQuery.data]);
 
   // Build a synthetic ticker card from the user's own most-recent public journal entry.
   // This works regardless of which backend is in use (Azure or dev), since journal entries
@@ -456,7 +497,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       seen.add(numericUserId);
     }
 
-    for (const activity of rawActivities) {
+    for (const activity of allActivities) {
       const activityUserId = activity.user?.id ?? activity.userId;
       if (!activityUserId || seen.has(activityUserId)) {
         continue;
@@ -477,7 +518,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     }
 
     return ids;
-  }, [numericUserId, ownStoredAvatarUri, rawActivities, user]);
+  }, [numericUserId, ownStoredAvatarUri, allActivities, user]);
 
   const carouselUserProfilesQuery = useQuery({
     queryKey: ['community-carousel-user-profiles', carouselAvatarLookupUserIds],
@@ -539,7 +580,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       seenUserIds.add(numericUserId);
     }
 
-    for (const activity of rawActivities) {
+    for (const activity of allActivities) {
       const activityUserId = activity.user?.id ?? activity.userId;
       if (!activity.user || !activityUserId || seenUserIds.has(activityUserId)) {
         continue;
@@ -572,7 +613,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     }
 
     return entries;
-  }, [carouselUserProfileByUserId, numericUserId, ownActivity, ownStoredAvatarUri, rawActivities, user]);
+  }, [carouselUserProfileByUserId, numericUserId, ownActivity, ownStoredAvatarUri, allActivities, user]);
 
   const openOwnProfile = useCallback(() => {
     if (!numericUserId || !user) {
@@ -1081,29 +1122,63 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             {selectedActivity && (
               <>
                 <View style={styles.modalHeader}>
-                  <View style={styles.modalAvatar}>
-                    {(() => {
-                      const ActivityIcon = getActivityIconComponent(selectedActivity.activityType);
-                      return <ActivityIcon size={18} color="#e2e8f0" weight="fill" />;
-                    })()}
-                  </View>
+                  <TouchableOpacity
+                    style={styles.modalAvatar}
+                    activeOpacity={selectedActivity.user?.id ? 0.7 : 1}
+                    onPress={() => {
+                      if (!selectedActivity.user?.id) return;
+                      setTickerModalVisible(false);
+                      navigation.navigate('PublicProfile', {
+                        userId: selectedActivity.user.id,
+                        name: selectedActivity.user.name || null,
+                        username: selectedActivity.user.username || null,
+                        profileImageUrl: selectedActivity.user.profileImageUrl || null,
+                      });
+                    }}
+                  >
+                    {selectedActivity.user?.profileImageUrl ? (
+                      <Image
+                        source={{ uri: selectedActivity.user.profileImageUrl }}
+                        style={{ width: 36, height: 36, borderRadius: 18 }}
+                      />
+                    ) : (
+                      (() => {
+                        const ActivityIcon = getActivityIconComponent(selectedActivity.activityType);
+                        return <ActivityIcon size={18} color="#e2e8f0" weight="fill" />;
+                      })()
+                    )}
+                  </TouchableOpacity>
                   <View style={{ flex: 1 }}>
                     <Text variant="body" weight="bold" color="foreground">
-                      {selectedActivity.title}
+                      {selectedActivity.user?.name || selectedActivity.user?.username || selectedActivity.title}
                     </Text>
                     {!!selectedActivity.user?.username && (
                       <Text variant="caption" color="secondary">
-                        {selectedActivity.user.name || selectedActivity.user.username} · {formatTimeAgo(selectedActivity.createdAt)}
+                        @{selectedActivity.user.username} · {formatTimeAgo(selectedActivity.createdAt)}
                       </Text>
                     )}
                   </View>
                 </View>
 
-                <View style={styles.modalBody}>
+                <TouchableOpacity
+                  style={styles.modalBody}
+                  activeOpacity={selectedActivity.activityType === 'feed_post' ? 0.7 : 1}
+                  onPress={() => {
+                    if (selectedActivity.activityType === 'feed_post') {
+                      setTickerModalVisible(false);
+                      (navigation as any).navigate('MainTabs', { screen: 'Feed' });
+                    }
+                  }}
+                >
                   <Text variant="body" color="foreground" style={{ lineHeight: 22 }}>
                     {selectedActivity.description || 'No additional details available.'}
                   </Text>
-                </View>
+                  {selectedActivity.activityType === 'feed_post' && (
+                    <Text variant="caption" color="secondary" style={{ marginTop: 6 }}>
+                      Tap to view post
+                    </Text>
+                  )}
+                </TouchableOpacity>
 
                 <View style={styles.modalActions}>
                   <TouchableOpacity
@@ -1127,16 +1202,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.modalActionButton}
-                    onPress={() => saveToJournalMutation.mutate(selectedActivity)}
-                    disabled={saveToJournalMutation.isPending}
-                  >
-                    <FloppyDisk size={18} color="#FF9800" weight="fill" />
-                    <Text variant="caption" weight="medium" color="secondary">
-                      {saveToJournalMutation.isPending ? 'Saving...' : 'Save to Journal'}
-                    </Text>
-                  </TouchableOpacity>
+                  {selectedActivity.activityType !== 'feed_post' && (
+                    <TouchableOpacity
+                      style={styles.modalActionButton}
+                      onPress={() => saveToJournalMutation.mutate(selectedActivity)}
+                      disabled={saveToJournalMutation.isPending}
+                    >
+                      <FloppyDisk size={18} color="#FF9800" weight="fill" />
+                      <Text variant="caption" weight="medium" color="secondary">
+                        {saveToJournalMutation.isPending ? 'Saving...' : 'Save to Journal'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </>
             )}
