@@ -172,6 +172,23 @@ const CarouselAvatar: React.FC<{ imageUrl?: string; initial: string }> = ({ imag
   );
 };
 
+const MONTH_ABBR_H = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const parseHomeSessionDate = (rawDate?: string | null): Date | null => {
+  if (!rawDate) return null;
+  const t = rawDate.trim();
+  const iso = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return new Date(parseInt(iso[1]), parseInt(iso[2]) - 1, parseInt(iso[3]));
+  const short = t.match(/^([A-Za-z]{3})-(\d{1,2})$/);
+  if (short) {
+    const mon = short[1][0].toUpperCase() + short[1].slice(1).toLowerCase();
+    const idx = MONTH_ABBR_H.indexOf(mon);
+    if (idx >= 0) return new Date(new Date().getFullYear(), idx, parseInt(short[2]));
+  }
+  const d = new Date(t);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -288,54 +305,61 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const sessionsByDay = useMemo(() => {
     const map: Record<number, any> = {};
-    if (programSessions) {
-      programSessions.forEach((session: any) => {
-        if (session.dayNumber != null) {
-          map[session.dayNumber] = session;
-        }
-      });
-    }
+    programSessions?.forEach((s: any) => {
+      if (s.dayNumber != null) map[s.dayNumber] = s;
+    });
     return map;
   }, [programSessions]);
 
-  const todayDayNumber = useMemo(() => {
+  const sessionsByDateKey = useMemo(() => {
+    const map: Record<string, any> = {};
+    programSessions?.forEach((s: any) => {
+      const parsed = parseHomeSessionDate(s.date);
+      if (parsed) {
+        const key = `${MONTH_ABBR_H[parsed.getMonth()]}-${parsed.getDate()}`;
+        map[key] = s;
+      }
+    });
+    return map;
+  }, [programSessions]);
+
+  const todaySession = useMemo(() => {
     if (!programSessions || programSessions.length === 0) return null;
-    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayKey = `${MONTH_ABBR_H[today.getMonth()]}-${today.getDate()}`;
+    const totalDays = Math.max(...Object.keys(sessionsByDay).map(Number), programSessions.length, 1);
 
+    // Date-key lookup first — mirrors PracticeScreen behaviour, handles rest-day gaps
+    const byDateKey = sessionsByDateKey[todayKey];
+    if (byDateKey) {
+      return { ...byDateKey, dayNumber: byDateKey.dayNumber ?? 1, totalDays, programId: resolvedProgramId };
+    }
+
+    // Fall back: compute day offset from program start date
     const datesFromSessions = programSessions
-      .map((s: any) => {
-        if (!s.date) return null;
-        const shortM = String(s.date).match(/^([A-Za-z]{3})-(\d{1,2})$/);
-        if (shortM) {
-          const monIdx = MONTHS.indexOf(shortM[1][0].toUpperCase() + shortM[1].slice(1).toLowerCase());
-          if (monIdx >= 0) return new Date(today.getFullYear(), monIdx, parseInt(shortM[2]));
-        }
-        const isoM = String(s.date).match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (isoM) return new Date(parseInt(isoM[1]), parseInt(isoM[2]) - 1, parseInt(isoM[3]));
-        return null;
-      })
+      .map((s: any) => parseHomeSessionDate(s.date))
       .filter(Boolean) as Date[];
 
-    if (datesFromSessions.length === 0) return 1;
-    datesFromSessions.sort((a, b) => a.getTime() - b.getTime());
-    const programStartDate = datesFromSessions[0];
-    const diff = Math.round((today.getTime() - programStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const totalDays = Math.max(...Object.keys(sessionsByDay).map(Number), programSessions.length);
-    if (diff >= 1 && diff <= totalDays) return diff;
-    return 1;
-  }, [programSessions, sessionsByDay]);
+    let dayNum = 1;
+    if (datesFromSessions.length > 0) {
+      datesFromSessions.sort((a, b) => a.getTime() - b.getTime());
+      const diff = Math.round((today.getTime() - datesFromSessions[0].getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      dayNum = diff >= 1 && diff <= totalDays ? diff : 1;
+    }
+
+    const matched = sessionsByDay[dayNum];
+    if (!matched) return null;
+    return { ...matched, dayNumber: matched.dayNumber ?? dayNum, totalDays, programId: resolvedProgramId };
+  }, [programSessions, sessionsByDay, sessionsByDateKey, resolvedProgramId]);
+
+  const todayDayNumber = todaySession?.dayNumber ?? null;
 
   const todaySessionId = useMemo(() => {
-    if (!todayDayNumber) return { sessionId: undefined, dayNumber: undefined };
-    const session = sessionsByDay[todayDayNumber];
-    if (session) return { sessionId: session.id, dayNumber: todayDayNumber };
-    if (!programSessions || programSessions.length === 0) return { sessionId: undefined, dayNumber: undefined };
-    const incomplete = programSessions.filter((s: any) => !s.completed_at);
-    const fallback = incomplete.length > 0 ? incomplete[incomplete.length - 1] : programSessions[programSessions.length - 1];
-    return { sessionId: fallback?.id, dayNumber: fallback?.dayNumber };
-  }, [todayDayNumber, sessionsByDay, programSessions]);
+    if (!todaySession) return { sessionId: undefined, dayNumber: undefined };
+    return { sessionId: todaySession.id, dayNumber: todaySession.dayNumber };
+  }, [todaySession]);
 
   const todayGymQuery = useQuery({
     queryKey: ['gym-data-home', resolvedProgramId, todaySessionId.dayNumber, todaySessionId.sessionId],
@@ -351,22 +375,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     enabled: !!(todaySessionId.sessionId || (resolvedProgramId && todaySessionId.dayNumber)),
   });
   const todayGymData = todayGymQuery.data?.gymData ?? [];
-
-  const todaySession = useMemo(() => {
-    if (!todayDayNumber || !programSessions || programSessions.length === 0) return null;
-
-    const matched = sessionsByDay[todayDayNumber];
-    if (!matched) return null;
-
-    const totalDays = Math.max(...Object.keys(sessionsByDay).map(Number), programSessions.length);
-
-    return {
-      ...matched,
-      dayNumber: matched.dayNumber || todayDayNumber,
-      totalDays,
-      programId: resolvedProgramId,
-    };
-  }, [todayDayNumber, sessionsByDay, programSessions, resolvedProgramId]);
 
   const screenOpacity = useSharedValue(0);
   useEffect(() => {
