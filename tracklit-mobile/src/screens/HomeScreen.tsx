@@ -640,16 +640,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   );
 
   // Keep the "+" card hidden to the left by default.
-  // contentOffset prop is unreliable when data loads async, so we scroll
-  // programmatically once the carousel data is available.
+  // Triggered via onContentSizeChange on the FlatList, which fires once the
+  // scrollable content has been fully measured — more reliable than contentOffset
+  // or requestAnimationFrame which both fire before layout is complete.
   const carouselSeeded = useRef(false);
-  useEffect(() => {
-    if (carouselData.length > 1 && !carouselSeeded.current) {
+  const handleCarouselContentSizeChange = useCallback(() => {
+    if (!carouselSeeded.current && carouselData.length > 1) {
       carouselSeeded.current = true;
-      // Allow one frame for the FlatList to finish its layout pass
-      requestAnimationFrame(() => {
-        carouselRef.current?.scrollToOffset({ offset: CAROUSEL_ITEM_WIDTH, animated: false });
-      });
+      carouselRef.current?.scrollToOffset({ offset: CAROUSEL_ITEM_WIDTH, animated: false });
     }
   }, [carouselData.length]);
 
@@ -972,6 +970,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.key}
               contentContainerStyle={styles.carouselContent}
+              onContentSizeChange={handleCarouselContentSizeChange}
               snapToInterval={CAROUSEL_ITEM_WIDTH}
               decelerationRate="fast"
               getItemLayout={(_, index) => ({
