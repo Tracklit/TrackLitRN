@@ -622,6 +622,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     return entries;
   }, [carouselUserProfileByUserId, numericUserId, ownActivity, ownStoredAvatarUri, allActivities, user]);
 
+  const PLUS_ENTRY: CarouselUserEntry = {
+    key: 'carousel-new-post',
+    userId: -1,
+    displayName: 'Post',
+    username: '',
+    profileImageUrl: undefined,
+    isSelf: false,
+    activity: null,
+  };
+
+  const carouselData = useMemo<CarouselUserEntry[]>(
+    () => [PLUS_ENTRY, ...carouselEntries],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [carouselEntries],
+  );
+
   const openOwnProfile = useCallback(() => {
     if (!numericUserId || !user) {
       return;
@@ -931,38 +947,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         {carouselEntries.length > 0 && !carouselHidden && (
           <View style={styles.carouselContainer}>
             <FlatList
-              data={carouselEntries}
+              data={carouselData}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.key}
               contentContainerStyle={styles.carouselContent}
+              contentOffset={{ x: CAROUSEL_ITEM_WIDTH, y: 0 }}
               getItemLayout={(_, index) => ({
                 length: CAROUSEL_ITEM_WIDTH,
                 offset: CAROUSEL_ITEM_WIDTH * index,
                 index,
               })}
-              ListFooterComponent={() => (
-                <TouchableOpacity
-                  style={styles.carouselItem}
-                  activeOpacity={0.7}
-                  onPress={() => setIsComposerOpen(true)}
-                >
-                  <View style={[styles.carouselRing, styles.carouselRingRead]}>
-                    <View style={[styles.carouselCircle, styles.carouselPlusCircle]}>
-                      <Plus size={20} color="#FF7A00" weight="bold" />
-                    </View>
-                  </View>
-                  <Text
-                    variant="caption"
-                    color="secondary"
-                    numberOfLines={1}
-                    style={styles.carouselUsername}
-                  >
-                    Post
-                  </Text>
-                </TouchableOpacity>
-              )}
               renderItem={({ item }) => {
+                if (item.key === 'carousel-new-post') {
+                  return (
+                    <TouchableOpacity
+                      style={styles.carouselItem}
+                      activeOpacity={0.7}
+                      onPress={() => setIsComposerOpen(true)}
+                    >
+                      <View style={[styles.carouselRing, styles.carouselRingRead]}>
+                        <View style={[styles.carouselCircle, styles.carouselPlusCircle]}>
+                          <Plus size={20} color="#FF7A00" weight="bold" />
+                        </View>
+                      </View>
+                      <Text
+                        variant="caption"
+                        color="secondary"
+                        numberOfLines={1}
+                        style={styles.carouselUsername}
+                      >
+                        Post
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }
+
                 const badge = item.isSelf ? 'profile' : getActivityBadge(item.activity?.activityType ?? 'workout');
                 const initial = (item.displayName?.[0] || item.username?.[0] || '?').toUpperCase();
                 const username = item.displayName?.split(' ')[0] || item.username || (item.isSelf ? 'You' : '');
