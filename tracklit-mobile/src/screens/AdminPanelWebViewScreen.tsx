@@ -79,8 +79,8 @@ interface AdminStats {
   programs?: number;
 }
 
-async function fetchAdminUsers(): Promise<AdminUser[]> {
-  const response = await apiRequest<any>('/api/admin/users');
+async function fetchAdminUsers(search: string): Promise<AdminUser[]> {
+  const response = await apiRequest<any>(`/api/admin/users?search=${encodeURIComponent(search)}`);
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.users)) return response.users;
   if (Array.isArray(response?.data)) return response.data;
@@ -130,14 +130,16 @@ export const AdminPanelWebViewScreen: React.FC = () => {
 
   useEffect(() => {
     refreshUser().then(() => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
     }).catch(() => {});
   }, []);
 
+  const searchReady = search.trim().length >= 2;
+
   const usersQuery = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: fetchAdminUsers,
+    queryKey: ['admin-users', search.trim()],
+    queryFn: () => fetchAdminUsers(search.trim()),
+    enabled: searchReady,
     retry: 1,
   });
 
@@ -260,11 +262,7 @@ export const AdminPanelWebViewScreen: React.FC = () => {
     );
   }, [selectedUser, deleteUserMutation]);
 
-  const filteredUsers = (usersQuery.data ?? []).filter((u) => {
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return `${u.name ?? ''} ${u.username} ${u.email ?? ''}`.toLowerCase().includes(q);
-  });
+  const filteredUsers = usersQuery.data ?? [];
 
   const stats = statsQuery.data;
   const totalUsers = stats?.totalUsers ?? stats?.users ?? stats?.total;
@@ -336,10 +334,16 @@ export const AdminPanelWebViewScreen: React.FC = () => {
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.orange} />
             }
           >
-            {usersQuery.isLoading ? (
+            {!searchReady ? (
+              <View style={styles.center}>
+                <MagnifyingGlass size={36} color={C.textMuted} weight="fill" />
+                <Text style={styles.errorHeading}>Search for a user</Text>
+                <Text style={styles.mutedText}>Type at least 2 characters{'\n'}to find users by name, username, or email.</Text>
+              </View>
+            ) : usersQuery.isLoading || usersQuery.isFetching ? (
               <View style={styles.center}>
                 <ActivityIndicator size="large" color={C.orange} />
-                <Text style={styles.mutedText}>Loading users…</Text>
+                <Text style={styles.mutedText}>Searching…</Text>
               </View>
             ) : usersQuery.isError ? (
               <View style={styles.center}>
@@ -388,9 +392,7 @@ export const AdminPanelWebViewScreen: React.FC = () => {
             ) : filteredUsers.length === 0 ? (
               <View style={styles.center}>
                 <Users size={36} color={C.textMuted} weight="fill" />
-                <Text style={styles.mutedText}>
-                  {search ? 'No users match your search.' : 'No users found.'}
-                </Text>
+                <Text style={styles.mutedText}>No users found for "{search.trim()}"</Text>
               </View>
             ) : (
               <>
