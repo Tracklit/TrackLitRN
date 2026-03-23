@@ -20,7 +20,7 @@ import {
 
 import { Text } from '@/components/ui/Text';
 import { LinearGradient } from '@/components/LinearGradient';
-import { ScreenTabBar } from '@/components/ScreenTabBar';
+
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -158,7 +158,6 @@ export const RehabScreen: React.FC = () => {
         <TouchableOpacity style={styles.drawerButton} onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
           <List size={20} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Rehabilitation</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
         </TouchableOpacity>
@@ -293,7 +292,6 @@ export const RehabScreen: React.FC = () => {
         </View>
       </Modal>
 
-      <ScreenTabBar />
     </View>
   );
 };
