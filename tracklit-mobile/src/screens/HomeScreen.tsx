@@ -639,18 +639,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     [carouselEntries],
   );
 
-  // Keep the "+" card hidden to the left by default.
-  // Triggered via onContentSizeChange on the FlatList, which fires once the
-  // scrollable content has been fully measured — more reliable than contentOffset
-  // or requestAnimationFrame which both fire before layout is complete.
-  const carouselSeeded = useRef(false);
-  const handleCarouselContentSizeChange = useCallback(() => {
-    if (!carouselSeeded.current && carouselData.length > 1) {
-      carouselSeeded.current = true;
-      carouselRef.current?.scrollToOffset({ offset: CAROUSEL_ITEM_WIDTH, animated: false });
-    }
-  }, [carouselData.length]);
-
   const openOwnProfile = useCallback(() => {
     if (!numericUserId || !user) {
       return;
@@ -970,7 +958,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.key}
               contentContainerStyle={styles.carouselContent}
-              onContentSizeChange={handleCarouselContentSizeChange}
+              initialScrollIndex={1}
               snapToInterval={CAROUSEL_ITEM_WIDTH}
               decelerationRate="fast"
               getItemLayout={(_, index) => ({
