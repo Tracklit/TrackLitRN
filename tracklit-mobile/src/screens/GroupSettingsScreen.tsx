@@ -19,7 +19,6 @@ import {
   Users,
   Crown,
   Camera,
-  CheckCircle,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -103,7 +102,7 @@ export const GroupSettingsScreen: React.FC = () => {
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.8,
+      quality: 0.7,
     });
     if (result.canceled || !result.assets[0]) return;
 
@@ -114,25 +113,37 @@ export const GroupSettingsScreen: React.FC = () => {
     try {
       const token = await getToken();
       const ext = uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const form = new FormData();
-      form.append('avatar', {
-        uri,
-        name: `group.${ext}`,
-        type: ext === 'png' ? 'image/png' : 'image/jpeg',
-      } as any);
+      const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+      const baseUrl = `${env.API_BASE_URL}/api/chat/groups/${groupId}`;
 
-      const response = await fetch(`${env.API_BASE_URL}/api/chat/groups/${groupId}`, {
-        method: 'PATCH',
+      // Strategy 1: multipart PUT (PUT often has file-upload middleware)
+      const form = new FormData();
+      form.append('avatar', { uri, name: `group.${ext}`, type: mimeType } as any);
+
+      let response = await fetch(baseUrl, {
+        method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
         body: form,
       });
+      let responseText = await response.text();
+      console.log('[GroupSettings] PUT avatar status=%d body=%s', response.status, responseText.slice(0, 300));
 
-      const responseText = await response.text();
-      console.log('[GroupSettings] avatar PATCH status=%d body=%s', response.status, responseText.slice(0, 500));
+      // Strategy 2: multipart PATCH with 'image' field name
+      if (!response.ok) {
+        const form2 = new FormData();
+        form2.append('image', { uri, name: `group.${ext}`, type: mimeType } as any);
+        response = await fetch(baseUrl, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form2,
+        });
+        responseText = await response.text();
+        console.log('[GroupSettings] PATCH image status=%d body=%s', response.status, responseText.slice(0, 300));
+      }
 
       if (!response.ok) {
         setPendingImageUri(null);
-        Alert.alert('Upload failed', `${response.status}: ${responseText.slice(0, 150)}`);
+        Alert.alert('Upload failed', `All upload methods failed.\nLast response: ${response.status}: ${responseText.slice(0, 200)}`);
         return;
       }
 
