@@ -113,6 +113,30 @@ const normalizeGroupInfo = (group: GroupInfoApi): GroupInfo => {
   };
 };
 
+// Normalise raw server message — handles both camelCase and snake_case API responses
+const normalizeMessage = (raw: any): Message => {
+  const replyRaw = raw.replyToMessage ?? raw.reply_to_message ?? null;
+  return {
+    id: raw.id,
+    text: raw.text ?? raw.content ?? undefined,
+    senderId: Number(raw.senderId ?? raw.sender_id ?? 0),
+    senderName: raw.senderName ?? raw.sender_name ?? undefined,
+    senderProfileImage: raw.senderProfileImage ?? raw.sender_profile_image ?? raw.senderAvatar ?? raw.sender_avatar ?? undefined,
+    createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
+    messageType: raw.messageType ?? raw.message_type ?? 'text',
+    mediaUrl: raw.mediaUrl ?? raw.media_url ?? undefined,
+    isDeleted: raw.isDeleted ?? raw.is_deleted ?? false,
+    editedAt: raw.editedAt ?? raw.edited_at ?? undefined,
+    replyToId: raw.replyToId ?? raw.reply_to_id ?? undefined,
+    replyToMessage: replyRaw ? {
+      id: replyRaw.id,
+      text: replyRaw.text ?? replyRaw.content ?? undefined,
+      senderName: replyRaw.senderName ?? replyRaw.sender_name ?? undefined,
+      messageType: replyRaw.messageType ?? replyRaw.message_type ?? 'text',
+    } : undefined,
+  };
+};
+
 export const ChatConversationScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -146,11 +170,12 @@ export const ChatConversationScreen: React.FC = () => {
 
   const messagesQuery = useQuery({
     queryKey: ['chat-messages', type, conversationId],
-    queryFn: () => {
+    queryFn: async () => {
       const endpoint = type === 'group'
         ? `/api/chat/groups/${conversationId}/messages`
         : `/api/chat/direct/${conversationId}/messages`;
-      return apiRequest<Message[]>(endpoint);
+      const raw = await apiRequest<any[]>(endpoint);
+      return (raw ?? []).map(normalizeMessage);
     },
     enabled: !!conversationId,
     refetchInterval: 5000,
@@ -340,7 +365,7 @@ export const ChatConversationScreen: React.FC = () => {
 
   const getHeaderTitle = () => {
     if (type === 'group' && groupInfo) return groupInfo.name;
-    const otherUserMessage = messages.find(m => m.senderId !== user?.id);
+    const otherUserMessage = messages.find(m => Number(m.senderId) !== Number(user?.id));
     return otherUserMessage?.senderName || 'Chat';
   };
 
@@ -411,7 +436,7 @@ export const ChatConversationScreen: React.FC = () => {
             </View>
           ) : (
             messages.map((message, index) => {
-              const isOwn = message.senderId === user?.id;
+              const isOwn = Number(message.senderId) === Number(user?.id);
               const isDeleted = message.isDeleted;
               const hasImage = message.messageType === 'image' && message.mediaUrl;
               const prevMessage = index > 0 ? messages[index - 1] : null;
