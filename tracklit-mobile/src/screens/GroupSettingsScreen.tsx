@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,24 +6,29 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import * as ImagePicker from 'expo-image-picker';
 import {
   ArrowLeft,
   UserPlus,
   Users,
   Crown,
+  Camera,
+  CheckCircle,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { apiRequest } from '@/lib/api';
+import { getToken } from '@/lib/tokenStorage';
+import { env } from '@/config/env';
 import { useAuth } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/queryClient';
-import { Alert } from 'react-native';
 import type { RootStackParamList } from '@/navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -65,6 +70,9 @@ export const GroupSettingsScreen: React.FC = () => {
   const { groupId, groupName: initialName, groupImageUrl: initialImage } = route.params;
   const { user } = useAuth();
 
+  const [pendingImageUri, setPendingImageUri] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const groupQuery = useQuery({
     queryKey: ['group-detail', groupId],
     queryFn: () => apiRequest<GroupDetail>(`/api/chat/groups/${groupId}`),
@@ -81,8 +89,64 @@ export const GroupSettingsScreen: React.FC = () => {
   const eligibleFriends = (friendsQuery.data ?? []).filter(f => !currentMemberIds.has(f.id));
 
   const displayName = groupData?.name ?? initialName;
-  const displayImage = groupData?.imageUrl ?? groupData?.avatar_url ?? initialImage;
+  const serverImage = groupData?.imageUrl ?? groupData?.avatar_url ?? initialImage;
+  const displayImage = pendingImageUri ?? serverImage;
   const memberCount = groupData?.memberCount ?? groupData?.member_count ?? currentMembers.length;
+
+  const pickAndUploadImage = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Please allow access to your photo library.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    const uri = result.assets[0].uri;
+    setPendingImageUri(uri);
+    setUploadingImage(true);
+
+    try {
+      const token = await getToken();
+      const ext = uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const form = new FormData();
+      form.append('avatar', {
+        uri,
+        name: `group.${ext}`,
+        type: ext === 'png' ? 'image/png' : 'image/jpeg',
+      } as any);
+
+      const response = await fetch(`${env.API_BASE_URL}/api/chat/groups/${groupId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+
+      const responseText = await response.text();
+      console.log('[GroupSettings] avatar PATCH status=%d body=%s', response.status, responseText.slice(0, 500));
+
+      if (!response.ok) {
+        setPendingImageUri(null);
+        Alert.alert('Upload failed', `${response.status}: ${responseText.slice(0, 150)}`);
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['chat-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['chat-info', 'group', groupId] });
+      queryClient.invalidateQueries({ queryKey: ['group-detail', groupId] });
+      Alert.alert('Done', 'Group photo updated.');
+    } catch (err: any) {
+      setPendingImageUri(null);
+      Alert.alert('Error', err?.message || 'Failed to upload photo. Please try again.');
+    } finally {
+      setUploadingImage(false);
+    }
+  }, [groupId]);
 
   const addMemberMutation = useMutation({
     mutationFn: (friendId: number) =>
@@ -117,15 +181,30 @@ export const GroupSettingsScreen: React.FC = () => {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Group Avatar */}
+        {/* Group Avatar — always tappable to change */}
         <View style={styles.avatarSection}>
-          {displayImage ? (
-            <Image source={{ uri: displayImage }} style={styles.avatarImg} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Users size={44} color="#64748b" weight="fill" />
+          <TouchableOpacity
+            style={styles.avatarWrap}
+            onPress={pickAndUploadImage}
+            activeOpacity={0.75}
+            disabled={uploadingImage}
+          >
+            {displayImage ? (
+              <Image source={{ uri: displayImage }} style={styles.avatarImg} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Users size={44} color="#64748b" weight="fill" />
+              </View>
+            )}
+            <View style={styles.cameraOverlay}>
+              {uploadingImage
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Camera size={16} color="#fff" weight="fill" />}
             </View>
-          )}
+          </TouchableOpacity>
+          <Text variant="caption" color="muted" style={styles.avatarHint}>
+            Tap to change photo
+          </Text>
           <Text variant="h3" weight="bold" color="foreground" style={styles.groupName}>
             {displayName}
           </Text>
@@ -257,7 +336,11 @@ const styles = StyleSheet.create({
   },
   avatarSection: {
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+  },
+  avatarWrap: {
+    position: 'relative',
+    marginBottom: 2,
   },
   avatarImg: {
     width: 96,
@@ -276,8 +359,25 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.1)',
   },
+  cameraOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FF7A00',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#0E0F14',
+  },
+  avatarHint: {
+    opacity: 0.5,
+    fontSize: 11,
+  },
   groupName: {
-    marginTop: 4,
+    marginTop: 2,
     textAlign: 'center',
   },
   section: {

@@ -138,8 +138,8 @@ export const CreateGroupScreen: React.FC = () => {
         form.append('isPrivate',   isPrivate ? 'true' : 'false');
         if (members.length > 0) form.append('members', JSON.stringify(members));
 
-        const ext = imageUri.split('.').pop() || 'jpg';
-        form.append('image', { uri: imageUri, name: `group.${ext}`, type: `image/${ext === 'png' ? 'png' : 'jpeg'}` } as any);
+        const ext = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
+        form.append('avatar', { uri: imageUri, name: `group.${ext}`, type: ext === 'png' ? 'image/png' : 'image/jpeg' } as any);
 
         response = await fetch(`${env.API_BASE_URL}/api/chat/groups`, {
           method:  'POST',
