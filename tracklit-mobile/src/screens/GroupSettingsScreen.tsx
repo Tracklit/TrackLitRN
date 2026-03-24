@@ -29,6 +29,7 @@ import { apiRequest } from '@/lib/api';
 import { getToken } from '@/lib/tokenStorage';
 import { env } from '@/config/env';
 import { queryClient } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import theme from '../utils/theme';
 
@@ -40,6 +41,8 @@ interface Member {
   name?: string | null;
   username: string;
   profileImageUrl?: string | null;
+  profile_image_url?: string | null;
+  role?: string | null;
 }
 
 interface Friend {
@@ -61,7 +64,8 @@ export const GroupSettingsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const { groupId, groupName: initialName, groupImageUrl: initialImage, isOwner } = route.params;
+  const { groupId, groupName: initialName, groupImageUrl: initialImage } = route.params;
+  const { user } = useAuth();
 
   const [name, setName] = useState(initialName);
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -72,20 +76,23 @@ export const GroupSettingsScreen: React.FC = () => {
     queryFn: () => apiRequest<GroupDetail>(`/api/chat/groups/${groupId}`),
   });
 
-  const friendsQuery = useQuery({
-    queryKey: ['friends'],
-    queryFn: () => apiRequest<Friend[]>('/api/friends'),
-    enabled: isOwner,
-  });
-
   const groupData = groupQuery.data;
   const currentMembers: Member[] = groupData?.members ?? [];
   const currentMemberIds = new Set(currentMembers.map(m => m.id));
 
+  const myMember = currentMembers.find(m => Number(m.id) === Number(user?.id));
+  const isAdmin = myMember?.role === 'admin' || myMember?.role === 'owner';
+
+  const friendsQuery = useQuery({
+    queryKey: ['friends'],
+    queryFn: () => apiRequest<Friend[]>('/api/friends'),
+    enabled: isAdmin,
+  });
+
   const eligibleFriends = (friendsQuery.data ?? []).filter(f => !currentMemberIds.has(f.id));
 
   const pickImage = useCallback(async () => {
-    if (!isOwner) return;
+    if (!isAdmin) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission required', 'Please allow access to your photo library.');
@@ -100,10 +107,10 @@ export const GroupSettingsScreen: React.FC = () => {
     if (!result.canceled && result.assets[0]) {
       setImageUri(result.assets[0].uri);
     }
-  }, [isOwner]);
+  }, [isAdmin]);
 
   const handleSave = useCallback(async () => {
-    if (!isOwner) return;
+    if (!isAdmin) return;
     if (!name.trim()) {
       Alert.alert('Error', 'Group name cannot be empty.');
       return;
@@ -153,7 +160,7 @@ export const GroupSettingsScreen: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  }, [isOwner, name, imageUri, groupId, navigation]);
+  }, [isAdmin, name, imageUri, groupId, navigation]);
 
   const addMemberMutation = useMutation({
     mutationFn: (friendId: number) =>
@@ -180,9 +187,9 @@ export const GroupSettingsScreen: React.FC = () => {
           <ArrowLeft size={22} color="#fff" weight="bold" />
         </TouchableOpacity>
         <Text variant="h3" weight="bold" color="foreground" style={styles.headerTitle}>
-          {isOwner ? 'Group Settings' : 'Group Info'}
+          {isAdmin ? 'Group Settings' : 'Group Info'}
         </Text>
-        {isOwner ? (
+        {isAdmin ? (
           <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
             {saving
               ? <ActivityIndicator size="small" color="#FF7A00" />
@@ -204,7 +211,7 @@ export const GroupSettingsScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.avatarWrap}
             onPress={pickImage}
-            activeOpacity={isOwner ? 0.7 : 1}
+            activeOpacity={isAdmin ? 0.7 : 1}
           >
             {displayImage ? (
               <Image source={{ uri: displayImage }} style={styles.avatarImg} />
@@ -213,13 +220,13 @@ export const GroupSettingsScreen: React.FC = () => {
                 <Users size={40} color="#64748b" weight="fill" />
               </View>
             )}
-            {isOwner && (
+            {isAdmin && (
               <View style={styles.cameraOverlay}>
                 <Camera size={18} color="#fff" weight="fill" />
               </View>
             )}
           </TouchableOpacity>
-          {isOwner && (
+          {isAdmin && (
             <Text variant="caption" color="muted" style={styles.avatarHint}>
               Tap to change photo
             </Text>
@@ -229,7 +236,7 @@ export const GroupSettingsScreen: React.FC = () => {
         {/* Group Name */}
         <View style={styles.section}>
           <Text variant="caption" color="muted" style={styles.sectionLabel}>GROUP NAME</Text>
-          {isOwner ? (
+          {isAdmin ? (
             <TextInput
               style={styles.nameInput}
               value={name}
@@ -276,8 +283,8 @@ export const GroupSettingsScreen: React.FC = () => {
           ) : null}
         </View>
 
-        {/* Invite Section — owner only */}
-        {isOwner && (
+        {/* Invite Section — admin only */}
+        {isAdmin && (
           <View style={styles.section}>
             <Text variant="caption" color="muted" style={styles.sectionLabel}>ADD MEMBERS</Text>
 
