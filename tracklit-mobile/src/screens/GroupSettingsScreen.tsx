@@ -113,31 +113,41 @@ export const GroupSettingsScreen: React.FC = () => {
       const token = await getToken();
       const baseUrl = env.API_BASE_URL;
 
+      const form = new FormData();
+      form.append('name', name.trim());
       if (imageUri) {
-        const form = new FormData();
-        form.append('name', name.trim());
-        const ext = imageUri.split('.').pop() || 'jpg';
-        form.append('image', { uri: imageUri, name: `group.${ext}`, type: `image/${ext === 'png' ? 'png' : 'jpeg'}` } as any);
-        await fetch(`${baseUrl}/api/chat/groups/${groupId}`, {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${token}` },
-          body: form,
-        });
-      } else {
-        await apiRequest(`/api/chat/groups/${groupId}`, {
-          method: 'PATCH',
-          data: { name: name.trim() },
-        });
+        const ext = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
+        form.append('image', {
+          uri: imageUri,
+          name: `group.${ext}`,
+          type: ext === 'png' ? 'image/png' : 'image/jpeg',
+        } as any);
       }
 
+      const response = await fetch(`${baseUrl}/api/chat/groups/${groupId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.warn('[GroupSettings] PATCH failed', response.status, text.slice(0, 300));
+        throw new Error(`Server error (${response.status})`);
+      }
+
+      const updated = await response.json().catch(() => null);
+      console.log('[GroupSettings] saved ok', updated);
+
       queryClient.invalidateQueries({ queryKey: ['chat-groups'] });
-      queryClient.invalidateQueries({ queryKey: ['group-info', groupId] });
+      queryClient.invalidateQueries({ queryKey: ['chat-info', 'group', groupId] });
       queryClient.invalidateQueries({ queryKey: ['group-detail', groupId] });
-      Alert.alert('Saved', 'Group settings updated successfully.', [
+
+      Alert.alert('Saved', 'Group settings updated.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch {
-      Alert.alert('Error', 'Failed to save group settings. Please try again.');
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Failed to save group settings. Please try again.');
     } finally {
       setSaving(false);
     }
