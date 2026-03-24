@@ -121,12 +121,19 @@ export const CreateGroupScreen: React.FC = () => {
       const token = await getToken();
       if (!token) throw new Error('Not signed in — please log in again.');
 
-      const members = selected.map(m => ({
-        id:              m.id,
-        name:            m.name,
-        username:        m.username,
-        profileImageUrl: m.profileImageUrl,
-      }));
+      const creator = user
+        ? [{ id: user.id, name: user.name, username: user.username ?? user.email ?? '', profileImageUrl: user.profileImageUrl, role: 'admin' }]
+        : [];
+
+      const members = [
+        ...creator,
+        ...selected.map(m => ({
+          id:              m.id,
+          name:            m.name,
+          username:        m.username,
+          profileImageUrl: m.profileImageUrl,
+        })),
+      ];
 
       let response: Response;
 
