@@ -73,6 +73,7 @@ interface GroupInfo {
   description?: string;
   imageUrl?: string;
   memberCount?: number;
+  ownerId?: number;
 }
 
 interface GroupInfoApi {
@@ -85,6 +86,10 @@ interface GroupInfoApi {
   member_count?: number | null;
   member_ids?: number[] | null;
   members?: unknown[] | null;
+  ownerId?: number | null;
+  owner_id?: number | null;
+  createdBy?: number | null;
+  created_by?: number | null;
 }
 
 const formatMsgTime = (dateStr: string) => {
@@ -107,6 +112,7 @@ const normalizeGroupInfo = (group: GroupInfoApi): GroupInfo => {
   const derivedMemberCount = memberIds.length > 0 ? memberIds.length : members.length;
   return {
     id: group.id,
+    ownerId: group.ownerId ?? group.owner_id ?? group.createdBy ?? group.created_by ?? undefined,
     name: group.name,
     description: group.description ?? undefined,
     imageUrl: group.imageUrl ?? group.avatar_url ?? undefined,
@@ -443,12 +449,25 @@ export const ChatConversationScreen: React.FC = () => {
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
-            <View style={styles.groupNamePill}>
+            <TouchableOpacity
+              style={styles.groupNamePill}
+              activeOpacity={type === 'group' ? 0.6 : 1}
+              onPress={() => {
+                if (type === 'group' && groupInfo) {
+                  navigation.navigate('GroupSettings', {
+                    groupId: groupInfo.id,
+                    groupName: groupInfo.name,
+                    groupImageUrl: groupInfo.imageUrl,
+                    isOwner: !!groupInfo.ownerId && Number(groupInfo.ownerId) === Number(user?.id),
+                  });
+                }
+              }}
+            >
               <Text style={styles.groupNameText} numberOfLines={1}>{getHeaderTitle()}</Text>
               {subtitle && (
                 <Text style={styles.groupSubtitleText}>{subtitle}</Text>
               )}
-            </View>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.headerRight} />
@@ -515,7 +534,7 @@ export const ChatConversationScreen: React.FC = () => {
                         </View>
                       )}
 
-                      <View style={{ position: 'relative' }}>
+                      <View style={[styles.bubbleWrapper, isOwn ? styles.bubbleWrapperOwn : styles.bubbleWrapperOther]}>
                         <View
                           style={[
                             styles.bubble,
@@ -835,8 +854,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
-  bubble: {
+  bubbleWrapper: {
+    position: 'relative',
     maxWidth: '82%',
+  },
+  bubbleWrapperOwn: {
+    alignSelf: 'flex-end',
+  },
+  bubbleWrapperOther: {
+    alignSelf: 'flex-start',
+  },
+  bubble: {
     paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 6,
@@ -913,10 +941,11 @@ const styles = StyleSheet.create({
     color: 'rgba(0,0,0,0.4)',
   },
   msgImage: {
-    width: 220,
-    height: 165,
+    width: '100%',
+    aspectRatio: 4 / 3,
     borderRadius: 12,
     marginBottom: 4,
+    minWidth: 180,
   },
 
   // ── Reply block inside bubble ─────────────────────────────

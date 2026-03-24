@@ -100,6 +100,7 @@ import { ClubsScreen } from './src/screens/ClubsScreen';
 import { ClubDetailScreen } from './src/screens/ClubDetailScreen';
 import { ClubManagementScreen } from './src/screens/ClubManagementScreen';
 import { CreateGroupScreen } from './src/screens/CreateGroupScreen';
+import { GroupSettingsScreen } from './src/screens/GroupSettingsScreen';
 import { ProgramCreateScreen } from './src/screens/ProgramCreateScreen';
 import { ProgramImportScreen } from './src/screens/ProgramImportScreen';
 import { SheetFormatInfoScreen } from './src/screens/SheetFormatInfoScreen';
@@ -115,6 +116,7 @@ import { queryClient } from './src/lib/queryClient';
 
 import theme from './src/utils/theme';
 import { OnboardingOverlay } from './src/onboarding/OnboardingOverlay';
+import { registerForPushNotifications, sendPushTokenToServer, setupNotificationListeners } from './src/lib/notifications';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -159,6 +161,7 @@ const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'ClubDetail',
   'ClubManagement',
   'CreateGroup',
+  'GroupSettings',
   'Rehab',
   'RehabHamstringProgram',
   'RehabFootProgram',
@@ -292,6 +295,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="ClubDetail" component={ClubDetailScreen} />
     <RootStack.Screen name="ClubManagement" component={ClubManagementScreen} />
     <RootStack.Screen name="CreateGroup" component={CreateGroupScreen} />
+    <RootStack.Screen name="GroupSettings" component={GroupSettingsScreen} />
     <RootStack.Screen name="Sprinthia" component={SprinthiaScreen} />
     <RootStack.Screen name="Rehab" component={RehabScreen} />
     <RootStack.Screen name="RehabHamstringProgram" component={HamstringRehabProgramScreen} />
@@ -666,6 +670,27 @@ const AppContent: React.FC = () => {
   const { isActive: onboardingActive } = useOnboarding();
   const insets = useSafeAreaInsets();
   const [showGlobalBackButton, setShowGlobalBackButton] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    let cleanup: (() => void) | undefined;
+    registerForPushNotifications().then((token) => {
+      if (token) sendPushTokenToServer(token);
+    });
+    cleanup = setupNotificationListeners(
+      () => {},
+      (response) => {
+        const data = response.notification.request.content.data as any;
+        if (data?.conversationId && navigationRef.isReady()) {
+          (navigationRef as any).navigate('ChatConversation', {
+            conversationId: data.conversationId,
+            type: data.type ?? 'direct',
+          });
+        }
+      },
+    );
+    return cleanup;
+  }, [isAuthenticated]);
 
   const syncBackState = React.useCallback(() => {
     if (!navigationRef.isReady()) {

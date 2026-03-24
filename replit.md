@@ -48,6 +48,8 @@ The Tracklit mobile app is built using React Native (Expo SDK 54) with TypeScrip
 - **AsyncStorage:** For local data persistence.
 - **xlsx:** For parsing .xlsx/.xls spreadsheet files locally on mobile.
 - **expo-document-picker:** For selecting documents (PDF, DOCX, CSV, XLSX) from the device.
+- **expo-notifications:** For push notification registration and handling. Token sent to `/api/user/push-token`.
+- **expo-device:** Used alongside expo-notifications to check if running on a real device.
 
 ## Program Import/Upload Architecture
 The app uses a unified **Import / Upload** screen (`ProgramImportScreen`) that auto-detects input type:

@@ -43,6 +43,7 @@ export type RootStackParamList = {
   CreateGroup: undefined;
   Chat: undefined;
   ChatConversation: { conversationId: number; type: 'direct' | 'group' };
+  GroupSettings: { groupId: number; groupName: string; groupImageUrl?: string; isOwner: boolean };
   Notifications: undefined;
   Connections: undefined;
   Coaches: undefined;

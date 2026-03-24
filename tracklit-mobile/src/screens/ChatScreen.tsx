@@ -52,6 +52,7 @@ interface ChatGroup {
   lastMessage?: string;
   lastMessageAt?: string;
   unreadCount?: number;
+  lastMessageSenderName?: string;
 }
 
 interface ChatGroupApi {
@@ -71,6 +72,10 @@ interface ChatGroupApi {
   last_message_at?: string | null;
   unreadCount?: number | null;
   unread_count?: number | null;
+  lastMessageSenderName?: string | null;
+  last_message_sender_name?: string | null;
+  lastMessageSenderUsername?: string | null;
+  last_message_sender_username?: string | null;
 }
 
 interface Conversation {
@@ -111,6 +116,12 @@ const normalizeChatGroup = (group: ChatGroupApi): ChatGroup => {
     lastMessage: group.lastMessage ?? group.last_message ?? undefined,
     lastMessageAt: group.lastMessageAt ?? group.last_message_at ?? undefined,
     unreadCount: group.unreadCount ?? group.unread_count ?? 0,
+    lastMessageSenderName:
+      group.lastMessageSenderName ??
+      group.last_message_sender_name ??
+      group.lastMessageSenderUsername ??
+      group.last_message_sender_username ??
+      undefined,
   };
 };
 
@@ -289,6 +300,16 @@ export const ChatScreen: React.FC = () => {
               {time}
             </Text>
           </View>
+          {isGroup && (item.data as ChatGroup).lastMessageSenderName && (
+            <Text
+              variant="caption"
+              color="muted"
+              numberOfLines={1}
+              style={styles.chatRowSender}
+            >
+              {(item.data as ChatGroup).lastMessageSenderName}
+            </Text>
+          )}
           <View style={styles.chatRowBottom}>
             <Text
               variant="caption"
@@ -587,6 +608,10 @@ const styles = StyleSheet.create({
   chatRowBottom: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  chatRowSender: {
+    marginBottom: 1,
+    opacity: 0.7,
   },
   chatRowPreview: {
     flex: 1,
