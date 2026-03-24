@@ -51,6 +51,7 @@ interface ChatGroup {
   memberCount?: number;
   lastMessage?: string;
   lastMessageAt?: string;
+  createdAt?: string;
   unreadCount?: number;
   lastMessageSenderName?: string;
 }
@@ -76,6 +77,8 @@ interface ChatGroupApi {
   last_message_sender_name?: string | null;
   lastMessageSenderUsername?: string | null;
   last_message_sender_username?: string | null;
+  createdAt?: string | null;
+  created_at?: string | null;
 }
 
 interface Conversation {
@@ -122,6 +125,7 @@ const normalizeChatGroup = (group: ChatGroupApi): ChatGroup => {
       group.lastMessageSenderUsername ??
       group.last_message_sender_username ??
       undefined,
+    createdAt: group.createdAt ?? group.created_at ?? undefined,
   };
 };
 
@@ -172,8 +176,12 @@ export const ChatScreen: React.FC = () => {
     ...groups.map((g): ListItem => ({ kind: 'group', data: g })),
     ...conversations.map((c): ListItem => ({ kind: 'dm', data: c })),
   ].sort((a, b) => {
-    const aTime = a.kind === 'group' ? a.data.lastMessageAt : a.data.lastMessageAt;
-    const bTime = b.kind === 'group' ? b.data.lastMessageAt : b.data.lastMessageAt;
+    const aMsg = a.data.lastMessageAt;
+    const bMsg = b.data.lastMessageAt;
+    const aCreated = a.kind === 'group' ? (a.data as ChatGroup).createdAt : undefined;
+    const bCreated = b.kind === 'group' ? (b.data as ChatGroup).createdAt : undefined;
+    const aTime = aMsg ?? aCreated;
+    const bTime = bMsg ?? bCreated;
     if (!aTime) return 1;
     if (!bTime) return -1;
     return new Date(bTime).getTime() - new Date(aTime).getTime();

@@ -56,8 +56,14 @@ interface GroupDetail {
   id: number;
   name: string;
   imageUrl?: string;
+  avatar_url?: string;
   memberCount?: number;
+  member_count?: number;
   members?: Member[];
+  ownerId?: number | null;
+  owner_id?: number | null;
+  createdBy?: number | null;
+  created_by?: number | null;
 }
 
 export const GroupSettingsScreen: React.FC = () => {
@@ -81,7 +87,20 @@ export const GroupSettingsScreen: React.FC = () => {
   const currentMemberIds = new Set(currentMembers.map(m => m.id));
 
   const myMember = currentMembers.find(m => Number(m.id) === Number(user?.id));
-  const isAdmin = myMember?.role === 'admin' || myMember?.role === 'owner';
+  const roleFromMember = myMember?.role;
+  const ownerIdFromServer =
+    groupData?.ownerId ?? groupData?.owner_id ??
+    groupData?.createdBy ?? groupData?.created_by;
+  const isAdminByRole = roleFromMember === 'admin' || roleFromMember === 'owner';
+  const isAdminByOwnerId = ownerIdFromServer != null && Number(ownerIdFromServer) === Number(user?.id);
+  const isAdminByParam = !groupQuery.isFetched && route.params.isOwner === true;
+  const isAdmin = isAdminByRole || isAdminByOwnerId || isAdminByParam;
+
+  console.log('[GroupSettings] admin check', {
+    userId: user?.id, ownerIdFromServer, roleFromMember,
+    isAdminByRole, isAdminByOwnerId, isAdminByParam, isAdmin,
+    members: currentMembers.map(m => ({ id: m.id, role: m.role })),
+  });
 
   const friendsQuery = useQuery({
     queryKey: ['friends'],
