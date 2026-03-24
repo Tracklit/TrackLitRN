@@ -116,29 +116,29 @@ export const GroupSettingsScreen: React.FC = () => {
       const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
       const baseUrl = `${env.API_BASE_URL}/api/chat/groups/${groupId}`;
 
-      // Strategy 1: multipart PUT (PUT often has file-upload middleware)
+      // Strategy 1: PATCH with 'image' field (server uses upload.single('image'))
       const form = new FormData();
-      form.append('avatar', { uri, name: `group.${ext}`, type: mimeType } as any);
+      form.append('image', { uri, name: `group.${ext}`, type: mimeType } as any);
 
       let response = await fetch(baseUrl, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
         body: form,
       });
       let responseText = await response.text();
-      console.log('[GroupSettings] PUT avatar status=%d body=%s', response.status, responseText.slice(0, 300));
+      console.log('[GroupSettings] PATCH image status=%d body=%s', response.status, responseText.slice(0, 300));
 
-      // Strategy 2: multipart PATCH with 'image' field name
+      // Strategy 2: PATCH with 'avatar' field as fallback
       if (!response.ok) {
         const form2 = new FormData();
-        form2.append('image', { uri, name: `group.${ext}`, type: mimeType } as any);
+        form2.append('avatar', { uri, name: `group.${ext}`, type: mimeType } as any);
         response = await fetch(baseUrl, {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${token}` },
           body: form2,
         });
         responseText = await response.text();
-        console.log('[GroupSettings] PATCH image status=%d body=%s', response.status, responseText.slice(0, 300));
+        console.log('[GroupSettings] PATCH avatar status=%d body=%s', response.status, responseText.slice(0, 300));
       }
 
       if (!response.ok) {

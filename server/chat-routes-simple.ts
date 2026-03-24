@@ -1020,8 +1020,13 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
     }
 
     const group = groupResult.rows[0];
-    const adminIds = (group as any).admin_ids ? (Array.isArray((group as any).admin_ids) ? (group as any).admin_ids : []) : [];
-    const isAdmin = group.creator_id === userId || adminIds.includes(userId);
+    const rawAdminIds = (group as any).admin_ids;
+    const adminIds: number[] = Array.isArray(rawAdminIds)
+      ? rawAdminIds.map(Number)
+      : typeof rawAdminIds === 'string'
+        ? rawAdminIds.replace(/[{}]/g, '').split(',').filter(Boolean).map(Number)
+        : [];
+    const isAdmin = Number(group.creator_id) === Number(userId) || adminIds.includes(Number(userId));
 
     if (!isAdmin) {
       return res.status(403).json({ error: "Only admins can update group details" });
