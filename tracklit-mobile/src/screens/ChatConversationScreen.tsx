@@ -26,6 +26,7 @@ import {
   WarningCircle,
   ChatTeardropDots,
   Check,
+  Heart,
 } from 'phosphor-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -177,6 +178,8 @@ export const ChatConversationScreen: React.FC = () => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showMessageOptions, setShowMessageOptions] = useState(false);
   const [showFullImage, setShowFullImage] = useState<string | null>(null);
+  const [likedMessages, setLikedMessages] = useState<Set<number>>(new Set());
+  const lastTapRef = useRef<{ [id: number]: number }>({});
 
   useEffect(() => {
     setTimeout(() => {
@@ -349,6 +352,22 @@ export const ChatConversationScreen: React.FC = () => {
     setMessageText('');
   }, []);
 
+  const handleDoubleTap = useCallback((messageId: number) => {
+    const now = Date.now();
+    const lastTap = lastTapRef.current[messageId] ?? 0;
+    if (now - lastTap < 300) {
+      setLikedMessages(prev => {
+        const next = new Set(prev);
+        if (next.has(messageId)) next.delete(messageId);
+        else next.add(messageId);
+        return next;
+      });
+      lastTapRef.current[messageId] = 0;
+    } else {
+      lastTapRef.current[messageId] = now;
+    }
+  }, []);
+
   const handleAttach = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -477,8 +496,10 @@ export const ChatConversationScreen: React.FC = () => {
                 <React.Fragment key={message.id}>
                   {showDate && renderDateSeparator(message.createdAt)}
                   <Pressable
+                    onPress={() => !isDeleted && handleDoubleTap(message.id)}
                     onLongPress={() => !isDeleted && handleMessageLongPress(message)}
                     delayLongPress={400}
+                    style={likedMessages.has(message.id) && !isDeleted ? { paddingBottom: 12 } : undefined}
                   >
                     <View style={[styles.msgRow, isOwn ? styles.msgRowRight : styles.msgRowLeft]}>
                       {/* Avatar — other users in group, only on last message of a group */}
@@ -494,63 +515,72 @@ export const ChatConversationScreen: React.FC = () => {
                         </View>
                       )}
 
-                      <View
-                        style={[
-                          styles.bubble,
-                          isOwn ? styles.bubbleOwn : styles.bubbleOther,
-                          isDeleted && styles.bubbleDeleted,
-                        ]}
-                      >
-                        {/* Sender name — others in group, first message of chain */}
-                        {!isOwn && type === 'group' && message.senderName && (
-                          <Text style={styles.senderLabel}>{message.senderName}</Text>
-                        )}
+                      <View style={{ position: 'relative' }}>
+                        <View
+                          style={[
+                            styles.bubble,
+                            isOwn ? styles.bubbleOwn : styles.bubbleOther,
+                            isDeleted && styles.bubbleDeleted,
+                          ]}
+                        >
+                          {/* Sender name — others in group, first message of chain */}
+                          {!isOwn && type === 'group' && message.senderName && (
+                            <Text style={styles.senderLabel}>{message.senderName}</Text>
+                          )}
 
-                        {/* Reply preview */}
-                        {message.replyToMessage && (
-                          <View style={[styles.replyBlock, isOwn ? styles.replyBlockOwn : styles.replyBlockOther]}>
-                            <Text style={[styles.replyAuthor, isOwn ? styles.replyAuthorOwn : styles.replyAuthorOther]}>
-                              {message.replyToMessage.senderName || 'Unknown'}
+                          {/* Reply preview */}
+                          {message.replyToMessage && (
+                            <View style={[styles.replyBlock, isOwn ? styles.replyBlockOwn : styles.replyBlockOther]}>
+                              <Text style={[styles.replyAuthor, isOwn ? styles.replyAuthorOwn : styles.replyAuthorOther]}>
+                                {message.replyToMessage.senderName || 'Unknown'}
+                              </Text>
+                              <Text
+                                style={[styles.replyText, isOwn ? styles.replyTextOwn : styles.replyTextOther]}
+                                numberOfLines={1}
+                              >
+                                {message.replyToMessage.messageType === 'image' ? '📷 Photo' : message.replyToMessage.text}
+                              </Text>
+                            </View>
+                          )}
+
+                          {/* Image */}
+                          {hasImage && (
+                            <TouchableOpacity onPress={() => setShowFullImage(message.mediaUrl || null)}>
+                              <Image source={{ uri: message.mediaUrl }} style={styles.msgImage} resizeMode="cover" />
+                            </TouchableOpacity>
+                          )}
+
+                          {/* Text */}
+                          {(message.text || isDeleted) && (
+                            <Text style={[
+                              styles.msgText,
+                              isOwn ? styles.msgTextOwn : styles.msgTextOther,
+                              isDeleted && styles.deletedText,
+                            ]}>
+                              {isDeleted ? 'This message was deleted' : message.text}
                             </Text>
-                            <Text
-                              style={[styles.replyText, isOwn ? styles.replyTextOwn : styles.replyTextOther]}
-                              numberOfLines={1}
-                            >
-                              {message.replyToMessage.messageType === 'image' ? '📷 Photo' : message.replyToMessage.text}
+                          )}
+
+                          {/* Meta row */}
+                          <View style={styles.msgMeta}>
+                            {message.editedAt && !isDeleted && (
+                              <Text style={[styles.metaLabel, isOwn ? styles.metaOwn : styles.metaOther]}>edited</Text>
+                            )}
+                            <Text style={[styles.metaTime, isOwn ? styles.metaOwn : styles.metaOther]}>
+                              {formatMsgTime(message.createdAt)}
                             </Text>
+                            {isOwn && !isDeleted && (
+                              <Check size={13} color={isOwn ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)'} weight="bold" style={{ marginLeft: 1 }} />
+                            )}
+                          </View>
+                        </View>
+
+                        {/* Like heart badge */}
+                        {likedMessages.has(message.id) && !isDeleted && (
+                          <View style={[styles.likeHeart, isOwn ? styles.likeHeartOwn : styles.likeHeartOther]}>
+                            <Heart size={11} color="#FF3B5C" weight="fill" />
                           </View>
                         )}
-
-                        {/* Image */}
-                        {hasImage && (
-                          <TouchableOpacity onPress={() => setShowFullImage(message.mediaUrl || null)}>
-                            <Image source={{ uri: message.mediaUrl }} style={styles.msgImage} resizeMode="cover" />
-                          </TouchableOpacity>
-                        )}
-
-                        {/* Text */}
-                        {(message.text || isDeleted) && (
-                          <Text style={[
-                            styles.msgText,
-                            isOwn ? styles.msgTextOwn : styles.msgTextOther,
-                            isDeleted && styles.deletedText,
-                          ]}>
-                            {isDeleted ? 'This message was deleted' : message.text}
-                          </Text>
-                        )}
-
-                        {/* Meta row */}
-                        <View style={styles.msgMeta}>
-                          {message.editedAt && !isDeleted && (
-                            <Text style={[styles.metaLabel, isOwn ? styles.metaOwn : styles.metaOther]}>edited</Text>
-                          )}
-                          <Text style={[styles.metaTime, isOwn ? styles.metaOwn : styles.metaOther]}>
-                            {formatMsgTime(message.createdAt)}
-                          </Text>
-                          {isOwn && !isDeleted && (
-                            <Check size={13} color={isOwn ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)'} weight="bold" style={{ marginLeft: 1 }} />
-                          )}
-                        </View>
                       </View>
                     </View>
                   </Pressable>
@@ -822,6 +852,25 @@ const styles = StyleSheet.create({
   },
   bubbleDeleted: {
     opacity: 0.5,
+  },
+  likeHeart: {
+    position: 'absolute',
+    bottom: -9,
+    backgroundColor: '#1C1F2B',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#0E0F14',
+    zIndex: 10,
+  },
+  likeHeartOwn: {
+    left: 8,
+  },
+  likeHeartOther: {
+    right: 8,
   },
   senderLabel: {
     color: '#FF7A00',
