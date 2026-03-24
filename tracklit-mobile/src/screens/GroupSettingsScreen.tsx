@@ -130,13 +130,15 @@ export const GroupSettingsScreen: React.FC = () => {
         body: form,
       });
 
+      const responseText = await response.text();
+      console.warn('[GroupSettings] response', response.status, responseText.slice(0, 500));
+
       if (!response.ok) {
-        const text = await response.text();
-        console.warn('[GroupSettings] PATCH failed', response.status, text.slice(0, 300));
-        throw new Error(`Server error (${response.status})`);
+        throw new Error(`${response.status}: ${responseText.slice(0, 200)}`);
       }
 
-      const updated = await response.json().catch(() => null);
+      let updated: any = null;
+      try { updated = JSON.parse(responseText); } catch {}
       console.log('[GroupSettings] saved ok', updated);
 
       queryClient.invalidateQueries({ queryKey: ['chat-groups'] });
