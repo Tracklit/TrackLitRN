@@ -115,23 +115,48 @@ const normalizeGroupInfo = (group: GroupInfoApi): GroupInfo => {
 
 // Normalise raw server message — handles both camelCase and snake_case API responses
 const normalizeMessage = (raw: any): Message => {
+  // Broad sender ID lookup — cover every naming convention the server might use
+  const rawSenderId =
+    raw.senderId ??
+    raw.sender_id ??
+    raw.userId ??
+    raw.user_id ??
+    raw.authorId ??
+    raw.author_id ??
+    raw.fromUserId ??
+    raw.from_user_id ??
+    raw.user?.id ??
+    0;
+
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.log('[MSG]', JSON.stringify({ keys: Object.keys(raw), senderId: rawSenderId, id: raw.id }));
+  }
+
   const replyRaw = raw.replyToMessage ?? raw.reply_to_message ?? null;
   return {
     id: raw.id,
     text: raw.text ?? raw.content ?? undefined,
-    senderId: Number(raw.senderId ?? raw.sender_id ?? 0),
-    senderName: raw.senderName ?? raw.sender_name ?? undefined,
-    senderProfileImage: raw.senderProfileImage ?? raw.sender_profile_image ?? raw.senderAvatar ?? raw.sender_avatar ?? undefined,
+    senderId: Number(rawSenderId),
+    senderName: raw.senderName ?? raw.sender_name ?? raw.user?.name ?? raw.user?.username ?? undefined,
+    senderProfileImage:
+      raw.senderProfileImage ??
+      raw.sender_profile_image ??
+      raw.senderAvatar ??
+      raw.sender_avatar ??
+      raw.user?.profileImageUrl ??
+      raw.user?.profile_image_url ??
+      undefined,
     createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
     messageType: raw.messageType ?? raw.message_type ?? 'text',
-    mediaUrl: raw.mediaUrl ?? raw.media_url ?? undefined,
+    mediaUrl: raw.mediaUrl ?? raw.media_url ?? raw.imageUrl ?? raw.image_url ?? undefined,
     isDeleted: raw.isDeleted ?? raw.is_deleted ?? false,
     editedAt: raw.editedAt ?? raw.edited_at ?? undefined,
     replyToId: raw.replyToId ?? raw.reply_to_id ?? undefined,
     replyToMessage: replyRaw ? {
       id: replyRaw.id,
       text: replyRaw.text ?? replyRaw.content ?? undefined,
-      senderName: replyRaw.senderName ?? replyRaw.sender_name ?? undefined,
+      senderName: replyRaw.senderName ?? replyRaw.sender_name ?? replyRaw.user?.name ?? undefined,
       messageType: replyRaw.messageType ?? replyRaw.message_type ?? 'text',
     } : undefined,
   };
@@ -437,6 +462,10 @@ export const ChatConversationScreen: React.FC = () => {
           ) : (
             messages.map((message, index) => {
               const isOwn = Number(message.senderId) === Number(user?.id);
+              if (__DEV__ && index === 0) {
+                // eslint-disable-next-line no-console
+                console.log('[isOwn debug]', { msgSenderId: message.senderId, userId: user?.id, isOwn });
+              }
               const isDeleted = message.isDeleted;
               const hasImage = message.messageType === 'image' && message.mediaUrl;
               const prevMessage = index > 0 ? messages[index - 1] : null;
