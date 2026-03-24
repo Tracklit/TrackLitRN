@@ -14,6 +14,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import {
   ArrowLeft,
   PaperPlaneRight,
@@ -30,7 +31,6 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
-import { launchImageLibrary, type Asset } from 'react-native-image-picker';
 
 import { Text } from '../components/ui/Text';
 import { Avatar } from '../components/ui/Avatar';
@@ -104,7 +104,6 @@ const normalizeGroupInfo = (group: GroupInfoApi): GroupInfo => {
   const memberIds = Array.isArray(group.member_ids) ? group.member_ids : [];
   const members = Array.isArray(group.members) ? group.members : [];
   const derivedMemberCount = memberIds.length > 0 ? memberIds.length : members.length;
-
   return {
     id: group.id,
     name: group.name,
@@ -123,7 +122,7 @@ export const ChatConversationScreen: React.FC = () => {
 
   const { conversationId, type } = route.params || { conversationId: 0, type: 'direct' as const };
   const [messageText, setMessageText] = useState('');
-  const [pendingMedia, setPendingMedia] = useState<Asset | null>(null);
+  const [pendingMedia, setPendingMedia] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -169,24 +168,25 @@ export const ChatConversationScreen: React.FC = () => {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (text: string) => {
+    mutationFn: async ({ text, replyToId }: { text: string; replyToId?: number }) => {
       const endpoint = type === 'group'
         ? `/api/chat/groups/${conversationId}/messages`
         : `/api/chat/direct/${conversationId}/messages`;
       return apiRequest(endpoint, {
         method: 'POST',
-        data: { text },
+        data: { text, ...(replyToId ? { replyToId } : {}) },
       });
     },
     onSuccess: () => {
       setMessageText('');
+      setReplyToMessage(null);
       queryClient.invalidateQueries({ queryKey: ['chat-messages', type, conversationId] });
       setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
     },
   });
 
   const sendMediaMutation = useMutation({
-    mutationFn: async (payload: { asset: Asset; text?: string }) => {
+    mutationFn: async (payload: { asset: ImagePicker.ImagePickerAsset; text?: string; replyToId?: number }) => {
       const token = await getToken();
       if (!token) throw new Error('Missing auth token');
       if (!payload.asset.uri) throw new Error('Missing media uri');
@@ -199,10 +199,13 @@ export const ChatConversationScreen: React.FC = () => {
 
       const formData = new FormData();
       if (payload.text?.trim()) formData.append('text', payload.text.trim());
+      if (payload.replyToId) formData.append('replyToId', String(payload.replyToId));
+      const filename = payload.asset.fileName || `upload_${Date.now()}.jpg`;
+      const mimeType = payload.asset.mimeType || 'image/jpeg';
       formData.append(uploadField, {
         uri: payload.asset.uri,
-        name: payload.asset.fileName || 'upload.jpg',
-        type: payload.asset.type || 'image/jpeg',
+        name: filename,
+        type: mimeType,
       } as any);
 
       const response = await fetch(`${env.API_BASE_URL}${endpoint}`, {
@@ -216,11 +219,12 @@ export const ChatConversationScreen: React.FC = () => {
     onSuccess: () => {
       setPendingMedia(null);
       setMessageText('');
+      setReplyToMessage(null);
       queryClient.invalidateQueries({ queryKey: ['chat-messages', type, conversationId] });
       setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
     },
     onError: (error: Error) => {
-      Alert.alert('Unable to send media', error.message || 'Please try again.');
+      Alert.alert('Unable to send image', error.message || 'Please try again.');
     },
   });
 
@@ -296,13 +300,18 @@ export const ChatConversationScreen: React.FC = () => {
   }, []);
 
   const handleAttach = async () => {
-    const result = await launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.8 });
-    if (result.didCancel) return;
-    if (result.errorCode) {
-      Alert.alert('Unable to pick image', result.errorMessage || 'Please try again.');
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Please allow access to your photo library.');
       return;
     }
-    const asset = result.assets?.[0] ?? null;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.8,
+    });
+    if (result.canceled) return;
+    const asset = result.assets?.[0];
     if (!asset?.uri) return;
     setPendingMedia(asset);
   };
@@ -318,28 +327,15 @@ export const ChatConversationScreen: React.FC = () => {
     }
     if (pendingMedia) {
       if (sendMediaMutation.isPending) return;
-      sendMediaMutation.mutate({ asset: pendingMedia, text: messageText });
-      return;
-    }
-    if (!messageText.trim() || sendMessageMutation.isPending) return;
-    if (replyToMessage) {
-      const endpoint = type === 'group'
-        ? `/api/chat/groups/${conversationId}/messages`
-        : `/api/chat/direct/${conversationId}/messages`;
-      apiRequest(endpoint, {
-        method: 'POST',
-        data: { text: messageText.trim(), replyToId: replyToMessage.id },
-      }).then(() => {
-        setMessageText('');
-        setReplyToMessage(null);
-        queryClient.invalidateQueries({ queryKey: ['chat-messages', type, conversationId] });
-        setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
-      }).catch((error: Error) => {
-        Alert.alert('Unable to send reply', error.message || 'Please try again.');
+      sendMediaMutation.mutate({
+        asset: pendingMedia,
+        text: messageText,
+        replyToId: replyToMessage?.id,
       });
       return;
     }
-    sendMessageMutation.mutate(messageText.trim());
+    if (!messageText.trim() || sendMessageMutation.isPending) return;
+    sendMessageMutation.mutate({ text: messageText.trim(), replyToId: replyToMessage?.id });
   };
 
   const getHeaderTitle = () => {
@@ -363,6 +359,7 @@ export const ChatConversationScreen: React.FC = () => {
 
   const isSending = sendMessageMutation.isPending || sendMediaMutation.isPending || editMessageMutation.isPending;
   const canSend = (pendingMedia || messageText.trim()) && !isSending;
+  const subtitle = getHeaderSubtitle();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -370,20 +367,25 @@ export const ChatConversationScreen: React.FC = () => {
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <ArrowLeft size={22} color="#fff" weight="bold" />
           </TouchableOpacity>
-          <View style={styles.headerInfo}>
-            <Text variant="body" weight="bold" color="foreground" numberOfLines={1}>
-              {getHeaderTitle()}
-            </Text>
-            {getHeaderSubtitle() && (
-              <Text variant="small" color="muted">{getHeaderSubtitle()}</Text>
-            )}
+
+          <View style={styles.headerCenter}>
+            <View style={styles.groupNamePill}>
+              <Text style={styles.groupNameText} numberOfLines={1}>{getHeaderTitle()}</Text>
+              {subtitle && (
+                <Text style={styles.groupSubtitleText}>{subtitle}</Text>
+              )}
+            </View>
           </View>
+
+          <View style={styles.headerRight} />
         </View>
 
+        {/* Messages */}
         <ScrollView
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
@@ -413,24 +415,31 @@ export const ChatConversationScreen: React.FC = () => {
               const isDeleted = message.isDeleted;
               const hasImage = message.messageType === 'image' && message.mediaUrl;
               const prevMessage = index > 0 ? messages[index - 1] : null;
+              const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
               const showDate = !prevMessage || !isSameDay(new Date(message.createdAt), new Date(prevMessage.createdAt));
+              const isLastInGroup = !nextMessage || nextMessage.senderId !== message.senderId;
 
               return (
                 <React.Fragment key={message.id}>
                   {showDate && renderDateSeparator(message.createdAt)}
                   <Pressable
                     onLongPress={() => !isDeleted && handleMessageLongPress(message)}
-                    delayLongPress={500}
+                    delayLongPress={400}
                   >
                     <View style={[styles.msgRow, isOwn ? styles.msgRowRight : styles.msgRowLeft]}>
+                      {/* Avatar — other users in group, only on last message of a group */}
                       {!isOwn && type === 'group' && (
-                        <Avatar
-                          size="sm"
-                          src={message.senderProfileImage}
-                          fallback={message.senderName?.[0] || '?'}
-                          style={styles.msgAvatar}
-                        />
+                        <View style={styles.avatarSlot}>
+                          {isLastInGroup && (
+                            <Avatar
+                              size="sm"
+                              src={message.senderProfileImage}
+                              fallback={message.senderName?.[0] || '?'}
+                            />
+                          )}
+                        </View>
                       )}
+
                       <View
                         style={[
                           styles.bubble,
@@ -438,10 +447,12 @@ export const ChatConversationScreen: React.FC = () => {
                           isDeleted && styles.bubbleDeleted,
                         ]}
                       >
+                        {/* Sender name — others in group, first message of chain */}
                         {!isOwn && type === 'group' && message.senderName && (
                           <Text style={styles.senderLabel}>{message.senderName}</Text>
                         )}
 
+                        {/* Reply preview */}
                         {message.replyToMessage && (
                           <View style={[styles.replyBlock, isOwn ? styles.replyBlockOwn : styles.replyBlockOther]}>
                             <Text style={[styles.replyAuthor, isOwn ? styles.replyAuthorOwn : styles.replyAuthorOther]}>
@@ -456,18 +467,25 @@ export const ChatConversationScreen: React.FC = () => {
                           </View>
                         )}
 
+                        {/* Image */}
                         {hasImage && (
                           <TouchableOpacity onPress={() => setShowFullImage(message.mediaUrl || null)}>
                             <Image source={{ uri: message.mediaUrl }} style={styles.msgImage} resizeMode="cover" />
                           </TouchableOpacity>
                         )}
 
+                        {/* Text */}
                         {(message.text || isDeleted) && (
-                          <Text style={[styles.msgText, isOwn ? styles.msgTextOwn : styles.msgTextOther, isDeleted && styles.deletedText]}>
+                          <Text style={[
+                            styles.msgText,
+                            isOwn ? styles.msgTextOwn : styles.msgTextOther,
+                            isDeleted && styles.deletedText,
+                          ]}>
                             {isDeleted ? 'This message was deleted' : message.text}
                           </Text>
                         )}
 
+                        {/* Meta row */}
                         <View style={styles.msgMeta}>
                           {message.editedAt && !isDeleted && (
                             <Text style={[styles.metaLabel, isOwn ? styles.metaOwn : styles.metaOther]}>edited</Text>
@@ -476,7 +494,7 @@ export const ChatConversationScreen: React.FC = () => {
                             {formatMsgTime(message.createdAt)}
                           </Text>
                           {isOwn && !isDeleted && (
-                            <Check size={14} color="rgba(255,255,255,0.5)" weight="bold" style={{ marginLeft: 2 }} />
+                            <Check size={13} color={isOwn ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)'} weight="bold" style={{ marginLeft: 1 }} />
                           )}
                         </View>
                       </View>
@@ -488,62 +506,70 @@ export const ChatConversationScreen: React.FC = () => {
           )}
         </ScrollView>
 
+        {/* Input bar */}
         <View style={[styles.inputBar, { paddingBottom: insets.bottom || 12 }]}>
+
+          {/* Edit / Reply banner */}
           {(editingMessage || replyToMessage) && (
             <View style={styles.editReplyBar}>
-              <View style={styles.editReplyLeft}>
-                <View style={styles.editReplyAccent} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.editReplyTitle}>
-                    {editingMessage ? 'Editing' : `Reply to ${replyToMessage?.senderName || 'message'}`}
-                  </Text>
-                  <Text style={styles.editReplyPreview} numberOfLines={1}>
-                    {editingMessage
-                      ? editingMessage.text
-                      : replyToMessage?.messageType === 'image'
-                      ? '📷 Photo'
-                      : replyToMessage?.text}
-                  </Text>
-                </View>
+              <View style={styles.editReplyAccent} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.editReplyTitle}>
+                  {editingMessage ? 'Editing message' : `Reply to ${replyToMessage?.senderName || 'message'}`}
+                </Text>
+                <Text style={styles.editReplyPreview} numberOfLines={1}>
+                  {editingMessage
+                    ? editingMessage.text
+                    : replyToMessage?.messageType === 'image'
+                    ? '📷 Photo'
+                    : replyToMessage?.text}
+                </Text>
               </View>
-              <TouchableOpacity onPress={cancelEditOrReply} style={{ padding: 4 }}>
+              <TouchableOpacity onPress={cancelEditOrReply} style={styles.editReplyClose}>
                 <XIcon size={18} color="#94a3b8" weight="bold" />
               </TouchableOpacity>
             </View>
           )}
 
+          {/* Image preview thumbnail */}
           {pendingMedia && (
             <View style={styles.attachPreview}>
-              <Text variant="small" color="muted">1 image attached</Text>
-              <TouchableOpacity onPress={() => setPendingMedia(null)}>
+              <Image source={{ uri: pendingMedia.uri }} style={styles.attachThumb} resizeMode="cover" />
+              <Text variant="small" color="muted" style={{ flex: 1, marginLeft: 10 }}>
+                Image ready to send
+              </Text>
+              <TouchableOpacity onPress={() => setPendingMedia(null)} style={{ padding: 4 }}>
                 <XIcon size={16} color="#94a3b8" weight="bold" />
               </TouchableOpacity>
             </View>
           )}
 
+          {/* Row: attach + input + send */}
           <View style={styles.inputRow}>
             <TouchableOpacity
               style={styles.attachBtn}
               onPress={handleAttach}
               disabled={isSending || !!editingMessage}
             >
-              <Paperclip size={20} color={editingMessage ? '#475569' : '#94a3b8'} weight="bold" />
+              <Paperclip size={21} color={editingMessage ? '#475569' : '#94a3b8'} weight="bold" />
             </TouchableOpacity>
 
-            <TextInput
-              style={styles.textInput}
-              value={messageText}
-              onChangeText={setMessageText}
-              placeholder={
-                editingMessage ? 'Edit your message...'
-                : replyToMessage ? `Reply to ${replyToMessage.senderName || 'message'}...`
-                : pendingMedia ? 'Add a caption...'
-                : 'Message'
-              }
-              placeholderTextColor="#64748b"
-              multiline
-              maxLength={1000}
-            />
+            <View style={styles.textInputWrap}>
+              <TextInput
+                style={styles.textInput}
+                value={messageText}
+                onChangeText={setMessageText}
+                placeholder={
+                  editingMessage ? 'Edit message…'
+                  : replyToMessage ? `Reply to ${replyToMessage.senderName || 'message'}…`
+                  : pendingMedia ? 'Add a caption…'
+                  : 'Message'
+                }
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                multiline
+                maxLength={1000}
+              />
+            </View>
 
             <TouchableOpacity
               style={[styles.sendBtn, canSend ? styles.sendBtnActive : styles.sendBtnInactive]}
@@ -551,7 +577,7 @@ export const ChatConversationScreen: React.FC = () => {
               disabled={!canSend}
             >
               {isSending ? (
-                <ActivityIndicator size="small" color="#64748b" />
+                <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <PaperPlaneRight
                   size={20}
@@ -564,6 +590,7 @@ export const ChatConversationScreen: React.FC = () => {
         </View>
       </KeyboardAvoidingView>
 
+      {/* Message options modal */}
       <Modal
         visible={showMessageOptions}
         transparent
@@ -602,6 +629,7 @@ export const ChatConversationScreen: React.FC = () => {
         </TouchableOpacity>
       </Modal>
 
+      {/* Full-screen image viewer */}
       <Modal
         visible={!!showFullImage}
         transparent
@@ -629,11 +657,13 @@ const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
   },
+
+  // ── Header ──────────────────────────────────────────────
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
@@ -643,17 +673,43 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
   },
-  headerInfo: {
+  headerCenter: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  groupNamePill: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 5,
+    maxWidth: '100%',
+  },
+  groupNameText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  groupSubtitleText: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 12,
+    marginTop: 1,
+  },
+  headerRight: {
+    width: 36,
+  },
+
+  // ── Messages ─────────────────────────────────────────────
   messagesScroll: {
     flex: 1,
   },
   messagesContent: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    gap: 2,
   },
   centerState: {
     alignItems: 'center',
@@ -662,10 +718,10 @@ const styles = StyleSheet.create({
   },
   dateSeparator: {
     alignItems: 'center',
-    marginVertical: 12,
+    marginVertical: 14,
   },
   datePill: {
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     paddingHorizontal: 14,
     paddingVertical: 5,
     borderRadius: 12,
@@ -677,7 +733,8 @@ const styles = StyleSheet.create({
   },
   msgRow: {
     flexDirection: 'row',
-    marginBottom: 3,
+    marginBottom: 2,
+    alignItems: 'flex-end',
   },
   msgRowLeft: {
     justifyContent: 'flex-start',
@@ -687,43 +744,46 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginLeft: 48,
   },
-  msgAvatar: {
+  avatarSlot: {
+    width: 32,
+    height: 32,
     marginRight: 6,
-    alignSelf: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   bubble: {
-    maxWidth: '85%',
+    maxWidth: '82%',
     paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 6,
-    borderRadius: 14,
+    borderRadius: 18,
   },
   bubbleOwn: {
-    backgroundColor: '#2b5278',
+    backgroundColor: '#FF7A00',
     borderBottomRightRadius: 4,
   },
   bubbleOther: {
-    backgroundColor: '#1e2c3a',
+    backgroundColor: '#ffffff',
     borderBottomLeftRadius: 4,
   },
   bubbleDeleted: {
-    opacity: 0.55,
+    opacity: 0.5,
   },
   senderLabel: {
-    color: '#7cacf8',
+    color: '#FF7A00',
     fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 2,
+    fontWeight: '700',
+    marginBottom: 3,
   },
   msgText: {
     fontSize: 15,
     lineHeight: 21,
   },
   msgTextOwn: {
-    color: '#e8edf2',
+    color: '#ffffff',
   },
   msgTextOther: {
-    color: '#e2e8f0',
+    color: '#1a1a2e',
   },
   deletedText: {
     fontStyle: 'italic',
@@ -733,8 +793,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginTop: 2,
-    gap: 4,
+    marginTop: 3,
+    gap: 3,
   },
   metaTime: {
     fontSize: 11,
@@ -744,106 +804,114 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   metaOwn: {
-    color: 'rgba(255,255,255,0.45)',
+    color: 'rgba(255,255,255,0.65)',
   },
   metaOther: {
-    color: 'rgba(148,163,184,0.6)',
+    color: 'rgba(0,0,0,0.4)',
   },
   msgImage: {
     width: 220,
     height: 165,
-    borderRadius: 10,
+    borderRadius: 12,
     marginBottom: 4,
   },
+
+  // ── Reply block inside bubble ─────────────────────────────
   replyBlock: {
     paddingLeft: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     marginBottom: 6,
-    borderLeftWidth: 2,
-    borderRadius: 4,
+    borderLeftWidth: 3,
+    borderRadius: 6,
   },
   replyBlockOwn: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderLeftColor: '#7cacf8',
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    borderLeftColor: 'rgba(255,255,255,0.7)',
   },
   replyBlockOther: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderLeftColor: '#7cacf8',
+    backgroundColor: 'rgba(255,122,0,0.1)',
+    borderLeftColor: '#FF7A00',
   },
   replyAuthor: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 1,
   },
   replyAuthorOwn: {
-    color: '#7cacf8',
+    color: 'rgba(255,255,255,0.85)',
   },
   replyAuthorOther: {
-    color: '#7cacf8',
+    color: '#FF7A00',
   },
   replyText: {
     fontSize: 12,
   },
   replyTextOwn: {
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.6)',
   },
   replyTextOther: {
-    color: 'rgba(148,163,184,0.7)',
+    color: 'rgba(0,0,0,0.55)',
   },
+
+  // ── Input bar ────────────────────────────────────────────
   inputBar: {
     paddingHorizontal: 8,
     paddingTop: 8,
     backgroundColor: '#0e1621',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   editReplyBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: 8,
+    marginHorizontal: 4,
     marginBottom: 8,
     paddingVertical: 8,
-    paddingRight: 8,
-  },
-  editReplyLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 0,
+    paddingLeft: 0,
+    paddingRight: 4,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 10,
+    paddingHorizontal: 10,
   },
   editReplyAccent: {
     width: 3,
-    height: '100%',
-    backgroundColor: '#7cacf8',
+    alignSelf: 'stretch',
+    backgroundColor: '#FF7A00',
     borderRadius: 2,
     marginRight: 10,
   },
   editReplyTitle: {
-    color: '#7cacf8',
+    color: '#FF7A00',
     fontSize: 13,
     fontWeight: '600',
   },
   editReplyPreview: {
-    color: '#94a3b8',
+    color: 'rgba(255,255,255,0.5)',
     fontSize: 12,
     marginTop: 1,
+  },
+  editReplyClose: {
+    padding: 4,
+    marginLeft: 8,
   },
   attachPreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: 8,
+    marginHorizontal: 4,
     marginBottom: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  attachThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 6,
+    gap: 8,
   },
   attachBtn: {
     width: 40,
@@ -852,13 +920,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  textInput: {
+  textInputWrap: {
     flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 2,
+    minHeight: 42,
+    justifyContent: 'center',
+  },
+  textInput: {
     fontSize: 16,
-    color: '#e2e8f0',
+    color: '#ffffff',
     maxHeight: 100,
-    paddingVertical: 10,
-    paddingHorizontal: 4,
+    padding: 0,
   },
   sendBtn: {
     width: 40,
@@ -868,39 +943,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendBtnActive: {
-    backgroundColor: '#FF9800',
+    backgroundColor: '#FF7A00',
   },
   sendBtnInactive: {
     backgroundColor: 'transparent',
   },
+
+  // ── Options modal ────────────────────────────────────────
   optionsOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   optionsCard: {
     backgroundColor: '#1a2332',
     borderRadius: 16,
-    padding: 8,
+    paddingVertical: 4,
     minWidth: 200,
+    overflow: 'hidden',
   },
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   optionCancel: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(255,255,255,0.08)',
-    marginTop: 4,
     justifyContent: 'center',
   },
+
+  // ── Full image viewer ─────────────────────────────────────
   fullImageWrap: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: 'rgba(0,0,0,0.95)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -909,10 +988,10 @@ const styles = StyleSheet.create({
     top: 50,
     right: 20,
     zIndex: 10,
-    padding: 12,
+    padding: 8,
   },
   fullImage: {
     width: '100%',
-    height: '100%',
+    height: '80%',
   },
 });
