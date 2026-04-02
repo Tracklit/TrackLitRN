@@ -1020,61 +1020,69 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
     }
 
     const group = groupResult.rows[0];
+
+    // Handle both column name variants (creator_id newer schema, created_by legacy)
+    const creatorId = (group as any).creator_id ?? (group as any).created_by;
     const rawAdminIds = (group as any).admin_ids;
     const adminIds: number[] = Array.isArray(rawAdminIds)
       ? rawAdminIds.map(Number)
       : typeof rawAdminIds === 'string'
         ? rawAdminIds.replace(/[{}]/g, '').split(',').filter(Boolean).map(Number)
         : [];
-    const isAdmin = Number(group.creator_id) === Number(userId) || adminIds.includes(Number(userId));
+    const isAdmin = Number(creatorId) === Number(userId) || adminIds.includes(Number(userId));
 
     if (!isAdmin) {
       return res.status(403).json({ error: "Only admins can update group details" });
     }
 
-    // Handle image upload with compression and Azure Blob Storage
-    let imageUrl = group.image;
-    console.log('File upload received:', req.file);
-    console.log('Current group image:', group.image);
-    
+    // Detect which optional columns actually exist in this DB
+    const groupColumns = await getChatGroupColumns();
+    const hasImage = groupColumns.has('image') || groupColumns.has('avatar_url');
+    const hasIsPrivate = groupColumns.has('is_private');
+    const hasDescription = groupColumns.has('description');
+    const imageColumn = groupColumns.has('image') ? 'image' : groupColumns.has('avatar_url') ? 'avatar_url' : null;
+
+    // Handle image upload
+    const existingImage = (group as any).image ?? (group as any).avatar_url ?? null;
+    let imageUrl: string | null = existingImage;
+
     if (req.file) {
       try {
-        imageUrl = await uploadChatImage(req.file.buffer, userId, 'group', 96);
-        console.log('New compressed image URL:', imageUrl);
-      } catch (error) {
-        console.error('Error uploading group image:', error);
-        // Keep existing image if upload fails
+        imageUrl = await uploadChatImage(req.file.buffer, Number(userId), 'group', 256);
+        console.log('[PATCH group] New image URL:', imageUrl);
+      } catch (err) {
+        console.error('[PATCH group] Image upload failed, keeping existing:', err);
       }
-    } else {
-      console.log('No file uploaded in request');
     }
 
-    // Update group - handle boolean conversion properly
-    const finalPrivateValue = privateValue === 'true' || privateValue === true ? true : 
-                              privateValue === 'false' || privateValue === false ? false : 
-                              (group as any).is_private;
-    
-    console.log('Final privacy value:', finalPrivateValue, 'from input:', privateValue);
-    
-    console.log('About to execute update query with:', {
-      name: name || (group as any).name,
-      description: description || (group as any).description,
-      imageUrl,
-      finalPrivateValue,
-      groupId
-    });
+    // Build SET clauses dynamically — only touch columns that exist
+    const newName = name || (group as any).name;
+    const setClauses: string[] = [`name = '${String(newName).replace(/'/g, "''")}'`];
 
-    const updateResult = await db.execute(sql`
-      UPDATE chat_groups 
-      SET name = ${name || (group as any).name}, 
-          description = ${description || (group as any).description}, 
-          image = ${imageUrl},
-          is_private = ${finalPrivateValue}
-      WHERE id = ${groupId}
-      RETURNING *
-    `);
+    if (hasDescription) {
+      const newDesc = description !== undefined ? description : ((group as any).description ?? null);
+      setClauses.push(`description = ${newDesc === null ? 'NULL' : `'${String(newDesc).replace(/'/g, "''")}'`}`);
+    }
 
-    console.log('Update result:', updateResult.rows[0]);
+    if (imageColumn && req.file && imageUrl) {
+      setClauses.push(`${imageColumn} = '${String(imageUrl).replace(/'/g, "''")}'`);
+    }
+
+    if (hasIsPrivate) {
+      const finalPrivateValue = privateValue === 'true' || privateValue === true ? true :
+                                privateValue === 'false' || privateValue === false ? false :
+                                ((group as any).is_private ?? false);
+      setClauses.push(`is_private = ${finalPrivateValue}`);
+    }
+
+    const setClause = setClauses.join(', ');
+    console.log('[PATCH group] SET clause:', setClause);
+
+    const updateResult = await db.execute(
+      sql.raw(`UPDATE chat_groups SET ${setClause} WHERE id = ${groupId} RETURNING *`)
+    );
+
+    console.log('[PATCH group] Updated row:', updateResult.rows[0]);
     res.json(updateResult.rows[0]);
   } catch (error) {
     console.error("Error updating group:", error);
