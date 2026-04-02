@@ -445,7 +445,12 @@ async function uploadChatImage(buffer: Buffer, userId: number, prefix: string, m
     }
     const filePath = path.join(uploadDir, fileName);
     fs.writeFileSync(filePath, compressedBuffer);
-    return `/uploads/${fileName}`;
+    // Return a fully-qualified URL so mobile clients can load the image
+    const domain = process.env.REPLIT_DOMAINS
+      ? process.env.REPLIT_DOMAINS.split(',')[0].trim()
+      : '';
+    const baseUrl = domain ? `https://${domain}` : '';
+    return `${baseUrl}/uploads/${fileName}`;
   }
 }
 
