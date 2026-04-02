@@ -72,7 +72,7 @@ export const MainScreenHeader: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Notifications"
             >
-              <Bell size={29} color="#94a3b8" weight="fill" />
+              <Bell size={22} color="#94a3b8" weight="fill" />
               {unreadNotifications > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -88,7 +88,7 @@ export const MainScreenHeader: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Messages"
             >
-              <PaperPlaneTilt size={25} color="#FF7A00" weight="fill" />
+              <PaperPlaneTilt size={19} color="#94a3b8" weight="fill" />
               {unreadMessages > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -108,8 +108,7 @@ export const MainScreenHeader: React.FC = () => {
 const styles = StyleSheet.create({
   wrapper: {
     zIndex: 10,
-    paddingLeft: theme.spacing.container,
-    paddingRight: theme.spacing.container + 45,
+    paddingHorizontal: theme.spacing.container,
   },
   header: {
     paddingVertical: theme.spacing.xs,
