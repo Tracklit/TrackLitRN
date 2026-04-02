@@ -88,7 +88,7 @@ export const MainScreenHeader: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Messages"
             >
-              <PaperPlaneTilt size={25} color="#94a3b8" weight="fill" />
+              <PaperPlaneTilt size={25} color="#FF7A00" weight="fill" />
               {unreadMessages > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
