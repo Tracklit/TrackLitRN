@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   wrapper: {
     zIndex: 10,
     paddingLeft: theme.spacing.container,
-    paddingRight: theme.spacing.container + 20,
+    paddingRight: theme.spacing.container + 45,
   },
   header: {
     paddingVertical: theme.spacing.xs,
