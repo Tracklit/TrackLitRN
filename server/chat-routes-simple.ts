@@ -1055,38 +1055,37 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
       }
     }
 
-    // Build SET clauses dynamically — only touch columns that exist
-    const newName = name || (group as any).name;
-    const setClauses: string[] = [`name = '${String(newName).replace(/'/g, "''")}'`];
+    // Update each column individually using parameterised queries (only columns that exist)
+    const newName = (name !== undefined && name !== null && name !== '') ? name : ((group as any).name ?? '');
+    await db.execute(sql`UPDATE chat_groups SET name = ${newName} WHERE id = ${groupId}`);
 
     if (hasDescription) {
       const newDesc = description !== undefined ? description : ((group as any).description ?? null);
-      setClauses.push(`description = ${newDesc === null ? 'NULL' : `'${String(newDesc).replace(/'/g, "''")}'`}`);
-    }
-
-    if (imageColumn && req.file && imageUrl) {
-      setClauses.push(`${imageColumn} = '${String(imageUrl).replace(/'/g, "''")}'`);
+      await db.execute(sql`UPDATE chat_groups SET description = ${newDesc} WHERE id = ${groupId}`);
     }
 
     if (hasIsPrivate) {
       const finalPrivateValue = privateValue === 'true' || privateValue === true ? true :
                                 privateValue === 'false' || privateValue === false ? false :
                                 ((group as any).is_private ?? false);
-      setClauses.push(`is_private = ${finalPrivateValue}`);
+      await db.execute(sql`UPDATE chat_groups SET is_private = ${finalPrivateValue} WHERE id = ${groupId}`);
     }
 
-    const setClause = setClauses.join(', ');
-    console.log('[PATCH group] SET clause:', setClause);
+    if (imageColumn && req.file && imageUrl) {
+      if (groupColumns.has('image')) {
+        await db.execute(sql`UPDATE chat_groups SET image = ${imageUrl} WHERE id = ${groupId}`);
+      } else if (groupColumns.has('avatar_url')) {
+        await db.execute(sql`UPDATE chat_groups SET avatar_url = ${imageUrl} WHERE id = ${groupId}`);
+      }
+      console.log('[PATCH group] Image column updated:', imageColumn, imageUrl);
+    }
 
-    const updateResult = await db.execute(
-      sql.raw(`UPDATE chat_groups SET ${setClause} WHERE id = ${groupId} RETURNING *`)
-    );
-
-    console.log('[PATCH group] Updated row:', updateResult.rows[0]);
-    res.json(updateResult.rows[0]);
-  } catch (error) {
+    const updatedResult = await db.execute(sql`SELECT * FROM chat_groups WHERE id = ${groupId}`);
+    console.log('[PATCH group] Updated row:', updatedResult.rows[0]);
+    res.json(updatedResult.rows[0]);
+  } catch (error: any) {
     console.error("Error updating group:", error);
-    res.status(500).json({ error: "Failed to update group" });
+    res.status(500).json({ error: "Failed to update group", detail: error?.message ?? String(error) });
   }
 });
 
