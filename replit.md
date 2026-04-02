@@ -1,7 +1,14 @@
 # Tracklit Mobile
 
 ## Overview
-Tracklit is a track and field athletics management platform. This workspace is dedicated to the development of the React Native mobile application. The app connects directly to a production Azure API, providing features for athlete training management, performance tracking, and analysis. Key capabilities include practice session management, program creation, an AI-powered assistant (Sprinthia) for biomechanical analysis, and various athletics tools like photo finish analysis and start gun simulation.
+Tracklit is a track and field athletics management platform. This workspace is dedicated to the development of the React Native mobile application. The app connects to a Node.js backend that shares a PostgreSQL production database. Key capabilities include practice session management, program creation, an AI-powered assistant (Sprinthia) for biomechanical analysis, and various athletics tools like photo finish analysis and start gun simulation.
+
+## Backend / Deployment Architecture
+- **Replit backend server** (`Start backend` workflow): Runs `node --import tsx server/index.ts` on port 5000. Accessible at `https://8b5183e5-6d1e-4f8f-b552-a694d2551b72-00-2lk970pew7i8o.riker.replit.dev`. The mobile app's `.env` points here during development.
+- **Production PostgreSQL**: The `DATABASE_URL` env var points to the shared production database (same DB used by Azure).
+- **Azure App Service**: `app-tracklit-prod-tnrusd.azurewebsites.net` — Docker-based deployment. May lag behind the Replit server code if not redeployed.
+- **CI/CD**: `.github/workflows/deploy.yml` builds and pushes a Docker image to GHCR then deploys to Azure on every push to `main`. Requires `AZURE_WEBAPP_PUBLISH_PROFILE` GitHub secret to be configured.
+- **Mobile API URL**: `tracklit-mobile/.env` sets `EXPO_PUBLIC_API_BASE_URL`. Currently pointing to the Replit dev domain. Falls back to Azure if env is not set.
 
 ## User Preferences
 I prefer clear and concise communication. When making changes, prioritize iterative development and explain the high-level approach before diving into code. For significant architectural decisions or major feature implementations, please ask for confirmation before proceeding.
