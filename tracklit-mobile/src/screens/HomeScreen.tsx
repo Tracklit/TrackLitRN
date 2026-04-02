@@ -932,7 +932,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
               >
-              <Bell size={29} color="#94a3b8" weight="fill" />
+              <Bell size={25} color="#94a3b8" weight="fill" />
               {unreadNotifications > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -942,12 +942,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               )}
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.headerActionButton}
+                style={[styles.headerActionButton, styles.headerActionButtonGap]}
                 onPress={() => onNavigate?.('Chat')}
                 accessibilityRole="button"
                 accessibilityLabel="Messages"
               >
-              <PaperPlaneTilt size={25} color="#94a3b8" weight="fill" />
+              <PaperPlaneTilt size={21} color="#94a3b8" weight="fill" />
               {unreadMessages > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -1792,6 +1792,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
+    marginTop: 5,
+  },
+  headerActionButtonGap: {
+    marginLeft: 10,
   },
   carouselContainer: {
     marginTop: theme.spacing.md,
