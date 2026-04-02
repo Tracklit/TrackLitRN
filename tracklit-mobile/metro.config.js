@@ -16,6 +16,15 @@ const config = {
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  watchFolders: [path.resolve(__dirname, 'src')],
+  watcher: {
+    healthCheck: {
+      enabled: true,
+    },
+    watchman: {
+      deferStates: [],
+    },
+  },
 };
 
 module.exports = mergeConfig(baseConfig, config);
