@@ -30,6 +30,7 @@ import {
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { SkeletonListRows } from '@/components/Skeleton';
+import { MiniSparkline } from '@/components/MiniSparkline';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
@@ -68,11 +69,12 @@ interface AthleteMoodStat {
   athleteUsername: string;
   avgMood: string | null;
   entryCount: number;
+  dailyTrend: { date: string; avg: number }[];
 }
 
 interface MoodStats {
   athletes: AthleteMoodStat[];
-  overall: { avgMood: string | null; entryCount: number };
+  overall: { avgMood: string | null; entryCount: number; dailyTrend: { date: string; avg: number }[] };
   timeRange: number;
 }
 
@@ -223,6 +225,7 @@ export const CoachDashboardScreen: React.FC = () => {
   const myOffering = myOfferingQuery.data ?? null;
 
   const overallAvg = moodStats?.overall?.avgMood ? parseFloat(moodStats.overall.avgMood) : null;
+  const overallTrend = (moodStats?.overall?.dailyTrend ?? []).map(d => d.avg);
   const activeSubscribers = mySubscribers.filter(s => s.status === 'active');
   const monthlyRevenue = activeSubscribers.reduce((sum, s) => {
     const amount = s.coachAmount || s.totalAmount;
@@ -238,9 +241,19 @@ export const CoachDashboardScreen: React.FC = () => {
     });
   }, [navigation]);
 
-  const handleDM = useCallback(() => {
-    navigation.navigate('Chat');
-  }, [navigation]);
+  const startDMMutation = useMutation({
+    mutationFn: (athleteId: number) =>
+      apiRequest<{ conversationId: number }>('/api/conversations', {
+        method: 'POST',
+        data: { otherUserId: athleteId },
+      }),
+    onSuccess: (data) => {
+      navigation.navigate('ChatConversation', {
+        conversationId: data.conversationId,
+        type: 'direct',
+      });
+    },
+  });
 
   const moodByAthlete = useMemo(() => {
     const map: Record<number, number | null> = {};
@@ -290,6 +303,7 @@ export const CoachDashboardScreen: React.FC = () => {
               <>
                 <MoodSummaryCard
                   overallAvg={overallAvg}
+                  overallTrend={overallTrend}
                   athleteCount={athletes.length}
                   isLoading={moodStatsQuery.isLoading}
                   onPress={() => navigation.navigate('CoachTeamMood')}
@@ -352,7 +366,7 @@ export const CoachDashboardScreen: React.FC = () => {
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                   style={styles.dmButton}
-                                  onPress={handleDM}
+                                  onPress={() => startDMMutation.mutate(athlete.id)}
                                   activeOpacity={0.7}
                                 >
                                   <PaperPlaneTilt size={14} color={C.orange} weight="fill" />
@@ -392,8 +406,7 @@ export const CoachDashboardScreen: React.FC = () => {
                           style={styles.journalCard}
                           activeOpacity={0.75}
                           onPress={() =>
-                            navigation.navigate('CoachJournalEntry', {
-                              entryId: entry.id,
+                            navigation.navigate('CoachAthleteDetail', {
                               athleteId: entry.athleteId,
                               athleteName: entry.athleteName,
                               athleteUsername: entry.athleteUsername,
@@ -598,10 +611,11 @@ export const CoachDashboardScreen: React.FC = () => {
 
 const MoodSummaryCard: React.FC<{
   overallAvg: number | null;
+  overallTrend: number[];
   athleteCount: number;
   isLoading: boolean;
   onPress: () => void;
-}> = ({ overallAvg, athleteCount, isLoading, onPress }) => {
+}> = ({ overallAvg, overallTrend, athleteCount, isLoading, onPress }) => {
   const color = getMoodColor(overallAvg);
   const label = getMoodLabel(overallAvg);
   const avgDisplay = overallAvg !== null ? overallAvg.toFixed(1) : '—';
@@ -617,6 +631,9 @@ const MoodSummaryCard: React.FC<{
           <Text style={styles.moodSub}>
             {athleteCount} athlete{athleteCount !== 1 ? 's' : ''} · 7-day avg
           </Text>
+          {overallTrend.length >= 2 && (
+            <MiniSparkline data={overallTrend} width={90} height={22} strokeWidth={2} showDots />
+          )}
         </View>
       </View>
       <View style={styles.moodRight}>

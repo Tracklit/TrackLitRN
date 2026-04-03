@@ -91,9 +91,54 @@ export async function getAthleteMoodStats(req: Request, res: Response) {
         )
       );
 
+    // Per-athlete per-day averages for trend lines
+    const dailyData = await db
+      .select({
+        athleteId: moodEntries.userId,
+        date: moodEntries.date,
+        avgMood: avg(moodEntries.moodRating),
+      })
+      .from(coachAthletes)
+      .innerJoin(moodEntries, and(
+        eq(moodEntries.userId, coachAthletes.athleteId),
+        gte(moodEntries.date, cutoffDateStr)
+      ))
+      .where(and(
+        eq(coachAthletes.coachId, req.user.id),
+        eq(coachAthletes.status, 'accepted')
+      ))
+      .groupBy(moodEntries.userId, moodEntries.date)
+      .orderBy(moodEntries.date);
+
+    const dailyByAthlete: Record<number, { date: string; avg: number }[]> = {};
+    dailyData.forEach(d => {
+      if (!dailyByAthlete[d.athleteId]) dailyByAthlete[d.athleteId] = [];
+      dailyByAthlete[d.athleteId].push({
+        date: d.date,
+        avg: parseFloat(d.avgMood as string || '0'),
+      });
+    });
+
+    const overallDailyMap: Record<string, { sum: number; count: number }> = {};
+    dailyData.forEach(d => {
+      const v = parseFloat(d.avgMood as string || '0');
+      if (!overallDailyMap[d.date]) overallDailyMap[d.date] = { sum: 0, count: 0 };
+      overallDailyMap[d.date].sum += v;
+      overallDailyMap[d.date].count += 1;
+    });
+    const overallDailyTrend = Object.entries(overallDailyMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, { sum, count }]) => ({ date, avg: sum / count }));
+
     return res.json({
-      athletes: athleteMoods,
-      overall: overallAvg[0] || { avgMood: null, entryCount: 0 },
+      athletes: athleteMoods.map(a => ({
+        ...a,
+        dailyTrend: dailyByAthlete[a.athleteId] || [],
+      })),
+      overall: {
+        ...(overallAvg[0] || { avgMood: null, entryCount: 0 }),
+        dailyTrend: overallDailyTrend,
+      },
       timeRange: days,
     });
   } catch (error) {

@@ -18,6 +18,7 @@ import {
 
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
+import { MiniSparkline } from '@/components/MiniSparkline';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import type { RootStackParamList } from '@/navigation/types';
@@ -44,6 +45,7 @@ interface AthleteMoodStat {
   athleteUsername: string;
   avgMood: string | null;
   entryCount: number;
+  dailyTrend: { date: string; avg: number }[];
 }
 
 interface MoodStats {
@@ -201,7 +203,17 @@ export const CoachTeamMoodScreen: React.FC = () => {
                         {getMoodLabel(avg)}
                       </Text>
                     </View>
-                    <MoodBar avg={avg} />
+                    {stat.dailyTrend?.length >= 2 ? (
+                      <MiniSparkline
+                        data={stat.dailyTrend.map(d => d.avg)}
+                        width={80}
+                        height={20}
+                        strokeWidth={2}
+                        showDots
+                      />
+                    ) : (
+                      <MoodBar avg={avg} />
+                    )}
                     <Text style={styles.entryCount}>{stat.entryCount} entries</Text>
                   </View>
 
