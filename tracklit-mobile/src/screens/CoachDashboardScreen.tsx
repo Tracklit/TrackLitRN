@@ -292,6 +292,7 @@ export const CoachDashboardScreen: React.FC = () => {
                   overallAvg={overallAvg}
                   athleteCount={athletes.length}
                   isLoading={moodStatsQuery.isLoading}
+                  onPress={() => navigation.navigate('CoachTeamMood')}
                 />
 
                 <View style={styles.section}>
@@ -386,7 +387,19 @@ export const CoachDashboardScreen: React.FC = () => {
                   ) : (
                     <View style={styles.journalList}>
                       {journalEntries.map((entry) => (
-                        <View key={entry.id} style={styles.journalCard}>
+                        <TouchableOpacity
+                          key={entry.id}
+                          style={styles.journalCard}
+                          activeOpacity={0.75}
+                          onPress={() =>
+                            navigation.navigate('CoachJournalEntry', {
+                              entryId: entry.id,
+                              athleteId: entry.athleteId,
+                              athleteName: entry.athleteName,
+                              athleteUsername: entry.athleteUsername,
+                            })
+                          }
+                        >
                           <View style={styles.journalCardHeader}>
                             <View style={styles.journalAthlete}>
                               <Avatar
@@ -398,9 +411,12 @@ export const CoachDashboardScreen: React.FC = () => {
                                 {entry.athleteName || `@${entry.athleteUsername}`}
                               </Text>
                             </View>
-                            <Text style={styles.journalTime}>
-                              {formatRelativeTime(entry.createdAt)}
-                            </Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Text style={styles.journalTime}>
+                                {formatRelativeTime(entry.createdAt)}
+                              </Text>
+                              <CaretRight size={12} color={C.textMuted} weight="bold" />
+                            </View>
                           </View>
                           {entry.title ? (
                             <Text style={styles.journalTitle} numberOfLines={1}>
@@ -410,7 +426,7 @@ export const CoachDashboardScreen: React.FC = () => {
                           <Text style={styles.journalBody} numberOfLines={2}>
                             {entry.notes || entry.content || 'No content'}
                           </Text>
-                        </View>
+                        </TouchableOpacity>
                       ))}
                     </View>
                   )}
@@ -584,13 +600,14 @@ const MoodSummaryCard: React.FC<{
   overallAvg: number | null;
   athleteCount: number;
   isLoading: boolean;
-}> = ({ overallAvg, athleteCount, isLoading }) => {
+  onPress: () => void;
+}> = ({ overallAvg, athleteCount, isLoading, onPress }) => {
   const color = getMoodColor(overallAvg);
   const label = getMoodLabel(overallAvg);
   const avgDisplay = overallAvg !== null ? overallAvg.toFixed(1) : '—';
 
   return (
-    <View style={styles.moodCard}>
+    <TouchableOpacity style={styles.moodCard} activeOpacity={0.75} onPress={onPress}>
       <View style={styles.moodCardLeft}>
         <View style={[styles.moodIcon, { backgroundColor: `${color}20` }]}>
           <Smiley size={22} color={color} weight="fill" />
@@ -611,8 +628,9 @@ const MoodSummaryCard: React.FC<{
             <Text style={[styles.moodStatus, { color }]}>{label}</Text>
           </>
         )}
+        <CaretRight size={14} color={C.textMuted} weight="bold" style={{ marginLeft: 4 }} />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

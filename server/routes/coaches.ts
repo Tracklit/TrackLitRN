@@ -296,6 +296,82 @@ export async function addJournalComment(req: Request, res: Response) {
   }
 }
 
+// Get individual mood entries for a specific athlete (coach access)
+export async function getAthleteIndividualMoodEntries(req: Request, res: Response) {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const athleteId = parseInt(req.params.athleteId);
+    if (isNaN(athleteId)) {
+      return res.status(400).json({ message: "Invalid athlete ID" });
+    }
+
+    const relationship = await db.query.coachAthletes.findFirst({
+      where: and(
+        eq(coachAthletes.coachId, req.user.id),
+        eq(coachAthletes.athleteId, athleteId),
+        eq(coachAthletes.status, 'accepted')
+      ),
+    });
+
+    if (!relationship) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const entries = await db
+      .select()
+      .from(moodEntries)
+      .where(eq(moodEntries.userId, athleteId))
+      .orderBy(desc(moodEntries.date))
+      .limit(60);
+
+    return res.json(entries);
+  } catch (error) {
+    console.error("Error fetching athlete mood entries:", error);
+    return res.status(500).json({ message: "Failed to fetch mood entries" });
+  }
+}
+
+// Get journal entries for a specific athlete (coach access)
+export async function getAthleteSpecificJournalEntries(req: Request, res: Response) {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "You must be logged in" });
+    }
+
+    const athleteId = parseInt(req.params.athleteId);
+    if (isNaN(athleteId)) {
+      return res.status(400).json({ message: "Invalid athlete ID" });
+    }
+
+    const relationship = await db.query.coachAthletes.findFirst({
+      where: and(
+        eq(coachAthletes.coachId, req.user.id),
+        eq(coachAthletes.athleteId, athleteId),
+        eq(coachAthletes.status, 'accepted')
+      ),
+    });
+
+    if (!relationship) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const entries = await db
+      .select()
+      .from(journalEntries)
+      .where(eq(journalEntries.userId, athleteId))
+      .orderBy(desc(journalEntries.createdAt))
+      .limit(60);
+
+    return res.json(entries);
+  } catch (error) {
+    console.error("Error fetching athlete journal entries:", error);
+    return res.status(500).json({ message: "Failed to fetch journal entries" });
+  }
+}
+
 // Record mood entry for an athlete (can be created by coach or athlete)
 export async function recordMoodEntry(req: Request, res: Response) {
   try {

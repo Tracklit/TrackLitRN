@@ -64,6 +64,9 @@ export type RootStackParamList = {
   Spikes: undefined;
   SpikesInfo: undefined;
   SpikesProgress: undefined;
+  CoachTeamMood: undefined;
+  CoachAthleteDetail: { athleteId: number; athleteName: string | null; athleteUsername: string; athleteProfileImageUrl?: string | null };
+  CoachJournalEntry: { entryId: number; athleteId: number; athleteName: string | null; athleteUsername: string };
   Subscriptions: undefined;
   AppTier: undefined;
   PhotoFinishAnalysis: { uri?: string; fileName?: string };

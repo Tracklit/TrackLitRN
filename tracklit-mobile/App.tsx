@@ -88,6 +88,9 @@ import { CoachesScreen } from './src/screens/CoachesScreen';
 import { AthletesScreen } from './src/screens/AthletesScreen';
 import { MyAthletesScreen } from './src/screens/MyAthletesScreen';
 import { CoachDashboardScreen } from './src/screens/CoachDashboardScreen';
+import { CoachTeamMoodScreen } from './src/screens/CoachTeamMoodScreen';
+import { CoachAthleteDetailScreen } from './src/screens/CoachAthleteDetailScreen';
+import { CoachJournalEntryScreen } from './src/screens/CoachJournalEntryScreen';
 import { RehabScreen } from './src/screens/RehabScreen';
 import { HamstringRehabProgramScreen } from './src/screens/rehab/HamstringRehabProgramScreen';
 import { FootRehabProgramScreen } from './src/screens/rehab/FootRehabProgramScreen';
@@ -173,6 +176,9 @@ const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'Spikes',
   'SpikesInfo',
   'SpikesProgress',
+  'CoachTeamMood',
+  'CoachAthleteDetail',
+  'CoachJournalEntry',
   'Subscriptions',
   'AppTier',
   'AdminPanelWebView',
@@ -310,6 +316,9 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="Spikes" component={SpikesScreen} />
     <RootStack.Screen name="SpikesInfo" component={SpikesInfoScreen} />
     <RootStack.Screen name="SpikesProgress" component={SpikesProgressScreen} />
+    <RootStack.Screen name="CoachTeamMood" component={CoachTeamMoodScreen} />
+    <RootStack.Screen name="CoachAthleteDetail" component={CoachAthleteDetailScreen} />
+    <RootStack.Screen name="CoachJournalEntry" component={CoachJournalEntryScreen} />
     <RootStack.Screen name="Subscriptions" component={SubscriptionsScreen} />
     <RootStack.Screen name="AppTier" component={AppTierScreen} />
     <RootStack.Screen name="AdminPanelWebView" component={AdminPanelWebViewScreen} />
