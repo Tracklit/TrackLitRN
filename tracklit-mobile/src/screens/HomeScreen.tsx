@@ -887,7 +887,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       route: 'Tools',
     },
     {
-      title: 'Sprinthia',
+      title: 'Aria',
       description: 'Your AI Track Companion',
       iconName: 'comments',
       route: 'Sprinthia',
@@ -1150,10 +1150,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 <View style={styles.categoryInner}>
                   <View style={styles.categoryText}>
                     <Text variant="body" weight="bold" color={disabled ? 'muted' : 'foreground'}>
-                      {card.title}{' '}
-                      {card.showStar ? (
-                        <Star size={12} color="#facc15" weight="fill" />
-                      ) : null}
+                      {card.title}
                     </Text>
                     <View style={styles.categorySubRow}>
                       <View style={styles.categoryDot} />
@@ -1434,7 +1431,6 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
               <RNText style={tsStyles.statLabel}>Sessions</RNText>
             </View>
           </View>
-          <View style={tsStyles.vDivider} />
           <View style={tsStyles.statCell}>
             <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
               <PencilLine size={14} color="#fff" weight="fill" />
@@ -1445,7 +1441,6 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
             </View>
           </View>
         </View>
-        <View style={tsStyles.hDivider} />
         <View style={tsStyles.row}>
           {item.quickAction ? (
             <TouchableOpacity
@@ -1469,7 +1464,6 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
               </View>
             </View>
           )}
-          <View style={tsStyles.vDivider} />
           <View style={tsStyles.statCell}>
             <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
               <PushPin size={14} color="#facc15" weight="fill" />
@@ -1969,6 +1963,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(109,40,217,0.3)',
     padding: theme.spacing.xl,
     overflow: 'hidden',
+    minHeight: 190,
   },
   practiceCardHeader: {
     flexDirection: 'row',

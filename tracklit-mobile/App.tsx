@@ -429,7 +429,7 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             navigateIntoAppStack({ screen: 'Rehab' }),
         },
         {
-          label: 'Sprinthia',
+          label: 'Aria',
           IconComponent: ChatCircleDots,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Sprinthia' }),
