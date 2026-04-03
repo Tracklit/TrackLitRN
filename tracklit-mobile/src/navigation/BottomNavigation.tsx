@@ -41,7 +41,7 @@ const BASE_NAV_ITEMS: NavItem[] = [
 ];
 
 const COACH_NAV_ITEM: NavItem = {
-  title: "Coach's",
+  title: "Coach's Dashboard",
   routeName: 'CoachDashboard',
   key: 'coach-dashboard',
   IconComponent: Target,
@@ -76,7 +76,11 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
         <IconComp size={23} color={contentColor} weight="fill" />
         {showBadge && <View style={styles.badge} />}
       </View>
-      <Text style={[styles.navLabel, { color: contentColor }]}>
+      <Text
+        style={[styles.navLabel, { color: contentColor }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
         {item.title}
       </Text>
     </TouchableOpacity>

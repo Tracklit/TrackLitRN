@@ -340,13 +340,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
     marginBottom: 20,
-    backgroundColor: COLORS.glass,
-    borderWidth: 0.5,
-    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
   },

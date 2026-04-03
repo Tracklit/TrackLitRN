@@ -100,6 +100,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'welcome',
     mode: 'intro',
     title: 'Welcome to TrackLit',
+    icon: <Image source={require('../../assets/tracklit-logo.png')} style={styles.logo} />,
     body: (
       <View style={{ gap: 14 }}>
         <Text style={styles.bodyText}>
@@ -165,7 +166,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
           <View style={{ gap: 6 }}>
             <BulletRow>Pro and Elite tier features</BulletRow>
             <BulletRow>Advanced performance analytics</BulletRow>
-            <BulletRow>AI-generated training programs</BulletRow>
+            <BulletRow>Aria-generated training programs</BulletRow>
             <BulletRow>Exclusive tools and content</BulletRow>
           </View>
         </View>

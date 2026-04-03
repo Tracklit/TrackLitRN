@@ -944,21 +944,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             <>
               <TouchableOpacity
                 style={styles.headerActionButton}
-                onPress={() => onNavigate?.('Chat')}
-                accessibilityRole="button"
-                accessibilityLabel="Messages"
-              >
-              <PaperPlaneTilt size={21} color="#94a3b8" weight="fill" />
-              {unreadMessages > 0 && (
-                <View style={styles.badge}>
-                  <Text variant="caption" weight="bold" color="foreground">
-                    {unreadMessages > 99 ? '99+' : unreadMessages}
-                  </Text>
-                </View>
-              )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.headerActionButton, styles.headerActionButtonGap]}
                 onPress={() => onNavigate?.('Notifications')}
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
@@ -968,6 +953,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
                     {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </Text>
+                </View>
+              )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.headerActionButton, styles.headerActionButtonGap]}
+                onPress={() => onNavigate?.('Chat')}
+                accessibilityRole="button"
+                accessibilityLabel="Messages"
+              >
+              <PaperPlaneTilt size={21} color="#94a3b8" weight="fill" />
+              {unreadMessages > 0 && (
+                <View style={styles.badge}>
+                  <Text variant="caption" weight="bold" color="foreground">
+                    {unreadMessages > 99 ? '99+' : unreadMessages}
                   </Text>
                 </View>
               )}
@@ -1122,20 +1122,33 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               coachJournalEntries.length > 0 ? (
                 <View style={{ gap: 6 }}>
                   {(coachJournalEntries as any[]).slice(0, 2).map((entry: any) => (
-                    <View key={entry.id} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-                      <Text style={{ fontSize: 11, color: '#FF7A00', fontWeight: '700', minWidth: 80 }} numberOfLines={1}>
+                    <TouchableOpacity
+                      key={entry.id}
+                      activeOpacity={0.75}
+                      onPress={() => navigation.navigate('CoachAthleteDetail', {
+                        athleteId: entry.athleteId,
+                        athleteName: entry.athleteName,
+                        athleteUsername: entry.athleteUsername,
+                        athleteProfileImageUrl: entry.athleteProfileImageUrl ?? null,
+                      })}
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        borderRadius: 8,
+                        padding: 8,
+                        flexDirection: 'row',
+                        gap: 8,
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 11, color: '#FF7A00', fontWeight: '700', maxWidth: 90 }} numberOfLines={1}>
                         {entry.athleteName || `@${entry.athleteUsername}`}
                       </Text>
                       <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', flex: 1 }} numberOfLines={1}>
                         {entry.title || entry.notes || entry.content || 'Journal entry'}
                       </Text>
-                    </View>
+                      <CaretRight size={10} color="rgba(255,255,255,0.2)" weight="bold" />
+                    </TouchableOpacity>
                   ))}
-                  {(coachJournalEntries as any[]).length > 2 && (
-                    <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>
-                      +{(coachJournalEntries as any[]).length - 2} more — tap to view all
-                    </Text>
-                  )}
                 </View>
               ) : (
                 <Text style={styles.practiceNoSession}>

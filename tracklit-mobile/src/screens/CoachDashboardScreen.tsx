@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Animated,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
@@ -62,6 +63,7 @@ interface CoachAthlete {
   username: string;
   name?: string | null;
   profileImageUrl?: string | null;
+  relationshipId?: number;
 }
 
 interface AthleteMoodStat {
@@ -256,6 +258,35 @@ export const CoachDashboardScreen: React.FC = () => {
     },
   });
 
+  const removeAthleteMutation = useMutation({
+    mutationFn: (relationshipId: number) =>
+      apiRequest(`/api/coaches/${relationshipId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coach-athletes'] });
+      queryClient.invalidateQueries({ queryKey: ['coach-mood-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['coach-journal-entries'] });
+    },
+  });
+
+  const handleLongPressAthlete = useCallback((athlete: CoachAthlete) => {
+    Alert.alert(
+      'Remove Athlete',
+      `Remove ${athlete.name || '@' + athlete.username} from your athlete roster?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            if (athlete.relationshipId) {
+              removeAthleteMutation.mutate(athlete.relationshipId);
+            }
+          },
+        },
+      ]
+    );
+  }, [removeAthleteMutation]);
+
   const moodByAthlete = useMemo(() => {
     const map: Record<number, number | null> = {};
     moodStats?.athletes.forEach(a => {
@@ -430,6 +461,8 @@ export const CoachDashboardScreen: React.FC = () => {
                                     athleteProfileImageUrl: athlete.profileImageUrl ?? null,
                                   })
                                 }
+                                onLongPress={() => handleLongPressAthlete(athlete)}
+                                delayLongPress={500}
                                 activeOpacity={0.7}
                               >
                                 <Avatar

@@ -511,13 +511,6 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             navigateIntoAppStack({ screen: 'Chat' }),
         },
         {
-          label: "Coach's Dashboard",
-          IconComponent: Target,
-          requiresCoach: true,
-          onPress: () =>
-            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'CoachDashboard' } }),
-        },
-        {
           label: 'Roster Stats',
           IconComponent: ChartLineUp,
           requiresCoach: true,

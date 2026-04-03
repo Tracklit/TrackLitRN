@@ -227,7 +227,11 @@ export const CoachAthleteDetailScreen: React.FC = () => {
                             <View style={styles.itemHeaderRow}>
                               <Text style={styles.itemKind}>Mood Check-In</Text>
                               <View style={styles.itemHeaderRight}>
-                                {liked && <ThumbsUp size={13} color={C.orange} weight="fill" />}
+                                <ThumbsUp
+                                  size={13}
+                                  color={liked ? C.orange : C.textMuted}
+                                  weight={liked ? 'fill' : 'regular'}
+                                />
                                 <Text style={styles.itemDate}>{formatDate(m.date || m.createdAt)}</Text>
                               </View>
                             </View>
@@ -271,7 +275,11 @@ export const CoachAthleteDetailScreen: React.FC = () => {
                           <View style={styles.itemHeaderRow}>
                             <Text style={styles.itemKind}>Journal Entry</Text>
                             <View style={styles.itemHeaderRight}>
-                              {liked && <ThumbsUp size={13} color={C.orange} weight="fill" />}
+                              <ThumbsUp
+                                size={13}
+                                color={liked ? C.orange : C.textMuted}
+                                weight={liked ? 'fill' : 'regular'}
+                              />
                               <Text style={styles.itemDate}>{formatDate(j.createdAt)}</Text>
                             </View>
                           </View>

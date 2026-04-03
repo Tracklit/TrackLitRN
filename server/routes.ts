@@ -1907,6 +1907,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify athlete exists
       const athlete = await dbStorage.getUser(coachData.athleteId);
       if (!athlete) return res.status(404).send("Athlete not found");
+
+      // Require that the users are already connected (friends/followers) before
+      // a coach-athlete relationship can be established
+      const connection = await db.query.friendships.findFirst({
+        where: or(
+          and(
+            eq(friendships.requesterId, req.user!.id),
+            eq(friendships.addresseeId, coachData.athleteId)
+          ),
+          and(
+            eq(friendships.requesterId, coachData.athleteId),
+            eq(friendships.addresseeId, req.user!.id)
+          )
+        ),
+      });
+      if (!connection) {
+        return res.status(403).json({
+          message: "You must be connected with this user before creating a coach-athlete relationship.",
+        });
+      }
       
       // Create the coach relationship (pending by default)
       const coach = await dbStorage.createCoach(coachData);
