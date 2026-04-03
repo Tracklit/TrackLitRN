@@ -505,7 +505,7 @@ export const SprinthiaScreen: React.FC = () => {
       await apiRequest('/api/programs', {
         method: 'POST',
         data: {
-          title: 'Training Plan from Sprinthia',
+          title: 'Training Plan from Aria',
           description: content.substring(0, 500) + (content.length > 500 ? '...' : ''),
           category: 'training',
           level: 'intermediate',

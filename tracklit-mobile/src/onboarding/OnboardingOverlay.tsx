@@ -224,7 +224,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
   const renderPage = ({ item }: { item: OnboardingStep; index: number }) => (
     <View style={[styles.pageContainer, { width: SCREEN_WIDTH }]}>
       <View style={styles.pageContent}>
-        <View style={styles.iconWrap}>{item.icon}</View>
+        {item.icon ? <View style={styles.iconWrap}>{item.icon}</View> : null}
         <Text style={styles.stepTitle}>{item.title}</Text>
         <View style={styles.bodyWrap}>{item.body}</View>
         {renderClaimBlock(item)}

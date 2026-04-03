@@ -50,3 +50,7 @@ publicDir = "dist/public"
 [userenv]
 
 [userenv.development]
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 60000
