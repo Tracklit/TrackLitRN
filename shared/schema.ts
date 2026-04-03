@@ -1570,6 +1570,8 @@ export const coachAthletes = pgTable("coach_athletes", {
   id: serial("id").primaryKey(),
   coachId: integer("coach_id").notNull().references(() => users.id),
   athleteId: integer("athlete_id").notNull().references(() => users.id),
+  status: text("status").default('pending'),
+  acceptedAt: timestamp("accepted_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

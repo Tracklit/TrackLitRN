@@ -731,7 +731,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     AsyncStorage.getItem('last_used_tool').then((val) => {
-      setLastUsedTool(val || 'PhotoFinish');
+      setLastUsedTool(val);
     });
   }, []);
 
@@ -937,21 +937,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             <>
               <TouchableOpacity
                 style={styles.headerActionButton}
-                onPress={() => onNavigate?.('Chat')}
-                accessibilityRole="button"
-                accessibilityLabel="Messages"
-              >
-              <PaperPlaneTilt size={21} color="#94a3b8" weight="fill" />
-              {unreadMessages > 0 && (
-                <View style={styles.badge}>
-                  <Text variant="caption" weight="bold" color="foreground">
-                    {unreadMessages > 99 ? '99+' : unreadMessages}
-                  </Text>
-                </View>
-              )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.headerActionButton, styles.headerActionButtonGap]}
                 onPress={() => onNavigate?.('Notifications')}
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
@@ -961,6 +946,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
                     {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </Text>
+                </View>
+              )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.headerActionButton, styles.headerActionButtonGap]}
+                onPress={() => onNavigate?.('Chat')}
+                accessibilityRole="button"
+                accessibilityLabel="Messages"
+              >
+              <PaperPlaneTilt size={21} color="#94a3b8" weight="fill" />
+              {unreadMessages > 0 && (
+                <View style={styles.badge}>
+                  <Text variant="caption" weight="bold" color="foreground">
+                    {unreadMessages > 99 ? '99+' : unreadMessages}
                   </Text>
                 </View>
               )}
