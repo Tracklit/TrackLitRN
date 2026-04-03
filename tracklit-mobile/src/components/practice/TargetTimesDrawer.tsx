@@ -187,7 +187,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
       return getDistance(a) - getDistance(b);
     });
 
-    const percentages = [60, 65, 70, 75, 80, 85, 90, 95, 100];
+    const percentages = [60, 65, 70, 75, 80, 85, 90, 92, 95, 98, 100];
 
     return {
       distances,
@@ -261,7 +261,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                     {([
                       { key: 'trackType', label: 'Track', icon: <MapPin size={11} color={optionsSubPage === 'trackType' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
                       { key: 'timingMethod', label: 'Timing', icon: <Gauge size={11} color={optionsSubPage === 'timingMethod' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
-                      { key: 'goalTimes', label: 'Goals', icon: <Target size={11} color={optionsSubPage === 'goalTimes' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
+                      { key: 'goalTimes', label: 'Race Goals', icon: <Target size={11} color={optionsSubPage === 'goalTimes' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
                     ] as { key: OptionsSubPage; label: string; icon: React.ReactNode }[]).map((tab) => (
                       <TouchableOpacity
                         key={tab.key}
@@ -373,7 +373,10 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
             <View style={styles.section}>
               <View style={styles.sectionHeaderStatic}>
                 <Timer size={13} color={COLORS.accent} weight="fill" />
-                <Text style={styles.sectionTitle}>Calculated Targets</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.sectionTitle, { flex: 0 }]}>Calculated Targets</Text>
+                  <Text style={styles.sectionSubtitle}>Change under Options · Race Goals</Text>
+                </View>
               </View>
               <View style={styles.tableContainer}>
                 {calculateTargetTimes.distances.length === 0 ? (
@@ -524,6 +527,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     flex: 1,
+  },
+  sectionSubtitle: {
+    color: COLORS.textMuted,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
   },
   sectionCaret: {
     width: 16,
