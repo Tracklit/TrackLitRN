@@ -873,13 +873,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     }
   };
 
+  const isCoach = (user as any)?.isCoach === true;
+
   const categoryCards: CategoryCard[] = [
-    {
-      title: 'Programs',
-      description: 'Training plans and schedules',
-      iconName: 'book',
-      route: 'Programs',
-    },
+    isCoach
+      ? {
+          title: "Coach's Dashboard",
+          description: 'Manage athletes & subscriptions',
+          iconName: 'users',
+          route: 'CoachDashboard',
+        }
+      : {
+          title: 'Programs',
+          description: 'Training plans and schedules',
+          iconName: 'book',
+          route: 'Programs',
+        },
     {
       title: 'Tools',
       description: 'Training and performance tools',

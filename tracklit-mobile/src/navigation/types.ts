@@ -3,6 +3,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 export type TabParamList = {
   Home: undefined;
   Training: { tab?: 'practice' | 'programs' } | undefined;
+  CoachDashboard: undefined;
   Feed: undefined;
   Tools: undefined;
   Profile: { focusCoachToggle?: boolean } | undefined;

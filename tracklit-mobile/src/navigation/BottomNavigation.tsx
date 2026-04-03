@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -14,14 +14,16 @@ import {
   ChatCircleDots,
   Newspaper,
   Timer,
+  Target,
   type Icon,
 } from 'phosphor-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 import { apiRequest } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import theme from '@/utils/theme';
 
-type TabRoute = 'Home' | 'Training' | 'Feed' | 'Tools' | 'Sprinthia';
+type TabRoute = 'Home' | 'Training' | 'CoachDashboard' | 'Feed' | 'Tools' | 'Sprinthia';
 
 interface NavItem {
   title: string;
@@ -30,13 +32,20 @@ interface NavItem {
   routeName: TabRoute;
 }
 
-const navItems: NavItem[] = [
+const BASE_NAV_ITEMS: NavItem[] = [
   { title: 'Home',      routeName: 'Home',      key: 'dashboard', IconComponent: House },
   { title: 'Training',  routeName: 'Training',  key: 'training',  IconComponent: Barbell },
-  { title: 'Feed',      routeName: 'Feed',       key: 'feed',      IconComponent: Newspaper },
-  { title: 'Tools',     routeName: 'Tools',      key: 'tools',     IconComponent: Timer },
-  { title: 'Aria',      routeName: 'Sprinthia',  key: 'sprinthia', IconComponent: ChatCircleDots },
+  { title: 'Feed',      routeName: 'Feed',      key: 'feed',      IconComponent: Newspaper },
+  { title: 'Tools',     routeName: 'Tools',     key: 'tools',     IconComponent: Timer },
+  { title: 'Aria',      routeName: 'Sprinthia', key: 'sprinthia', IconComponent: ChatCircleDots },
 ];
+
+const COACH_NAV_ITEM: NavItem = {
+  title: "Coach's",
+  routeName: 'CoachDashboard',
+  key: 'coach-dashboard',
+  IconComponent: Target,
+};
 
 interface NavItemComponentProps {
   item: NavItem;
@@ -83,12 +92,24 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
   navigation,
 }) => {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const isCoach = (user as any)?.isCoach === true;
+
   const parent = navigation.getParent();
   const parentState = parent?.getState();
   const parentRoute = parentState?.routes[parentState.index ?? 0];
 
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
   const isFeedActive = state.routeNames[state.index] === 'Feed';
+
+  const navItems = useMemo<NavItem[]>(() => {
+    if (isCoach) {
+      return BASE_NAV_ITEMS.map((item) =>
+        item.routeName === 'Training' ? COACH_NAV_ITEM : item
+      );
+    }
+    return BASE_NAV_ITEMS;
+  }, [isCoach]);
 
   const feedCheckQuery = useQuery({
     queryKey: ['feed-badge-check'],

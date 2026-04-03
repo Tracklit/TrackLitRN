@@ -87,6 +87,7 @@ import { ConnectionsScreen } from './src/screens/ConnectionsScreen';
 import { CoachesScreen } from './src/screens/CoachesScreen';
 import { AthletesScreen } from './src/screens/AthletesScreen';
 import { MyAthletesScreen } from './src/screens/MyAthletesScreen';
+import { CoachDashboardScreen } from './src/screens/CoachDashboardScreen';
 import { RehabScreen } from './src/screens/RehabScreen';
 import { HamstringRehabProgramScreen } from './src/screens/rehab/HamstringRehabProgramScreen';
 import { FootRehabProgramScreen } from './src/screens/rehab/FootRehabProgramScreen';
@@ -128,7 +129,7 @@ type DrawerParamList = {
 };
 const Drawer = createDrawerNavigator<DrawerParamList>();
 const navigationRef = createNavigationContainerRef();
-const TAB_ROUTE_NAMES = new Set(['Home', 'Training', 'Feed', 'Tools', 'Profile']);
+const TAB_ROUTE_NAMES = new Set(['Home', 'Training', 'CoachDashboard', 'Feed', 'Tools', 'Profile']);
 const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'MarketplaceListingDetail',
   'MarketplaceCart',
@@ -249,6 +250,7 @@ const MainTabs: React.FC = () => {
       >
         <Tab.Screen name="Home" component={HomeTabScreen} />
         <Tab.Screen name="Training" component={TrainingScreen} />
+        <Tab.Screen name="CoachDashboard" component={CoachDashboardScreen} />
         <Tab.Screen name="Feed" component={FeedScreen} />
         <Tab.Screen name="Tools" component={ToolsScreen} />
         <Tab.Screen name="Sprinthia" component={SprinthiaScreen} />
@@ -404,10 +406,17 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       title: 'Dashboard',
       items: [
         {
-          label: 'Dashboard',
+          label: 'Home',
           IconComponent: House,
           onPress: () =>
             navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'Home' } }),
+        },
+        {
+          label: "Coach's Dashboard",
+          IconComponent: Target,
+          requiresCoach: true,
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'CoachDashboard' } }),
         },
       ],
     },
@@ -490,11 +499,11 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             navigateIntoAppStack({ screen: 'Chat' }),
         },
         {
-          label: 'My Athletes',
+          label: "Coach's Dashboard",
           IconComponent: Target,
           requiresCoach: true,
           onPress: () =>
-            navigateIntoAppStack({ screen: 'MyAthletes' }),
+            navigateIntoAppStack({ screen: 'MainTabs', params: { screen: 'CoachDashboard' } }),
         },
         {
           label: 'Roster Stats',
@@ -565,12 +574,6 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           IconComponent: CurrencyCircleDollar,
           onPress: () =>
             navigateIntoAppStack({ screen: 'Spikes' }),
-        },
-        {
-          label: 'My Athletes',
-          IconComponent: Heart,
-          onPress: () =>
-            navigateIntoAppStack({ screen: 'MyAthletes' }),
         },
         {
           label: 'App Plan',
