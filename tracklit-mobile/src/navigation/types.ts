@@ -67,6 +67,7 @@ export type RootStackParamList = {
   CoachTeamMood: undefined;
   CoachAthleteDetail: { athleteId: number; athleteName: string | null; athleteUsername: string; athleteProfileImageUrl?: string | null };
   CoachJournalEntry: { entryId: number; athleteId: number; athleteName: string | null; athleteUsername: string };
+  CoachAssignProgram: { athleteId: number; athleteName: string | null; athleteUsername: string };
   Subscriptions: undefined;
   AppTier: undefined;
   PhotoFinishAnalysis: { uri?: string; fileName?: string };

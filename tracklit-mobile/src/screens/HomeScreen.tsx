@@ -937,21 +937,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             <>
               <TouchableOpacity
                 style={styles.headerActionButton}
-                onPress={() => onNavigate?.('Notifications')}
-                accessibilityRole="button"
-                accessibilityLabel="Notifications"
-              >
-              <Bell size={25} color="#94a3b8" weight="fill" />
-              {unreadNotifications > 0 && (
-                <View style={styles.badge}>
-                  <Text variant="caption" weight="bold" color="foreground">
-                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
-                  </Text>
-                </View>
-              )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.headerActionButton, styles.headerActionButtonGap]}
                 onPress={() => onNavigate?.('Chat')}
                 accessibilityRole="button"
                 accessibilityLabel="Messages"
@@ -961,6 +946,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
                     {unreadMessages > 99 ? '99+' : unreadMessages}
+                  </Text>
+                </View>
+              )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.headerActionButton, styles.headerActionButtonGap]}
+                onPress={() => onNavigate?.('Notifications')}
+                accessibilityRole="button"
+                accessibilityLabel="Notifications"
+              >
+              <Bell size={25} color="#94a3b8" weight="fill" />
+              {unreadNotifications > 0 && (
+                <View style={styles.badge}>
+                  <Text variant="caption" weight="bold" color="foreground">
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
                   </Text>
                 </View>
               )}
@@ -1460,11 +1460,20 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
               <CaretRight size={12} color="rgba(255,255,255,0.4)" weight="bold" />
             </TouchableOpacity>
           ) : (
-            <View style={tsStyles.statCell}>
+            <TouchableOpacity
+              style={tsStyles.statCell}
+              activeOpacity={0.7}
+              onPress={() => onNavigate?.('Tools')}
+            >
+              <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+                <Barbell size={14} color="rgba(255,255,255,0.28)" weight="fill" />
+              </View>
               <View style={tsStyles.statText}>
+                <RNText style={[tsStyles.statValue, { color: 'rgba(255,255,255,0.38)', fontSize: 12 }]} numberOfLines={1}>Explore Tools</RNText>
                 <RNText style={tsStyles.statLabel}>Quick Action</RNText>
               </View>
-            </View>
+              <CaretRight size={12} color="rgba(255,255,255,0.18)" weight="bold" />
+            </TouchableOpacity>
           )}
           <View style={tsStyles.statCell}>
             <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>

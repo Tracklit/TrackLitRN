@@ -81,10 +81,25 @@ const BulletRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
+    id: 'lets-get-started',
+    mode: 'intro',
+    title: "Let's Get Started",
+    icon: <Image source={require('../../assets/tracklit-logo.png')} style={styles.logo} />,
+    body: (
+      <View style={{ gap: 14 }}>
+        <Text style={styles.bodyText}>
+          Welcome to TrackLit — your track and field training companion built for athletes and coaches.
+        </Text>
+        <Text style={styles.bodyText}>
+          We'll walk you through a few things before you dive in.
+        </Text>
+      </View>
+    ),
+  },
+  {
     id: 'welcome',
     mode: 'intro',
     title: 'Welcome to TrackLit',
-    icon: <Image source={require('../../assets/tracklit-logo.png')} style={styles.logo} />,
     body: (
       <View style={{ gap: 14 }}>
         <Text style={styles.bodyText}>
@@ -148,10 +163,10 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
             Use Spikes to unlock:
           </Text>
           <View style={{ gap: 6 }}>
-            <BulletRow>Pro tier features (1,000 Spikes)</BulletRow>
-            <BulletRow>Advanced analytics</BulletRow>
-            <BulletRow>Custom workout plans</BulletRow>
-            <BulletRow>Priority support</BulletRow>
+            <BulletRow>Pro and Elite tier features</BulletRow>
+            <BulletRow>Advanced performance analytics</BulletRow>
+            <BulletRow>AI-generated training programs</BulletRow>
+            <BulletRow>Exclusive tools and content</BulletRow>
           </View>
         </View>
       </View>
