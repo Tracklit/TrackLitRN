@@ -173,7 +173,7 @@ export const ProgramCreateScreen: React.FC = () => {
   const methods = [
     { id: 'import' as const, title: 'Import / Upload', description: 'PDF, Sheets, CSV or DOCX.', Icon: FileArrowUp },
     { id: 'text' as const, title: 'Text Based', description: 'Simple text-based program.', Icon: Keyboard },
-    { id: 'sprinthia' as const, title: 'Sprinthia AI', description: 'Generate with AI assistance.', Icon: Robot },
+    { id: 'sprinthia' as const, title: 'Aria AI', description: 'Generate with AI assistance.', Icon: Robot },
   ];
 
   const handleCreateBuilder = () => {
@@ -347,7 +347,7 @@ export const ProgramCreateScreen: React.FC = () => {
           <View style={[styles.formCard, { borderColor: 'rgba(245,158,11,0.2)' }]}>
             <View style={styles.formCardHeader}>
               <Robot size={16} color="#f59e0b" weight="fill" />
-              <Text style={styles.formCardTitle}>Build With Sprinthia AI</Text>
+              <Text style={styles.formCardTitle}>Build With Aria AI</Text>
             </View>
             <Text style={styles.formCardSubtitle}>Generate an AI-powered text program and then edit it before saving.</Text>
             <View style={styles.formFields}>

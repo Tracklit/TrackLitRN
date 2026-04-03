@@ -12,7 +12,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import {
   CaretLeft,
-  Lightning,
+  PushPin,
   Trophy,
   CalendarCheck,
   CheckCircle,
@@ -242,7 +242,7 @@ export const SpikesProgressScreen: React.FC = () => {
                         isPositive ? styles.txPositive : styles.txNegative,
                       ]}
                     >
-                      <Lightning
+                      <PushPin
                         size={12}
                         color={isPositive ? C.orange : '#ef4444'}
                         weight="fill"

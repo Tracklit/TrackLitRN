@@ -40,7 +40,7 @@ import {
   Heart,
   FloppyDisk,
   Newspaper,
-  Lightning,
+  PushPin,
   Barbell,
   PencilLine,
   FilmStrip,
@@ -763,9 +763,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     const monthJournal = allJournal.filter((j: any) => inRange(j.date || j.createdAt, monthAgo)).length;
 
     return [
-      { key: 'today', label: 'Today', sessions: todaySessions, weeklyTotal: 1, journal: todayJournal, spikes: spikesBalance, quickAction: lastUsedTool || 'PhotoFinish' },
-      { key: '7days', label: '7 Days', sessions: weekSessions, weeklyTotal: totalWeeklySessions, journal: weekJournal, spikes: spikesBalance, quickAction: lastUsedTool || 'PhotoFinish' },
-      { key: '30days', label: '30 Days', sessions: monthSessions, weeklyTotal: totalWeeklySessions * 4, journal: monthJournal, spikes: spikesBalance, quickAction: lastUsedTool || 'PhotoFinish' },
+      { key: 'today', label: 'Today', sessions: todaySessions, weeklyTotal: 1, journal: todayJournal, spikes: spikesBalance, quickAction: lastUsedTool || '' },
+      { key: '7days', label: '7 Days', sessions: weekSessions, weeklyTotal: totalWeeklySessions, journal: weekJournal, spikes: spikesBalance, quickAction: lastUsedTool || '' },
+      { key: '30days', label: '30 Days', sessions: monthSessions, weeklyTotal: totalWeeklySessions * 4, journal: monthJournal, spikes: spikesBalance, quickAction: lastUsedTool || '' },
     ];
   }, [programSessions, journalEntries, spikesBalance, lastUsedTool]);
 
@@ -928,21 +928,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             <>
               <TouchableOpacity
                 style={styles.headerActionButton}
-                onPress={() => onNavigate?.('Notifications')}
-                accessibilityRole="button"
-                accessibilityLabel="Notifications"
-              >
-              <Bell size={25} color="#94a3b8" weight="fill" />
-              {unreadNotifications > 0 && (
-                <View style={styles.badge}>
-                  <Text variant="caption" weight="bold" color="foreground">
-                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
-                  </Text>
-                </View>
-              )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.headerActionButton, styles.headerActionButtonGap]}
                 onPress={() => onNavigate?.('Chat')}
                 accessibilityRole="button"
                 accessibilityLabel="Messages"
@@ -952,6 +937,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
                     {unreadMessages > 99 ? '99+' : unreadMessages}
+                  </Text>
+                </View>
+              )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.headerActionButton, styles.headerActionButtonGap]}
+                onPress={() => onNavigate?.('Notifications')}
+                accessibilityRole="button"
+                accessibilityLabel="Notifications"
+              >
+              <Bell size={25} color="#94a3b8" weight="fill" />
+              {unreadNotifications > 0 && (
+                <View style={styles.badge}>
+                  <Text variant="caption" weight="bold" color="foreground">
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
                   </Text>
                 </View>
               )}
@@ -1390,14 +1390,14 @@ interface StatsPeriod {
 
 const TOOL_CONFIG: Record<string, { label: string; icon: React.ReactNode; screen: string }> = {
   PhotoFinish: { label: 'Photo Finish', icon: <FilmStrip size={14} color="#818cf8" weight="fill" />, screen: 'PhotoFinish' },
-  Sprinthia: { label: 'Sprinthia AI', icon: <Brain size={14} color="#a78bfa" weight="fill" />, screen: 'Sprinthia' },
+  Sprinthia: { label: 'Aria AI', icon: <Brain size={14} color="#a78bfa" weight="fill" />, screen: 'Sprinthia' },
   StartGun: { label: 'Start Gun', icon: <PersonSimpleThrow size={14} color="#f87171" weight="fill" />, screen: 'StartGun' },
   Stopwatch: { label: 'Stopwatch', icon: <Timer size={14} color="#38bdf8" weight="fill" />, screen: 'Stopwatch' },
   IntervalTimer: { label: 'Interval Timer', icon: <Clock size={14} color="#4ade80" weight="fill" />, screen: 'IntervalTimer' },
   Journal: { label: 'Journal', icon: <BookOpen size={14} color="#fbbf24" weight="fill" />, screen: 'Journal' },
   ExerciseLibrary: { label: 'Exercise Lib', icon: <VideoCamera size={14} color="#c084fc" weight="fill" />, screen: 'ExerciseLibrary' },
   Rehab: { label: 'Rehab', icon: <FirstAidKit size={14} color="#fb7185" weight="fill" />, screen: 'Rehab' },
-  Spikes: { label: 'Spikes', icon: <Lightning size={14} color="#facc15" weight="fill" />, screen: 'Spikes' },
+  Spikes: { label: 'Spikes', icon: <PushPin size={14} color="#facc15" weight="fill" />, screen: 'Spikes' },
 };
 
 const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNavigate?: (route: string) => void }) => {
@@ -1436,7 +1436,7 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
           </View>
           <View style={tsStyles.vDivider} />
           <View style={tsStyles.statCell}>
-            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(0,0,0,0.25)' }]}>
+            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
               <PencilLine size={14} color="#fff" weight="fill" />
             </View>
             <View style={tsStyles.statText}>
@@ -1447,24 +1447,32 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
         </View>
         <View style={tsStyles.hDivider} />
         <View style={tsStyles.row}>
-          <TouchableOpacity
-            style={tsStyles.statCell}
-            activeOpacity={0.7}
-            onPress={() => handleQuickAction(item.quickAction)}
-          >
-            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(99,102,241,0.25)' }]}>
-              {tool.icon}
+          {item.quickAction ? (
+            <TouchableOpacity
+              style={tsStyles.statCell}
+              activeOpacity={0.7}
+              onPress={() => handleQuickAction(item.quickAction)}
+            >
+              <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(99,102,241,0.25)' }]}>
+                {tool.icon}
+              </View>
+              <View style={tsStyles.statText}>
+                <RNText style={tsStyles.statValue} numberOfLines={1}>{tool.label}</RNText>
+                <RNText style={tsStyles.statLabel}>Quick Action</RNText>
+              </View>
+              <CaretRight size={12} color="rgba(255,255,255,0.4)" weight="bold" />
+            </TouchableOpacity>
+          ) : (
+            <View style={tsStyles.statCell}>
+              <View style={tsStyles.statText}>
+                <RNText style={tsStyles.statLabel}>Quick Action</RNText>
+              </View>
             </View>
-            <View style={tsStyles.statText}>
-              <RNText style={tsStyles.statValue} numberOfLines={1}>{tool.label}</RNText>
-              <RNText style={tsStyles.statLabel}>Quick Action</RNText>
-            </View>
-            <CaretRight size={12} color="rgba(255,255,255,0.4)" weight="bold" />
-          </TouchableOpacity>
+          )}
           <View style={tsStyles.vDivider} />
           <View style={tsStyles.statCell}>
-            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(0,0,0,0.25)' }]}>
-              <Lightning size={14} color="#fff" weight="fill" />
+            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+              <PushPin size={14} color="#facc15" weight="fill" />
             </View>
             <View style={tsStyles.statText}>
               <RNText style={tsStyles.statValue}>{item.spikes.toLocaleString()}</RNText>
@@ -1479,7 +1487,7 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
   return (
     <View style={tsStyles.wrapper}>
       <LinearGradient
-        colors={['#FF7A00', '#FF9A40']}
+        colors={['#1C1F2B', '#252A3A']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={tsStyles.card}
@@ -1540,7 +1548,7 @@ const tsStyles = StyleSheet.create({
     marginBottom: 10,
   },
   headerTitle: {
-    color: 'rgba(0,0,0,0.6)',
+    color: 'rgba(255,255,255,0.45)',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -1555,7 +1563,7 @@ const tsStyles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   dotActive: {
     backgroundColor: '#fff',
@@ -1565,7 +1573,7 @@ const tsStyles = StyleSheet.create({
     color: '#fff',
     fontSize: 11,
     fontWeight: '800',
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -1599,7 +1607,7 @@ const tsStyles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1622,7 +1630,7 @@ const tsStyles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
   },
   statLabel: {
-    color: 'rgba(0,0,0,0.5)',
+    color: 'rgba(255,255,255,0.45)',
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.3,

@@ -383,14 +383,14 @@ export const SprinthiaScreen: React.FC = () => {
       const isUnauthorized = error.status === 401 || lowerMessage.includes('unauthorized');
 
       if (isUnauthorized) {
-        setInlineWarning('Session expired. Please sign in again to keep chatting with Sprinthia.');
+        setInlineWarning('Session expired. Please sign in again to keep chatting with Aria.');
         refreshUser?.();
         Alert.alert('Sign in required', 'Your session expired. Please sign in again to continue.');
         return;
       }
 
       if (lowerMessage.includes('prompt')) {
-        setInlineWarning('No prompts remaining. Purchase more to continue using Sprinthia.');
+        setInlineWarning('No prompts remaining. Purchase more to continue using Aria.');
         return;
       }
 
@@ -401,7 +401,7 @@ export const SprinthiaScreen: React.FC = () => {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, fallback]);
-      Alert.alert('Connection issue', error.message || 'Failed to send message to Sprinthia.');
+      Alert.alert('Connection issue', error.message || 'Failed to send message to Aria.');
     },
   });
 
@@ -409,12 +409,12 @@ export const SprinthiaScreen: React.FC = () => {
     if (!inputText.trim() || isThinking) return;
 
     if (!isAuthenticated || isGuest) {
-      Alert.alert('Sign In Required', 'Please sign in to chat with Sprinthia AI.');
+      Alert.alert('Sign In Required', 'Please sign in to chat with Aria.');
       return;
     }
 
     if (isOutOfPrompts) {
-      setInlineWarning('No prompts remaining. Purchase more to continue using Sprinthia.');
+      setInlineWarning('No prompts remaining. Purchase more to continue using Aria.');
       return;
     }
 
@@ -578,7 +578,7 @@ export const SprinthiaScreen: React.FC = () => {
               </TouchableOpacity>
             ) : null}
             <Text weight="bold" color="foreground" style={styles.titleText}>
-              Sprinthia
+              Aria
             </Text>
             <Image source={poweredByAria} style={styles.poweredBy} resizeMode="contain" />
           </View>
@@ -792,7 +792,7 @@ export const SprinthiaScreen: React.FC = () => {
                 weight="semiBold"
                 style={message.role === 'user' ? styles.messageLabelUser : styles.messageLabelAI}
               >
-                {message.role === 'user' ? 'You' : 'Sprinthia'}
+                {message.role === 'user' ? 'You' : 'Aria'}
               </Text>
               <View
                 style={[
@@ -847,7 +847,7 @@ export const SprinthiaScreen: React.FC = () => {
           {isThinking && (
             <View style={styles.messageBlock}>
               <Text color="muted" weight="semiBold" style={styles.messageLabelAI}>
-                Sprinthia
+                Aria
               </Text>
               <View style={[styles.messageBubble, styles.aiBubble]}>
                 <View style={styles.typingRow}>
@@ -893,8 +893,8 @@ export const SprinthiaScreen: React.FC = () => {
                   isListening
                     ? 'Listening... tap mic to stop'
                     : isGuest
-                      ? 'Sign in to chat with Sprinthia...'
-                      : 'Ask Sprinthia about training, races, rehabilitation, or nutrition...'
+                      ? 'Sign in to chat with Aria...'
+                      : 'Ask Aria about training, races, rehabilitation, or nutrition...'
                 }
                 placeholderTextColor={theme.colors.textMuted}
                 multiline
@@ -928,7 +928,7 @@ export const SprinthiaScreen: React.FC = () => {
           {(inlineWarning || isOutOfPrompts) && (
             <Text color="muted" style={styles.promptWarning}>
               {inlineWarning ||
-                "You've used all your prompts. Upgrade to Pro or Star to continue using Sprinthia."}
+                "You've used all your prompts. Upgrade to Pro or Star to continue using Aria."}
             </Text>
           )}
         </View>

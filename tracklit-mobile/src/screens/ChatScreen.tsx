@@ -7,6 +7,7 @@ import {
   RefreshControl,
   Modal,
   TextInput,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -140,6 +141,9 @@ export const ChatScreen: React.FC = () => {
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showFriendsModal, setShowFriendsModal] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const SEARCH_BAR_HEIGHT = 52;
 
   const groupsQuery = useQuery({
     queryKey: ['chat-groups'],
@@ -175,7 +179,16 @@ export const ChatScreen: React.FC = () => {
   const allItems: ListItem[] = [
     ...groups.map((g): ListItem => ({ kind: 'group', data: g })),
     ...conversations.map((c): ListItem => ({ kind: 'dm', data: c })),
-  ].sort((a, b) => {
+  ]
+  .filter(item => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const name = item.kind === 'group'
+      ? (item.data as ChatGroup).name
+      : (item.data as Conversation).otherUserName || (item.data as Conversation).otherUserUsername || '';
+    return name.toLowerCase().includes(q);
+  })
+  .sort((a, b) => {
     const aMsg = a.data.lastMessageAt;
     const bMsg = b.data.lastMessageAt;
     const aCreated = a.kind === 'group' ? (a.data as ChatGroup).createdAt : undefined;
@@ -347,7 +360,7 @@ export const ChatScreen: React.FC = () => {
           <ArrowLeft size={22} color="#fff" weight="bold" />
         </TouchableOpacity>
         <Text variant="h3" weight="bold" color="foreground" style={styles.headerTitle}>
-          Chats
+          {' '}
         </Text>
         <TouchableOpacity
           style={styles.headerAction}
@@ -362,6 +375,7 @@ export const ChatScreen: React.FC = () => {
         keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scrollContent, { paddingBottom: contentBottomPadding }]}
         showsVerticalScrollIndicator={false}
+        contentOffset={{ x: 0, y: SEARCH_BAR_HEIGHT }}
         refreshControl={
           <RefreshControl
             tintColor="#fff"
@@ -370,6 +384,23 @@ export const ChatScreen: React.FC = () => {
           />
         }
       >
+        <View style={styles.searchBar}>
+          <MagnifyingGlass size={16} color="#64748b" weight="bold" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search conversations..."
+            placeholderTextColor="#475569"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <X size={14} color="#64748b" weight="bold" />
+            </TouchableOpacity>
+          )}
+        </View>
         {isGuest || !hasValidToken ? (
           <View style={styles.emptyState}>
             <Lock size={48} color={theme.colors.textMuted} weight="fill" />
@@ -570,6 +601,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 4,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 8,
+    backgroundColor: '#1a1f2e',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+    height: 44,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    padding: 0,
   },
   chatRow: {
     flexDirection: 'row',

@@ -414,7 +414,7 @@ export const SettingsScreen: React.FC = () => {
           </View>
 
           <Text style={styles.inputHint}>
-            Used by Sprinthia for personalized biomechanical analysis.
+            Used by Aria for personalized biomechanical analysis.
           </Text>
         </View>
 

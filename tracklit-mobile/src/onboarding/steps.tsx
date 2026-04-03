@@ -1,9 +1,7 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import {
-  Sparkle,
   Info,
-  CurrencyDollar,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -71,6 +69,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+  logo: {
+    width: 52,
+    height: 52,
+    resizeMode: 'contain',
+  },
 });
 
 const BulletRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -82,10 +85,30 @@ const BulletRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
+    id: 'get-started',
+    mode: 'intro',
+    title: "Let's Get Started",
+    body: (
+      <View style={{ gap: 14 }}>
+        <Text style={styles.bodyText}>
+          Welcome to TrackLit — your complete track and field training companion.
+        </Text>
+        <View style={styles.panel}>
+          <Text style={styles.panelLabel}>Where to begin</Text>
+          <View style={{ gap: 8 }}>
+            <BulletRow>Head to the Training tab to create or import your first training program.</BulletRow>
+            <BulletRow>Log sessions, track your progress, and stay on top of your athletic goals.</BulletRow>
+            <BulletRow>Explore Tools, Feed, and Aria for more features as you go.</BulletRow>
+          </View>
+        </View>
+      </View>
+    ),
+  },
+  {
     id: 'welcome',
     mode: 'intro',
     title: 'Welcome to TrackLit',
-    icon: <Sparkle size={28} color={COLORS.orange} weight="fill" />,
+    icon: <Image source={require('../../assets/tracklit-logo.png')} style={styles.logo} />,
     body: (
       <View style={{ gap: 14 }}>
         <Text style={styles.bodyText}>
@@ -102,7 +125,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'alpha-info',
     mode: 'intro',
     title: 'Alpha Testing Information',
-    icon: <Info size={28} color={COLORS.orange} weight="fill" />,
     body: (
       <View style={{ gap: 14 }}>
         <Text style={styles.bodyText}>
@@ -126,11 +148,10 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'spikes',
     mode: 'intro',
     title: 'Meet Spikes',
-    icon: <CurrencyDollar size={28} color="#f59e0b" weight="fill" />,
     showClaimSpikes: true,
     primaryCtaLabel: 'Finish',
     body: (
-      <View style={{ gap: 14 }}>
+      <View style={{ gap: 12 }}>
         <Text style={styles.bodyText}>
           Spikes are your in-app currency that you earn automatically by training and engaging with
           TrackLit.
@@ -139,7 +160,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
           <Text style={styles.panelLabel}>
             Earn Spikes by:
           </Text>
-          <View style={{ gap: 8 }}>
+          <View style={{ gap: 6 }}>
             <BulletRow>Completing training sessions</BulletRow>
             <BulletRow>Daily login streaks</BulletRow>
             <BulletRow>Achieving personal records</BulletRow>
@@ -151,7 +172,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
           <Text style={styles.panelLabel}>
             Use Spikes to unlock:
           </Text>
-          <View style={{ gap: 8 }}>
+          <View style={{ gap: 6 }}>
             <BulletRow>Pro tier features (1,000 Spikes)</BulletRow>
             <BulletRow>Advanced analytics</BulletRow>
             <BulletRow>Custom workout plans</BulletRow>

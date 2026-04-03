@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import {
   CaretLeft,
-  Lightning,
+  PushPin,
   Trophy,
   Timer,
   UsersThree,
@@ -136,7 +136,7 @@ export const SpikesInfoScreen: React.FC = () => {
       >
         <View style={styles.introSection}>
           <View style={styles.introIconWrap}>
-            <Lightning size={24} color={C.orange} weight="fill" />
+            <PushPin size={24} color={C.orange} weight="fill" />
           </View>
           <Text style={styles.introText}>
             Spikes are Tracklit's in-app currency. You earn them automatically
