@@ -149,7 +149,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
 
   const roleSetMutation = useMutation({
     mutationFn: (isCoach: boolean) =>
-      apiRequest('/api/user/coach-status', { method: 'POST', data: { isCoach } }),
+      apiRequest('/api/user/coach-status', { method: 'PATCH', data: { isCoach } }),
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       await refreshUser();
