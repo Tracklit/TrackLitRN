@@ -1,9 +1,5 @@
 import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
-import {
-  Info,
-} from 'phosphor-react-native';
-
 import { Text } from '@/components/ui/Text';
 
 const COLORS = {
@@ -70,8 +66,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   logo: {
-    width: 52,
-    height: 52,
+    width: 104,
+    height: 104,
     resizeMode: 'contain',
   },
 });
@@ -84,26 +80,6 @@ const BulletRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
-  {
-    id: 'get-started',
-    mode: 'intro',
-    title: "Let's Get Started",
-    body: (
-      <View style={{ gap: 14 }}>
-        <Text style={styles.bodyText}>
-          Welcome to TrackLit — your complete track and field training companion.
-        </Text>
-        <View style={styles.panel}>
-          <Text style={styles.panelLabel}>Where to begin</Text>
-          <View style={{ gap: 8 }}>
-            <BulletRow>Head to the Training tab to create or import your first training program.</BulletRow>
-            <BulletRow>Log sessions, track your progress, and stay on top of your athletic goals.</BulletRow>
-            <BulletRow>Explore Tools, Feed, and Aria for more features as you go.</BulletRow>
-          </View>
-        </View>
-      </View>
-    ),
-  },
   {
     id: 'welcome',
     mode: 'intro',
@@ -149,7 +125,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     mode: 'intro',
     title: 'Meet Spikes',
     showClaimSpikes: true,
-    primaryCtaLabel: 'Finish',
     body: (
       <View style={{ gap: 12 }}>
         <Text style={styles.bodyText}>
@@ -177,6 +152,24 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
             <BulletRow>Advanced analytics</BulletRow>
             <BulletRow>Custom workout plans</BulletRow>
             <BulletRow>Priority support</BulletRow>
+          </View>
+        </View>
+      </View>
+    ),
+  },
+  {
+    id: 'get-started',
+    mode: 'intro',
+    title: "Let's Get Started",
+    primaryCtaLabel: 'Finish',
+    body: (
+      <View style={{ gap: 14 }}>
+        <View style={styles.panel}>
+          <Text style={styles.panelLabel}>Where to begin</Text>
+          <View style={{ gap: 8 }}>
+            <BulletRow>Head to the Training tab to create or import your first training program.</BulletRow>
+            <BulletRow>Log sessions, track your progress, and stay on top of your athletic goals.</BulletRow>
+            <BulletRow>Explore Tools, Feed, and Aria for more features as you go.</BulletRow>
           </View>
         </View>
       </View>
