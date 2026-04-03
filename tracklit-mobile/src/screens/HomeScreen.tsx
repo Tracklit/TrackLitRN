@@ -1140,7 +1140,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                         alignItems: 'center',
                       }}
                     >
-                      <Text style={{ fontSize: 11, color: '#FF7A00', fontWeight: '700', maxWidth: 90 }} numberOfLines={1}>
+                      {entry.athleteProfileImageUrl ? (
+                        <Image
+                          source={{ uri: entry.athleteProfileImageUrl }}
+                          style={{ width: 22, height: 22, borderRadius: 11 }}
+                        />
+                      ) : (
+                        <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(255,122,0,0.25)', alignItems: 'center', justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 9, color: '#FF7A00', fontWeight: '800' }}>
+                            {(entry.athleteName?.[0] || entry.athleteUsername?.[0] || '?').toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
+                      <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: '700', maxWidth: 90 }} numberOfLines={1}>
                         {entry.athleteName || `@${entry.athleteUsername}`}
                       </Text>
                       <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', flex: 1 }} numberOfLines={1}>

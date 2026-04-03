@@ -8,8 +8,10 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
-  Switch,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -26,6 +28,7 @@ import {
   Lock,
   CalendarBlank,
   CaretRight,
+  Eye,
 } from 'phosphor-react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
@@ -48,6 +51,7 @@ interface JournalEntry {
 }
 
 type SortDirection = 'asc' | 'desc';
+type Visibility = 'private' | 'coach' | 'public';
 
 const C = {
   bg: '#0E0F14',
@@ -64,6 +68,23 @@ const C = {
   red: '#ef4444',
   inputBg: 'rgba(255,255,255,0.05)',
   modalBg: '#151821',
+  blue: '#60a5fa',
+};
+
+const VISIBILITY_OPTIONS: { key: Visibility; label: string; icon: React.ReactNode; color: string; desc: string }[] = [
+  { key: 'private', label: 'Private', icon: null, color: C.textMuted, desc: 'Only you' },
+  { key: 'coach',   label: 'Coach',   icon: null, color: C.blue,     desc: 'You + your coach' },
+  { key: 'public',  label: 'Public',  icon: null, color: C.green,    desc: 'Everyone' },
+];
+
+const visibilityToIsPublic = (v: Visibility) => v !== 'private';
+
+const contentToVisibility = (content: any): Visibility => {
+  if (!content) return 'private';
+  const v = content.visibility;
+  if (v === 'coach' || v === 'public') return v;
+  if (content.isPublic === true) return 'public';
+  return 'private';
 };
 
 const parseContent = (content: any) => {
@@ -84,8 +105,14 @@ const formatDate = (dateString: string) =>
 
 const getMoodColor = (value: number) => {
   if (value <= 3) return C.red;
-  if (value <= 5) return C.yellow;
+  if (value <= 6) return C.yellow;
   return C.green;
+};
+
+const VisibilityIcon: React.FC<{ vis: Visibility; size: number; color?: string }> = ({ vis, size, color }) => {
+  if (vis === 'public') return <Globe size={size} color={color ?? C.green} weight="fill" />;
+  if (vis === 'coach') return <Eye size={size} color={color ?? C.blue} weight="fill" />;
+  return <Lock size={size} color={color ?? C.textMuted} weight="fill" />;
 };
 
 export const JournalScreen: React.FC = () => {
@@ -104,7 +131,7 @@ export const JournalScreen: React.FC = () => {
   const [formTitle, setFormTitle] = useState('');
   const [formNotes, setFormNotes] = useState('');
   const [formMoodRating, setFormMoodRating] = useState(7);
-  const [formIsPublic, setFormIsPublic] = useState(true);
+  const [formVisibility, setFormVisibility] = useState<Visibility>('private');
 
   const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
@@ -151,8 +178,8 @@ export const JournalScreen: React.FC = () => {
           title: formTitle.trim(),
           notes: formNotes.trim(),
           type: 'manual',
-          isPublic: formIsPublic,
-          content: { moodRating: formMoodRating },
+          isPublic: visibilityToIsPublic(formVisibility),
+          content: { moodRating: formMoodRating, visibility: formVisibility },
         },
       }),
     onSuccess: () => { invalidateAll(); setModalMode(null); resetForm(); },
@@ -177,7 +204,7 @@ export const JournalScreen: React.FC = () => {
     setFormTitle('');
     setFormNotes('');
     setFormMoodRating(7);
-    setFormIsPublic(true);
+    setFormVisibility('private');
   };
 
   const handleOpenCreate = () => {
@@ -195,7 +222,7 @@ export const JournalScreen: React.FC = () => {
     setFormTitle(entry.title || '');
     setFormNotes(entry.notes || '');
     setFormMoodRating(content.moodRating ?? 7);
-    setFormIsPublic(entry.isPublic ?? true);
+    setFormVisibility(contentToVisibility(content));
     setModalMode('edit');
   };
 
@@ -218,8 +245,8 @@ export const JournalScreen: React.FC = () => {
       title: formTitle.trim(),
       notes: formNotes.trim(),
       type: editingEntry.type || 'manual',
-      isPublic: formIsPublic,
-      content: { ...(editingEntry.content || {}), moodRating: formMoodRating },
+      isPublic: visibilityToIsPublic(formVisibility),
+      content: { ...(editingEntry.content || {}), moodRating: formMoodRating, visibility: formVisibility },
     });
   };
 
@@ -230,21 +257,31 @@ export const JournalScreen: React.FC = () => {
     ]);
   };
 
-  const MoodPicker: React.FC = () => (
-    <View style={styles.moodPicker}>
-      <Text style={styles.moodPickerLabel}>Mood: {formMoodRating}/10</Text>
-      <View style={styles.moodDots}>
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
-          <TouchableOpacity
-            key={v}
-            style={[
-              styles.moodDot,
-              { backgroundColor: v <= formMoodRating ? getMoodColor(formMoodRating) : 'rgba(255,255,255,0.08)' },
-            ]}
-            onPress={() => setFormMoodRating(v)}
-            activeOpacity={0.7}
-          />
-        ))}
+  const moodColor = getMoodColor(formMoodRating);
+
+  const VisibilitySelector: React.FC = () => (
+    <View style={styles.visibilityWrap}>
+      <Text style={styles.inputLabel}>Visibility</Text>
+      <View style={styles.visibilityRow}>
+        {VISIBILITY_OPTIONS.map((opt) => {
+          const isActive = formVisibility === opt.key;
+          return (
+            <TouchableOpacity
+              key={opt.key}
+              style={[styles.visibilityBtn, isActive && { borderColor: opt.color, backgroundColor: `${opt.color}14` }]}
+              onPress={() => setFormVisibility(opt.key)}
+              activeOpacity={0.7}
+            >
+              <VisibilityIcon vis={opt.key} size={14} color={isActive ? opt.color : C.textMuted} />
+              <Text style={[styles.visibilityBtnLabel, { color: isActive ? opt.color : C.textMuted }]}>
+                {opt.label}
+              </Text>
+              <Text style={[styles.visibilityBtnDesc, { color: isActive ? opt.color : C.textMuted, opacity: 0.7 }]}>
+                {opt.desc}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -309,7 +346,8 @@ export const JournalScreen: React.FC = () => {
           filteredEntries.map((entry) => {
             const mood = entry.content?.moodRating;
             const isExpanded = expandedId === entry.id;
-            const moodColor = mood ? getMoodColor(mood) : null;
+            const entryMoodColor = mood ? getMoodColor(mood) : null;
+            const vis = contentToVisibility(entry.content);
 
             return (
               <TouchableOpacity
@@ -328,18 +366,15 @@ export const JournalScreen: React.FC = () => {
                       <View style={styles.entryMeta}>
                         <CalendarBlank size={10} color={C.textMuted} weight="bold" />
                         <Text style={styles.entryDate}>{formatDate(entry.createdAt)}</Text>
-                        {entry.isPublic
-                          ? <Globe size={10} color={C.textMuted} weight="bold" />
-                          : <Lock size={10} color={C.textMuted} weight="bold" />
-                        }
+                        <VisibilityIcon vis={vis} size={10} />
                       </View>
                     </View>
                   </View>
                   <View style={styles.entryTopRight}>
                     {mood !== undefined && mood !== null && (
-                      <View style={[styles.moodBadge, { backgroundColor: `${moodColor}22` }]}>
-                        <Smiley size={10} color={moodColor!} weight="fill" />
-                        <Text style={[styles.moodBadgeText, { color: moodColor! }]}>{mood}</Text>
+                      <View style={[styles.moodBadge, { backgroundColor: `${entryMoodColor}22` }]}>
+                        <Smiley size={10} color={entryMoodColor!} weight="fill" />
+                        <Text style={[styles.moodBadgeText, { color: entryMoodColor! }]}>{mood}</Text>
                       </View>
                     )}
                     <CaretRight
@@ -389,14 +424,27 @@ export const JournalScreen: React.FC = () => {
         transparent
         onRequestClose={() => { setModalMode(null); setEditingEntry(null); }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => { setModalMode(null); setEditingEntry(null); }}
+          />
+          <View style={[styles.modalSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>
               {modalMode === 'create' ? 'New Journal Entry' : 'Edit Entry'}
             </Text>
 
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
               <Text style={styles.inputLabel}>Title</Text>
               <TextInput
                 style={styles.modalInput}
@@ -404,6 +452,7 @@ export const JournalScreen: React.FC = () => {
                 placeholderTextColor={C.textMuted}
                 value={formTitle}
                 onChangeText={setFormTitle}
+                returnKeyType="next"
               />
 
               <Text style={styles.inputLabel}>Notes</Text>
@@ -415,27 +464,36 @@ export const JournalScreen: React.FC = () => {
                 onChangeText={setFormNotes}
                 multiline
                 textAlignVertical="top"
+                returnKeyType="done"
               />
 
-              <MoodPicker />
-
-              <View style={styles.publicRow}>
-                <View style={styles.publicLeft}>
-                  {formIsPublic
-                    ? <Globe size={14} color={C.orange} weight="fill" />
-                    : <Lock size={14} color={C.textMuted} weight="fill" />
-                  }
-                  <Text style={styles.publicLabel}>
-                    {formIsPublic ? 'Public — visible to your coach' : 'Private'}
-                  </Text>
+              {/* Mood Slider */}
+              <View style={styles.moodWrap}>
+                <View style={styles.moodHeader}>
+                  <Text style={styles.inputLabel}>Mood</Text>
+                  <View style={[styles.moodValueBadge, { backgroundColor: `${moodColor}20` }]}>
+                    <Smiley size={12} color={moodColor} weight="fill" />
+                    <Text style={[styles.moodValueText, { color: moodColor }]}>{formMoodRating}/10</Text>
+                  </View>
                 </View>
-                <Switch
-                  value={formIsPublic}
-                  onValueChange={setFormIsPublic}
-                  trackColor={{ false: 'rgba(255,255,255,0.1)', true: 'rgba(255,122,0,0.5)' }}
-                  thumbColor={formIsPublic ? C.orange : 'rgba(255,255,255,0.4)'}
+                <Slider
+                  style={styles.slider}
+                  minimumValue={1}
+                  maximumValue={10}
+                  step={1}
+                  value={formMoodRating}
+                  onValueChange={(v) => setFormMoodRating(Math.round(v))}
+                  minimumTrackTintColor={moodColor}
+                  maximumTrackTintColor="rgba(255,255,255,0.12)"
+                  thumbTintColor={Platform.OS === 'android' ? moodColor : undefined}
                 />
+                <View style={styles.moodLabels}>
+                  <Text style={styles.moodLabelText}>Low</Text>
+                  <Text style={styles.moodLabelText}>High</Text>
+                </View>
               </View>
+
+              <VisibilitySelector />
             </ScrollView>
 
             <View style={styles.modalFooter}>
@@ -461,7 +519,7 @@ export const JournalScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -595,9 +653,9 @@ const styles = StyleSheet.create({
     backgroundColor: C.modalBg,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '85%',
-    padding: 20,
-    paddingBottom: 32,
+    maxHeight: '90%',
+    paddingTop: 12,
+    paddingHorizontal: 20,
   },
   modalHandle: {
     width: 36,
@@ -622,34 +680,41 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTextArea: {
-    minHeight: 100,
+    minHeight: 90,
     textAlignVertical: 'top',
   },
 
-  moodPicker: { marginBottom: 16 },
-  moodPickerLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 0.8, marginBottom: 8, textTransform: 'uppercase' },
-  moodDots: { flexDirection: 'row', gap: 6 },
-  moodDot: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-  },
-
-  publicRow: {
+  moodWrap: { marginBottom: 16 },
+  moodHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  moodValueBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: C.inputBg,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  moodValueText: { fontSize: 12, fontWeight: '700' },
+  slider: { width: '100%', height: 40 },
+  moodLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -4 },
+  moodLabelText: { fontSize: 10, color: C.textMuted },
+
+  visibilityWrap: { marginBottom: 20 },
+  visibilityRow: { flexDirection: 'row', gap: 8 },
+  visibilityBtn: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: C.border,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 20,
+    backgroundColor: C.inputBg,
   },
-  publicLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  publicLabel: { fontSize: 13, color: C.textSecondary },
+  visibilityBtnLabel: { fontSize: 12, fontWeight: '700' },
+  visibilityBtnDesc: { fontSize: 9, textAlign: 'center' },
 
-  modalFooter: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  modalFooter: { flexDirection: 'row', gap: 10, paddingTop: 12, paddingBottom: 4 },
   cancelBtn: {
     flex: 1,
     paddingVertical: 13,

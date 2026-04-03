@@ -175,7 +175,8 @@ export async function getAthleteJournalEntries(req: Request, res: Response) {
       .where(
         and(
           eq(coachAthletes.coachId, req.user.id),
-          eq(coachAthletes.status, 'accepted')
+          eq(coachAthletes.status, 'accepted'),
+          eq(journalEntries.isPublic, true)
         )
       )
       .orderBy(desc(journalEntries.createdAt))
