@@ -375,7 +375,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                 <Timer size={13} color={COLORS.accent} weight="fill" />
                 <Text style={styles.sectionTitle}>
                   Speed Table{'  '}
-                  <Text style={styles.sectionSubtitle}>Change under Options · Race Goals</Text>
+                  <Text style={styles.sectionSubtitle}>Change under options</Text>
                 </Text>
               </View>
               <View style={styles.tableContainer}>
