@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Dimensions,
   FlatList,
   StyleSheet,
@@ -9,7 +10,16 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from '@tanstack/react-query';
-import { CheckCircle, Gift, CurrencyDollar, ArrowRight, ArrowLeft } from 'phosphor-react-native';
+import {
+  CheckCircle,
+  Gift,
+  CurrencyDollar,
+  ArrowRight,
+  ArrowLeft,
+  Barbell,
+  ClipboardText,
+  Info,
+} from 'phosphor-react-native';
 
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
@@ -30,6 +40,8 @@ type ClaimResponse = {
   error?: string;
 };
 
+type RoleChoice = 'athlete' | 'coach';
+
 const COLORS = {
   bg: '#0E0F14',
   surface: '#161823',
@@ -47,6 +59,9 @@ const COLORS = {
   amberBg: 'rgba(245,158,11,0.08)',
   amberBorder: 'rgba(245,158,11,0.15)',
   dotInactive: 'rgba(255,255,255,0.15)',
+  blue: '#60a5fa',
+  blueBg: 'rgba(96,165,250,0.10)',
+  blueBorder: 'rgba(96,165,250,0.25)',
 };
 
 const isAlreadyClaimedError = (err: any) => {
@@ -97,31 +112,56 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
 
   const flatListRef = useRef<FlatList>(null);
   const totalSteps = steps.length;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const [claimedSpikes, setClaimedSpikes] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimedBonus, setClaimedBonus] = useState<number | null>(null);
+
+  // Role selection state — shown after the final onboarding step
+  const [showRoleSelect, setShowRoleSelect] = useState(false);
+  const [roleChoice, setRoleChoice] = useState<RoleChoice | null>(null);
 
   useEffect(() => {
     if (isActive) {
       setClaimedSpikes(false);
       setClaimError(null);
       setClaimedBonus(null);
+      setShowRoleSelect(false);
+      setRoleChoice(null);
+      fadeAnim.setValue(1);
     }
-  }, [isActive]);
+  }, [isActive, fadeAnim]);
 
   useEffect(() => {
-    if (isActive && flatListRef.current) {
+    if (isActive && flatListRef.current && !showRoleSelect) {
       flatListRef.current.scrollToIndex({
         index: currentStepIndex,
         animated: true,
       });
     }
-  }, [currentStepIndex, isActive]);
+  }, [currentStepIndex, isActive, showRoleSelect]);
 
   const claimMutation = useMutation({
     mutationFn: () =>
       apiRequest<ClaimResponse>('/api/claim-welcome-spikes', { method: 'POST' }),
+  });
+
+  const roleSetMutation = useMutation({
+    mutationFn: (isCoach: boolean) =>
+      apiRequest('/api/user/coach-status', { method: 'POST', data: { isCoach } }),
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      await refreshUser();
+      // Fade the overlay out then mark onboarding complete
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start(() => {
+        complete();
+      });
+    },
   });
 
   const handleClaimSpikes = async () => {
@@ -158,6 +198,27 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
       goToStep(newIndex);
     }
   }, [currentStepIndex, totalSteps, goToStep]);
+
+  // Instead of calling complete() directly on Finish, show the role picker
+  const handleFinish = useCallback(() => {
+    setShowRoleSelect(true);
+  }, []);
+
+  const handleRoleConfirm = useCallback(() => {
+    if (!roleChoice || roleSetMutation.isPending) return;
+    roleSetMutation.mutate(roleChoice === 'coach');
+  }, [roleChoice, roleSetMutation]);
+
+  const handleSkipRole = useCallback(async () => {
+    // Default to athlete, fade out, complete
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      complete();
+    });
+  }, [fadeAnim, complete]);
 
   const canGoBack = currentStepIndex > 0;
   const isLastStep = currentStepIndex === totalSteps - 1;
@@ -232,11 +293,108 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     </View>
   );
 
+  // ── Role selection screen ────────────────────────────────────────────────
+  if (showRoleSelect) {
+    return (
+      <Animated.View
+        style={[
+          styles.fullScreen,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24, backgroundColor: COLORS.bg, opacity: fadeAnim },
+        ]}
+      >
+        <View style={styles.roleContainer}>
+          <Text style={styles.roleTitle}>What describes you best?</Text>
+          <Text style={styles.roleSubtitle}>
+            This personalises your TrackLit experience from the start.
+          </Text>
+
+          {/* Athlete card */}
+          <TouchableOpacity
+            style={[
+              styles.roleCard,
+              roleChoice === 'athlete' && styles.roleCardActive,
+            ]}
+            activeOpacity={0.8}
+            onPress={() => setRoleChoice('athlete')}
+          >
+            <View style={[styles.roleIconWrap, { backgroundColor: 'rgba(255,122,0,0.12)' }]}>
+              <Barbell size={28} color={COLORS.orange} weight="fill" />
+            </View>
+            <View style={styles.roleCardText}>
+              <Text style={styles.roleCardTitle}>Athlete</Text>
+              <Text style={styles.roleCardDesc}>
+                Track sessions, log programs, monitor progress and compete.
+              </Text>
+            </View>
+            {roleChoice === 'athlete' && (
+              <CheckCircle size={22} color={COLORS.orange} weight="fill" />
+            )}
+          </TouchableOpacity>
+
+          {/* Coach card */}
+          <TouchableOpacity
+            style={[
+              styles.roleCard,
+              roleChoice === 'coach' && [styles.roleCardActive, styles.roleCardActiveBlue],
+            ]}
+            activeOpacity={0.8}
+            onPress={() => setRoleChoice('coach')}
+          >
+            <View style={[styles.roleIconWrap, { backgroundColor: COLORS.blueBg }]}>
+              <ClipboardText size={28} color={COLORS.blue} weight="fill" />
+            </View>
+            <View style={styles.roleCardText}>
+              <Text style={styles.roleCardTitle}>Coach</Text>
+              <Text style={styles.roleCardDesc}>
+                Manage athletes, assign programs and monitor team activity.
+              </Text>
+            </View>
+            {roleChoice === 'coach' && (
+              <CheckCircle size={22} color={COLORS.blue} weight="fill" />
+            )}
+          </TouchableOpacity>
+
+          {/* Info row */}
+          <View style={styles.roleInfoRow}>
+            <Info size={13} color={COLORS.textMuted} weight="fill" />
+            <Text style={styles.roleInfoText}>
+              You can change this later in Account Settings.
+            </Text>
+          </View>
+
+          {/* Confirm button */}
+          <TouchableOpacity
+            style={[styles.roleConfirmBtn, !roleChoice && styles.roleConfirmBtnDisabled]}
+            activeOpacity={0.85}
+            onPress={handleRoleConfirm}
+            disabled={!roleChoice || roleSetMutation.isPending}
+          >
+            {roleSetMutation.isPending ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Text style={styles.roleConfirmBtnText}>
+                  {roleChoice ? `Continue as ${roleChoice === 'coach' ? 'Coach' : 'Athlete'}` : 'Select a role to continue'}
+                </Text>
+                {!!roleChoice && <ArrowRight size={16} color="#fff" weight="bold" />}
+              </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.roleSkipBtn} onPress={handleSkipRole} activeOpacity={0.6}>
+            <Text style={styles.roleSkipText}>Skip for now</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  }
+
+  // ── Standard onboarding slides ───────────────────────────────────────────
   return (
-    <View
+    <Animated.View
       style={[
         styles.fullScreen,
-        { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16, backgroundColor: COLORS.bg },
+        { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16, backgroundColor: COLORS.bg, opacity: fadeAnim },
       ]}
     >
       <FlatList
@@ -294,7 +452,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
 
           <TouchableOpacity
             testID="onboarding-next"
-            onPress={isLastStep ? complete : next}
+            onPress={isLastStep ? handleFinish : next}
             disabled={claimMutation.isPending}
             style={styles.footerPrimaryBtn}
             activeOpacity={0.8}
@@ -319,7 +477,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
           <ActivityIndicator size="large" color={COLORS.textPrimary} />
         </View>
       ) : null}
-    </View>
+    </Animated.View>
   );
 };
 
@@ -495,5 +653,106 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // ── Role selection styles ────────────────────────────────────────────────
+  roleContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    gap: 16,
+  },
+  roleTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  roleSubtitle: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  roleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+  },
+  roleCardActive: {
+    borderColor: COLORS.orange,
+    backgroundColor: 'rgba(255,122,0,0.07)',
+  },
+  roleCardActiveBlue: {
+    borderColor: COLORS.blue,
+    backgroundColor: COLORS.blueBg,
+  },
+  roleIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roleCardText: {
+    flex: 1,
+    gap: 4,
+  },
+  roleCardTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  roleCardDesc: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    lineHeight: 18,
+  },
+  roleInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  roleInfoText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+  },
+  roleConfirmBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: COLORS.orange,
+    borderRadius: 14,
+    paddingVertical: 15,
+    marginTop: 4,
+  },
+  roleConfirmBtnDisabled: {
+    backgroundColor: 'rgba(255,122,0,0.30)',
+  },
+  roleConfirmBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  roleSkipBtn: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  roleSkipText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontWeight: '500',
   },
 });
