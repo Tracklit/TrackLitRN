@@ -54,6 +54,11 @@
           "cameraPermission": "Allow TrackLit to use the camera flash for the Start Gun feature."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e7439f9b-bace-46f3-97eb-108dbbefaa71"
+      }
+    }
   }
 }
