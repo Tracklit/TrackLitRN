@@ -369,14 +369,14 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
               )}
             </View>
 
-            {/* Calculated Targets — always visible, table scrolls from right */}
+            {/* Speed Table — always visible, table scrolls from right */}
             <View style={styles.section}>
               <View style={styles.sectionHeaderStatic}>
                 <Timer size={13} color={COLORS.accent} weight="fill" />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.sectionTitle, { flex: 0 }]}>Calculated Targets</Text>
+                <Text style={styles.sectionTitle}>
+                  Speed Table{'  '}
                   <Text style={styles.sectionSubtitle}>Change under Options · Race Goals</Text>
-                </View>
+                </Text>
               </View>
               <View style={styles.tableContainer}>
                 {calculateTargetTimes.distances.length === 0 ? (
