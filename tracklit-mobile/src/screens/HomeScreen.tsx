@@ -1087,7 +1087,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           style={styles.practiceCardWrapper}
         >
           <LinearGradient
-            colors={['#1d1333', '#1C1F2B']}
+            colors={['#2d1f6e', '#1e1a3a']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={styles.practiceCard}
@@ -1095,13 +1095,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             {/* Header row */}
             <View style={styles.practiceCardHeader}>
               <View style={styles.practiceCardHeaderLeft}>
-                <View style={styles.practiceCardIconWrap}>
-                  <Image
-                    source={require('../../assets/tracklit-logo.png')}
-                    style={styles.practiceCardLogo}
-                    resizeMode="contain"
-                  />
-                </View>
                 <Text style={styles.practiceCardLabel}>
                   {isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}
                 </Text>
@@ -1963,7 +1956,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(109,40,217,0.3)',
     padding: theme.spacing.xl,
     overflow: 'hidden',
-    minHeight: 190,
+    minHeight: 181,
   },
   practiceCardHeader: {
     flexDirection: 'row',
