@@ -50,6 +50,7 @@ import { cleanSpeechText } from '../utils/speechText';
 import poweredByAria from '../assets/powered-by-aria.png';
 import type { RootStackParamList } from '@/navigation/types';
 import { goBackOrNavigateToScreen, goBackOrNavigateToTab } from '@/navigation/appNavigation';
+import { TIER_LIMITS, TIER_DISPLAY_NAMES, type Tier } from '@/constants/tierEntitlements';
 
 type Role = 'user' | 'assistant';
 
@@ -184,12 +185,16 @@ export const SprinthiaScreen: React.FC = () => {
   const [autoSpeak, setAutoSpeak] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('en-US');
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [lowPromptsDismissed, setLowPromptsDismissed] = useState(false);
   const micPulse = useRef(new Animated.Value(1)).current;
   const micPulseAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const isVoiceActiveRef = useRef(false);
 
+  const tier = (user?.subscriptionTier ?? 'free') as Tier;
+  const tierLimits = TIER_LIMITS[tier] ?? TIER_LIMITS.free;
   const remainingPrompts = isStar ? 'Unlimited' : user?.sprinthiaPrompts ?? 0;
   const isOutOfPrompts = !isStar && ((user?.sprinthiaPrompts ?? 0) <= 0);
+  const isLowPrompts = !isStar && !isOutOfPrompts && typeof remainingPrompts === 'number' && remainingPrompts <= 2;
   const suggestionChips = entryContext === 'rehab' ? REHAB_SUGGESTIONS : DEFAULT_SUGGESTIONS;
 
   useEffect(() => {
@@ -389,8 +394,8 @@ export const SprinthiaScreen: React.FC = () => {
         return;
       }
 
-      if (lowerMessage.includes('prompt')) {
-        setInlineWarning('No prompts remaining. Purchase more to continue using Aria.');
+      if (lowerMessage.includes('prompt') || error.status === 403) {
+        refreshUser?.();
         return;
       }
 
@@ -401,7 +406,7 @@ export const SprinthiaScreen: React.FC = () => {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, fallback]);
-      Alert.alert('Connection issue', error.message || 'Failed to send message to Aria.');
+      Alert.alert('Something went wrong', 'Aria couldn\'t respond — please try again in a moment.');
     },
   });
 
@@ -414,7 +419,6 @@ export const SprinthiaScreen: React.FC = () => {
     }
 
     if (isOutOfPrompts) {
-      setInlineWarning('No prompts remaining. Purchase more to continue using Aria.');
       return;
     }
 
@@ -518,8 +522,15 @@ export const SprinthiaScreen: React.FC = () => {
     }
   };
 
-  const formattedRemaining =
-    typeof remainingPrompts === 'number' ? `${remainingPrompts} prompts` : remainingPrompts;
+  const formattedRemaining = isStar
+    ? 'Unlimited'
+    : `${remainingPrompts} prompt${remainingPrompts === 1 ? '' : 's'}`;
+
+  const promptCounterLabel = isStar
+    ? 'Unlimited prompts'
+    : tierLimits.promptResetPeriod === 'week'
+      ? `${remainingPrompts} prompt${remainingPrompts === 1 ? '' : 's'} left this week`
+      : `${remainingPrompts} prompt${remainingPrompts === 1 ? '' : 's'} left this month`;
 
   const showGreeting = messages.length === 0 && !isThinking;
   const headerSubtitle =
@@ -584,9 +595,20 @@ export const SprinthiaScreen: React.FC = () => {
           </View>
 
           <View style={styles.headerBottomRow}>
-            <Text color="muted" style={styles.subtitle} numberOfLines={1}>
-              {headerSubtitle}
-            </Text>
+            <View style={{ flex: 1, minWidth: 180 }}>
+              <Text color="muted" style={styles.subtitle} numberOfLines={1}>
+                {headerSubtitle}
+              </Text>
+              {!isGuest && (
+                <Text
+                  color="muted"
+                  style={[styles.subtitle, styles.promptCounter, isOutOfPrompts && styles.promptCounterEmpty]}
+                  numberOfLines={1}
+                >
+                  {promptCounterLabel}
+                </Text>
+              )}
+            </View>
 
             <View style={styles.headerControls}>
               <TouchableOpacity
@@ -861,6 +883,27 @@ export const SprinthiaScreen: React.FC = () => {
           )}
         </ScrollView>
 
+        {/* Low prompts amber banner */}
+        {isLowPrompts && !lowPromptsDismissed && (
+          <View style={styles.lowPromptsBanner}>
+            <Text style={styles.lowPromptsBannerText}>
+              {'You\'re almost out — '}
+              <Text weight="semiBold" style={styles.lowPromptsBannerText}>
+                {`${remainingPrompts} prompt${remainingPrompts === 1 ? '' : 's'} remaining`}
+              </Text>
+              {'. Upgrade for more.'}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setLowPromptsDismissed(true)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss warning"
+            >
+              <FontAwesome5 name="times" size={14} color="#92400e" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Input */}
         <View
           style={[
@@ -868,68 +911,90 @@ export const SprinthiaScreen: React.FC = () => {
             { paddingBottom: getBottomNavOverlayHeight(insets.bottom) },
           ]}
         >
-          <View style={styles.inputRow}>
-            <Animated.View style={{ transform: [{ scale: micPulse }] }}>
+          {isOutOfPrompts ? (
+            <View style={styles.outOfPromptsCard}>
+              <Text weight="semiBold" color="foreground" style={styles.outOfPromptsTitle}>
+                You've used all your Aria prompts
+              </Text>
+              <Text color="muted" style={styles.outOfPromptsBody}>
+                {`${TIER_DISPLAY_NAMES[tier]} plan includes ${typeof tierLimits.ariaPrompts === 'number' ? tierLimits.ariaPrompts : 'unlimited'} prompts${tierLimits.promptResetPeriod !== 'unlimited' ? ` per ${tierLimits.promptResetPeriod}` : ''}. Upgrade to Pro for 50/month, or Elite for unlimited.`}
+              </Text>
               <TouchableOpacity
-                style={[
-                  styles.micButton,
-                  isListening ? styles.micButtonActive : styles.micButtonInactive,
-                ]}
-                onPress={isListening ? stopVoiceInput : startVoiceInput}
-                disabled={isGuest || isOutOfPrompts || (!isListening && isThinking)}
+                style={styles.upgradeButton}
+                onPress={() => navigation.navigate('Subscriptions')}
                 accessibilityRole="button"
-                accessibilityLabel={isListening ? 'Stop recording' : 'Start recording'}
-                accessibilityHint={isListening ? 'Tap to stop and use the transcription' : 'Tap to start recording'}
+                accessibilityLabel="Upgrade your plan"
               >
-                {isListening ? <StopCircle size={20} color={WHITE} /> : <Mic size={18} color={WHITE} />}
-              </TouchableOpacity>
-            </Animated.View>
-            <View style={styles.inputShell}>
-              <TextInput
-                style={styles.textInput}
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder={
-                  isListening
-                    ? 'Listening... tap mic to stop'
-                    : isGuest
-                      ? 'Sign in to chat with Aria...'
-                      : 'Ask Aria about training, races, rehabilitation, or nutrition...'
-                }
-                placeholderTextColor={theme.colors.textMuted}
-                multiline
-                maxLength={800}
-                editable={!isGuest && !isOutOfPrompts && !isListening && !isThinking}
-                onSubmitEditing={handleSendMessage}
-                returnKeyType="send"
-              />
-              <TouchableOpacity
-                style={[
-                  styles.sendButton,
-                  inputText.trim() && !isThinking && !isOutOfPrompts && !isListening
-                    ? styles.sendButtonActive
-                    : styles.sendButtonDisabled,
-                ]}
-                onPress={handleSendMessage}
-                disabled={!inputText.trim() || isThinking || isOutOfPrompts || isGuest || isListening}
-              >
-                <FontAwesome5
-                  name="paper-plane"
-                  size={16}
-                  color={
-                    inputText.trim() && !isThinking && !isOutOfPrompts && !isListening
-                      ? 'white'
-                      : theme.colors.textMuted
-                  }
-                />
+                <Text weight="semiBold" style={styles.upgradeButtonText}>
+                  Upgrade Plan
+                </Text>
               </TouchableOpacity>
             </View>
-          </View>
-          {(inlineWarning || isOutOfPrompts) && (
-            <Text color="muted" style={styles.promptWarning}>
-              {inlineWarning ||
-                "You've used all your prompts. Upgrade to Pro or Star to continue using Aria."}
-            </Text>
+          ) : (
+            <>
+              <View style={styles.inputRow}>
+                <Animated.View style={{ transform: [{ scale: micPulse }] }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.micButton,
+                      isListening ? styles.micButtonActive : styles.micButtonInactive,
+                    ]}
+                    onPress={isListening ? stopVoiceInput : startVoiceInput}
+                    disabled={isGuest || (!isListening && isThinking)}
+                    accessibilityRole="button"
+                    accessibilityLabel={isListening ? 'Stop recording' : 'Start recording'}
+                    accessibilityHint={isListening ? 'Tap to stop and use the transcription' : 'Tap to start recording'}
+                  >
+                    {isListening ? <StopCircle size={20} color={WHITE} /> : <Mic size={18} color={WHITE} />}
+                  </TouchableOpacity>
+                </Animated.View>
+                <View style={styles.inputShell}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={inputText}
+                    onChangeText={setInputText}
+                    placeholder={
+                      isListening
+                        ? 'Listening... tap mic to stop'
+                        : isGuest
+                          ? 'Sign in to chat with Aria...'
+                          : 'Ask Aria about training, races, rehabilitation, or nutrition...'
+                    }
+                    placeholderTextColor={theme.colors.textMuted}
+                    multiline
+                    maxLength={800}
+                    editable={!isGuest && !isListening && !isThinking}
+                    onSubmitEditing={handleSendMessage}
+                    returnKeyType="send"
+                  />
+                  <TouchableOpacity
+                    style={[
+                      styles.sendButton,
+                      inputText.trim() && !isThinking && !isListening
+                        ? styles.sendButtonActive
+                        : styles.sendButtonDisabled,
+                    ]}
+                    onPress={handleSendMessage}
+                    disabled={!inputText.trim() || isThinking || isGuest || isListening}
+                  >
+                    <FontAwesome5
+                      name="paper-plane"
+                      size={16}
+                      color={
+                        inputText.trim() && !isThinking && !isListening
+                          ? 'white'
+                          : theme.colors.textMuted
+                      }
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              {inlineWarning && (
+                <Text color="muted" style={styles.promptWarning}>
+                  {inlineWarning}
+                </Text>
+              )}
+            </>
           )}
         </View>
       </KeyboardAvoidingView>
@@ -1003,8 +1068,15 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 2,
-    flex: 1,
-    minWidth: 180,
+  },
+  promptCounter: {
+    fontSize: 11,
+    marginTop: 2,
+    opacity: 0.75,
+  },
+  promptCounterEmpty: {
+    color: '#ef4444',
+    opacity: 1,
   },
   headerControls: {
     flexDirection: 'row',
@@ -1336,5 +1408,49 @@ const styles = StyleSheet.create({
   promptWarning: {
     marginTop: 8,
     fontSize: 13,
+  },
+  lowPromptsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: 10,
+    backgroundColor: '#fef3c7',
+    borderTopWidth: 1,
+    borderTopColor: '#fde68a',
+    gap: theme.spacing.sm,
+  },
+  lowPromptsBannerText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#92400e',
+    lineHeight: 18,
+  },
+  outOfPromptsCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.25)',
+    backgroundColor: 'rgba(239,68,68,0.08)',
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  outOfPromptsTitle: {
+    fontSize: 15,
+  },
+  outOfPromptsBody: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  upgradeButton: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#FF7A00',
+  },
+  upgradeButtonText: {
+    color: WHITE,
+    fontSize: 14,
   },
 });
