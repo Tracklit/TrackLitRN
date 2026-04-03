@@ -25,6 +25,7 @@ import {
   ChartLineUp,
   CurrencyDollar,
   ArrowRight,
+  ClipboardText,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -37,7 +38,7 @@ import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
-type PageKey = 'athletes' | 'subscriptions';
+type PageKey = 'teamBoard' | 'myAthletes' | 'subscriptions';
 
 const C = {
   bg: '#0E0F14',
@@ -172,7 +173,7 @@ export const CoachDashboardScreen: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
 
-  const [page, setPage] = useState<PageKey>('athletes');
+  const [page, setPage] = useState<PageKey>('teamBoard');
   const [athleteListOpen, setAthleteListOpen] = useState(true);
 
   const athletesQuery = useQuery({
@@ -277,7 +278,7 @@ export const CoachDashboardScreen: React.FC = () => {
       </View>
 
       <View style={styles.pageTabRow}>
-        {(['athletes', 'subscriptions'] as PageKey[]).map((key) => (
+        {(['teamBoard', 'myAthletes', 'subscriptions'] as PageKey[]).map((key) => (
           <TouchableOpacity
             key={key}
             style={[styles.pageTab, page === key && styles.pageTabActive]}
@@ -285,7 +286,7 @@ export const CoachDashboardScreen: React.FC = () => {
             activeOpacity={0.7}
           >
             <Text style={[styles.pageTabText, page === key && styles.pageTabTextActive]}>
-              {key === 'athletes' ? 'My Athletes' : 'Subscriptions'}
+              {key === 'teamBoard' ? 'Team Board' : key === 'myAthletes' ? 'My Athletes' : 'Subscriptions'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -295,10 +296,10 @@ export const CoachDashboardScreen: React.FC = () => {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 96 }]}
         showsVerticalScrollIndicator={false}
       >
-        {page === 'athletes' && (
+        {page === 'teamBoard' && (
           <>
             {isGuest ? (
-              <EmptyState icon={<Users size={40} color={C.textMuted} weight="fill" />} text="Sign in to view your athletes." />
+              <EmptyState icon={<ChartLineUp size={40} color={C.textMuted} weight="fill" />} text="Sign in to view your team board." />
             ) : (
               <>
                 <MoodSummaryCard
@@ -308,77 +309,6 @@ export const CoachDashboardScreen: React.FC = () => {
                   isLoading={moodStatsQuery.isLoading}
                   onPress={() => navigation.navigate('CoachTeamMood')}
                 />
-
-                <View style={styles.section}>
-                  <TouchableOpacity
-                    style={styles.sectionHeader}
-                    onPress={() => setAthleteListOpen(v => !v)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.sectionHeaderLeft}>
-                      <Users size={14} color={C.orange} weight="fill" />
-                      <Text style={styles.sectionTitle}>
-                        Athletes ({athletes.length})
-                      </Text>
-                    </View>
-                    {athleteListOpen
-                      ? <CaretDown size={14} color={C.textMuted} weight="bold" />
-                      : <CaretRight size={14} color={C.textMuted} weight="bold" />
-                    }
-                  </TouchableOpacity>
-
-                  {athleteListOpen && (
-                    <View style={styles.card}>
-                      {athletesQuery.isLoading ? (
-                        <SkeletonListRows count={4} />
-                      ) : athletes.length === 0 ? (
-                        <EmptyState
-                          icon={<Users size={32} color={C.textMuted} weight="fill" />}
-                          text="No athletes yet. Athletes will appear once they connect with you."
-                          compact
-                        />
-                      ) : (
-                        athletes.map((athlete, idx) => {
-                          const moodAvg = moodByAthlete[athlete.id] ?? null;
-                          return (
-                            <View key={athlete.id}>
-                              {idx > 0 && <View style={styles.rowDivider} />}
-                              <View style={styles.athleteRow}>
-                                <TouchableOpacity
-                                  style={styles.athleteInfo}
-                                  onPress={() => handleAthletePress(athlete)}
-                                  activeOpacity={0.7}
-                                >
-                                  <Avatar
-                                    size="sm"
-                                    fallback={(athlete.name || athlete.username || 'U').slice(0, 2)}
-                                    src={athlete.profileImageUrl || undefined}
-                                  />
-                                  <View style={styles.athleteText}>
-                                    <View style={styles.athleteNameRow}>
-                                      <Text style={styles.athleteName} numberOfLines={1}>
-                                        {athlete.name || 'Athlete'}
-                                      </Text>
-                                      <MoodDot avg={moodAvg} />
-                                    </View>
-                                    <Text style={styles.athleteUsername}>@{athlete.username}</Text>
-                                  </View>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                  style={styles.dmButton}
-                                  onPress={() => startDMMutation.mutate(athlete.id)}
-                                  activeOpacity={0.7}
-                                >
-                                  <PaperPlaneTilt size={14} color={C.orange} weight="fill" />
-                                </TouchableOpacity>
-                              </View>
-                            </View>
-                          );
-                        })
-                      )}
-                    </View>
-                  )}
-                </View>
 
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
@@ -410,6 +340,7 @@ export const CoachDashboardScreen: React.FC = () => {
                               athleteId: entry.athleteId,
                               athleteName: entry.athleteName,
                               athleteUsername: entry.athleteUsername,
+                              athleteProfileImageUrl: entry.athleteProfileImageUrl,
                             })
                           }
                         >
@@ -445,6 +376,107 @@ export const CoachDashboardScreen: React.FC = () => {
                   )}
                 </View>
               </>
+            )}
+          </>
+        )}
+
+        {page === 'myAthletes' && (
+          <>
+            {isGuest ? (
+              <EmptyState icon={<Users size={40} color={C.textMuted} weight="fill" />} text="Sign in to view your athletes." />
+            ) : (
+              <View style={styles.section}>
+                <TouchableOpacity
+                  style={styles.sectionHeader}
+                  onPress={() => setAthleteListOpen(v => !v)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.sectionHeaderLeft}>
+                    <Users size={14} color={C.orange} weight="fill" />
+                    <Text style={styles.sectionTitle}>
+                      Athletes ({athletes.length})
+                    </Text>
+                  </View>
+                  {athleteListOpen
+                    ? <CaretDown size={14} color={C.textMuted} weight="bold" />
+                    : <CaretRight size={14} color={C.textMuted} weight="bold" />
+                  }
+                </TouchableOpacity>
+
+                {athleteListOpen && (
+                  <View style={styles.card}>
+                    {athletesQuery.isLoading ? (
+                      <SkeletonListRows count={4} />
+                    ) : athletes.length === 0 ? (
+                      <EmptyState
+                        icon={<Users size={32} color={C.textMuted} weight="fill" />}
+                        text="No athletes yet. Athletes will appear once they connect with you."
+                        compact
+                      />
+                    ) : (
+                      athletes.map((athlete, idx) => {
+                        const moodAvg = moodByAthlete[athlete.id] ?? null;
+                        return (
+                          <View key={athlete.id}>
+                            {idx > 0 && <View style={styles.rowDivider} />}
+                            <View style={styles.athleteRow}>
+                              <TouchableOpacity
+                                style={styles.athleteInfo}
+                                onPress={() =>
+                                  navigation.navigate('CoachAthleteDetail', {
+                                    athleteId: athlete.id,
+                                    athleteName: athlete.name ?? null,
+                                    athleteUsername: athlete.username,
+                                    athleteProfileImageUrl: athlete.profileImageUrl ?? null,
+                                  })
+                                }
+                                activeOpacity={0.7}
+                              >
+                                <Avatar
+                                  size="sm"
+                                  fallback={(athlete.name || athlete.username || 'U').slice(0, 2)}
+                                  src={athlete.profileImageUrl || undefined}
+                                />
+                                <View style={styles.athleteText}>
+                                  <View style={styles.athleteNameRow}>
+                                    <Text style={styles.athleteName} numberOfLines={1}>
+                                      {athlete.name || 'Athlete'}
+                                    </Text>
+                                    <MoodDot avg={moodAvg} />
+                                  </View>
+                                  <Text style={styles.athleteUsername}>@{athlete.username}</Text>
+                                </View>
+                              </TouchableOpacity>
+                              <View style={styles.athleteActions}>
+                                <TouchableOpacity
+                                  style={styles.dmButton}
+                                  onPress={() => startDMMutation.mutate(athlete.id)}
+                                  activeOpacity={0.7}
+                                >
+                                  <PaperPlaneTilt size={14} color={C.orange} weight="fill" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={styles.assignButton}
+                                  onPress={() =>
+                                    navigation.navigate('CoachAssignProgram', {
+                                      athleteId: athlete.id,
+                                      athleteName: athlete.name ?? null,
+                                      athleteUsername: athlete.username,
+                                    })
+                                  }
+                                  activeOpacity={0.7}
+                                >
+                                  <ClipboardText size={14} color={C.orange} weight="fill" />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
+                )}
+              </View>
             )}
           </>
         )}
@@ -854,7 +886,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: C.textMuted,
   },
+  athleteActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   dmButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,122,0,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
+  },
+  assignButton: {
     width: 32,
     height: 32,
     borderRadius: 10,

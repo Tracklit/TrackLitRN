@@ -727,6 +727,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     enabled: !!userId && userId !== 'guest',
   });
 
+  const { data: coachJournalEntries = [] } = useQuery({
+    queryKey: ['coach-journal-home'],
+    queryFn: () => apiRequest<any[]>('/api/coaches/journal-entries?limit=3'),
+    staleTime: 60000,
+    enabled: !!userId && userId !== 'guest' && (user as any)?.isCoach === true,
+  });
+
   const [lastUsedTool, setLastUsedTool] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1092,7 +1099,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         {/* Practice Card */}
         <TouchableOpacity
           activeOpacity={0.85}
-          onPress={() => handleCardPress('Training')}
+          onPress={() => handleCardPress(isCoach ? 'CoachDashboard' : 'Training')}
           style={styles.practiceCardWrapper}
         >
           <LinearGradient
@@ -1105,13 +1112,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             <View style={styles.practiceCardHeader}>
               <View style={styles.practiceCardHeaderLeft}>
                 <Text style={styles.practiceCardLabel}>
-                  {isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}
+                  {isCoach ? 'TEAM ACTIVITY' : isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}
                 </Text>
               </View>
               <CaretRight size={13} color="rgba(255,255,255,0.25)" weight="bold" />
             </View>
 
-            {isTextBasedProgram ? (
+            {isCoach ? (
+              coachJournalEntries.length > 0 ? (
+                <View style={{ gap: 6 }}>
+                  {(coachJournalEntries as any[]).slice(0, 2).map((entry: any) => (
+                    <View key={entry.id} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                      <Text style={{ fontSize: 11, color: '#FF7A00', fontWeight: '700', minWidth: 80 }} numberOfLines={1}>
+                        {entry.athleteName || `@${entry.athleteUsername}`}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', flex: 1 }} numberOfLines={1}>
+                        {entry.title || entry.notes || entry.content || 'Journal entry'}
+                      </Text>
+                    </View>
+                  ))}
+                  {(coachJournalEntries as any[]).length > 2 && (
+                    <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>
+                      +{(coachJournalEntries as any[]).length - 2} more — tap to view all
+                    </Text>
+                  )}
+                </View>
+              ) : (
+                <Text style={styles.practiceNoSession}>
+                  No recent athlete activity
+                </Text>
+              )
+            ) : isTextBasedProgram ? (
               <Text style={styles.practiceTapPrompt}>
                 Tap to open your program
               </Text>
