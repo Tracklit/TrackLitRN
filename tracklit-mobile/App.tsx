@@ -44,6 +44,7 @@ import {
   ArrowLeft,
   X,
   UserCircle,
+  Star,
   type Icon,
 } from 'phosphor-react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -110,6 +111,7 @@ import { ExerciseLibraryAddScreen } from './src/screens/ExerciseLibraryAddScreen
 import { VelocityTrackerScreen } from './src/screens/VelocityTrackerScreen';
 import { SprintTimePredictionScreen } from './src/screens/SprintTimePredictionScreen';
 import { AdminPanelWebViewScreen } from './src/screens/AdminPanelWebViewScreen';
+import { AppTierScreen } from './src/screens/AppTierScreen';
 import type { TabParamList, RootStackParamList, AuthStackParamList } from './src/navigation/types';
 import { navigateToTab } from './src/navigation/appNavigation';
 import { queryClient } from './src/lib/queryClient';
@@ -171,6 +173,7 @@ const LOCAL_BACK_ROUTE_NAMES = new Set<keyof RootStackParamList>([
   'SpikesInfo',
   'SpikesProgress',
   'Subscriptions',
+  'AppTier',
   'AdminPanelWebView',
 ]);
 
@@ -218,7 +221,7 @@ const HomeTabScreen: React.FC<HomeTabProps> = ({ navigation }) => (
       const rootStackScreens = new Set([
         'Marketplace', 'Chat', 'Notifications', 'Sprinthia', 'Rehab', 'Spikes',
         'PhotoFinish', 'StartGun', 'Stopwatch', 'IntervalTimer', 'Journal', 'ExerciseLibrary',
-        'VelocityTracker', 'Subscriptions', 'Athletes', 'Coaches', 'AdminPanelWebView',
+        'VelocityTracker', 'Subscriptions', 'Athletes', 'Coaches', 'AdminPanelWebView', 'AppTier',
       ]);
       if (rootStackScreens.has(routeName)) {
         rootNavigation.navigate(routeName as any);
@@ -306,6 +309,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="SpikesInfo" component={SpikesInfoScreen} />
     <RootStack.Screen name="SpikesProgress" component={SpikesProgressScreen} />
     <RootStack.Screen name="Subscriptions" component={SubscriptionsScreen} />
+    <RootStack.Screen name="AppTier" component={AppTierScreen} />
     <RootStack.Screen name="AdminPanelWebView" component={AdminPanelWebViewScreen} />
   </RootStack.Navigator>
 );
@@ -563,10 +567,16 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             navigateIntoAppStack({ screen: 'Spikes' }),
         },
         {
-          label: 'My Subscriptions',
+          label: 'My Athletes',
           IconComponent: Heart,
           onPress: () =>
-            navigateIntoAppStack({ screen: 'Subscriptions' }),
+            navigateIntoAppStack({ screen: 'MyAthletes' }),
+        },
+        {
+          label: 'App Plan',
+          IconComponent: Star,
+          onPress: () =>
+            navigateIntoAppStack({ screen: 'AppTier' }),
         },
       ],
     },

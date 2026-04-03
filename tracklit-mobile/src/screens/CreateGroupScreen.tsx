@@ -9,6 +9,7 @@ import {
   Image,
   ActivityIndicator,
   Switch,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -24,6 +25,7 @@ import {
   Lock,
   UsersThree,
   Warning,
+  Star,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -34,6 +36,7 @@ import { getToken } from '@/lib/tokenStorage';
 import { env } from '@/config/env';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
+import { TIER_LIMITS, resolveUserTier } from '@/constants/tierEntitlements';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -65,12 +68,19 @@ export const CreateGroupScreen: React.FC = () => {
   const isGuest   = user?.id === 'guest';
   const canUse    = isAuthenticated && !isGuest;
 
+  const userTier  = resolveUserTier((user as any)?.subscriptionTier);
+  const tierLimits = TIER_LIMITS[userTier];
+  const maxGroups = tierLimits.unlimitedGroups ? null : (tierLimits as any).maxGroups ?? 3;
+  const maxMembersPerGroup = tierLimits.unlimitedMembers ? null : (tierLimits as any).maxMembersPerGroup ?? MAX_MEMBERS;
+
   const [name,            setName]            = useState('');
   const [description,     setDescription]     = useState('');
   const [isPrivate,       setIsPrivate]       = useState(false);
   const [imageUri,        setImageUri]        = useState<string | null>(null);
   const [selected,        setSelected]        = useState<Friend[]>([]);
   const [submitting,      setSubmitting]      = useState(false);
+  const [showPaywall,     setShowPaywall]      = useState(false);
+  const [paywallMessage,  setPaywallMessage]  = useState('');
 
   // ── load connections ──────────────────────────────────────────────────────
   const friendsQuery = useQuery({
@@ -79,6 +89,13 @@ export const CreateGroupScreen: React.FC = () => {
     enabled:  canUse,
   });
   const friends = friendsQuery.data ?? [];
+
+  const groupsQuery = useQuery({
+    queryKey: ['chat-groups'],
+    queryFn:  () => apiRequest<{ id: number }[]>('/api/chat/groups'),
+    enabled:  canUse,
+  });
+  const existingGroupCount = (groupsQuery.data ?? []).length;
 
   // ── pick image ────────────────────────────────────────────────────────────
   const pickImage = useCallback(async () => {
@@ -98,23 +115,54 @@ export const CreateGroupScreen: React.FC = () => {
     }
   }, []);
 
+  // ── paywall helper ────────────────────────────────────────────────────────
+  const showGroupPaywall = useCallback((msg: string) => {
+    setPaywallMessage(msg);
+    setShowPaywall(true);
+  }, []);
+
   // ── toggle member ─────────────────────────────────────────────────────────
+  const effectiveMaxMembers = maxMembersPerGroup ?? MAX_MEMBERS;
   const toggleMember = useCallback((friend: Friend) => {
     setSelected(prev => {
       if (prev.some(m => m.id === friend.id)) {
         return prev.filter(m => m.id !== friend.id);
       }
-      if (prev.length >= MAX_MEMBERS - 1) {
-        Alert.alert('Limit reached', `Groups are limited to ${MAX_MEMBERS} members.`);
+      if (prev.length >= effectiveMaxMembers - 1) {
+        if (maxMembersPerGroup !== null && userTier === 'free') {
+          showGroupPaywall(
+            `Free plan allows up to ${effectiveMaxMembers} members per group.\nUpgrade to Pro for up to 30 members, or Elite for unlimited.`
+          );
+        } else if (maxMembersPerGroup !== null && userTier === 'pro') {
+          showGroupPaywall(
+            `Pro plan allows up to ${effectiveMaxMembers} members per group.\nUpgrade to Elite for unlimited members.`
+          );
+        } else {
+          Alert.alert('Limit reached', `Groups are limited to ${effectiveMaxMembers} members.`);
+        }
         return prev;
       }
       return [...prev, friend];
     });
-  }, []);
+  }, [effectiveMaxMembers, maxMembersPerGroup, userTier, showGroupPaywall]);
 
   // ── submit ────────────────────────────────────────────────────────────────
   const handleCreate = useCallback(async () => {
     if (!canUse || !name.trim() || submitting) return;
+
+    if (maxGroups !== null && existingGroupCount >= maxGroups) {
+      if (userTier === 'free') {
+        showGroupPaywall(
+          `Free plan includes ${maxGroups} groups. Upgrade to Pro for more, or Elite for unlimited.`
+        );
+      } else if (userTier === 'pro') {
+        showGroupPaywall(
+          `Pro plan includes ${maxGroups} groups. Upgrade to Elite for unlimited groups.`
+        );
+      }
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -187,7 +235,7 @@ export const CreateGroupScreen: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [canUse, name, description, isPrivate, imageUri, selected, submitting, nav]);
+  }, [canUse, name, description, isPrivate, imageUri, selected, submitting, nav, maxGroups, existingGroupCount, userTier, showGroupPaywall]);
 
   const canSubmit = canUse && name.trim().length > 0 && !submitting;
 
@@ -294,13 +342,13 @@ export const CreateGroupScreen: React.FC = () => {
             {/* members header */}
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Add Members</Text>
-              <Text style={styles.sectionCount}>{selected.length}/{MAX_MEMBERS - 1}</Text>
+              <Text style={styles.sectionCount}>{selected.length}/{effectiveMaxMembers - 1}</Text>
             </View>
 
-            {selected.length >= MAX_MEMBERS - 1 && (
+            {selected.length >= effectiveMaxMembers - 1 && (
               <View style={styles.limitBanner}>
                 <Warning size={14} color={C.orange} weight="fill" />
-                <Text style={styles.limitText}>Member limit reached ({MAX_MEMBERS})</Text>
+                <Text style={styles.limitText}>Member limit reached ({effectiveMaxMembers})</Text>
               </View>
             )}
 
@@ -354,6 +402,43 @@ export const CreateGroupScreen: React.FC = () => {
           </>
         )}
       </ScrollView>
+
+      <Modal
+        visible={showPaywall}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPaywall(false)}
+      >
+        <TouchableOpacity
+          style={styles.paywallOverlay}
+          activeOpacity={1}
+          onPress={() => setShowPaywall(false)}
+        >
+          <View style={styles.paywallSheet}>
+            <View style={styles.paywallHandle} />
+            <Star size={32} color="#FF7A00" weight="fill" style={{ alignSelf: 'center', marginBottom: 12 }} />
+            <Text style={styles.paywallTitle}>Upgrade Your Plan</Text>
+            <Text style={styles.paywallBody}>{paywallMessage}</Text>
+            <TouchableOpacity
+              style={styles.paywallUpgradeBtn}
+              onPress={() => {
+                setShowPaywall(false);
+                nav.navigate('AppTier');
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.paywallUpgradeBtnText}>View Plans</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.paywallDismissBtn}
+              onPress={() => setShowPaywall(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.paywallDismissBtnText}>Not Now</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -443,4 +528,57 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   checkboxOn: { borderColor: C.orange, backgroundColor: 'rgba(255,122,0,0.1)' },
+  paywallOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  paywallSheet: {
+    backgroundColor: '#1C1F2B',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 36,
+    gap: 12,
+  },
+  paywallHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignSelf: 'center',
+    marginBottom: 8,
+  },
+  paywallTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  paywallBody: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  paywallUpgradeBtn: {
+    backgroundColor: '#FF7A00',
+    borderRadius: 10,
+    paddingVertical: 13,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  paywallUpgradeBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#000',
+  },
+  paywallDismissBtn: {
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  paywallDismissBtnText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.5)',
+  },
 });

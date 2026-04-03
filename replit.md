@@ -74,8 +74,10 @@ The `ProgramCreateScreen` offers 4 methods: Import/Upload (navigates to ProgramI
 ## Coaching & Social Features
 - **Athletes Screen**: Directory of all users. Connect button shows "Connected" (grayed out) for athletes where `isAlreadyFriend || athlete.isFollowing`. Tapping an athlete navigates to their PublicProfile. Connection uses `/api/follow/${id}`.
 - **Coaches Screen**: Directory of coaches. Request coaching uses `/api/follow/${coachId}` (same follow pattern as athletes). Optimistic "Requested" state via `pendingRequests` Set.
-- **My Athletes Screen** (`MyAthletesScreen`): Coach-only screen showing accepted athletes from `/api/coach/athletes`, accessible via drawer
-- **Subscriptions Screen**: Dark premium styled, 3 tabs (My Subscriptions, My Subscribers, My Offering)
+- **My Athletes Screen** (`MyAthletesScreen`): Merged screen with 4 tabs: Athletes (coach-only: accepted athlete list), Subscribers (coach-only: athletes paying this coach), My Subs (subscriptions this user pays to coaches), Offering (coach-only: published subscription product). Non-coach users see only the "My Subs" tab. Accessible from drawer (replaces the old Subscriptions route for coach billing). Points to `/api/coach/athletes`, `/api/my-subscriptions`, `/api/my-subscribers`, `/api/my-subscription`.
+- **App Plan Screen** (`AppTierScreen`): New tier comparison screen showing Free / Pro / Elite cards with entitlements, current plan highlight with badge, and upgrade CTAs (stub — links to external URL). Registered as `AppTier` route in RootStack. Accessible from drawer "App Plan" item (all users) and paywall bottom sheets.
+- **Tier Entitlements** (`src/constants/tierEntitlements.ts`): `TIER_LIMITS`, `TIER_DISPLAY_NAMES`, `TIER_PRICES`, `TIER_ENTITLEMENT_LABELS`, `resolveUserTier` constants and utilities for tier-based feature gating.
+- **Group Chat Tier Enforcement**: `CreateGroupScreen` checks user's group count against `TIER_LIMITS[tier].maxGroups` before creating. `GroupSettingsScreen` checks member count against `TIER_LIMITS[tier].maxMembersPerGroup` before adding a member. Both show a paywall bottom sheet with "View Plans" → `AppTier` navigation.
 
 ## Rehabilitation Module
 - **RehabScreen**: Hub with 4 categories (Acute Muscle, Chronic, Back, Bone Breaks). No hamburger/drawer button — only a back arrow.

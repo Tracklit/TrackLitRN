@@ -64,6 +64,7 @@ export type RootStackParamList = {
   SpikesInfo: undefined;
   SpikesProgress: undefined;
   Subscriptions: undefined;
+  AppTier: undefined;
   PhotoFinishAnalysis: { uri?: string; fileName?: string };
   AdminPanelWebView:
     | {
