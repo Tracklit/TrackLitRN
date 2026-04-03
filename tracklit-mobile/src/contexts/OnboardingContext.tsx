@@ -78,12 +78,13 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const stored = await readOnboardingState(userId);
       if (cancelled) return;
 
-      const hasCompleted =
-        stored?.version === ONBOARDING_VERSION && stored.completed === true;
+      // TEMP: always show onboarding for testing — remove before release
+      const hasCompleted = false;
+      void stored;
 
       if (hasCompleted) {
         setIsActive(false);
-        setCurrentStepIndex(clamp(stored.stepIndex ?? 0, 0, steps.length - 1));
+        setCurrentStepIndex(clamp(stored?.stepIndex ?? 0, 0, steps.length - 1));
         setIsReady(true);
         return;
       }

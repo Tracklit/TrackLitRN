@@ -944,21 +944,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
             <>
               <TouchableOpacity
                 style={styles.headerActionButton}
-                onPress={() => onNavigate?.('Notifications')}
-                accessibilityRole="button"
-                accessibilityLabel="Notifications"
-              >
-              <Bell size={25} color="#94a3b8" weight="fill" />
-              {unreadNotifications > 0 && (
-                <View style={styles.badge}>
-                  <Text variant="caption" weight="bold" color="foreground">
-                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
-                  </Text>
-                </View>
-              )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.headerActionButton, styles.headerActionButtonGap]}
                 onPress={() => onNavigate?.('Chat')}
                 accessibilityRole="button"
                 accessibilityLabel="Messages"
@@ -968,6 +953,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
                     {unreadMessages > 99 ? '99+' : unreadMessages}
+                  </Text>
+                </View>
+              )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.headerActionButton, styles.headerActionButtonGap]}
+                onPress={() => onNavigate?.('Notifications')}
+                accessibilityRole="button"
+                accessibilityLabel="Notifications"
+              >
+              <Bell size={25} color="#94a3b8" weight="fill" />
+              {unreadNotifications > 0 && (
+                <View style={styles.badge}>
+                  <Text variant="caption" weight="bold" color="foreground">
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
                   </Text>
                 </View>
               )}
@@ -1103,7 +1103,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           style={styles.practiceCardWrapper}
         >
           <LinearGradient
-            colors={['#2d1f6e', '#1e1a3a']}
+            colors={['#1C1F2B', '#13151F']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={styles.practiceCard}
