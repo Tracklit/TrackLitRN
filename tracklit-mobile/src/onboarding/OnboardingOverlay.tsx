@@ -113,7 +113,6 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
   const flatListRef = useRef<FlatList>(null);
   const totalSteps = steps.length;
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const roleFadeAnim = useRef(new Animated.Value(0)).current;
 
   const [claimedSpikes, setClaimedSpikes] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
@@ -131,9 +130,8 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
       setShowRoleSelect(false);
       setRoleChoice(null);
       fadeAnim.setValue(1);
-      roleFadeAnim.setValue(0);
     }
-  }, [isActive, fadeAnim, roleFadeAnim]);
+  }, [isActive, fadeAnim]);
 
   useEffect(() => {
     if (isActive && flatListRef.current && !showRoleSelect) {
@@ -201,16 +199,10 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     }
   }, [currentStepIndex, totalSteps, goToStep]);
 
-  // Instead of calling complete() directly on Finish, show the role picker with a fade-in
+  // Instead of calling complete() directly on Finish, show the role picker
   const handleFinish = useCallback(() => {
-    roleFadeAnim.setValue(0);
     setShowRoleSelect(true);
-    Animated.timing(roleFadeAnim, {
-      toValue: 1,
-      duration: 350,
-      useNativeDriver: true,
-    }).start();
-  }, [roleFadeAnim]);
+  }, []);
 
   const handleRoleConfirm = useCallback(() => {
     if (!roleChoice || roleSetMutation.isPending) return;
@@ -311,7 +303,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
             paddingTop: insets.top + 16,
             paddingBottom: insets.bottom + 24,
             backgroundColor: COLORS.bg,
-            opacity: Animated.multiply(fadeAnim, roleFadeAnim),
+            opacity: fadeAnim,
           },
         ]}
       >
