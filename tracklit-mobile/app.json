@@ -19,7 +19,8 @@
         "NSPhotoLibraryUsageDescription": "Allow TrackLit to access your photo library for uploads.",
         "NSPhotoLibraryAddUsageDescription": "Allow TrackLit to save media to your photo library.",
         "NSSpeechRecognitionUsageDescription": "Allow TrackLit to transcribe your voice notes.",
-        "NSCameraUsageDescription": "Allow TrackLit to use the camera flash for the Start Gun feature."
+        "NSCameraUsageDescription": "Allow TrackLit to use the camera flash for the Start Gun feature.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "appleTeamId": "3J66W9Z8S7"
     },
