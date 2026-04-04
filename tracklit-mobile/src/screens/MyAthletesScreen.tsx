@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   TextInput,
   ScrollView,
+  Modal,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
@@ -19,6 +21,8 @@ import {
   CurrencyDollar,
   GearSix,
   XCircle,
+  UserPlus,
+  X,
 } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -45,6 +49,13 @@ const C = {
   blue: '#3b82f6',
   green: '#22c55e',
 };
+
+interface Friend {
+  id: number;
+  username: string;
+  name?: string | null;
+  profileImageUrl?: string | null;
+}
 
 interface CoachAthlete {
   id: number;
@@ -104,6 +115,8 @@ export const MyAthletesScreen: React.FC = () => {
 
   const [tab, setTab] = useState<TabKey>(isCoach ? 'athletes' : 'mySubs');
   const [search, setSearch] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addSearch, setAddSearch] = useState('');
 
   const athletesQuery = useQuery({
     queryKey: ['coach-athletes'],
@@ -129,7 +142,38 @@ export const MyAthletesScreen: React.FC = () => {
     enabled: isAuthenticated && !isGuest && isCoach,
   });
 
+  const friendsQuery = useQuery({
+    queryKey: ['friends'],
+    queryFn: () => apiRequest<Friend[]>('/api/friends'),
+    enabled: isAuthenticated && !isGuest && isCoach && showAddModal,
+  });
+
+  const addAthleteMutation = useMutation({
+    mutationFn: (athleteId: number) =>
+      apiRequest('/api/coach/athletes', { method: 'POST', data: { athleteId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coach-athletes'] });
+      setShowAddModal(false);
+      setAddSearch('');
+    },
+    onError: (error: any) => {
+      Alert.alert('Failed to add athlete', error?.message || 'Please try again.');
+    },
+  });
+
   const athletes = athletesQuery.data ?? [];
+  const friends = friendsQuery.data ?? [];
+
+  const availableConnections = useMemo(() => {
+    const athleteIds = new Set(athletes.map((a) => a.id));
+    const filtered = friends.filter((f) => !athleteIds.has(f.id));
+    if (!addSearch.trim()) return filtered;
+    const q = addSearch.trim().toLowerCase();
+    return filtered.filter(
+      (f) => f.name?.toLowerCase().includes(q) || f.username.toLowerCase().includes(q),
+    );
+  }, [friends, athletes, addSearch]);
+
   const mySubscriptions = useMemo(() => mySubsQuery.data ?? [], [mySubsQuery.data]);
   const mySubscribers = useMemo(() => mySubscribersQuery.data ?? [], [mySubscribersQuery.data]);
   const myOffering = myOfferingQuery.data ?? null;
@@ -186,6 +230,16 @@ export const MyAthletesScreen: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Athletes</Text>
         <View style={{ flex: 1 }} />
+        {isCoach && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddModal(true)}
+            activeOpacity={0.6}
+          >
+            <UserPlus size={16} color={C.orange} weight="bold" />
+            <Text style={styles.addButtonText}>Add</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {tab === 'athletes' && (
@@ -405,6 +459,83 @@ export const MyAthletesScreen: React.FC = () => {
           </>
         )}
       </ScrollView>
+
+      {/* Add Athlete Modal */}
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Athlete from Connections</Text>
+              <TouchableOpacity
+                onPress={() => { setShowAddModal(false); setAddSearch(''); }}
+                hitSlop={12}
+              >
+                <X size={20} color={C.textSecondary} weight="bold" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalSearchRow}>
+              <MagnifyingGlass size={14} color={C.textMuted} weight="bold" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search connections..."
+                placeholderTextColor={C.textMuted}
+                value={addSearch}
+                onChangeText={setAddSearch}
+                autoFocus
+              />
+            </View>
+
+            <ScrollView style={styles.modalList} showsVerticalScrollIndicator={false}>
+              {friendsQuery.isLoading ? (
+                <ActivityIndicator color={C.orange} style={{ marginTop: 32 }} />
+              ) : availableConnections.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Users size={32} color={C.textMuted} weight="fill" />
+                  <Text style={styles.emptyText}>
+                    {friends.length === 0
+                      ? 'No connections yet. Add friends first.'
+                      : 'All connections are already your athletes.'}
+                  </Text>
+                </View>
+              ) : (
+                availableConnections.map((friend) => (
+                  <TouchableOpacity
+                    key={friend.id}
+                    style={styles.modalItem}
+                    activeOpacity={0.6}
+                    onPress={() => addAthleteMutation.mutate(friend.id)}
+                    disabled={addAthleteMutation.isPending}
+                  >
+                    <Avatar
+                      size="sm"
+                      fallback={(friend.name || friend.username || 'U').slice(0, 2)}
+                      src={friend.profileImageUrl || undefined}
+                    />
+                    <View style={styles.itemBody}>
+                      <Text style={styles.itemName} numberOfLines={1}>
+                        {friend.name || 'TrackLit User'}
+                      </Text>
+                      <Text style={styles.itemUsername} numberOfLines={1}>
+                        @{friend.username}
+                      </Text>
+                    </View>
+                    <View style={styles.addAthleteButton}>
+                      <UserPlus size={14} color="#000" weight="bold" />
+                      <Text style={styles.addAthleteButtonText}>Add</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -608,5 +739,79 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: C.orange,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,122,0,0.3)',
+  },
+  addButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.orange,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: C.bg,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '75%',
+    paddingTop: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: C.textPrimary,
+  },
+  modalSearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: C.iconBg,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginHorizontal: 20,
+    marginBottom: 8,
+  },
+  modalList: {
+    paddingHorizontal: 20,
+  },
+  modalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: C.border,
+  },
+  addAthleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: C.orange,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  addAthleteButtonText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#000',
   },
 });

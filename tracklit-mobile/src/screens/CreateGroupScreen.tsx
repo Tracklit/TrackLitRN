@@ -92,10 +92,12 @@ export const CreateGroupScreen: React.FC = () => {
 
   const groupsQuery = useQuery({
     queryKey: ['chat-groups'],
-    queryFn:  () => apiRequest<{ id: number }[]>('/api/chat/groups'),
+    queryFn:  () => apiRequest<{ id: number; created_by: number | null }[]>('/api/chat/groups'),
     enabled:  canUse,
   });
-  const existingGroupCount = (groupsQuery.data ?? []).length;
+  const existingGroupCount = (groupsQuery.data ?? []).filter(
+    (g) => g.created_by != null && String(g.created_by) === String(user?.id),
+  ).length;
 
   // ── pick image ────────────────────────────────────────────────────────────
   const pickImage = useCallback(async () => {
@@ -223,6 +225,27 @@ export const CreateGroupScreen: React.FC = () => {
           if (text) msg = text.slice(0, 300);
         }
         throw new Error(msg);
+      }
+
+      // If the group was created with an image, upload it separately via PATCH
+      // to ensure persistence even if the POST didn't store it (column cache issue)
+      if (imageUri) {
+        try {
+          const created = JSON.parse(text);
+          const groupId = created?.id;
+          if (groupId) {
+            const patchForm = new FormData();
+            const ext = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
+            patchForm.append('image', { uri: imageUri, name: `group.${ext}`, type: ext === 'png' ? 'image/png' : 'image/jpeg' } as any);
+            await fetch(`${env.API_BASE_URL}/api/chat/groups/${groupId}`, {
+              method: 'PATCH',
+              headers: { Authorization: `Bearer ${token}` },
+              body: patchForm,
+            });
+          }
+        } catch (patchErr) {
+          console.warn('[CreateGroup] Image PATCH follow-up failed:', patchErr);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['chat-groups'] });

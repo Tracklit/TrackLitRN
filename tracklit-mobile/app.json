@@ -57,8 +57,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "e7439f9b-bace-46f3-97eb-108dbbefaa71"
+        "projectId": "424d40d0-c8de-401b-9f0a-87045e1ca209"
       }
-    }
+    },
+    "owner": "rowexian"
   }
 }

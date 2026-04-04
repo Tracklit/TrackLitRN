@@ -108,9 +108,10 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
 
   const navItems = useMemo<NavItem[]>(() => {
     if (isCoach) {
-      return BASE_NAV_ITEMS.map((item) =>
-        item.routeName === 'Training' ? COACH_NAV_ITEM : item
-      );
+      // Insert Coach Dashboard after Home, keep all other tabs
+      const items = [...BASE_NAV_ITEMS];
+      items.splice(1, 0, COACH_NAV_ITEM);
+      return items;
     }
     return BASE_NAV_ITEMS;
   }, [isCoach]);

@@ -10,7 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, isToday, isYesterday } from 'date-fns';
@@ -149,9 +149,16 @@ export const ChatScreen: React.FC = () => {
     queryKey: ['chat-groups'],
     queryFn: async () => {
       const response = await apiRequest<ChatGroupApi[]>('/api/chat/groups');
-      return response
+      const groups = response
         .filter((item) => item.channel_type !== 'direct')
         .map(normalizeChatGroup);
+      // Deduplicate by ID to prevent React key collisions
+      const seen = new Set<number>();
+      return groups.filter((g) => {
+        if (seen.has(g.id)) return false;
+        seen.add(g.id);
+        return true;
+      });
     },
     enabled: isAuthenticated && !isGuest && hasValidToken,
   });
@@ -167,6 +174,13 @@ export const ChatScreen: React.FC = () => {
     queryFn: () => apiRequest<Friend[]>('/api/friends'),
     enabled: isAuthenticated && !isGuest && hasValidToken && showFriendsModal,
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      groupsQuery.refetch();
+      conversationsQuery.refetch();
+    }, [])
+  );
 
   const groups = groupsQuery.data ?? [];
   const conversations = conversationsQuery.data ?? [];
