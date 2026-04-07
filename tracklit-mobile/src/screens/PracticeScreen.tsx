@@ -9,7 +9,6 @@ import {
   Alert,
 } from 'react-native';
 import { DocumentViewer } from '@/components/DocumentViewer';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ClipboardText,
@@ -35,12 +34,15 @@ import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import { spacing, borderRadius, shadows } from '@/utils/theme';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { TargetTimesDrawer } from '@/components/practice/TargetTimesDrawer';
 import { SkeletonSessionList } from '@/components/Skeleton';
 import type { RootStackParamList } from '@/navigation/types';
-import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
+import { useActiveProgramBackfill } from '@/hooks/useActiveProgramBackfill';
+import type { ProgramSource } from '@/utils/programSource';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import type { ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -62,6 +64,7 @@ interface PurchasedProgramItem {
   programId: number | string;
   program: Program;
   assignerName?: string;
+  source?: ProgramSource;
 }
 
 
@@ -69,24 +72,378 @@ interface PracticeScreenProps {
   hideHeader?: boolean;
 }
 
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
+  },
+  stickyHeaderWrap: {
+    zIndex: 30,
+    backgroundColor: t.colors.backgroundSolid,
+  },
+  stickyHeader: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 10,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  expandedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  activeProgramLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: t.colors.textMuted,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  tapToChange: {
+    fontSize: 10,
+    color: 'rgba(255,122,0,0.55)',
+    fontWeight: '500',
+  },
+  programTriggerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  unassignBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    justifyContent: 'center',
+  },
+  programTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  programTriggerIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: t.colors.overlayLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  programTriggerIconActive: {
+    backgroundColor: t.colors.brandOrangeLight,
+  },
+  programTriggerName: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: t.colors.textPrimary,
+  },
+  dropdownPanel: {
+    overflow: 'hidden',
+    backgroundColor: t.colors.darkGray,
+    borderTopWidth: 1,
+    borderTopColor: t.colors.overlaySubtle,
+  },
+  dropdownScroll: {
+    paddingVertical: 6,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.xl,
+    borderRadius: 0,
+  },
+  dropdownItemSelected: {
+    backgroundColor: t.colors.brandOrangeLight,
+  },
+  dropdownItemIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: t.colors.overlayLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dropdownItemIconSelected: {
+    backgroundColor: 'rgba(255,122,0,0.18)',
+  },
+  dropdownItemText: {
+    flex: 1,
+  },
+  dropdownItemTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: t.colors.textPrimary,
+  },
+  dropdownItemSub: {
+    fontSize: 11,
+    color: t.colors.textMuted,
+    marginTop: 1,
+  },
+  dropdownEmpty: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  dropdownEmptyText: {
+    fontSize: 13,
+    color: t.colors.textMuted,
+  },
+  contentContainer: {
+    marginTop: spacing.md,
+  },
+  textProgramCard: {
+    borderRadius: borderRadius.webCard,
+    borderWidth: 1,
+    borderColor: t.colors.webCardBorder,
+    marginBottom: spacing.lg,
+  },
+  textProgramFullContainer: {
+    flex: 1,
+    backgroundColor: t.colors.cardSolid,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: t.colors.overlaySubtle,
+    overflow: 'hidden',
+  },
+  textProgramHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: t.colors.overlayLight,
+  },
+  textProgramScrollArea: {
+    flex: 1,
+    padding: 16,
+  },
+  programHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  textProgramContent: {
+    marginTop: spacing.md,
+    backgroundColor: t.colors.overlayMedium,
+    padding: spacing.md,
+    borderRadius: borderRadius.sm,
+    maxHeight: 320,
+  },
+  programNote: {
+    marginTop: spacing.md,
+    padding: spacing.sm,
+    borderRadius: borderRadius.sm,
+    backgroundColor: t.colors.overlayLight,
+  },
+  monoText: {
+    fontFamily: 'Courier',
+    lineHeight: 20,
+  },
+  cardsList: {
+    gap: spacing.lg,
+  },
+  loadingState: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  emptyGradientCard: {
+    marginTop: spacing.xl,
+    borderRadius: 12,
+    padding: spacing.xl,
+    minHeight: 120,
+    gap: spacing.md,
+    overflow: 'hidden',
+    ...shadows.md,
+  },
+  emptyTitle: {
+    marginBottom: spacing.sm,
+  },
+  emptyText: {
+    marginBottom: spacing.md,
+  },
+  emptyButton: {
+    borderColor: t.colors.overlayHeavy,
+    backgroundColor: t.colors.overlayMedium,
+    alignSelf: 'flex-start',
+  },
+  workoutCard: {
+    padding: spacing.xl,
+    borderRadius: 12,
+    backgroundColor: t.colors.cardSolid,
+    borderWidth: 1,
+    borderColor: t.colors.overlayLight,
+    ...shadows.md,
+  },
+  emptyDayCard: {
+    padding: spacing.xl,
+    borderRadius: 12,
+    backgroundColor: t.colors.darkGray,
+    borderWidth: 1,
+    borderColor: t.colors.overlaySubtle,
+    minHeight: 60,
+  },
+  restDayCard: {
+    padding: spacing.xl,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,122,0,0.15)',
+    backgroundColor: 'rgba(255,122,0,0.04)',
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  cardHeaderRight: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  todayBadge: {
+    backgroundColor: t.colors.brandOrange,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.sm,
+  },
+  finishButton: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    backgroundColor: t.colors.overlayMedium,
+  },
+  dateText: {
+    opacity: 0.8,
+  },
+  cardSections: {
+    gap: 4,
+  },
+  solidBlock: {
+    backgroundColor: t.colors.overlayLight,
+    borderRadius: 10,
+    padding: 12,
+    gap: 8,
+  },
+  solidBlockRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  solidBlockLabel: {
+    color: t.colors.textMuted,
+    fontSize: 11,
+    fontWeight: '700' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+    width: 50,
+    flexShrink: 0,
+    paddingTop: 1,
+  },
+  solidBlockValue: {
+    color: t.colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '500' as const,
+    lineHeight: 18,
+    flex: 1,
+  },
+  sessionDescription: {
+    opacity: 0.85,
+    marginBottom: 4,
+  },
+  sessionPlaceholder: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  restDay: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  restDayText: {
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    opacity: 0.8,
+  },
+  openDocButton: {
+    marginTop: spacing.md,
+    alignSelf: 'flex-start',
+  },
+  collapsedDocCard: {
+    borderRadius: borderRadius.lg,
+  },
+  collapsedDocContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+  },
+  collapsedDocLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  collapsedDocOpenBtn: {
+    paddingHorizontal: spacing.lg,
+  },
+  targetTimesButton: {
+    position: 'absolute',
+    right: 0,
+    width: 43,
+    height: 64,
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    overflow: 'hidden',
+    zIndex: 200,
+    elevation: 20,
+    shadowColor: '#FF7A00',
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    shadowOffset: { width: -2, height: 0 },
+  },
+  targetTimesButtonInner: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
+  },
+});
+
 export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = false }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
-  const { user, isAuthenticated, refreshUser } = useAuth();
+  const { user, isAuthenticated, refreshUser, setUserAndPersist } = useAuth();
   const queryClient = useQueryClient();
   const isGuest = user?.id === 'guest';
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
+  const { styles, theme } = useThemedStyles(createStyles);
+
+  // PracticeScreen is the sole writer of user.activeProgramSelection. The backfill hook
+  // migrates any legacy AsyncStorage value to the DB on first authenticated mount.
+  useActiveProgramBackfill();
 
   const [showTargetTimes, setShowTargetTimes] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState<PurchasedProgramItem | null>(null);
+  const [pendingSelectionId, setPendingSelectionId] = useState<string | null>(null);
+  // Monotonic counter for each select-program PATCH. Late responses from earlier taps must
+  // not clobber a newer intended selection (stale-PATCH race).
+  const selectionRequestIdRef = useRef(0);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [workoutCards, setWorkoutCards] = useState<any[]>([]);
   const [docViewerUrl, setDocViewerUrl] = useState<string | null>(null);
   const [docAutoOpened, setDocAutoOpened] = useState(false);
 
   const purchasedProgramsQuery = useQuery({
-    queryKey: ['purchased-programs'],
-    queryFn: () => apiRequest<PurchasedProgramItem[]>('/api/purchased-programs'),
+    queryKey: ['my-programs'],
+    queryFn: () => apiRequest<PurchasedProgramItem[]>('/api/my-programs'),
     enabled: isAuthenticated && !isGuest,
   });
 
@@ -96,38 +453,52 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
     [programs]
   );
 
+  // The effective wrapper id is either a freshly-tapped optimistic value (pendingSelectionId)
+  // or the server-of-truth (user.activeProgramSelection). Pending always wins during the
+  // PATCH round-trip to prevent the derivation from reverting an optimistic tap.
+  const effectiveSelectionId = pendingSelectionId ?? user?.activeProgramSelection ?? null;
+
+  const selectedProgram = useMemo<PurchasedProgramItem | null>(() => {
+    if (!programs.length) return null;
+    const matched = effectiveSelectionId
+      ? programs.find((p) => String(p.id) === effectiveSelectionId)
+      : null;
+    return matched ?? programs[0] ?? null;
+  }, [programs, effectiveSelectionId]);
+
   const selectedProgramId = selectedProgram?.programId ? String(selectedProgram.programId) : null;
   const { programSessions, programDuration, isLoading: isLoadingProgramSessions, refetch: refetchSessions } = useProgramSessions(selectedProgramId);
 
+  // Opportunistic phantom cleanup: if user.activeProgramSelection points at a wrapper id that
+  // no longer exists in the programs list (coach deleted the program, assignment was rejected,
+  // etc.), fire-and-forget a PATCH to null so the DB stops tracking a dangling pointer. Also
+  // gated on the query being a real success (not a transient empty-on-error) so we don't nuke
+  // a still-valid selection if /api/my-programs briefly fails.
   useEffect(() => {
-    if (!programs.length) {
-      setSelectedProgram(null);
-      return;
-    }
-
-    let isCancelled = false;
-    const loadSelection = async () => {
-      const savedId = await AsyncStorage.getItem(PROGRAM_SELECTION_KEY);
-      const matched = programs.find((assignment) => String(assignment.id) === savedId);
-      const nextProgram = matched ?? programs[0];
-      if (!isCancelled) {
-        setSelectedProgram((previous) => {
-          if (previous && String(previous.id) === String(nextProgram.id)) {
-            return previous;
-          }
-          return nextProgram;
+    if (!purchasedProgramsQuery.isSuccess) return;
+    const savedId = user?.activeProgramSelection;
+    if (!savedId || !programs.length) return;
+    if (pendingSelectionId) return; // don't clear during an in-flight tap
+    const matched = programs.find((p) => String(p.id) === savedId);
+    if (matched) return;
+    // Phantom: the DB points at something not in the user's current list.
+    const phantomSnapshot = savedId;
+    (async () => {
+      try {
+        const updated = await apiRequest<any>('/api/user', {
+          method: 'PATCH',
+          data: { activeProgramSelection: null },
         });
+        // Only commit the cleared user object if a newer handleSelectProgram tap hasn't
+        // landed in the meantime (user.activeProgramSelection still matches what we cleared).
+        if (user?.activeProgramSelection === phantomSnapshot && updated && typeof updated === 'object') {
+          await setUserAndPersist(updated);
+        }
+      } catch (err) {
+        // Non-critical; try again next mount.
       }
-      if (!matched) {
-        await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(nextProgram.id));
-      }
-    };
-
-    loadSelection();
-    return () => {
-      isCancelled = true;
-    };
-  }, [programIdsKey]);
+    })();
+  }, [user?.activeProgramSelection, programIdsKey, pendingSelectionId, purchasedProgramsQuery.isSuccess]);
 
   useEffect(() => {
     if (!selectedProgram) {
@@ -215,15 +586,34 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
   }, [selectedProgram, programSessions, programDuration, isLoadingProgramSessions]);
 
   const handleSelectProgram = async (assignment: PurchasedProgramItem) => {
-    setSelectedProgram(assignment);
+    const wrapperId = String(assignment.id);
+    const requestId = ++selectionRequestIdRef.current;
+    setPendingSelectionId(wrapperId); // optimistic, wins over user.activeProgramSelection
     setWorkoutCards([]);
     setIsLoadingCards(true);
     setDocViewerUrl(null);
     setDocAutoOpened(false);
-    await AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(assignment.id));
-    await queryClient.invalidateQueries({
-      queryKey: ['program-sessions', String(assignment.programId)],
-    });
+    try {
+      const updated = await apiRequest<any>('/api/user', {
+        method: 'PATCH',
+        data: { activeProgramSelection: wrapperId },
+      });
+      // Drop stale responses: if a newer tap fired while we were awaiting, let the newer
+      // PATCH be the source of truth and don't commit this older response.
+      if (requestId !== selectionRequestIdRef.current) return;
+      if (updated && typeof updated === 'object') {
+        await setUserAndPersist(updated);
+      }
+      setPendingSelectionId(null); // server is now the source of truth
+      await queryClient.invalidateQueries({
+        queryKey: ['program-sessions', String(assignment.programId)],
+      });
+    } catch (err) {
+      if (__DEV__) console.log('[practice] active program PATCH failed', err);
+      if (requestId === selectionRequestIdRef.current) {
+        setPendingSelectionId(null); // fall back to the old user value silently
+      }
+    }
   };
 
   useEffect(() => {
@@ -245,10 +635,26 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
     mutationFn: async (purchaseId: number | string) => {
       await apiRequest(`/api/purchased-programs/${purchaseId}`, { method: 'DELETE' });
     },
-    onSuccess: async () => {
-      await AsyncStorage.removeItem(PROGRAM_SELECTION_KEY);
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
+    onSuccess: async (_data, purchaseId) => {
+      // Only clear active_program_selection if the unassigned program was actually the
+      // active one. If the user unassigns a background program while a different one is
+      // active, leave the active selection intact.
+      const wasActive = user?.activeProgramSelection === String(purchaseId);
+      if (wasActive) {
+        try {
+          const updated = await apiRequest<any>('/api/user', {
+            method: 'PATCH',
+            data: { activeProgramSelection: null },
+          });
+          if (updated && typeof updated === 'object') {
+            await setUserAndPersist(updated);
+          }
+        } catch (err) {
+          // Non-critical; server-side cleanup will catch up.
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ['my-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs-home'] });
       queryClient.invalidateQueries({ queryKey: ['today-session'] });
     },
   });
@@ -318,16 +724,13 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
       >
         {!hideHeader && <MainScreenHeader />}
 
-        {/* Sticky collapsible program header */}
         <View style={styles.stickyHeaderWrap}>
           <Animated.View style={[styles.stickyHeader, { height: headerHeight }]}>
-            {/* Expanded-only label row */}
             <Animated.View style={[styles.expandedRow, { opacity: expandedOpacity }]} pointerEvents="none">
               <Text style={styles.activeProgramLabel}>ACTIVE PROGRAM</Text>
               {selectedTitle && <Text style={styles.tapToChange}>Tap to change</Text>}
             </Animated.View>
 
-            {/* Button row — always visible */}
             <View style={styles.programTriggerRow}>
               <TouchableOpacity
                 style={[styles.programTrigger, { flex: 1 }]}
@@ -335,14 +738,14 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
                 activeOpacity={0.75}
               >
                 <View style={[styles.programTriggerIcon, selectedTitle && styles.programTriggerIconActive]}>
-                  <Link size={14} color={selectedTitle ? '#FF7A00' : 'rgba(255,255,255,0.45)'} weight="fill" />
+                  <Link size={14} color={selectedTitle ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" />
                 </View>
                 <Text style={styles.programTriggerName} numberOfLines={1}>
-                  {selectedTitle ?? 'Select a program…'}
+                  {selectedTitle ?? 'Select a program...'}
                 </Text>
                 <CaretDown
                   size={13}
-                  color="rgba(255,255,255,0.45)"
+                  color={theme.colors.textMuted}
                   weight="fill"
                   style={{ transform: [{ rotate: dropdownOpen ? '180deg' : '0deg' }] }}
                 />
@@ -354,13 +757,12 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
                   activeOpacity={0.7}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <XCircle size={20} color="rgba(255,255,255,0.4)" weight="fill" />
+                  <XCircle size={20} color={theme.colors.textMuted} weight="fill" />
                 </TouchableOpacity>
               )}
             </View>
           </Animated.View>
 
-          {/* Inline dropdown panel */}
           <Animated.View style={[styles.dropdownPanel, { maxHeight: dropdownAnimH }]}>
             <ScrollView
               style={styles.dropdownScroll}
@@ -369,7 +771,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
             >
               {purchasedProgramsQuery.isLoading ? (
                 <View style={styles.dropdownEmpty}>
-                  <Text style={styles.dropdownEmptyText}>Loading programs…</Text>
+                  <Text style={styles.dropdownEmptyText}>Loading programs...</Text>
                 </View>
               ) : sortedPrograms.length > 0 ? (
                 sortedPrograms.map((assignment, idx) => {
@@ -382,7 +784,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
                       activeOpacity={0.7}
                     >
                       <View style={[styles.dropdownItemIcon, isSelected && styles.dropdownItemIconSelected]}>
-                        <ClipboardText size={13} color={isSelected ? '#FF7A00' : 'rgba(255,255,255,0.6)'} weight="fill" />
+                        <ClipboardText size={13} color={isSelected ? theme.colors.brandOrange : theme.colors.textSecondary} weight="fill" />
                       </View>
                       <View style={styles.dropdownItemText}>
                         <Text style={styles.dropdownItemTitle} numberOfLines={1}>{assignment.program?.title ?? 'Unnamed'}</Text>
@@ -390,7 +792,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
                           {assignment.program?.category ?? 'Training Program'}
                         </Text>
                       </View>
-                      {isSelected && <CheckCircle size={16} color="#FF7A00" weight="fill" />}
+                      {isSelected && <CheckCircle size={16} color={theme.colors.brandOrange} weight="fill" />}
                     </TouchableOpacity>
                   );
                 })
@@ -417,7 +819,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
           )}
           refreshControl={
             <RefreshControl
-              tintColor="#fff"
+              tintColor={theme.colors.textPrimary}
               refreshing={isRefreshing}
               onRefresh={onRefresh}
             />
@@ -430,7 +832,7 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
               {selectedProgram.program?.isTextBased && selectedProgram.program?.textContent ? (
                 <View style={styles.textProgramFullContainer}>
                   <View style={styles.textProgramHeader}>
-                    <ClipboardText size={18} color="#FF7A00" weight="fill" />
+                    <ClipboardText size={18} color={theme.colors.brandOrange} weight="fill" />
                     <Text variant="body" weight="bold" color="foreground">
                       {selectedProgram.program?.title || 'Program Content'}
                     </Text>
@@ -486,6 +888,8 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
                       card={card}
                       programId={selectedProgramId}
                       onFinish={(date: string) => navigation.navigate('JournalEntry', { date })}
+                      styles={styles}
+                      theme={theme}
                     />
                   ))}
                 </View>
@@ -591,10 +995,14 @@ const SessionCard = ({
   card,
   programId,
   onFinish,
+  styles,
+  theme,
 }: {
   card: any;
   programId: number | string | null;
   onFinish: (date: string) => void;
+  styles: ReturnType<typeof createStyles>;
+  theme: ThemeValues;
 }) => {
   const sessionId = card.sessionData?.id;
   const dayNumber = card.sessionData?.dayNumber || card.dayNumber;
@@ -669,12 +1077,12 @@ const SessionCard = ({
         </View>
       </View>
 
-      <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} />
+      <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} styles={styles} />
     </View>
   );
 };
 
-const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymData: string[] }) => {
+const WorkoutCardContent = ({ sessionData, gymData, styles }: { sessionData: any; gymData: string[]; styles: ReturnType<typeof createStyles> }) => {
   if (!sessionData) {
     return null;
   }
@@ -803,349 +1211,3 @@ const WorkoutCardContent = ({ sessionData, gymData }: { sessionData: any; gymDat
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: theme.spacing.xl,
-  },
-  stickyHeaderWrap: {
-    zIndex: 30,
-    backgroundColor: '#0E0F14',
-  },
-  stickyHeader: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: 10,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  expandedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  activeProgramLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  tapToChange: {
-    fontSize: 10,
-    color: 'rgba(255,122,0,0.55)',
-    fontWeight: '500',
-  },
-  programTriggerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  unassignBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    justifyContent: 'center',
-  },
-  programTrigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  programTriggerIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  programTriggerIconActive: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
-  },
-  programTriggerName: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  dropdownPanel: {
-    overflow: 'hidden',
-    backgroundColor: '#13151E',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
-  },
-  dropdownScroll: {
-    paddingVertical: 6,
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: 0,
-  },
-  dropdownItemSelected: {
-    backgroundColor: 'rgba(255,122,0,0.08)',
-  },
-  dropdownItemIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dropdownItemIconSelected: {
-    backgroundColor: 'rgba(255,122,0,0.18)',
-  },
-  dropdownItemText: {
-    flex: 1,
-  },
-  dropdownItemTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  dropdownItemSub: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: 1,
-  },
-  dropdownEmpty: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  dropdownEmptyText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.35)',
-  },
-  contentContainer: {
-    marginTop: theme.spacing.md,
-  },
-  textProgramCard: {
-    borderRadius: theme.borderRadius.webCard,
-    borderWidth: 1,
-    borderColor: theme.colors.webCardBorder,
-    marginBottom: theme.spacing.lg,
-  },
-  textProgramFullContainer: {
-    flex: 1,
-    backgroundColor: '#1C1F2B',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    overflow: 'hidden',
-  },
-  textProgramHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
-  },
-  textProgramScrollArea: {
-    flex: 1,
-    padding: 16,
-  },
-  programHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.sm,
-  },
-  textProgramContent: {
-    marginTop: theme.spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.sm,
-    maxHeight: 320,
-  },
-  programNote: {
-    marginTop: theme.spacing.md,
-    padding: theme.spacing.sm,
-    borderRadius: theme.borderRadius.sm,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  monoText: {
-    fontFamily: 'Courier',
-    lineHeight: 20,
-  },
-  cardsList: {
-    gap: theme.spacing.lg,
-  },
-  loadingState: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
-  },
-  emptyGradientCard: {
-    marginTop: theme.spacing.xl,
-    borderRadius: 12,
-    padding: theme.spacing.xl,
-    minHeight: 120,
-    gap: theme.spacing.md,
-    overflow: 'hidden',
-    ...theme.shadows.md,
-  },
-  emptyTitle: {
-    marginBottom: theme.spacing.sm,
-  },
-  emptyText: {
-    marginBottom: theme.spacing.md,
-  },
-  emptyButton: {
-    borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignSelf: 'flex-start',
-  },
-  workoutCard: {
-    padding: theme.spacing.xl,
-    borderRadius: 12,
-    backgroundColor: '#1C1F2B',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    ...theme.shadows.md,
-  },
-  emptyDayCard: {
-    padding: theme.spacing.xl,
-    borderRadius: 12,
-    backgroundColor: '#161823',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    minHeight: 60,
-  },
-  restDayCard: {
-    padding: theme.spacing.xl,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,122,0,0.15)',
-    backgroundColor: 'rgba(255,122,0,0.04)',
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.md,
-  },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  cardHeaderRight: {
-    alignItems: 'flex-end',
-    gap: theme.spacing.xs,
-  },
-  todayBadge: {
-    backgroundColor: '#FF7A00',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs / 2,
-    borderRadius: theme.borderRadius.sm,
-  },
-  finishButton: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  dateText: {
-    opacity: 0.8,
-  },
-  cardSections: {
-    gap: 4,
-  },
-  solidBlock: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 10,
-    padding: 12,
-    gap: 8,
-  },
-  solidBlockRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  solidBlockLabel: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 11,
-    fontWeight: '700' as const,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-    width: 50,
-    flexShrink: 0,
-    paddingTop: 1,
-  },
-  solidBlockValue: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 13,
-    fontWeight: '500' as const,
-    lineHeight: 18,
-    flex: 1,
-  },
-  sessionDescription: {
-    opacity: 0.85,
-    marginBottom: 4,
-  },
-  sessionPlaceholder: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-  },
-  restDay: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
-  },
-  restDayText: {
-    textAlign: 'center',
-    marginTop: theme.spacing.sm,
-    opacity: 0.8,
-  },
-  openDocButton: {
-    marginTop: theme.spacing.md,
-    alignSelf: 'flex-start',
-  },
-  collapsedDocCard: {
-    borderRadius: theme.borderRadius.lg,
-  },
-  collapsedDocContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.sm,
-  },
-  collapsedDocLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    flex: 1,
-  },
-  collapsedDocOpenBtn: {
-    paddingHorizontal: theme.spacing.lg,
-  },
-  targetTimesButton: {
-    position: 'absolute',
-    right: 0,
-    width: 43,
-    height: 64,
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
-    overflow: 'hidden',
-    zIndex: 200,
-    elevation: 20,
-    shadowColor: '#FF7A00',
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: -2, height: 0 },
-  },
-  targetTimesButtonInner: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
-  },
-});

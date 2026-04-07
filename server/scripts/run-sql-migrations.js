@@ -12,6 +12,8 @@ const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR || path.resolve(__dirname, "..
 const MIGRATIONS = [
   "0001_add_feed_tables.sql",
   "0002_add_marketplace_and_subscription_tables.sql",
+  "backfill_is_coach_from_coaches_table.sql",
+  "0007_add_active_program_selection.sql",
 ];
 
 function requireEnv(name) {

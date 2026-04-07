@@ -6,6 +6,12 @@ import { storage } from "../storage";
 // Keep validation aligned with mobile (SettingsScreen/ProfileScreen).
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/;
 
+// Wrapper id format emitted by /api/my-programs: 'assigned-{id}', 'created-{id}', or a
+// bare positive integer (purchase id). Rejects 0, leading-zero variants, and unknown
+// prefixes like 'self_assigned-{id}' (never emitted by the backend).
+export const ACTIVE_PROGRAM_SELECTION_RE = /^(assigned|created)-[1-9]\d*$|^[1-9]\d*$/;
+export const ACTIVE_PROGRAM_SELECTION_MAX_LEN = 64;
+
 function calculateAge(dateOfBirth: string | Date | null | undefined): number | null {
   if (!dateOfBirth) return null;
 
@@ -59,6 +65,7 @@ export async function patchUserHandler(req: Request, res: Response) {
       "mood",
       "coachMode",
       "specialties",
+      "activeProgramSelection",
     ] as const;
 
     const updates: Record<string, any> = {};
@@ -124,6 +131,23 @@ export async function patchUserHandler(req: Request, res: Response) {
       }
 
       updates.defaultClubId = clubId;
+    }
+
+    // Validate activeProgramSelection: null to clear, or a wrapper id string matching the
+    // /api/my-programs response format. Regex rejects 0 and leading-zero variants, and does
+    // NOT include self_assigned because the backend never emits that as a wrapper-id prefix.
+    if (updates.activeProgramSelection !== undefined && updates.activeProgramSelection !== null) {
+      const raw = String(updates.activeProgramSelection ?? "").trim();
+      if (raw.length === 0) {
+        updates.activeProgramSelection = null;
+      } else if (
+        raw.length > ACTIVE_PROGRAM_SELECTION_MAX_LEN ||
+        !ACTIVE_PROGRAM_SELECTION_RE.test(raw)
+      ) {
+        return res.status(400).json({ error: "Invalid activeProgramSelection format" });
+      } else {
+        updates.activeProgramSelection = raw;
+      }
     }
 
     const updatedUser = await storage.updateUser(userId, updates);

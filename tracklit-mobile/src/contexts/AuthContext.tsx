@@ -8,6 +8,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { Linking } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { apiRequest } from '@/lib/api';
 import {
@@ -22,6 +23,10 @@ import {
   setProfileFields,
 } from '@/lib/tokenStorage';
 import { getQueryParam } from '@/utils/url';
+import {
+  PROGRAM_SELECTION_KEY,
+  ACTIVE_PROGRAM_BACKFILL_FLAG_KEY,
+} from '@/utils/programSelection';
 
 const DEBUG_AUTH = __DEV__;
 
@@ -34,6 +39,7 @@ interface User {
   country?: string | null;
   dateOfBirth?: string | null; // server returns ISO string
   defaultClubId?: number | null;
+  activeProgramSelection?: string | null;
   isPrivate?: boolean | null;
   spikes?: number | null;
   isPremium?: boolean | null;
@@ -361,7 +367,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.log('[AUTH] Logout API call failed (non-critical):', error);
     } finally {
-      // Always clear local auth state
+      // Clear legacy program-selection keys so a different user on the same device starts fresh.
+      // DB is the source of truth per user; AsyncStorage is a one-shot backfill cache.
+      try {
+        await AsyncStorage.multiRemove([
+          PROGRAM_SELECTION_KEY,
+          ACTIVE_PROGRAM_BACKFILL_FLAG_KEY,
+        ]);
+      } catch (err) {
+        // Non-critical; fall through.
+      }
       await clearAuthStorage();
       setUser(null);
       setHasValidToken(false);

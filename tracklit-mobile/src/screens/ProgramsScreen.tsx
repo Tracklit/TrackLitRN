@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from '@/components/LinearGradient';
-import theme from '@/utils/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   MagnifyingGlass,
@@ -37,25 +36,12 @@ import { InlineRefreshHeader } from '@/components/refresh/InlineRefreshHeader';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import type { RootStackParamList } from '@/navigation/types';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import type { ThemeValues } from '@/contexts/ThemeContext';
+import { AssignAthletesModal } from '@/components/programs/AssignAthletesModal';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
-
-const C = {
-  bg: '#0E0F14',
-  surface: '#161823',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  glass: 'rgba(255,255,255,0.05)',
-  tabBg: 'rgba(255,255,255,0.04)',
-  tabActive: 'rgba(255,122,0,0.15)',
-};
 
 interface Program {
   id: number | string;
@@ -78,6 +64,395 @@ interface ProgramsScreenProps {
   hideHeader?: boolean;
 }
 
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  deleteBtn: {
+    padding: 6,
+    marginLeft: 8,
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginTop: 20,
+    marginBottom: 16,
+  },
+  searchInputWrapper: {
+    flex: 1,
+    minWidth: 160,
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: t.colors.overlaySubtle,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+  },
+  searchInput: {
+    flex: 1,
+    color: t.colors.textPrimary,
+    fontSize: 13,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40,
+    gap: 4,
+    backgroundColor: t.colors.overlaySubtle,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  filterText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: t.colors.textPrimary,
+    marginHorizontal: 2,
+  },
+  _viewToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+    overflow: 'hidden',
+  },
+  viewToggleButton: {
+    paddingHorizontal: 10,
+    height: '100%',
+    justifyContent: 'center',
+    backgroundColor: t.colors.overlaySubtle,
+  },
+  viewToggleActive: {
+    backgroundColor: t.colors.brandOrangeLight,
+  },
+  tabs: {
+    flexDirection: 'row',
+    backgroundColor: t.colors.overlaySubtle,
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 20,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 11,
+  },
+  tabActive: {
+    backgroundColor: t.colors.brandOrangeLight,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: t.colors.textMuted,
+  },
+  tabTextActive: {
+    color: t.colors.brandOrange,
+  },
+  programsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  listContainer: {
+    gap: 8,
+  },
+  programCard: {
+    borderRadius: 14,
+    backgroundColor: t.colors.cardSolid,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+    overflow: 'hidden',
+    flexBasis: '48%',
+    flexGrow: 1,
+  },
+  programCardInner: {
+    padding: 12,
+    gap: 6,
+  },
+  programTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  programTitleText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+    color: t.colors.textPrimary,
+    marginRight: 8,
+  },
+  programSubtext: {
+    fontSize: 13,
+    color: t.colors.textMuted,
+  },
+  badge: {
+    backgroundColor: t.colors.brandOrangeLight,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,122,0,0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: t.colors.brandOrange,
+  },
+  eventsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  eventBadge: {
+    backgroundColor: t.colors.overlaySubtle,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  eventBadgeText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: t.colors.textSecondary,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginTop: 4,
+  },
+  priceText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: t.colors.brandOrange,
+  },
+  programActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+  },
+  actionBtnPrimary: {
+    flex: 1,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  actionBtnGradient: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  actionBtnPrimaryText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: t.colors.textPrimary,
+  },
+  actionBtnSecondary: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,122,0,0.35)',
+    backgroundColor: 'rgba(255,122,0,0.07)',
+  },
+  actionBtnSecondaryText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: t.colors.brandOrange,
+  },
+  listCard: {
+    borderRadius: 12,
+    backgroundColor: t.colors.cardSolid,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+  },
+  listContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+  },
+  listMain: {
+    flex: 1,
+    gap: 4,
+  },
+  listTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  listTitleText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: t.colors.textPrimary,
+  },
+  listActionPrimary: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: t.colors.brandOrange,
+  },
+  listExpandedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+    paddingTop: 4,
+    borderTopWidth: 0.5,
+    borderTopColor: t.colors.overlayLight,
+  },
+  listExpandedBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  listExpandedSecondaryBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  listActionSecondary: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255,122,0,0.8)',
+  },
+  listExpandedDeleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  listDeleteText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: t.colors.destructive,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: t.colors.textPrimary,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyDescription: {
+    fontSize: 14,
+    color: t.colors.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  fab: {
+    position: 'absolute',
+    right: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    shadowColor: t.colors.brandOrange,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  fabGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  filterModal: {
+    backgroundColor: t.colors.cardSolid,
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+    padding: 16,
+    gap: 8,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  filterOptionText: {
+    fontSize: 14,
+    color: t.colors.textMuted,
+  },
+  filterOptionActive: {
+    color: t.colors.brandOrange,
+    fontWeight: '600',
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    paddingRight: 24,
+    paddingBottom: 16,
+  },
+  createMenu: {
+    width: 220,
+    backgroundColor: t.colors.cardSolid,
+    borderRadius: 14,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+    paddingVertical: 8,
+    marginBottom: 72,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  menuItemText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: t.colors.textPrimary,
+  },
+  menuIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: t.colors.brandOrangeLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuDivider: {
+    height: 0.5,
+    backgroundColor: t.colors.overlayLight,
+    marginHorizontal: 16,
+  },
+});
+
 export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = false }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -85,12 +460,14 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
   const [filterCategory, setFilterCategory] = useState<'all' | 'sprint' | 'distance' | 'strength'>('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const [assignTarget, setAssignTarget] = useState<Program | null>(null);
   const { user, isAuthenticated, refreshUser } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?.id;
   const isGuest = userId === 'guest';
   const isCoach = user?.isCoach === true;
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const myProgramsQuery = useQuery({
     queryKey: ['user-programs'],
@@ -118,8 +495,8 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
     navigation.navigate('ProgramEditor', { id: program.id });
   };
 
-  const handleAttachMyProgram = async (program: Program) => {
-    navigation.navigate('MainTabs', { screen: 'Training' } as never);
+  const handleAttachMyProgram = (program: Program) => {
+    setAssignTarget(program);
   };
 
   const deleteProgramMutation = useMutation({
@@ -128,8 +505,8 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs-home'] });
       queryClient.invalidateQueries({ queryKey: ['today-session'] });
     },
   });
@@ -199,7 +576,7 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
         extraScrollHeight={80}
         refreshControl={
           <RefreshControl
-            tintColor="#fff"
+            tintColor={theme.colors.textPrimary}
             refreshing={isRefreshing}
             onRefresh={onRefresh}
           />
@@ -209,11 +586,11 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
 
         <View style={styles.searchRow}>
           <View style={styles.searchInputWrapper}>
-            <MagnifyingGlass size={14} color={C.textMuted} weight="fill" />
+            <MagnifyingGlass size={14} color={theme.colors.textMuted} weight="fill" />
             <TextInput
               style={styles.searchInput}
               placeholder="Search programs..."
-              placeholderTextColor={C.textMuted}
+              placeholderTextColor={theme.colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -223,9 +600,9 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
             style={styles.filterButton}
             onPress={() => setShowFilterModal(true)}
           >
-            <Funnel size={14} color={C.textPrimary} weight="fill" />
+            <Funnel size={14} color={theme.colors.textPrimary} weight="fill" />
             <Text style={styles.filterText}>Filter</Text>
-            <CaretDown size={10} color={C.textPrimary} weight="fill" />
+            <CaretDown size={10} color={theme.colors.textPrimary} weight="fill" />
           </TouchableOpacity>
 
         </View>
@@ -237,7 +614,9 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
           isGuest={isGuest}
           onContinue={handleContinueProgram}
           onDelete={handleDeleteProgram}
-          onAttach={handleAttachMyProgram}
+          onAttach={isCoach ? handleAttachMyProgram : undefined}
+          styles={styles}
+          theme={theme}
         />
       </KeyboardAwareScreenScrollView>
 
@@ -264,13 +643,19 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
                     : `${category.charAt(0).toUpperCase()}${category.slice(1)} Programs`}
                 </Text>
                 {filterCategory === category && (
-                  <Check size={12} color={C.orange} weight="bold" />
+                  <Check size={12} color={theme.colors.brandOrange} weight="bold" />
                 )}
               </TouchableOpacity>
             ))}
           </View>
         </TouchableOpacity>
       </Modal>
+
+      <AssignAthletesModal
+        visible={!!assignTarget}
+        program={assignTarget ? { id: Number(assignTarget.id), title: assignTarget.title } : null}
+        onClose={() => setAssignTarget(null)}
+      />
 
       {isAuthenticated && !isGuest && (
         <TouchableOpacity
@@ -279,7 +664,7 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={[C.orange, C.orangeLight]}
+            colors={[theme.colors.brandOrange, '#FF9D00']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.fabGradient}
@@ -338,7 +723,9 @@ interface MyProgramsTabProps {
   isGuest: boolean;
   onContinue: (program: Program) => void;
   onDelete: (program: Program) => void;
-  onAttach: (program: Program) => void;
+  onAttach?: (program: Program) => void;
+  styles: ReturnType<typeof createStyles>;
+  theme: ThemeValues;
 }
 
 const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
@@ -349,11 +736,13 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   onContinue,
   onDelete,
   onAttach,
+  styles,
+  theme,
 }) => {
   if (isGuest) {
     return (
       <View style={styles.emptyState}>
-        <LockSimple size={48} color={C.textMuted} weight="fill" />
+        <LockSimple size={48} color={theme.colors.textMuted} weight="fill" />
         <Text style={styles.emptyTitle}>Sign In Required</Text>
         <Text style={styles.emptyDescription}>Sign in to view your enrolled training programs.</Text>
       </View>
@@ -371,7 +760,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   if (isError) {
     return (
       <View style={styles.emptyState}>
-        <WarningCircle size={48} color={C.textMuted} weight="fill" />
+        <WarningCircle size={48} color={theme.colors.textMuted} weight="fill" />
         <Text style={styles.emptyDescription}>Unable to load programs. Pull to refresh.</Text>
       </View>
     );
@@ -380,7 +769,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
   if (programs.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <ClipboardText size={48} color={C.textMuted} weight="fill" />
+        <ClipboardText size={48} color={theme.colors.textMuted} weight="fill" />
         <Text style={styles.emptyTitle}>No Programs Yet</Text>
         <Text style={styles.emptyDescription}>You haven't created any training programs yet.</Text>
       </View>
@@ -395,95 +784,16 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({
           program={program}
           onContinue={() => onContinue(program)}
           onDelete={() => onDelete(program)}
-          onAttach={() => onAttach(program)}
+          onAttach={onAttach ? () => onAttach(program) : undefined}
           buttonLabel="Edit Program"
+          styles={styles}
+          theme={theme}
         />
       ))}
     </View>
   );
 };
 
-
-interface ProgramCardItemProps {
-  program: Program;
-  badgeLabel?: string;
-  subtitle?: string;
-  price?: number;
-  onContinue: () => void;
-  onDelete?: () => void;
-  onAttach?: () => void;
-  buttonLabel?: string;
-}
-
-const ProgramCardItem: React.FC<ProgramCardItemProps> = ({
-  program,
-  badgeLabel,
-  subtitle,
-  price,
-  onContinue,
-  onDelete,
-  onAttach,
-  buttonLabel = 'Continue',
-}) => {
-  return (
-    <View style={styles.programCard}>
-      <View style={styles.programCardInner}>
-        <View style={styles.programTitleRow}>
-          <Text style={[styles.programTitleText, { flex: 1 }]} numberOfLines={1}>{program.title}</Text>
-          {badgeLabel && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{badgeLabel}</Text>
-            </View>
-          )}
-          {onDelete && (
-            <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} activeOpacity={0.7}>
-              <Trash size={18} color="#ef4444" weight="fill" />
-            </TouchableOpacity>
-          )}
-        </View>
-        <Text style={styles.programSubtext} numberOfLines={1}>
-          {subtitle ?? (program.coachName ? `by ${program.coachName}` : 'TrackLit Program')}
-          {program.durationWeeks ? ` · ${program.durationWeeks} weeks` : program.duration ? ` · ${program.duration}` : ''}
-        </Text>
-
-        {program.events && program.events.length > 0 && (
-          <View style={styles.eventsContainer}>
-            {program.events.map((event, index) => (
-              <View key={index} style={styles.eventBadge}>
-                <Text style={styles.eventBadgeText}>{event}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {!!price && price > 0 && (
-          <View style={styles.priceRow}>
-            <Text style={styles.priceText}>${price}</Text>
-            <Text style={styles.programSubtext}>one-time</Text>
-          </View>
-        )}
-
-        <View style={styles.programActions}>
-          <TouchableOpacity style={styles.actionBtnPrimary} onPress={onContinue} activeOpacity={0.8}>
-            <LinearGradient
-              colors={[C.orange, C.orangeLight]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.actionBtnGradient}
-            >
-              <Text style={styles.actionBtnPrimaryText}>{buttonLabel}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          {onAttach && (
-            <TouchableOpacity style={styles.actionBtnSecondary} onPress={onAttach} activeOpacity={0.7}>
-              <Text style={styles.actionBtnSecondaryText}>Assign to Practice</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    </View>
-  );
-};
 
 interface ProgramListItemProps {
   program: Program;
@@ -492,6 +802,8 @@ interface ProgramListItemProps {
   onDelete?: () => void;
   onAttach?: () => void;
   buttonLabel?: string;
+  styles: ReturnType<typeof createStyles>;
+  theme: ThemeValues;
 }
 
 const ProgramListItem: React.FC<ProgramListItemProps> = ({
@@ -501,6 +813,8 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
   onDelete,
   onAttach,
   buttonLabel = 'Continue',
+  styles,
+  theme,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -521,7 +835,7 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
             )}
             <CaretDown
               size={14}
-              color={C.textMuted}
+              color={theme.colors.textMuted}
               weight="bold"
               style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }], marginLeft: 6 }}
             />
@@ -538,12 +852,12 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
           </TouchableOpacity>
           {onAttach && (
             <TouchableOpacity style={styles.listExpandedSecondaryBtn} onPress={onAttach} activeOpacity={0.7}>
-              <Text style={styles.listActionSecondary}>Assign to Practice</Text>
+              <Text style={styles.listActionSecondary}>Assign to Athletes</Text>
             </TouchableOpacity>
           )}
           {onDelete && (
             <TouchableOpacity onPress={onDelete} style={styles.listExpandedDeleteBtn} activeOpacity={0.7}>
-              <Trash size={14} color="#ef4444" weight="fill" />
+              <Trash size={14} color={theme.colors.destructive} weight="fill" />
               <Text style={styles.listDeleteText}>Remove</Text>
             </TouchableOpacity>
           )}
@@ -552,392 +866,3 @@ const ProgramListItem: React.FC<ProgramListItemProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  deleteBtn: {
-    padding: 6,
-    marginLeft: 8,
-  },
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-  },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-    marginTop: 20,
-    marginBottom: 16,
-  },
-  searchInputWrapper: {
-    flex: 1,
-    minWidth: 160,
-    height: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: C.glass,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-  },
-  searchInput: {
-    flex: 1,
-    color: C.textPrimary,
-    fontSize: 13,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 40,
-    gap: 4,
-    backgroundColor: C.glass,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-  },
-  filterText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: C.textPrimary,
-    marginHorizontal: 2,
-  },
-  _viewToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 40,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    overflow: 'hidden',
-  },
-  viewToggleButton: {
-    paddingHorizontal: 10,
-    height: '100%',
-    justifyContent: 'center',
-    backgroundColor: C.glass,
-  },
-  viewToggleActive: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
-  },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: C.tabBg,
-    borderRadius: 14,
-    padding: 4,
-    marginBottom: 20,
-    borderWidth: 0.5,
-    borderColor: C.border,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 11,
-  },
-  tabActive: {
-    backgroundColor: C.tabActive,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,122,0,0.25)',
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.textMuted,
-  },
-  tabTextActive: {
-    color: C.orange,
-  },
-  programsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  listContainer: {
-    gap: 8,
-  },
-  programCard: {
-    borderRadius: 14,
-    backgroundColor: C.card,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    overflow: 'hidden',
-    flexBasis: '48%',
-    flexGrow: 1,
-  },
-  programCardInner: {
-    padding: 12,
-    gap: 6,
-  },
-  programTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  programTitleText: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '700',
-    color: C.textPrimary,
-    marginRight: 8,
-  },
-  programSubtext: {
-    fontSize: 13,
-    color: C.textMuted,
-  },
-  badge: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,122,0,0.25)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.orange,
-  },
-  eventsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 4,
-  },
-  eventBadge: {
-    backgroundColor: C.glass,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  eventBadgeText: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: C.textSecondary,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-    marginTop: 4,
-  },
-  priceText: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: C.orange,
-  },
-  programActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 8,
-  },
-  actionBtnPrimary: {
-    flex: 1,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  actionBtnGradient: {
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  actionBtnPrimaryText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: C.textPrimary,
-  },
-  actionBtnSecondary: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,122,0,0.35)',
-    backgroundColor: 'rgba(255,122,0,0.07)',
-  },
-  actionBtnSecondaryText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.orange,
-  },
-  listCard: {
-    borderRadius: 12,
-    backgroundColor: C.card,
-    borderWidth: 0.5,
-    borderColor: C.border,
-  },
-  listContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-  },
-  listMain: {
-    flex: 1,
-    gap: 4,
-  },
-  listTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  listTitleText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: C.textPrimary,
-  },
-  listActionPrimary: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: C.orange,
-  },
-  listExpandedActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingBottom: 12,
-    paddingTop: 4,
-    borderTopWidth: 0.5,
-    borderTopColor: C.border,
-  },
-  listExpandedBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  listExpandedSecondaryBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  listActionSecondary: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255,122,0,0.8)',
-  },
-  listExpandedDeleteBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  listDeleteText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ef4444',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: C.textPrimary,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyDescription: {
-    fontSize: 14,
-    color: C.textMuted,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  fab: {
-    position: 'absolute',
-    right: 24,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    overflow: 'hidden',
-    shadowColor: C.orange,
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-  },
-  fabGradient: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  filterModal: {
-    backgroundColor: C.card,
-    borderRadius: 16,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    padding: 16,
-    gap: 8,
-  },
-  filterOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-  },
-  filterOptionText: {
-    fontSize: 14,
-    color: C.textMuted,
-  },
-  filterOptionActive: {
-    color: C.orange,
-    fontWeight: '600',
-  },
-  menuOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-    paddingRight: 24,
-    paddingBottom: 16,
-  },
-  createMenu: {
-    width: 220,
-    backgroundColor: C.card,
-    borderRadius: 14,
-    borderWidth: 0.5,
-    borderColor: C.border,
-    paddingVertical: 8,
-    marginBottom: 72,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  menuItemText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: C.textPrimary,
-  },
-  menuIconWrapper: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,122,0,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuDivider: {
-    height: 0.5,
-    backgroundColor: C.border,
-    marginHorizontal: 16,
-  },
-});

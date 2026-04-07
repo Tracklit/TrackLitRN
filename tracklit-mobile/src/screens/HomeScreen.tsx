@@ -5,7 +5,6 @@ import {
   ScrollView,
   FlatList,
   StyleSheet,
-  StatusBar,
   TouchableOpacity,
   RefreshControl,
   Modal,
@@ -65,11 +64,13 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { apiRequest } from '@/lib/api';
 import { env } from '@/config/env';
-import { PROGRAM_SELECTION_KEY } from '@/utils/programSelection';
+import { useActiveProgramBackfill } from '@/hooks/useActiveProgramBackfill';
 
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import type { RootStackParamList } from '@/navigation/types';
-import theme from '../utils/theme';
+import { spacing } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import type { ThemeValues } from '@/contexts/ThemeContext';
 
 interface HomeScreenProps {
   onNavigate?: (route: string) => void;
@@ -158,21 +159,35 @@ const normalizeProfileImageUrl = (profileImageUrl?: string | null): string | und
   return `${env.API_BASE_URL}/${trimmed.replace(/^\/+/, '')}`;
 };
 
+const createCarouselAvatarStyles = (t: ThemeValues) => StyleSheet.create({
+  initial: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: t.colors.foreground,
+  },
+  image: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+});
+
 const CarouselAvatar: React.FC<{ imageUrl?: string; initial: string }> = ({ imageUrl, initial }) => {
   const [imageFailed, setImageFailed] = useState(false);
+  const { styles: caStyles } = useThemedStyles(createCarouselAvatarStyles);
 
   useEffect(() => {
     setImageFailed(false);
   }, [imageUrl]);
 
   if (!imageUrl || imageFailed) {
-    return <Text style={styles.carouselInitial}>{initial}</Text>;
+    return <Text style={caStyles.initial}>{initial}</Text>;
   }
 
   return (
     <Image
       source={{ uri: imageUrl }}
-      style={styles.carouselImage}
+      style={caStyles.image}
       onError={() => setImageFailed(true)}
     />
   );
@@ -201,6 +216,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [greeting, setGreeting] = useState('');
   const { user, refreshUser } = useAuth();
   const queryClient = useQueryClient();
+
+  // Read-only: PracticeScreen is the sole writer of user.activeProgramSelection.
+  // HomeScreen derives its displayed program from the user object + programs list.
+  useActiveProgramBackfill();
+
   const [tickerModalVisible, setTickerModalVisible] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<CommunityActivity | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<CarouselUserEntry | null>(null);
@@ -211,11 +231,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const carouselRef = useRef<ScrollView>(null);
   const carouselScrollSeeded = useRef(false);
   const [carouselHidden, setCarouselHidden] = useState(false);
-  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
-  const [selectionLoaded, setSelectionLoaded] = useState(false);
   const userId = user?.id;
   const numericUserId = userId && userId !== 'guest' ? Number(userId) : null;
   const [ownStoredAvatarUri, setOwnStoredAvatarUri] = useState<string | null>(null);
+  const { styles, theme } = useThemedStyles(createStyles);
 
   useFocusEffect(
     useCallback(() => {
@@ -239,78 +258,35 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       } else {
         setOwnStoredAvatarUri(null);
       }
-      AsyncStorage.getItem(PROGRAM_SELECTION_KEY).then(val => {
-        setSelectedProgramId(val);
-        setSelectionLoaded(true);
-      });
       queryClient.invalidateQueries({ queryKey: ['today-session'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs-home'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs-home'] });
     }, [numericUserId, queryClient])
   );
 
   const purchasedProgramsQuery = useQuery({
-    queryKey: ['purchased-programs-home'],
-    queryFn: () => apiRequest<Array<{ id: number | string; programId: number | string; program?: { title?: string; isTextBased?: boolean; textContent?: string; isUploadedProgram?: boolean; programFileUrl?: string } }>>('/api/purchased-programs'),
+    queryKey: ['my-programs-home'],
+    queryFn: () => apiRequest<Array<{ id: number | string; programId: number | string; program?: { title?: string; isTextBased?: boolean; textContent?: string; isUploadedProgram?: boolean; programFileUrl?: string } }>>('/api/my-programs'),
     enabled: !!userId && userId !== 'guest',
     staleTime: 120000,
   });
 
-  useEffect(() => {
-    if (!selectionLoaded) return;
-    if (selectedProgramId) return;
-    const purchases = purchasedProgramsQuery.data;
-    if (!purchases || purchases.length === 0) return;
-    const firstPurchase = purchases[0];
-    AsyncStorage.setItem(PROGRAM_SELECTION_KEY, String(firstPurchase.id));
-    setSelectedProgramId(String(firstPurchase.id));
-  }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
+  // Read-only derivation of the currently-displayed program. PracticeScreen is the sole writer
+  // of user.activeProgramSelection via PATCH /api/user — HomeScreen never writes. Match is
+  // strict against the wrapper `id` to stay consistent with PracticeScreen.
+  const currentProgram = useMemo(() => {
+    if (!purchasedProgramsQuery.data?.length) return null;
+    const savedId = user?.activeProgramSelection ?? null;
+    const matched = savedId
+      ? purchasedProgramsQuery.data.find((p) => String(p.id) === savedId)
+      : null;
+    return matched ?? purchasedProgramsQuery.data[0];
+  }, [purchasedProgramsQuery.data, user?.activeProgramSelection]);
 
-  const resolvedProgramId = React.useMemo(() => {
-    if (!selectionLoaded) return null;
-    const purchases = purchasedProgramsQuery.data;
-    if (!purchases || purchases.length === 0) return null;
-    if (selectedProgramId) {
-      const match = purchases.find((p) => String(p.id) === String(selectedProgramId));
-      if (match) {
-        console.warn('[Home] Resolved program:', { purchaseId: match.id, programId: match.programId, title: match.program?.title });
-        return String(match.programId);
-      }
-      const directMatch = purchases.find((p) => String(p.programId) === String(selectedProgramId));
-      if (directMatch) {
-        console.warn('[Home] Resolved via direct match:', { programId: directMatch.programId });
-        return String(directMatch.programId);
-      }
-      console.warn('[Home] No match found for selectedProgramId:', selectedProgramId, 'falling back to first purchase');
-    }
-    const fallback = purchases[0];
-    console.warn('[Home] Using fallback program:', { purchaseId: fallback.id, programId: fallback.programId, title: fallback.program?.title });
-    return String(fallback.programId);
-  }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
-
-  const selectedPurchase = useMemo(() => {
-    const purchases = purchasedProgramsQuery.data;
-    if (!purchases || !selectedProgramId) return null;
-    return purchases.find((p) => String(p.id) === String(selectedProgramId) || String(p.programId) === String(selectedProgramId)) ?? null;
-  }, [selectedProgramId, purchasedProgramsQuery.data]);
+  const resolvedProgramId = currentProgram ? String(currentProgram.programId) : null;
+  const selectedPurchase = currentProgram ?? null;
 
   const isTextBasedProgram = selectedPurchase?.program?.isTextBased === true;
   const isUploadedProgram = selectedPurchase?.program?.isUploadedProgram === true;
-
-  useEffect(() => {
-    if (!selectionLoaded) return;
-    const purchases = purchasedProgramsQuery.data;
-    if (!purchases || purchases.length === 0) return;
-    if (!selectedProgramId) return;
-    const hasMatch = purchases.some(
-      (p) => String(p.id) === String(selectedProgramId) || String(p.programId) === String(selectedProgramId)
-    );
-    if (!hasMatch) {
-      const fallbackId = String(purchases[0].id);
-      console.warn('[Home] Correcting stale selection to:', fallbackId);
-      AsyncStorage.setItem(PROGRAM_SELECTION_KEY, fallbackId);
-      setSelectedProgramId(fallbackId);
-    }
-  }, [selectionLoaded, selectedProgramId, purchasedProgramsQuery.data]);
 
   const { programSessions, programDuration } = useProgramSessions(resolvedProgramId);
 
@@ -342,13 +318,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     const todayKey = `${MONTH_ABBR_H[today.getMonth()]}-${today.getDate()}`;
     const totalDays = Math.max(...Object.keys(sessionsByDay).map(Number), programSessions.length, 1);
 
-    // Date-key lookup first — mirrors PracticeScreen behaviour, handles rest-day gaps
     const byDateKey = sessionsByDateKey[todayKey];
     if (byDateKey) {
       return { ...byDateKey, dayNumber: byDateKey.dayNumber ?? 1, totalDays, programId: resolvedProgramId };
     }
 
-    // Fall back: compute day offset from program start date
     const datesFromSessions = programSessions
       .map((s: any) => parseHomeSessionDate(s.date))
       .filter(Boolean) as Date[];
@@ -417,7 +391,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     retry: false,
   });
 
-  // Fetched early so ownActivity (below) can reference it without a forward-declaration error
   const { data: journalEntriesEarly = [] } = useQuery({
     queryKey: ['journal-home'],
     queryFn: () => apiRequest<any[]>('/api/journal'),
@@ -427,8 +400,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
   const rawActivities = activitiesQuery.data ?? [];
 
-  // Normalize feed posts into CommunityActivity shape and merge with community activities.
-  // Most recent entry per user wins so each user appears once in the carousel.
   const allActivities = useMemo<CommunityActivity[]>(() => {
     const feedPosts = (feedPostsQuery.data ?? [])
       .filter((p: any) => p.userId && p.content)
@@ -449,7 +420,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       }));
     const combined = [...rawActivities, ...feedPosts];
     combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    // One entry per user — first (newest) wins
     const seen = new Set<number>();
     return combined.filter((a) => {
       const uid = a.user?.id ?? a.userId;
@@ -459,9 +429,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     });
   }, [rawActivities, feedPostsQuery.data]);
 
-  // Build a synthetic ticker card from the user's own most-recent public journal entry.
-  // This works regardless of which backend is in use (Azure or dev), since journal entries
-  // are fetched separately and always available in HomeScreen.
   const ownActivity: CommunityActivity | null = useMemo(() => {
     if (!user || !userId || userId === 'guest' || !numericUserId) return null;
 
@@ -474,12 +441,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       ),
     };
 
-    // Most recent own feed post
     const ownFeedPost = (feedPostsQuery.data ?? [])
       .filter((p: any) => p.userId === numericUserId && p.content && !p.isJournalEntry)
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
-    // Most recent own public journal entry
     const latestJournal = (journalEntriesEarly as any[])
       .filter((e: any) => e.isPublic !== false)
       .sort((a: any, b: any) =>
@@ -494,7 +459,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       ? new Date(latestJournal.createdAt ?? latestJournal.date ?? 0).getTime()
       : 0;
 
-    // Feed post wins if it's newer
     if (ownFeedPost && feedTime >= journalTime) {
       return {
         id: -(ownFeedPost.id + 100000),
@@ -508,7 +472,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       };
     }
 
-    // Fall back to journal entry
     if (!latestJournal) return null;
     return {
       id: -(latestJournal.id ?? 1),
@@ -809,7 +772,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['feed-home'] });
       queryClient.invalidateQueries({ queryKey: ['community-activities'] });
-      // Slide carousel back to hide the "+" card
       setTimeout(() => {
         carouselRef.current?.scrollTo({ x: CAROUSEL_ITEM_WIDTH, animated: true });
       }, 300);
@@ -930,11 +892,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       end={theme.gradients.background.end}
       style={styles.container}
     >
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
 
       <Animated.View style={[{ flex: 1 }, screenFadeStyle]}>
       <View style={[styles.fixedHeader, { paddingTop: insets.top }]}>
@@ -948,7 +905,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Messages"
               >
-              <PaperPlaneTilt size={21} color="#94a3b8" weight="fill" />
+              <PaperPlaneTilt size={21} color={theme.colors.textMuted} weight="fill" />
               {unreadMessages > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -963,7 +920,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
               >
-              <Bell size={25} color="#94a3b8" weight="fill" />
+              <Bell size={25} color={theme.colors.textMuted} weight="fill" />
               {unreadNotifications > 0 && (
                 <View style={styles.badge}>
                   <Text variant="caption" weight="bold" color="foreground">
@@ -982,12 +939,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.contentContainer,
-          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xxxxl }) }
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: spacing.xxxxl }) }
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            tintColor="#fff"
+            tintColor={theme.colors.textPrimary}
             refreshing={isRefreshing}
             onRefresh={onRefresh}
           />
@@ -995,7 +952,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       >
         <InlineRefreshHeader visible={isRefreshing} />
 
-        {/* Activity Carousel — scrolls with page */}
         {carouselEntries.length > 0 && !carouselHidden && (
           <View style={styles.carouselContainer}>
             <ScrollView
@@ -1028,7 +984,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     >
                       <View style={[styles.carouselRing, styles.carouselRingRead]}>
                         <View style={[styles.carouselCircle, styles.carouselPlusCircle]}>
-                          <Plus size={20} color="#FF7A00" weight="bold" />
+                          <Plus size={20} color={theme.colors.brandOrange} weight="bold" />
                         </View>
                       </View>
                       <Text
@@ -1096,26 +1052,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           </View>
         )}
 
-        {/* Practice Card */}
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => handleCardPress(isCoach ? 'CoachDashboard' : 'Training')}
           style={styles.practiceCardWrapper}
         >
           <LinearGradient
-            colors={['#1C1F2B', '#13151F']}
+            colors={[theme.colors.cardSolid, theme.colors.darkGray]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={styles.practiceCard}
           >
-            {/* Header row */}
             <View style={styles.practiceCardHeader}>
               <View style={styles.practiceCardHeaderLeft}>
                 <Text style={styles.practiceCardLabel}>
                   {isCoach ? 'TEAM ACTIVITY' : isTextBasedProgram || isUploadedProgram ? 'YOUR PROGRAM' : 'TODAY\'S SESSION'}
                 </Text>
               </View>
-              <CaretRight size={13} color="rgba(255,255,255,0.25)" weight="bold" />
+              <CaretRight size={13} color={theme.colors.textMuted} weight="bold" />
             </View>
 
             {isCoach ? (
@@ -1132,7 +1086,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                         athleteProfileImageUrl: entry.athleteProfileImageUrl ?? null,
                       })}
                       style={{
-                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        backgroundColor: theme.colors.overlaySubtle,
                         borderRadius: 8,
                         padding: 8,
                         flexDirection: 'row',
@@ -1146,19 +1100,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                           style={{ width: 22, height: 22, borderRadius: 11 }}
                         />
                       ) : (
-                        <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(255,122,0,0.25)', alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ fontSize: 9, color: '#FF7A00', fontWeight: '800' }}>
+                        <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: theme.colors.brandOrangeLight, alignItems: 'center', justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 9, color: theme.colors.brandOrange, fontWeight: '800' }}>
                             {(entry.athleteName?.[0] || entry.athleteUsername?.[0] || '?').toUpperCase()}
                           </Text>
                         </View>
                       )}
-                      <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: '700', maxWidth: 90 }} numberOfLines={1}>
+                      <Text style={{ fontSize: 11, color: theme.colors.textPrimary, fontWeight: '700', maxWidth: 90 }} numberOfLines={1}>
                         {entry.athleteName || `@${entry.athleteUsername}`}
                       </Text>
-                      <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', flex: 1 }} numberOfLines={1}>
+                      <Text style={{ fontSize: 11, color: theme.colors.textSecondary, flex: 1 }} numberOfLines={1}>
                         {entry.title || entry.notes || entry.content || 'Journal entry'}
                       </Text>
-                      <CaretRight size={10} color="rgba(255,255,255,0.2)" weight="bold" />
+                      <CaretRight size={10} color={theme.colors.textMuted} weight="bold" />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -1182,7 +1136,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     {todaySession.title}
                   </Text>
                 )}
-                <HomeWorkoutContent session={todaySession} gymData={todayGymData} />
+                <HomeWorkoutContent session={todaySession} gymData={todayGymData} theme={theme} />
               </>
             ) : (
               <Text style={styles.practiceNoSession}>
@@ -1192,10 +1146,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Training Stats Carousel */}
-        <TrainingStatsCarousel data={trainingStats} onNavigate={onNavigate} />
+        <TrainingStatsCarousel data={trainingStats} onNavigate={onNavigate} theme={theme} />
 
-        {/* Category Cards */}
         <View style={styles.cardsContainer}>
           {categoryCards.map((card, idx) => {
             const disabled = card.disabled;
@@ -1224,10 +1176,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                         activeOpacity={0.7}
                         onPress={() => !disabled && handleCardPress(card.route)}
                       >
-                        <CaretRight size={14} color="#cbd5e1" weight="fill" />
+                        <CaretRight size={14} color={theme.colors.textSecondary} weight="fill" />
                       </TouchableOpacity>
                     )}
-                    <CaretRight size={12} color={disabled ? '#94a3b8' : '#cbd5e1'} weight="fill" />
+                    <CaretRight size={12} color={disabled ? theme.colors.textMuted : theme.colors.textSecondary} weight="fill" />
                   </View>
                 </View>
               </Card>
@@ -1275,7 +1227,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
               style={styles.modalCloseButton}
               onPress={() => setTickerModalVisible(false)}
             >
-              <X size={16} color="#94a3b8" weight="bold" />
+              <X size={16} color={theme.colors.textMuted} weight="bold" />
             </TouchableOpacity>
 
             {selectedActivity && selectedEntry && (
@@ -1303,7 +1255,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                     ) : (
                       (() => {
                         const ActivityIcon = getActivityIconComponent(selectedActivity.activityType);
-                        return <ActivityIcon size={18} color="#e2e8f0" weight="fill" />;
+                        return <ActivityIcon size={18} color={theme.colors.foreground} weight="fill" />;
                       })()
                     )}
                   </TouchableOpacity>
@@ -1349,7 +1301,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                   >
                     <Heart
                       size={18}
-                      color={likedActivities.has(selectedActivity.id) ? '#ef4444' : '#94a3b8'}
+                      color={likedActivities.has(selectedActivity.id) ? theme.colors.destructive : theme.colors.textMuted}
                       weight={likedActivities.has(selectedActivity.id) ? 'fill' : 'regular'}
                     />
                     <Text
@@ -1367,7 +1319,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
                       onPress={() => saveToJournalMutation.mutate(selectedActivity)}
                       disabled={saveToJournalMutation.isPending}
                     >
-                      <FloppyDisk size={18} color="#FF9800" weight="fill" />
+                      <FloppyDisk size={18} color={theme.colors.brandOrange} weight="fill" />
                       <Text variant="caption" weight="medium" color="secondary">
                         {saveToJournalMutation.isPending ? 'Saving...' : 'Save to Journal'}
                       </Text>
@@ -1380,7 +1332,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Feed post composer — opened by carousel + button */}
       <Modal
         transparent
         visible={isComposerOpen}
@@ -1431,7 +1382,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   );
 };
 
-const STATS_CARD_WIDTH = Dimensions.get('window').width - 2 * theme.spacing.container;
+const STATS_CARD_WIDTH = Dimensions.get('window').width - 2 * spacing.container;
 
 interface StatsPeriod {
   key: string;
@@ -1455,9 +1406,118 @@ const TOOL_CONFIG: Record<string, { label: string; icon: React.ReactNode; screen
   Spikes: { label: 'Spikes', icon: <PushPin size={14} color="#facc15" weight="fill" />, screen: 'Spikes' },
 };
 
-const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNavigate?: (route: string) => void }) => {
+const createTsStyles = (t: ThemeValues) => StyleSheet.create({
+  wrapper: {
+    marginBottom: spacing.xxxl,
+    marginTop: 0,
+  },
+  card: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  headerTitle: {
+    color: t.colors.textMuted,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    flex: 1,
+  },
+  dots: {
+    flexDirection: 'row',
+    gap: 5,
+    marginRight: 10,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: t.colors.overlayHeavy,
+  },
+  dotActive: {
+    backgroundColor: t.colors.textPrimary,
+    width: 16,
+  },
+  periodLabel: {
+    color: t.colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '800',
+    backgroundColor: t.colors.overlayLight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  page: {
+    width: STATS_CARD_WIDTH,
+    paddingHorizontal: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  statCell: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  vDivider: {
+    width: 0.5,
+    backgroundColor: t.colors.overlayMedium,
+  },
+  hDivider: {
+    height: 0.5,
+    backgroundColor: t.colors.overlayMedium,
+  },
+  iconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: t.colors.overlayMedium,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statLogo: {
+    width: 16,
+    height: 16,
+  },
+  statText: {
+    flex: 1,
+  },
+  statValue: {
+    color: t.colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '800',
+    lineHeight: 20,
+  },
+  statTotal: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: t.colors.textSecondary,
+  },
+  statLabel: {
+    color: t.colors.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    lineHeight: 14,
+  },
+});
+
+const TrainingStatsCarousel = ({ data, onNavigate, theme }: { data: StatsPeriod[]; onNavigate?: (route: string) => void; theme: ThemeValues }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const statsRef = useRef<FlatList>(null);
+  const { styles: tsStyles } = useThemedStyles(createTsStyles);
 
   const handleScroll = useCallback((e: any) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / STATS_CARD_WIDTH);
@@ -1490,8 +1550,8 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
             </View>
           </View>
           <View style={tsStyles.statCell}>
-            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-              <PencilLine size={14} color="#fff" weight="fill" />
+            <View style={[tsStyles.iconWrap, { backgroundColor: theme.colors.overlayLight }]}>
+              <PencilLine size={14} color={theme.colors.textPrimary} weight="fill" />
             </View>
             <View style={tsStyles.statText}>
               <RNText style={tsStyles.statValue}>{item.journal}</RNText>
@@ -1513,7 +1573,7 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
                 <RNText style={tsStyles.statValue} numberOfLines={1}>{tool.label}</RNText>
                 <RNText style={tsStyles.statLabel}>Quick Action</RNText>
               </View>
-              <CaretRight size={12} color="rgba(255,255,255,0.4)" weight="bold" />
+              <CaretRight size={12} color={theme.colors.textMuted} weight="bold" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -1521,18 +1581,18 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
               activeOpacity={0.7}
               onPress={() => onNavigate?.('Tools')}
             >
-              <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
-                <Barbell size={14} color="rgba(255,255,255,0.28)" weight="fill" />
+              <View style={[tsStyles.iconWrap, { backgroundColor: theme.colors.overlaySubtle }]}>
+                <Barbell size={14} color={theme.colors.textMuted} weight="fill" />
               </View>
               <View style={tsStyles.statText}>
-                <RNText style={[tsStyles.statValue, { color: 'rgba(255,255,255,0.38)', fontSize: 12 }]} numberOfLines={1}>Explore Tools</RNText>
+                <RNText style={[tsStyles.statValue, { color: theme.colors.textMuted, fontSize: 12 }]} numberOfLines={1}>Explore Tools</RNText>
                 <RNText style={tsStyles.statLabel}>Quick Action</RNText>
               </View>
-              <CaretRight size={12} color="rgba(255,255,255,0.18)" weight="bold" />
+              <CaretRight size={12} color={theme.colors.textMuted} weight="bold" />
             </TouchableOpacity>
           )}
           <View style={tsStyles.statCell}>
-            <View style={[tsStyles.iconWrap, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+            <View style={[tsStyles.iconWrap, { backgroundColor: theme.colors.overlayLight }]}>
               <PushPin size={14} color="#facc15" weight="fill" />
             </View>
             <View style={tsStyles.statText}>
@@ -1548,7 +1608,7 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
   return (
     <View style={tsStyles.wrapper}>
       <LinearGradient
-        colors={['#1C1F2B', '#252A3A']}
+        colors={[theme.colors.cardSolid, theme.colors.darkGray]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={tsStyles.card}
@@ -1591,115 +1651,52 @@ const TrainingStatsCarousel = ({ data, onNavigate }: { data: StatsPeriod[]; onNa
   );
 };
 
-const tsStyles = StyleSheet.create({
-  wrapper: {
-    marginBottom: theme.spacing.xxxl,
-    marginTop: 0,
-  },
-  card: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    paddingTop: 12,
-    paddingBottom: 14,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 10,
-  },
-  headerTitle: {
-    color: 'rgba(255,255,255,0.45)',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    flex: 1,
-  },
-  dots: {
-    flexDirection: 'row',
-    gap: 5,
-    marginRight: 10,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  dotActive: {
-    backgroundColor: '#fff',
-    width: 16,
-  },
-  periodLabel: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '800',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  page: {
-    width: STATS_CARD_WIDTH,
-    paddingHorizontal: 4,
+const createHwStyles = (t: ThemeValues) => StyleSheet.create({
+  container: {
+    backgroundColor: t.colors.overlayLight,
+    borderRadius: 10,
+    padding: 12,
+    gap: 7,
+    marginTop: 8,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  statCell: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
     gap: 8,
   },
-  vDivider: {
-    width: 0.5,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-  },
-  hDivider: {
-    height: 0.5,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-  },
-  iconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statLogo: {
-    width: 16,
-    height: 16,
-  },
-  statText: {
-    flex: 1,
-  },
-  statValue: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '800',
-    lineHeight: 20,
-  },
-  statTotal: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.6)',
-  },
-  statLabel: {
-    color: 'rgba(255,255,255,0.45)',
+  labelText: {
+    color: t.colors.textMuted,
     fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 0.3,
-    lineHeight: 14,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    width: 44,
+    paddingTop: 1,
+  },
+  valueText: {
+    color: t.colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+    flexShrink: 1,
+  },
+  descriptionText: {
+    color: t.colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+    marginBottom: 2,
+  },
+  fallbackText: {
+    color: t.colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
   },
 });
 
-const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: string[] }) => {
+const HomeWorkoutContent = ({ session, gymData = [], theme }: { session: any; gymData: string[]; theme: ThemeValues }) => {
+  const { styles: hwStyles } = useThemedStyles(createHwStyles);
+
   if (!session) return null;
 
   const contentSections = [
@@ -1771,50 +1768,7 @@ const HomeWorkoutContent = ({ session, gymData = [] }: { session: any; gymData: 
   );
 };
 
-const hwStyles = StyleSheet.create({
-  container: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 10,
-    padding: 12,
-    gap: 7,
-    marginTop: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  labelText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    width: 44,
-    paddingTop: 1,
-  },
-  valueText: {
-    color: 'rgba(255,255,255,0.95)',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-    flexShrink: 1,
-  },
-  descriptionText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-    marginBottom: 2,
-  },
-  fallbackText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-});
-
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -1823,23 +1777,23 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.container,
+    paddingHorizontal: spacing.container,
   },
   fixedHeader: {
     zIndex: 10,
-    paddingLeft: theme.spacing.container,
-    paddingRight: theme.spacing.container + 20,
+    paddingLeft: spacing.container,
+    paddingRight: spacing.container + 20,
   },
   header: {
-    paddingVertical: theme.spacing.xs,
+    paddingVertical: spacing.xs,
   },
   profileButton: {
-    padding: theme.spacing.sm,
+    padding: spacing.sm,
   },
   statsRow: {
     flexDirection: 'row',
-    marginBottom: theme.spacing.xl,
-    gap: theme.spacing.md,
+    marginBottom: spacing.xl,
+    gap: spacing.md,
   },
   statCard: {
     flex: 1,
@@ -1852,7 +1806,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardsContainer: {
-    gap: theme.spacing.sm,
+    gap: spacing.sm,
   },
   headerActionButton: {
     width: 36,
@@ -1867,12 +1821,12 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   carouselContainer: {
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
   },
   carouselToggle: {
     alignSelf: 'flex-end',
-    marginRight: theme.spacing.container,
+    marginRight: spacing.container,
     marginBottom: 4,
     padding: 4,
   },
@@ -1894,35 +1848,25 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   carouselRingUnread: {
-    borderColor: '#FF9800',
+    borderColor: t.colors.brandOrange,
   },
   carouselRingRead: {
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: t.colors.overlayMedium,
   },
   carouselCircle: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   carouselPlusCircle: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 1.5,
     borderColor: 'rgba(255,122,0,0.4)',
     borderStyle: 'dashed',
-  },
-  carouselImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-  },
-  carouselInitial: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#e2e8f0',
   },
   carouselBadge: {
     position: 'absolute',
@@ -1934,22 +1878,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#0f1623',
+    borderColor: t.colors.backgroundSolid,
   },
   carouselBadgeJournal: {
-    backgroundColor: '#FF9800',
+    backgroundColor: t.colors.brandOrange,
   },
   carouselBadgeFeed: {
     backgroundColor: '#6366f1',
   },
   carouselBadgeSystem: {
-    backgroundColor: '#1e293b',
+    backgroundColor: t.colors.darkGray,
   },
   carouselRedDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ef4444',
+    backgroundColor: t.colors.destructive,
   },
   carouselUsername: {
     marginTop: 4,
@@ -1961,7 +1905,7 @@ const styles = StyleSheet.create({
     height: 90,
     overflow: 'hidden',
     backgroundColor: 'rgba(147, 51, 234, 0.08)',
-    borderColor: 'rgba(100, 116, 139, 0.25)',
+    borderColor: t.colors.overlayMedium,
     borderWidth: 0.5,
     borderRadius: 16,
     shadowColor: '#000',
@@ -1971,14 +1915,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   categoryCardSpacer: {
-    marginTop: theme.spacing.sm,
+    marginTop: spacing.sm,
   },
   categoryInner: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: theme.spacing.lg,
+    padding: spacing.lg,
   },
   categoryText: {
     flex: 1,
@@ -1986,25 +1930,25 @@ const styles = StyleSheet.create({
   categorySubRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.xs,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   categoryDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(203,213,225,0.5)',
+    backgroundColor: t.colors.overlayHeavy,
   },
   categoryIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginLeft: theme.spacing.md,
+    gap: spacing.sm,
+    marginLeft: spacing.md,
   },
   previewButton: {
-    padding: theme.spacing.xs,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: 'rgba(203,213,225,0.08)',
+    padding: spacing.xs,
+    borderRadius: 6,
+    backgroundColor: t.colors.overlaySubtle,
   },
   cardDisabled: {
     opacity: 0.5,
@@ -2016,19 +1960,19 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#ef4444',
+    backgroundColor: t.colors.destructive,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 5,
   },
   practiceCardWrapper: {
-    marginBottom: theme.spacing.xxxl,
+    marginBottom: spacing.xxxl,
   },
   practiceCard: {
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(109,40,217,0.3)',
-    padding: theme.spacing.xl,
+    padding: spacing.xl,
     overflow: 'hidden',
     minHeight: 181,
   },
@@ -2056,34 +2000,34 @@ const styles = StyleSheet.create({
     height: 15,
   },
   practiceCardLabel: {
-    color: 'rgba(255,255,255,0.4)',
+    color: t.colors.textMuted,
     fontSize: 10,
     fontWeight: '700' as const,
     textTransform: 'uppercase' as const,
     letterSpacing: 1.2,
   },
   practiceSessionTitle: {
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     fontSize: 15,
     fontWeight: '700' as const,
     marginBottom: 8,
     lineHeight: 21,
   },
   practiceNoSession: {
-    color: 'rgba(255,255,255,0.35)',
+    color: t.colors.textMuted,
     fontSize: 12,
     fontWeight: '500' as const,
     fontStyle: 'italic' as const,
   },
   practiceTapPrompt: {
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     fontSize: 15,
     fontWeight: '600' as const,
     marginTop: 4,
     letterSpacing: 0.2,
   },
   workoutContentContainer: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
     borderRadius: 10,
     padding: 12,
     gap: 8,
@@ -2095,7 +2039,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   workoutSectionLabel: {
-    color: 'rgba(255,255,255,0.5)',
+    color: t.colors.textMuted,
     fontSize: 10,
     fontWeight: '700' as const,
     textTransform: 'uppercase' as const,
@@ -2105,7 +2049,7 @@ const styles = StyleSheet.create({
     paddingTop: 1,
   },
   workoutSectionValue: {
-    color: 'rgba(255,255,255,0.95)',
+    color: t.colors.textPrimary,
     fontSize: 12,
     fontWeight: '500' as const,
     lineHeight: 16,
@@ -2115,16 +2059,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.container,
+    paddingHorizontal: spacing.container,
   },
   modalContent: {
-    backgroundColor: '#141c2b',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingBottom: 20,
     paddingTop: 16,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: t.colors.overlayMedium,
   },
   modalCloseButton: {
     position: 'absolute',
@@ -2149,11 +2093,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(15,23,42,0.35)',
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.35)',
+    borderColor: t.colors.overlayMedium,
   },
   modalBody: {
     marginBottom: 20,
@@ -2170,9 +2114,9 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: 'rgba(148,163,184,0.2)',
+    borderColor: t.colors.overlayMedium,
   },
   modalActionButtonActive: {
     backgroundColor: 'rgba(239,68,68,0.1)',
@@ -2184,7 +2128,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
   },
   composerCard: {
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     minHeight: 240,
@@ -2192,7 +2136,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 32,
     borderTopWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: t.colors.overlayLight,
   },
   composerHeader: {
     flexDirection: 'row',
@@ -2201,7 +2145,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   composerInput: {
-    color: '#e2e8f0',
+    color: t.colors.foreground,
     fontSize: 15,
     lineHeight: 22,
     minHeight: 120,

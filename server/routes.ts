@@ -5628,6 +5628,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await dbStorage.deleteProgram(programId);
+
+      // Clear this user's (the creator's) active_program_selection if it pointed at the now-deleted
+      // program. Assignees whose rows were CASCADE-deleted will fall back to programs[0] client-side
+      // or be caught by the PracticeScreen opportunistic cleanup.
+      await dbStorage.clearActiveProgramSelectionIfMatches(
+        req.user!.id,
+        [`created-${programId}`],
+      );
+
       res.json({ success: true });
     } catch (error: any) {
       console.error("Error deleting program:", error);
@@ -5635,8 +5644,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // 6. Get user's purchased programs
-  app.get("/api/purchased-programs", async (req: Request, res: Response) => {
+  // 6. Get user's programs (purchased, assigned, self-assigned, created)
+  const myProgramsHandler = async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Not authenticated" });
@@ -5692,6 +5701,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 creator: {
                   username: assigner?.username || 'Unknown'
                 },
+                // 'self_assigned' if the assigner is the same user; covers /api/programs/:id/self-assign and any future coach-self-assign paths.
+                source: assignment.assignerId === assignment.assigneeId ? 'self_assigned' as const : 'assigned' as const,
+                // Deprecated: use `source` field instead. Kept for backward compat.
                 isAssigned: true, // Flag to indicate this is an assigned program
                 assignerName: assigner?.username || 'Unknown Coach'
               };
@@ -5716,22 +5728,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creator: {
           username: req.user!.username || 'You'
         },
+        source: 'created' as const,
+        // Deprecated: use `source` field instead. Kept for backward compat.
         isCreated: true, // Flag to indicate this is a created program
         creatorName: 'You (Creator)'
       }));
       
       console.log('Created programs:', createdAsPurchased);
       
+      // Tag pre-existing purchases with source so the union shape is consistent
+      const purchasesWithSource = purchases.map(p => ({ ...p, source: 'purchased' as const }));
+
       // Combine purchased, assigned, and created programs
-      const allPrograms = [...purchases, ...assignedAsPurchased, ...createdAsPurchased];
-      
+      const allPrograms = [...purchasesWithSource, ...assignedAsPurchased, ...createdAsPurchased];
+
       console.log('Final combined programs:', allPrograms);
-      
+
       res.json(allPrograms);
     } catch (error: any) {
       console.error("Error fetching purchased programs:", error);
       res.status(500).json({ error: "Failed to fetch purchased programs" });
     }
+  };
+
+  app.get("/api/my-programs", myProgramsHandler);
+
+  // Deprecated alias. Will be removed in a follow-up once mobile builds <= #15 stop calling it.
+  let purchasedProgramsDeprecationLogged = false;
+  app.get("/api/purchased-programs", (req: Request, res: Response) => {
+    if (!purchasedProgramsDeprecationLogged) {
+      console.log('[deprecated] /api/purchased-programs called, use /api/my-programs');
+      purchasedProgramsDeprecationLogged = true;
+    }
+    return myProgramsHandler(req, res);
   });
   
   // ============================================================
@@ -6677,8 +6706,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clubMembers = await dbStorage.getCoachableUsers(req.user!.id);
       
       // Get coach's athletes (if user is a coach)
-      const coachAthletes = req.user!.isCoach ? await dbStorage.getCoachAthletes(req.user!.id) : [];
-      
+      const coachAthletes = await dbStorage.getCoachAthletes(req.user!.id);
+
       // Get friends - coaches can assign programs to their friends too
       const friends = await dbStorage.getFriends(req.user!.id);
       
@@ -6723,34 +6752,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      
-      const programId = parseInt(req.params.id);
-      const { assigneeId, notes } = req.body;
-      
-      if (!assigneeId) {
-        return res.status(400).json({ error: "Assignee ID is required" });
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[assign]', { programId: req.params.id, assigneeId: req.body?.assigneeId, callerId: req.user?.id });
       }
-      
+
+      const programId = parseInt(req.params.id);
+      const { assigneeId: rawAssigneeId, notes } = req.body;
+      const assigneeId = Number(rawAssigneeId);
+      if (!Number.isInteger(assigneeId) || assigneeId <= 0) {
+        return res.status(400).json({ error: "Assignee ID is required and must be a positive integer" });
+      }
+
       const program = await dbStorage.getProgram(programId);
-      
+
       if (!program) {
         return res.status(404).json({ error: "Program not found" });
       }
-      
+
       // Only the creator can assign programs
       if (program.userId !== req.user!.id) {
         return res.status(403).json({ error: "Only the creator can assign this program" });
       }
-      
+
       // Check if the assignee is eligible (in same club/group or a coached athlete)
       const clubMembers = await dbStorage.getCoachableUsers(req.user!.id);
-      const coachAthletes = req.user!.isCoach ? await dbStorage.getCoachAthletes(req.user!.id) : [];
-      
+      const coachAthletes = await dbStorage.getCoachAthletes(req.user!.id);
+      const friends = await dbStorage.getFriends(req.user!.id);
+
       const isClubMember = clubMembers.some(member => member.id === assigneeId);
       const isCoachAthlete = coachAthletes.some(athlete => athlete.id === assigneeId);
-      
-      if (!isClubMember && !isCoachAthlete) {
-        return res.status(403).json({ error: "You can only assign programs to your club members or athletes" });
+      const isFriend = friends.some(friend => friend.id === assigneeId);
+
+      if (!isClubMember && !isCoachAthlete && !isFriend) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[assign] denied', {
+            programId,
+            assigneeId,
+            callerId: req.user!.id,
+            clubMembers: clubMembers.length,
+            coachAthletes: coachAthletes.length,
+            friends: friends.length,
+          });
+        }
+        return res.status(403).json({ error: "You can only assign programs to your club members, athletes, or friends" });
       }
       
       // Check if already assigned
@@ -6877,7 +6922,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const updatedAssignment = await dbStorage.updateProgramAssignment(assignmentId, updates);
-      
+
+      // If this assignment is no longer active, null out the ASSIGNEE's active_program_selection
+      // if it points at this assignment. Uses assignment.assigneeId (not req.user!.id) so this
+      // is future-proofed for when coach-on-behalf-of-athlete access is added. Today the handler
+      // permission check (via getAssignedPrograms) only allows the assignee through, but wiring
+      // against assigneeId directly keeps the cleanup correct regardless of who the caller is.
+      if (status && status !== 'accepted') {
+        await dbStorage.clearActiveProgramSelectionIfMatches(
+          assignment.assigneeId,
+          [`assigned-${assignmentId}`],
+        );
+      }
+
       res.json(updatedAssignment);
     } catch (error: any) {
       console.error("Error updating program assignment:", error);

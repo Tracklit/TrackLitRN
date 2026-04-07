@@ -680,6 +680,17 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async clearActiveProgramSelectionIfMatches(userId: number, wrapperIds: string[]): Promise<void> {
+    if (wrapperIds.length === 0) return;
+    await db
+      .update(users)
+      .set({ activeProgramSelection: null })
+      .where(and(
+        eq(users.id, userId),
+        inArray(users.activeProgramSelection, wrapperIds),
+      ));
+  }
+
   async searchUsers(query: string): Promise<User[]> {
     return db
       .select({
