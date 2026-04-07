@@ -30,20 +30,10 @@ import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const C = {
-  bg: '#0E0F14',
-  surface: '#161823',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  glass: 'rgba(255,255,255,0.05)',
-};
 
 type Visibility = 'public' | 'private' | 'premium';
 type PriceType = 'spikes' | 'money';
@@ -77,6 +67,7 @@ type SprinthiaFormData = {
 };
 
 export const ProgramCreateScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
@@ -113,7 +104,7 @@ export const ProgramCreateScreen: React.FC = () => {
     },
     onSuccess: (program) => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs'] });
       Alert.alert('Created', 'Your program was created successfully.');
       if (program?.id !== undefined) {
         if (selectedMethod === 'text') {
@@ -236,7 +227,7 @@ export const ProgramCreateScreen: React.FC = () => {
       <TextInput
         style={styles.input}
         placeholder="Price"
-        placeholderTextColor={C.textMuted}
+        placeholderTextColor={theme.colors.textMuted}
         value={price}
         onChangeText={setPrice}
         keyboardType="decimal-pad"
@@ -246,7 +237,7 @@ export const ProgramCreateScreen: React.FC = () => {
 
   const renderGradientBtn = (label: string, onPress: () => void, loading: boolean, icon?: React.ReactNode) => (
     <TouchableOpacity style={styles.gradientBtn} onPress={onPress} activeOpacity={0.8} disabled={loading || !isAuthenticated || isGuest}>
-      <LinearGradient colors={[C.orange, C.orangeLight]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.gradientBtnInner}>
+      <LinearGradient colors={[theme.colors.brandOrange, theme.colors.brandOrangeLight]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.gradientBtnInner}>
         {icon}
         <Text style={styles.gradientBtnText}>{loading ? 'Working...' : label}</Text>
       </LinearGradient>
@@ -257,7 +248,7 @@ export const ProgramCreateScreen: React.FC = () => {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
+          <ArrowLeft size={18} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Program</Text>
         <View style={styles.headerSpacer} />
@@ -289,7 +280,7 @@ export const ProgramCreateScreen: React.FC = () => {
                 }}
               >
                 <View style={styles.methodIcon}>
-                  <item.Icon size={20} color={C.orange} weight="fill" />
+                  <item.Icon size={20} color={theme.colors.brandOrange} weight="fill" />
                 </View>
                 <Text style={styles.methodTitle}>{item.title}</Text>
                 <Text style={styles.methodDescription}>{item.description}</Text>
@@ -298,7 +289,7 @@ export const ProgramCreateScreen: React.FC = () => {
           </View>
         ) : (
           <TouchableOpacity style={styles.backMethodBtn} onPress={() => setSelectedMethod(null)} activeOpacity={0.7}>
-            <ArrowLeft size={14} color={C.orange} weight="bold" />
+            <ArrowLeft size={14} color={theme.colors.brandOrange} weight="bold" />
             <Text style={styles.backMethodText}>Choose Different Method</Text>
           </TouchableOpacity>
         )}
@@ -306,13 +297,13 @@ export const ProgramCreateScreen: React.FC = () => {
         {selectedMethod === 'builder' && (
           <View style={styles.formCard}>
             <View style={styles.formCardHeader}>
-              <BookOpen size={16} color={C.orange} weight="fill" />
+              <BookOpen size={16} color={theme.colors.brandOrange} weight="fill" />
               <Text style={styles.formCardTitle}>Build Custom Program</Text>
             </View>
             <Text style={styles.formCardSubtitle}>Create a structured training program with custom sessions and exercises.</Text>
             <View style={styles.formFields}>
-              <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={title} onChangeText={setTitle} />
-              <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={C.textMuted} value={description} onChangeText={setDescription} multiline />
+              <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={theme.colors.textMuted} value={title} onChangeText={setTitle} />
+              <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={theme.colors.textMuted} value={description} onChangeText={setDescription} multiline />
               <Text style={styles.sectionLabel}>Visibility</Text>
               {renderVisibilityPills(visibility, setVisibility, ensurePricing)}
               <Text style={styles.sectionLabel}>Duration</Text>
@@ -327,14 +318,14 @@ export const ProgramCreateScreen: React.FC = () => {
         {selectedMethod === 'text' && (
           <View style={styles.formCard}>
             <View style={styles.formCardHeader}>
-              <Keyboard size={16} color={C.orange} weight="fill" />
+              <Keyboard size={16} color={theme.colors.brandOrange} weight="fill" />
               <Text style={styles.formCardTitle}>Text Based Program</Text>
             </View>
             <Text style={styles.formCardSubtitle}>Create a text-based program that displays as a scrollable list in Practice view.</Text>
             <View style={styles.formFields}>
-              <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={title} onChangeText={setTitle} />
-              <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={C.textMuted} value={description} onChangeText={setDescription} multiline />
-              <TextInput style={[styles.input, styles.textAreaLarge]} placeholder="Program content" placeholderTextColor={C.textMuted} value={textContent} onChangeText={setTextContent} multiline />
+              <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={theme.colors.textMuted} value={title} onChangeText={setTitle} />
+              <TextInput style={[styles.input, styles.textArea]} placeholder="Description" placeholderTextColor={theme.colors.textMuted} value={description} onChangeText={setDescription} multiline />
+              <TextInput style={[styles.input, styles.textAreaLarge]} placeholder="Program content" placeholderTextColor={theme.colors.textMuted} value={textContent} onChangeText={setTextContent} multiline />
               <Text style={styles.sectionLabel}>Visibility</Text>
               {renderVisibilityPills(visibility, setVisibility, ensurePricing)}
               {renderPricingSection()}
@@ -353,8 +344,8 @@ export const ProgramCreateScreen: React.FC = () => {
             <View style={styles.formFields}>
               {!generatedProgram ? (
                 <>
-                  <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={C.textMuted} value={title} onChangeText={setTitle} />
-                  <TextInput style={[styles.input, styles.textArea]} placeholder="Description (optional)" placeholderTextColor={C.textMuted} value={description} onChangeText={setDescription} multiline />
+                  <TextInput style={styles.input} placeholder="Program title" placeholderTextColor={theme.colors.textMuted} value={title} onChangeText={setTitle} />
+                  <TextInput style={[styles.input, styles.textArea]} placeholder="Description (optional)" placeholderTextColor={theme.colors.textMuted} value={description} onChangeText={setDescription} multiline />
 
                   <Text style={styles.sectionLabel}>Program Length</Text>
                   <View style={styles.pillRow}>
@@ -408,7 +399,7 @@ export const ProgramCreateScreen: React.FC = () => {
                     ))}
                   </View>
 
-                  <TextInput style={[styles.input, styles.textArea]} placeholder="Describe your goals and AI prompt" placeholderTextColor={C.textMuted} value={sprinthiaData.aiPrompt} onChangeText={(value) => setSprinthiaData((prev) => ({ ...prev, aiPrompt: value }))} multiline />
+                  <TextInput style={[styles.input, styles.textArea]} placeholder="Describe your goals and AI prompt" placeholderTextColor={theme.colors.textMuted} value={sprinthiaData.aiPrompt} onChangeText={(value) => setSprinthiaData((prev) => ({ ...prev, aiPrompt: value }))} multiline />
 
                   {renderGradientBtn('Generate Training Program', () => generateSprinthiaMutation.mutate(), generateSprinthiaMutation.isPending, <MagicWand size={16} color="white" weight="fill" />)}
                 </>
@@ -434,8 +425,8 @@ export const ProgramCreateScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -446,9 +437,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -456,7 +447,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   headerSpacer: { flex: 1 },
   content: {
@@ -469,12 +460,12 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: -0.3,
   },
   pageSubtitle: {
     fontSize: 14,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 20,
   },
   methodGrid: {
@@ -486,9 +477,9 @@ const styles = StyleSheet.create({
   methodCard: {
     width: '48%',
     borderRadius: 14,
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     padding: 16,
     minHeight: 130,
     alignItems: 'center',
@@ -501,19 +492,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,122,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.2)',
   },
   methodTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     textAlign: 'center',
   },
   methodDescription: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 15,
   },
@@ -526,13 +517,13 @@ const styles = StyleSheet.create({
   backMethodText: {
     fontSize: 14,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   formCard: {
     borderRadius: 14,
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     padding: 16,
     gap: 10,
   },
@@ -544,11 +535,11 @@ const styles = StyleSheet.create({
   formCardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   formCardSubtitle: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 18,
   },
   formFields: {
@@ -558,16 +549,16 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     marginTop: 4,
   },
   input: {
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 12,
     padding: 12,
-    color: C.textPrimary,
-    backgroundColor: C.glass,
+    color: t.colors.textPrimary,
+    backgroundColor: t.colors.overlaySubtle,
     fontSize: 14,
   },
   textArea: {
@@ -592,20 +583,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: C.border,
-    backgroundColor: C.glass,
+    borderColor: t.colors.overlayLight,
+    backgroundColor: t.colors.overlaySubtle,
   },
   pillActive: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderColor: 'rgba(255,122,0,0.3)',
   },
   pillText: {
     fontSize: 13,
     fontWeight: '500',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   pillTextActive: {
-    color: C.orange,
+    color: t.colors.brandOrange,
     fontWeight: '600',
   },
   gradientBtn: {
@@ -624,38 +615,38 @@ const styles = StyleSheet.create({
   gradientBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   outlineBtn: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   outlineBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   helperText: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   generatedBox: {
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 12,
     padding: 14,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     maxHeight: 300,
   },
   monoText: {
     fontFamily: 'Courier',
     fontSize: 12,
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     lineHeight: 18,
   },
   generatedActions: {

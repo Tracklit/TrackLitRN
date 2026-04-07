@@ -10,8 +10,11 @@ import {
 import { ClipboardText, CheckCircle, CaretDown } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
+import { describeProgramSource, type ProgramSource } from '@/utils/programSource';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface Program {
   id: number | string;
   title: string;
@@ -25,6 +28,7 @@ interface PurchasedProgramItem {
   programId: number | string;
   program: Program;
   assignerName?: string;
+  source?: ProgramSource;
 }
 
 interface ProgramPickerDropdownProps {
@@ -52,6 +56,7 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
   onSelect,
   isLoading,
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const [isOpen, setIsOpen] = useState(false);
   const animValue = useRef(new Animated.Value(0)).current;
 
@@ -116,6 +121,7 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
             <View style={styles.programList}>
               {sortedPrograms.map((assignment, idx) => {
                 const isSelected = String(selectedProgramId) === String(assignment.id);
+                const sourceLabel = describeProgramSource(assignment.source, assignment.assignerName);
                 return (
                   <TouchableOpacity
                     key={`${assignment.id}-${assignment.programId}-${idx}`}
@@ -141,7 +147,7 @@ export const ProgramPickerDropdown: React.FC<ProgramPickerDropdownProps> = ({
                       </Text>
                       <Text variant="caption" color="muted" numberOfLines={1}>
                         {assignment.program?.category || 'Training Program'}
-                        {assignment.program?.duration ? ` • ${assignment.program.duration}` : ''}
+                        {sourceLabel ? ` • ${sourceLabel}` : (assignment.program?.duration ? ` • ${assignment.program.duration}` : '')}
                       </Text>
                     </View>
                     {isSelected && <CheckCircle size={18} color={theme.colors.primary} weight="fill" />}
@@ -168,6 +174,7 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
   onSelect,
   isLoading,
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const sortedPrograms = useMemo(() => sortPrograms(programs), [programs]);
 
   if (!visible) {
@@ -193,6 +200,7 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
             <View style={styles.programList}>
               {sortedPrograms.map((assignment, idx) => {
                 const isSelected = String(selectedProgramId) === String(assignment.id);
+                const sourceLabel = describeProgramSource(assignment.source, assignment.assignerName);
                 return (
                   <TouchableOpacity
                     key={`${assignment.id}-${assignment.programId}-${idx}`}
@@ -218,7 +226,7 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
                       </Text>
                       <Text variant="caption" color="muted" numberOfLines={1}>
                         {assignment.program?.category || 'Training Program'}
-                        {assignment.program?.duration ? ` • ${assignment.program.duration}` : ''}
+                        {sourceLabel ? ` • ${sourceLabel}` : (assignment.program?.duration ? ` • ${assignment.program.duration}` : '')}
                       </Text>
                     </View>
                     {isSelected ? <CheckCircle size={18} color={theme.colors.primary} weight="fill" /> : null}
@@ -243,7 +251,7 @@ export const ProgramPickerModal: React.FC<ProgramPickerModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   wrapper: {
     zIndex: 10,
   },
@@ -251,18 +259,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
-    padding: theme.spacing.lg,
+    padding: themeStatic.spacing.lg,
   },
   modalCard: {
     borderRadius: 16,
     backgroundColor: 'rgba(15, 23, 42, 0.98)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    padding: theme.spacing.lg,
+    borderColor: t.colors.overlayMedium,
+    padding: themeStatic.spacing.lg,
   },
   modalSubtitle: {
-    marginTop: theme.spacing.xs,
-    marginBottom: theme.spacing.md,
+    marginTop: themeStatic.spacing.xs,
+    marginBottom: themeStatic.spacing.md,
     lineHeight: 18,
   },
   row: {
@@ -272,41 +280,41 @@ const styles = StyleSheet.create({
   dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
+    gap: themeStatic.spacing.sm,
+    paddingVertical: themeStatic.spacing.sm,
+    paddingHorizontal: themeStatic.spacing.md,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: t.colors.overlayMedium,
+    backgroundColor: t.colors.overlayLight,
   },
   buttonLabel: {
     maxWidth: 180,
   },
   dropdownContainer: {
     overflow: 'hidden',
-    marginTop: theme.spacing.sm,
+    marginTop: themeStatic.spacing.sm,
     borderRadius: 12,
     backgroundColor: 'rgba(15, 23, 42, 0.95)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: t.colors.overlayMedium,
   },
   scroll: {
     maxHeight: 280,
   },
   loadingState: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   programList: {
-    padding: theme.spacing.xs,
+    padding: themeStatic.spacing.xs,
   },
   programRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    padding: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
+    gap: themeStatic.spacing.sm,
+    padding: themeStatic.spacing.sm,
+    paddingHorizontal: themeStatic.spacing.md,
     borderRadius: 8,
   },
   programRowSelected: {
@@ -316,7 +324,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -328,15 +336,15 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   modalCloseButton: {
-    marginTop: theme.spacing.md,
+    marginTop: themeStatic.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: themeStatic.spacing.sm,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: t.colors.overlayMedium,
   },
 });

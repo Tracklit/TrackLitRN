@@ -144,7 +144,7 @@ describe('PracticeScreen', () => {
 
   // ─── Program selection ───
   it('auto-selects first program when loaded', async () => {
-    // First call: purchased-programs, subsequent calls: program sessions API
+    // First call: my-programs, subsequent calls: program sessions API
     mockedApiRequest
       .mockResolvedValueOnce(mockPrograms)
       .mockResolvedValue({ sessions: [] });

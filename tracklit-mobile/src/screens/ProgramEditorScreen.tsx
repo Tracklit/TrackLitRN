@@ -40,25 +40,11 @@ import type { RootStackParamList } from '@/navigation/types';
 import { env } from '@/config/env';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type ProgramEditorRouteProp = RouteProp<RootStackParamList, 'ProgramEditor'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const C = {
-  bg: '#0E0F14',
-  surface: '#161823',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  glass: 'rgba(255,255,255,0.05)',
-  rest: 'rgba(255,122,0,0.12)',
-  restBorder: 'rgba(255,122,0,0.3)',
-  today: 'rgba(99,102,241,0.15)',
-  todayBorder: 'rgba(99,102,241,0.4)',
-};
 
 interface ProgramSession {
   id?: number;
@@ -105,6 +91,7 @@ const parseSessionDate = (value?: string | null): Date | null => {
 const formatISODate = (date: Date) => format(date, 'yyyy-MM-dd');
 
 export const ProgramEditorScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const route = useRoute<ProgramEditorRouteProp>();
@@ -185,7 +172,7 @@ export const ProgramEditorScreen: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['program', programId] });
     queryClient.invalidateQueries({ queryKey: ['program-sessions', String(programId)] });
     queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-    queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+    queryClient.invalidateQueries({ queryKey: ['my-programs'] });
     queryClient.invalidateQueries({ queryKey: ['today-session'] });
   }, [programId]);
 
@@ -510,19 +497,19 @@ export const ProgramEditorScreen: React.FC = () => {
             navigation.goBack();
           }
         }}>
-          <ArrowLeft size={20} color={C.textPrimary} weight="bold" />
+          <ArrowLeft size={20} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Program Editor</Text>
         <View style={styles.headerActions}>
           {isUploadedProgram ? (
             <TouchableOpacity style={styles.webBtn} onPress={handleViewOnWeb}>
-              <Eye size={16} color={C.textPrimary} weight="fill" />
+              <Eye size={16} color={theme.colors.textPrimary} weight="fill" />
               <Text style={styles.webBtnText}>View</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.saveBtn} onPress={() => handleSaveAll(false)} disabled={isSaving} activeOpacity={0.8}>
               <LinearGradient
-                colors={[C.orange, C.orangeLight]}
+                colors={[theme.colors.brandOrange, theme.colors.brandOrangeLight]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.saveBtnGradient}
@@ -558,7 +545,7 @@ export const ProgramEditorScreen: React.FC = () => {
               value={title}
               onChangeText={setTitle}
               placeholder="Program title"
-              placeholderTextColor={C.textMuted}
+              placeholderTextColor={theme.colors.textMuted}
               editable={isOwner && !isUploadedProgram}
             />
           </View>
@@ -569,7 +556,7 @@ export const ProgramEditorScreen: React.FC = () => {
               value={description}
               onChangeText={setDescription}
               placeholder="Program description"
-              placeholderTextColor={C.textMuted}
+              placeholderTextColor={theme.colors.textMuted}
               multiline
               editable={isOwner && !isUploadedProgram}
             />
@@ -582,7 +569,7 @@ export const ProgramEditorScreen: React.FC = () => {
                 value={category}
                 onChangeText={setCategory}
                 placeholder="e.g. sprint"
-                placeholderTextColor={C.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 editable={isOwner && !isUploadedProgram}
               />
             </View>
@@ -593,7 +580,7 @@ export const ProgramEditorScreen: React.FC = () => {
                 onPress={() => setShowDatePicker(true)}
               >
                 <Text style={styles.dateText}>{format(startDate, 'MMM d, yyyy')}</Text>
-                <CalendarBlank size={14} color={C.textMuted} weight="fill" />
+                <CalendarBlank size={14} color={theme.colors.textMuted} weight="fill" />
               </TouchableOpacity>
             </View>
           </View>
@@ -607,7 +594,7 @@ export const ProgramEditorScreen: React.FC = () => {
 
           {isDragging && dragSourceDay !== null && (
             <View style={styles.swapBanner}>
-              <ArrowsDownUp size={14} color={C.orange} weight="bold" />
+              <ArrowsDownUp size={14} color={theme.colors.brandOrange} weight="bold" />
               <Text style={styles.swapBannerText}>
                 Dragging Day {dragSourceDay} — drop on another day to swap
               </Text>
@@ -626,7 +613,7 @@ export const ProgramEditorScreen: React.FC = () => {
 
           {isDragging && (
             <View style={styles.dragBanner}>
-              <ArrowsDownUp size={14} color={C.orange} weight="fill" />
+              <ArrowsDownUp size={14} color={theme.colors.brandOrange} weight="fill" />
               <Text style={styles.dragBannerText}>
                 Day {dragSourceDay} selected — tap target day to swap
               </Text>
@@ -682,11 +669,11 @@ export const ProgramEditorScreen: React.FC = () => {
                           {format(dayDate, 'MMM d')}
                         </Text>
                         {isDragSource && (
-                          <ArrowsDownUp size={10} color={C.orange} weight="bold" />
+                          <ArrowsDownUp size={10} color={theme.colors.brandOrange} weight="bold" />
                         )}
                       </View>
                       {isRest ? (
-                        <Moon size={12} color={C.orange} weight="fill" style={{ marginTop: 2 }} />
+                        <Moon size={12} color={theme.colors.brandOrange} weight="fill" style={{ marginTop: 2 }} />
                       ) : null}
                       {hasContent ? (
                         <View style={styles.cellContent}>
@@ -746,7 +733,7 @@ export const ProgramEditorScreen: React.FC = () => {
                 onPress={() => handleDuplicateWeek(weekIndex)}
                 activeOpacity={0.7}
               >
-                <CopySimple size={12} color={C.textMuted} weight="fill" />
+                <CopySimple size={12} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.duplicateWeekText}>Duplicate Week {weekIndex + 1}</Text>
               </TouchableOpacity>
             </View>
@@ -787,8 +774,8 @@ export const ProgramEditorScreen: React.FC = () => {
                   <Switch
                     value={!!draftSession?.isRestDay}
                     onValueChange={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), isRestDay: value }))}
-                    trackColor={{ false: C.glass, true: C.orange }}
-                    thumbColor={draftSession?.isRestDay ? C.orangeLight : '#666'}
+                    trackColor={{ false: theme.colors.overlaySubtle, true: theme.colors.brandOrange }}
+                    thumbColor={draftSession?.isRestDay ? theme.colors.brandOrangeLight : '#666'}
                   />
                 </View>
 
@@ -801,7 +788,7 @@ export const ProgramEditorScreen: React.FC = () => {
                         value={draftSession?.title ?? ''}
                         onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), title: value }))}
                         placeholder="Session title"
-                        placeholderTextColor={C.textMuted}
+                        placeholderTextColor={theme.colors.textMuted}
                       />
                     </View>
                     <View style={styles.modalInputGroup}>
@@ -811,7 +798,7 @@ export const ProgramEditorScreen: React.FC = () => {
                         value={draftSession?.preActivation1 ?? ''}
                         onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation1: value }))}
                         placeholder="Drills, activation"
-                        placeholderTextColor={C.textMuted}
+                        placeholderTextColor={theme.colors.textMuted}
                       />
                     </View>
                     <View style={styles.modalInputGroup}>
@@ -821,7 +808,7 @@ export const ProgramEditorScreen: React.FC = () => {
                         value={draftSession?.preActivation2 ?? ''}
                         onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), preActivation2: value }))}
                         placeholder="More activation work"
-                        placeholderTextColor={C.textMuted}
+                        placeholderTextColor={theme.colors.textMuted}
                       />
                     </View>
                     <View style={styles.modalInputGroup}>
@@ -831,7 +818,7 @@ export const ProgramEditorScreen: React.FC = () => {
                         value={draftSession?.shortDistanceWorkout ?? ''}
                         onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), shortDistanceWorkout: value }))}
                         placeholder="60/100m"
-                        placeholderTextColor={C.textMuted}
+                        placeholderTextColor={theme.colors.textMuted}
                       />
                     </View>
                     <View style={styles.modalInputGroup}>
@@ -841,7 +828,7 @@ export const ProgramEditorScreen: React.FC = () => {
                         value={draftSession?.mediumDistanceWorkout ?? ''}
                         onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), mediumDistanceWorkout: value }))}
                         placeholder="200m"
-                        placeholderTextColor={C.textMuted}
+                        placeholderTextColor={theme.colors.textMuted}
                       />
                     </View>
                     <View style={styles.modalInputGroup}>
@@ -851,7 +838,7 @@ export const ProgramEditorScreen: React.FC = () => {
                         value={draftSession?.longDistanceWorkout ?? ''}
                         onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), longDistanceWorkout: value }))}
                         placeholder="400m"
-                        placeholderTextColor={C.textMuted}
+                        placeholderTextColor={theme.colors.textMuted}
                       />
                     </View>
                     <View style={styles.modalInputGroup}>
@@ -861,7 +848,7 @@ export const ProgramEditorScreen: React.FC = () => {
                         value={draftSession?.extraSession ?? ''}
                         onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), extraSession: value }))}
                         placeholder="Optional extras"
-                        placeholderTextColor={C.textMuted}
+                        placeholderTextColor={theme.colors.textMuted}
                       />
                     </View>
                     <View style={styles.modalInputGroup}>
@@ -871,7 +858,7 @@ export const ProgramEditorScreen: React.FC = () => {
                         value={draftSession?.notes ?? ''}
                         onChangeText={(value) => setDraftSession((prev) => ({ ...(prev ?? {}), notes: value }))}
                         placeholder="Session notes"
-                        placeholderTextColor={C.textMuted}
+                        placeholderTextColor={theme.colors.textMuted}
                         multiline
                       />
                     </View>
@@ -886,7 +873,7 @@ export const ProgramEditorScreen: React.FC = () => {
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveDayBtn} onPress={handleSaveDay} activeOpacity={0.8}>
                 <LinearGradient
-                  colors={[C.orange, C.orangeLight]}
+                  colors={[theme.colors.brandOrange, theme.colors.brandOrangeLight]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.saveDayBtnGradient}
@@ -911,10 +898,10 @@ export const ProgramEditorScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: t.colors.backgroundSolid,
   },
   header: {
     flexDirection: 'row',
@@ -922,7 +909,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   backButton: {
     width: 36,
@@ -930,16 +917,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   headerActions: {
     minWidth: 80,
@@ -969,27 +956,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   webBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   readOnlyBadge: {
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.25)',
   },
   readOnlyText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   loadingContainer: {
     flex: 1,
@@ -999,20 +986,20 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   retryBtn: {
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   retryBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   scrollContent: {
     padding: 20,
@@ -1020,17 +1007,17 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   detailsCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     padding: 16,
     gap: 12,
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     marginBottom: 4,
   },
   inputGroup: {
@@ -1039,16 +1026,16 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   input: {
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: C.textPrimary,
-    backgroundColor: C.glass,
+    color: t.colors.textPrimary,
+    backgroundColor: t.colors.overlaySubtle,
     fontSize: 14,
   },
   textArea: {
@@ -1068,21 +1055,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
   },
   dateText: {
     fontSize: 14,
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   sessionsCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     padding: 16,
     gap: 12,
   },
@@ -1094,7 +1081,7 @@ const styles = StyleSheet.create({
   sessionCount: {
     fontSize: 12,
     fontWeight: '500',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   dayHeaderRow: {
     flexDirection: 'row',
@@ -1107,13 +1094,13 @@ const styles = StyleSheet.create({
   dayHeaderText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   dragBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,122,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 1,
     borderColor: 'rgba(255,122,0,0.3)',
     borderRadius: 8,
@@ -1124,19 +1111,19 @@ const styles = StyleSheet.create({
   dragBannerText: {
     fontSize: 12,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
     flex: 1,
   },
   dragCancelBtn: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
   },
   dragCancelText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
   },
   weekRow: {
     flexDirection: 'row',
@@ -1149,22 +1136,22 @@ const styles = StyleSheet.create({
     padding: 3,
     borderRadius: 8,
     borderWidth: 0.5,
-    borderColor: C.border,
-    backgroundColor: C.surface,
+    borderColor: t.colors.overlayLight,
+    backgroundColor: t.colors.darkGray,
   },
   restCell: {
-    backgroundColor: C.rest,
-    borderColor: C.restBorder,
+    backgroundColor: t.colors.brandOrangeLight,
+    borderColor: 'rgba(255,122,0,0.3)',
   },
   todayCell: {
-    backgroundColor: C.today,
-    borderColor: C.todayBorder,
+    backgroundColor: 'rgba(99,102,241,0.15)',
+    borderColor: 'rgba(99,102,241,0.4)',
     borderWidth: 1,
   },
   dragSourceCell: {
-    borderColor: C.orange,
+    borderColor: t.colors.brandOrange,
     borderWidth: 2,
-    backgroundColor: 'rgba(255,122,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     opacity: 0.6,
   },
   emptyCell: {
@@ -1179,7 +1166,7 @@ const styles = StyleSheet.create({
   dateLabel: {
     fontSize: 9,
     fontWeight: '500',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   todayDateLabel: {
     color: '#818CF8',
@@ -1192,21 +1179,21 @@ const styles = StyleSheet.create({
   cellTitle: {
     fontSize: 7,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     lineHeight: 10,
   },
   cellField: {
     fontSize: 6,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 9,
   },
   cellNotes: {
     fontStyle: 'italic',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   cellSummary: {
     fontSize: 8,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 11,
     marginTop: 4,
@@ -1215,7 +1202,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.3)',
     borderRadius: 10,
@@ -1226,16 +1213,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     fontWeight: '500',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   swapCancelText: {
     fontSize: 12,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   swapHint: {
     fontSize: 10,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     marginBottom: 4,
   },
@@ -1251,7 +1238,7 @@ const styles = StyleSheet.create({
   duplicateWeekText: {
     fontSize: 11,
     fontWeight: '500',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   modalOverlay: {
     flex: 1,
@@ -1260,10 +1247,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 16,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     padding: 20,
     gap: 12,
     maxHeight: '90%',
@@ -1274,11 +1261,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   modalSubtitle: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   modalScroll: {
     flexShrink: 1,
@@ -1290,17 +1277,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
   switchLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   modalInputGroup: {
     gap: 4,
@@ -1308,16 +1295,16 @@ const styles = StyleSheet.create({
   modalInputLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   modalInput: {
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: C.textPrimary,
-    backgroundColor: C.glass,
+    color: t.colors.textPrimary,
+    backgroundColor: t.colors.overlaySubtle,
     fontSize: 14,
   },
   modalActions: {
@@ -1330,14 +1317,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   cancelBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   saveDayBtn: {
     borderRadius: 10,

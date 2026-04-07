@@ -35,20 +35,10 @@ import { parseCSVString, parseXLSXBase64, type ParsedSession, type SheetTemplate
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  glass: 'rgba(255,255,255,0.05)',
-  green: '#22c55e',
-};
 
 type Visibility = 'public' | 'private' | 'premium';
 type PriceType = 'spikes' | 'money';
@@ -105,6 +95,7 @@ function getTypeIcon(type: DetectedType) {
 }
 
 export const ProgramImportScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
@@ -210,7 +201,7 @@ export const ProgramImportScreen: React.FC = () => {
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs'] });
       Alert.alert('Imported', `Program imported with ${response?.importedSessions ?? 0} sessions.`);
       if (response?.program?.id !== undefined) navigation.replace('ProgramDetail', { id: response.program.id });
       else navigation.navigate('MainTabs', { screen: 'Training' } as never);
@@ -241,7 +232,7 @@ export const ProgramImportScreen: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs'] });
       Alert.alert('Uploaded', 'Your program document was uploaded.');
       navigation.navigate('MainTabs', { screen: 'Training' } as never);
     },
@@ -317,7 +308,7 @@ export const ProgramImportScreen: React.FC = () => {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs'] });
       Alert.alert('Imported', `Spreadsheet imported with ${result?.importedSessions ?? 0} sessions.`);
       if (result?.program?.id !== undefined) navigation.replace('ProgramDetail', { id: result.program.id });
       else navigation.navigate('MainTabs', { screen: 'Training' } as never);
@@ -361,7 +352,7 @@ export const ProgramImportScreen: React.FC = () => {
           onPress={() => navigation.navigate('SheetFormatInfo')}
           activeOpacity={0.7}
         >
-          <Info size={18} color={C.textMuted} weight="fill" />
+          <Info size={18} color={theme.colors.textMuted} weight="fill" />
         </TouchableOpacity>
       </View>
 
@@ -376,11 +367,11 @@ export const ProgramImportScreen: React.FC = () => {
 
         <View style={styles.inputSection}>
           <View style={styles.inputRow}>
-            <LinkIcon size={16} color={C.textMuted} weight="bold" />
+            <LinkIcon size={16} color={theme.colors.textMuted} weight="bold" />
             <TextInput
               style={styles.linkInput}
               placeholder="Paste Google Sheets link..."
-              placeholderTextColor={C.textMuted}
+              placeholderTextColor={theme.colors.textMuted}
               value={linkInput}
               onChangeText={handleLinkChange}
               autoCapitalize="none"
@@ -400,8 +391,8 @@ export const ProgramImportScreen: React.FC = () => {
             onPress={pickFile}
             activeOpacity={0.7}
           >
-            <Paperclip size={16} color={file ? C.orange : C.textMuted} weight="fill" />
-            <Text style={[styles.filePickerText, file && { color: C.textPrimary }]} numberOfLines={1}>
+            <Paperclip size={16} color={file ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" />
+            <Text style={[styles.filePickerText, file && { color: theme.colors.textPrimary }]} numberOfLines={1}>
               {file?.name ?? 'Choose a file (PDF, DOC, XLSX, CSV)'}
             </Text>
           </TouchableOpacity>
@@ -409,7 +400,7 @@ export const ProgramImportScreen: React.FC = () => {
 
         {detectedType && (
           <View style={styles.detectedBanner}>
-            <TypeIcon size={16} color={C.orange} weight="fill" />
+            <TypeIcon size={16} color={theme.colors.brandOrange} weight="fill" />
             <Text style={styles.detectedText}>{getTypeLabel(detectedType)}</Text>
             <TouchableOpacity onPress={clearInput} style={styles.clearBtn}>
               <Text style={styles.clearBtnText}>Clear</Text>
@@ -419,7 +410,7 @@ export const ProgramImportScreen: React.FC = () => {
 
         {detectedType === 'spreadsheet' && detectedLocalTemplate && (
           <View style={styles.detectedTemplateBanner}>
-            <Lightbulb size={14} color={C.orange} weight="fill" />
+            <Lightbulb size={14} color={theme.colors.brandOrange} weight="fill" />
             <Text style={styles.detectedTemplateText}>
               Detected format: <Text style={styles.detectedTemplateBold}>
                 {detectedLocalTemplate === 'simple' ? 'Simple (Date + Session)' : 'Advanced (7 columns)'}
@@ -449,7 +440,7 @@ export const ProgramImportScreen: React.FC = () => {
             {sheetTemplate === 'simple' && (
               <View style={styles.instructionsCard}>
                 <View style={styles.instructionsHeader}>
-                  <Info size={14} color={C.orange} weight="fill" />
+                  <Info size={14} color={theme.colors.brandOrange} weight="fill" />
                   <Text style={styles.instructionsTitle}>How to format your sheet</Text>
                 </View>
                 <Text style={styles.instructionsBody}>
@@ -490,14 +481,14 @@ export const ProgramImportScreen: React.FC = () => {
               <TextInput
                 style={styles.input}
                 placeholder="Program title"
-                placeholderTextColor={C.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 value={title}
                 onChangeText={setTitle}
               />
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Description (optional)"
-                placeholderTextColor={C.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -508,21 +499,21 @@ export const ProgramImportScreen: React.FC = () => {
                   <TextInput
                     style={styles.input}
                     placeholder="Category (sprint, distance, jumps...)"
-                    placeholderTextColor={C.textMuted}
+                    placeholderTextColor={theme.colors.textMuted}
                     value={importCategory}
                     onChangeText={setImportCategory}
                   />
                   <TextInput
                     style={styles.input}
                     placeholder="Level (beginner, intermediate, advanced)"
-                    placeholderTextColor={C.textMuted}
+                    placeholderTextColor={theme.colors.textMuted}
                     value={importLevel}
                     onChangeText={setImportLevel}
                   />
                   <TextInput
                     style={styles.input}
                     placeholder="Duration (days)"
-                    placeholderTextColor={C.textMuted}
+                    placeholderTextColor={theme.colors.textMuted}
                     value={importDuration}
                     onChangeText={setImportDuration}
                     keyboardType="number-pad"
@@ -559,7 +550,7 @@ export const ProgramImportScreen: React.FC = () => {
                   <TextInput
                     style={styles.input}
                     placeholder="Price"
-                    placeholderTextColor={C.textMuted}
+                    placeholderTextColor={theme.colors.textMuted}
                     value={price}
                     onChangeText={setPrice}
                     keyboardType="decimal-pad"
@@ -574,7 +565,7 @@ export const ProgramImportScreen: React.FC = () => {
                 disabled={isLoading || !isAuthenticated || isGuest}
               >
                 <LinearGradient
-                  colors={[C.orange, C.orangeLight]}
+                  colors={[theme.colors.brandOrange, theme.colors.brandOrangeLight]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.gradientBtnInner}
@@ -598,7 +589,7 @@ export const ProgramImportScreen: React.FC = () => {
 
               {(!isAuthenticated || isGuest) && (
                 <View style={styles.warningRow}>
-                  <Warning size={14} color={C.orange} weight="fill" />
+                  <Warning size={14} color={theme.colors.brandOrange} weight="fill" />
                   <Text style={styles.helperText}>Sign in to import programs.</Text>
                 </View>
               )}
@@ -610,8 +601,8 @@ export const ProgramImportScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -621,15 +612,15 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   infoButton: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -646,12 +637,12 @@ const styles = StyleSheet.create({
   },
   detectedTemplateText: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     flex: 1,
   },
   detectedTemplateBold: {
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   content: {
     padding: 20,
@@ -659,7 +650,7 @@ const styles = StyleSheet.create({
   },
   pageSubtitle: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 20,
   },
   inputSection: {
@@ -670,15 +661,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 12,
     paddingHorizontal: 14,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
   },
   linkInput: {
     flex: 1,
     paddingVertical: 14,
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     fontSize: 14,
   },
   dividerRow: {
@@ -689,11 +680,11 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 0.5,
-    backgroundColor: C.border,
+    backgroundColor: t.colors.overlayLight,
   },
   dividerText: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
     fontWeight: '600',
@@ -705,9 +696,9 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderStyle: 'dashed',
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
   },
   filePickerActive: {
     borderColor: 'rgba(255,122,0,0.3)',
@@ -718,7 +709,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: '500',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   detectedBanner: {
     flexDirection: 'row',
@@ -735,7 +726,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   clearBtn: {
     paddingHorizontal: 8,
@@ -744,13 +735,13 @@ const styles = StyleSheet.create({
   clearBtnText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   formCard: {
     borderRadius: 14,
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     padding: 16,
   },
   formFields: {
@@ -759,16 +750,16 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     marginTop: 4,
   },
   input: {
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 12,
     padding: 12,
-    color: C.textPrimary,
-    backgroundColor: C.glass,
+    color: t.colors.textPrimary,
+    backgroundColor: t.colors.overlaySubtle,
     fontSize: 14,
   },
   textArea: {
@@ -788,20 +779,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: C.border,
-    backgroundColor: C.glass,
+    borderColor: t.colors.overlayLight,
+    backgroundColor: t.colors.overlaySubtle,
   },
   pillActive: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderColor: 'rgba(255,122,0,0.3)',
   },
   pillText: {
     fontSize: 13,
     fontWeight: '500',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   pillTextActive: {
-    color: C.orange,
+    color: t.colors.brandOrange,
     fontWeight: '600',
   },
   gradientBtn: {
@@ -820,11 +811,11 @@ const styles = StyleSheet.create({
   gradientBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   helperText: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   warningRow: {
     flexDirection: 'row',
@@ -839,29 +830,29 @@ const styles = StyleSheet.create({
     gap: 0,
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     overflow: 'hidden',
   },
   templateBtn: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
   },
   templateBtnActive: {
-    backgroundColor: 'rgba(255,122,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
   },
   templateBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   templateBtnTextActive: {
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   templateHint: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 18,
   },
   instructionsCard: {
@@ -880,22 +871,22 @@ const styles = StyleSheet.create({
   instructionsTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   instructionsBody: {
     fontSize: 12,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 19,
   },
   instructionsBold: {
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   exampleTable: {
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   exampleRow: {
     flexDirection: 'row',
@@ -906,20 +897,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRightWidth: 0.5,
     borderBottomWidth: 0.5,
-    borderColor: C.border,
-    backgroundColor: C.glass,
+    borderColor: t.colors.overlayLight,
+    backgroundColor: t.colors.overlaySubtle,
   },
   exampleHeaderCell: {
-    backgroundColor: 'rgba(255,122,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
   },
   exampleHeaderText: {
     fontSize: 11,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
     textAlign: 'center',
   },
   exampleCellText: {
     fontSize: 11,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
   },
 });

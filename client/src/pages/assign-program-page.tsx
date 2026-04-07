@@ -58,7 +58,7 @@ export function AssignProgramPage() {
         description: "The athlete will receive a notification and can access the program from their dashboard.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/assigned-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/my-programs'] });
       setLocation('/programs');
     },
     onError: (error: Error) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   ScrollView,
@@ -9,6 +9,7 @@ import {
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { UsersThree } from 'phosphor-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
@@ -18,12 +19,15 @@ import { SkeletonBlock } from '@/components/Skeleton';
 import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { AssignAthletesModal } from '@/components/programs/AssignAthletesModal';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '../utils/theme';
+import themeStatic from '../utils/theme';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type ProgramDetailRouteProp = RouteProp<RootStackParamList, 'ProgramDetail'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -57,11 +61,13 @@ interface ProgramDetail {
 }
 
 export const ProgramDetailScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const route = useRoute<ProgramDetailRouteProp>();
   const programId = route.params?.id;
   const { user } = useAuth();
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
   // Fetch program details
   const programQuery = useQuery({
@@ -244,14 +250,32 @@ export const ProgramDetailScreen: React.FC = () => {
         </Card>
 
         {isOwner && (
-          <Button
-            variant="default"
-            size="lg"
-            onPress={() => navigation.navigate('ProgramEditor', { id: program.id })}
-            style={styles.editButton}
-          >
-            Edit Program
-          </Button>
+          <View style={styles.actionRow}>
+            <Button
+              variant="default"
+              size="lg"
+              onPress={() => navigation.navigate('ProgramEditor', { id: program.id })}
+              style={styles.actionButton}
+            >
+              Edit Program
+            </Button>
+            {user?.isCoach === true && (
+              <Button
+                variant="outline"
+                size="lg"
+                onPress={() => setShowAssignModal(true)}
+                style={styles.actionButton}
+              >
+                {/* Button has no leftIcon prop, so compose icon + text as children */}
+                <View style={styles.actionButtonContent}>
+                  <UsersThree size={18} color={theme.colors.brandOrange} weight="fill" />
+                  <Text variant="body" weight="medium" color="primary">
+                    Assign to Athletes
+                  </Text>
+                </View>
+              </Button>
+            )}
+          </View>
         )}
 
         {/* Sessions by Week */}
@@ -337,41 +361,47 @@ export const ProgramDetailScreen: React.FC = () => {
         {/* Spacer for bottom nav */}
         <View style={{ height: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: 0 }) }} />
       </ScrollView>
+
+      <AssignAthletesModal
+        visible={showAssignModal}
+        onClose={() => setShowAssignModal(false)}
+        program={program ? { id: program.id, title: program.title } : null}
+      />
     </LinearGradient>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: themeStatic.spacing.lg,
+    paddingVertical: themeStatic.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: t.colors.border,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: t.colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     flex: 1,
-    marginHorizontal: theme.spacing.md,
+    marginHorizontal: themeStatic.spacing.md,
     textAlign: 'center',
   },
   headerSpacer: {
     width: 40,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
+    paddingTop: themeStatic.spacing.lg,
   },
   loadingContainer: {
     flex: 1,
@@ -379,133 +409,143 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loadingText: {
-    marginTop: theme.spacing.md,
+    marginTop: themeStatic.spacing.md,
   },
   errorContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: themeStatic.spacing.xl,
   },
   errorText: {
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    marginTop: themeStatic.spacing.md,
+    marginBottom: themeStatic.spacing.lg,
     textAlign: 'center',
   },
   overviewCard: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: themeStatic.spacing.xl,
   },
-  editButton: {
-    marginBottom: theme.spacing.lg,
+  actionRow: {
+    flexDirection: 'row',
+    gap: themeStatic.spacing.md,
+    marginBottom: themeStatic.spacing.lg,
+  },
+  actionButton: {
+    flex: 1,
+  },
+  actionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: themeStatic.spacing.sm,
   },
   overviewHeader: {
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   overviewTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.xs,
+    marginBottom: themeStatic.spacing.xs,
   },
   programTitle: {
     flex: 1,
-    marginRight: theme.spacing.md,
+    marginRight: themeStatic.spacing.md,
   },
   coachName: {
-    marginTop: theme.spacing.xs,
+    marginTop: themeStatic.spacing.xs,
   },
   statsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    paddingTop: theme.spacing.md,
+    gap: themeStatic.spacing.lg,
+    marginBottom: themeStatic.spacing.md,
+    paddingTop: themeStatic.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    borderTopColor: t.colors.border,
   },
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   statText: {
-    marginLeft: theme.spacing.xs,
+    marginLeft: themeStatic.spacing.xs,
   },
   description: {
     lineHeight: 22,
-    marginTop: theme.spacing.md,
+    marginTop: themeStatic.spacing.md,
   },
   eventsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.md,
+    gap: themeStatic.spacing.sm,
+    marginTop: themeStatic.spacing.md,
   },
   sessionsTitle: {
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   emptyCard: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: themeStatic.spacing.lg,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: themeStatic.spacing.xl,
   },
   emptyText: {
-    marginTop: theme.spacing.md,
+    marginTop: themeStatic.spacing.md,
     textAlign: 'center',
   },
   weekContainer: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: themeStatic.spacing.lg,
   },
   weekHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   weekBadge: {
-    backgroundColor: theme.colors.primary + '20',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.md,
+    backgroundColor: t.colors.primary + '20',
+    paddingHorizontal: themeStatic.spacing.md,
+    paddingVertical: themeStatic.spacing.xs,
+    borderRadius: themeStatic.borderRadius.md,
   },
   weekLine: {
     flex: 1,
     height: 1,
-    backgroundColor: theme.colors.border,
-    marginLeft: theme.spacing.md,
+    backgroundColor: t.colors.border,
+    marginLeft: themeStatic.spacing.md,
   },
   sessionCard: {
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   sessionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: themeStatic.spacing.sm,
   },
   dayBadge: {
-    backgroundColor: theme.colors.muted,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-    marginRight: theme.spacing.sm,
+    backgroundColor: t.colors.muted,
+    paddingHorizontal: themeStatic.spacing.sm,
+    paddingVertical: themeStatic.spacing.xs,
+    borderRadius: themeStatic.borderRadius.sm,
+    marginRight: themeStatic.spacing.sm,
   },
   sessionTitle: {
     flex: 1,
   },
   workoutTypeBadge: {
     alignSelf: 'flex-start',
-    marginBottom: theme.spacing.sm,
+    marginBottom: themeStatic.spacing.sm,
   },
   sessionDescription: {
     lineHeight: 20,
-    marginBottom: theme.spacing.sm,
+    marginBottom: themeStatic.spacing.sm,
   },
   exercisesContainer: {
-    marginTop: theme.spacing.sm,
+    marginTop: themeStatic.spacing.sm,
   },
   exercisesLabel: {
-    marginBottom: theme.spacing.xs,
+    marginBottom: themeStatic.spacing.xs,
   },
   exercisesText: {
     lineHeight: 20,
@@ -513,11 +553,11 @@ const styles = StyleSheet.create({
   durationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.sm,
-    gap: theme.spacing.xs,
+    marginTop: themeStatic.spacing.sm,
+    gap: themeStatic.spacing.xs,
   },
   durationText: {
-    marginLeft: theme.spacing.xs,
+    marginLeft: themeStatic.spacing.xs,
   },
 });
 

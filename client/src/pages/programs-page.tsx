@@ -112,9 +112,9 @@ export default function ProgramsPage() {
     data: purchasedPrograms = [], 
     isLoading: isLoadingPurchasedPrograms 
   } = useQuery({
-    queryKey: ["/api/purchased-programs"],
+    queryKey: ["/api/my-programs"],
     queryFn: async () => {
-      const response = await fetch("/api/purchased-programs");
+      const response = await fetch("/api/my-programs");
       if (!response.ok) throw new Error("Failed to fetch purchased programs");
       return response.json();
     }
@@ -805,13 +805,13 @@ function ModernProgramCard({
       
       {/* Visibility icon in bottom right corner */}
       <div className="absolute bottom-1 right-1">
-        {program.isAssigned && <UserCheck className="h-3 w-3 text-blue-500" />}
-        {!program.isAssigned && program.visibility === 'premium' && <Crown className="h-3 w-3 text-yellow-500" />}
-        {!program.isAssigned && program.visibility === 'private' && <LockIcon className="h-3 w-3 text-muted-foreground" />}
+        {(program.source === 'assigned' || program.source === 'self_assigned' || program.isAssigned) && <UserCheck className="h-3 w-3 text-blue-500" />}
+        {!(program.source === 'assigned' || program.source === 'self_assigned' || program.isAssigned) && program.visibility === 'premium' && <Crown className="h-3 w-3 text-yellow-500" />}
+        {!(program.source === 'assigned' || program.source === 'self_assigned' || program.isAssigned) && program.visibility === 'private' && <LockIcon className="h-3 w-3 text-muted-foreground" />}
       </div>
-      
+
       {/* Assigned program indicator */}
-      {program.isAssigned && (
+      {(program.source === 'assigned' || program.isAssigned) && (
         <div className="absolute top-1 left-1">
           <Badge variant="secondary" className="text-[8px] px-1 py-0 h-4 bg-blue-100 text-blue-700 border-blue-200">
             Coach: {program.assignerName}
@@ -874,9 +874,9 @@ function CompactProgramListItem({ program, viewMode, creator }: {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-foreground text-sm truncate">{program.title}</h3>
-              {program.isAssigned && <UserCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
-              {!program.isAssigned && program.visibility === 'premium' && <Crown className="h-4 w-4 text-yellow-500 flex-shrink-0" />}
-              {!program.isAssigned && program.visibility === 'private' && <LockIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+              {(program.source === 'assigned' || program.source === 'self_assigned' || program.isAssigned) && <UserCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+              {!(program.source === 'assigned' || program.source === 'self_assigned' || program.isAssigned) && program.visibility === 'premium' && <Crown className="h-4 w-4 text-yellow-500 flex-shrink-0" />}
+              {!(program.source === 'assigned' || program.source === 'self_assigned' || program.isAssigned) && program.visibility === 'private' && <LockIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
             </div>
             <p className="text-xs text-muted-foreground truncate">{program.description || "No description"}</p>
           </div>

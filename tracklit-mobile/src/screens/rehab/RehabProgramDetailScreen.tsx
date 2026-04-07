@@ -29,25 +29,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { REHAB_PROGRAMS } from '@/data/rehabPrograms';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type RouteProps = RouteProp<RootStackParamList, 'RehabProgramDetail'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  cardElevated: '#22263A',
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  glass: 'rgba(255,255,255,0.05)',
-  green: '#22c55e',
-  blue: '#60a5fa',
-};
 
 export const RehabProgramDetailScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const route = useRoute<RouteProps>();
@@ -76,7 +65,7 @@ export const RehabProgramDetailScreen: React.FC = () => {
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs'] });
       Alert.alert(
         'Rehab Program Assigned!',
         `Your ${programName} rehabilitation program has been assigned and is ready in Programs and Practice.`,
@@ -141,15 +130,15 @@ export const RehabProgramDetailScreen: React.FC = () => {
           <Text style={styles.programTitle}>{program.title}</Text>
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
-              <Clock size={14} color={C.textMuted} weight="fill" />
+              <Clock size={14} color={theme.colors.textMuted} weight="fill" />
               <Text style={styles.metaText}>{program.duration}</Text>
             </View>
             <View style={styles.metaItem}>
-              <Crosshair size={14} color={C.textMuted} weight="fill" />
+              <Crosshair size={14} color={theme.colors.textMuted} weight="fill" />
               <Text style={styles.metaText}>{program.phases.length} Phases</Text>
             </View>
             <View style={styles.metaItem}>
-              <CalendarBlank size={14} color={C.textMuted} weight="fill" />
+              <CalendarBlank size={14} color={theme.colors.textMuted} weight="fill" />
               <Text style={styles.metaText}>Guided Recovery</Text>
             </View>
           </View>
@@ -198,8 +187,8 @@ export const RehabProgramDetailScreen: React.FC = () => {
                     <Text style={styles.phaseDays}>{phase.days}</Text>
                   </View>
                   {isExpanded
-                    ? <CaretUp size={16} color={C.textMuted} weight="bold" />
-                    : <CaretDown size={16} color={C.textMuted} weight="bold" />
+                    ? <CaretUp size={16} color={theme.colors.textMuted} weight="bold" />
+                    : <CaretDown size={16} color={theme.colors.textMuted} weight="bold" />
                   }
                 </TouchableOpacity>
 
@@ -209,7 +198,7 @@ export const RehabProgramDetailScreen: React.FC = () => {
                       <Text style={styles.goalsLabel}>Goals</Text>
                       {phase.goals.map((goal, gi) => (
                         <View key={gi} style={styles.goalRow}>
-                          <CheckCircle size={13} color={C.green} weight="fill" />
+                          <CheckCircle size={13} color={theme.colors.success} weight="fill" />
                           <Text style={styles.goalText}>{goal}</Text>
                         </View>
                       ))}
@@ -227,7 +216,7 @@ export const RehabProgramDetailScreen: React.FC = () => {
                             <View style={styles.exerciseMetaTag}>
                               <Text style={styles.exerciseMetaTagText}>{exercise.sets}</Text>
                             </View>
-                            <ArrowRight size={10} color={C.textMuted} />
+                            <ArrowRight size={10} color={theme.colors.textMuted} />
                             <View style={styles.exerciseMetaTag}>
                               <Text style={styles.exerciseMetaTagText}>{exercise.duration}</Text>
                             </View>
@@ -249,8 +238,8 @@ export const RehabProgramDetailScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -262,9 +251,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -272,10 +261,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 17,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   badge: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderRadius: 8,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.25)',
@@ -285,7 +274,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -298,7 +287,7 @@ const styles = StyleSheet.create({
   programTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: -0.3,
     lineHeight: 28,
   },
@@ -314,7 +303,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     fontWeight: '500',
   },
   assignCard: {
@@ -326,10 +315,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  assignTitle: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
-  assignDesc: { fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 16 },
+  assignTitle: { fontSize: 14, fontWeight: '700', color: t.colors.textPrimary },
+  assignDesc: { fontSize: 11, color: t.colors.textMuted, lineHeight: 16 },
   assignBtn: {
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 10,
     paddingHorizontal: 18,
     paddingVertical: 10,
@@ -342,16 +331,16 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 2,
   },
   phaseCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     overflow: 'hidden',
   },
   phaseHeader: {
@@ -364,7 +353,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: 'rgba(255,122,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.3)',
     alignItems: 'center',
@@ -373,7 +362,7 @@ const styles = StyleSheet.create({
   phaseNumber: {
     fontSize: 14,
     fontWeight: '800',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   phaseTitleBlock: {
     flex: 1,
@@ -382,12 +371,12 @@ const styles = StyleSheet.create({
   phaseName: {
     fontSize: 14,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     lineHeight: 20,
   },
   phaseDays: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     fontWeight: '500',
   },
   phaseBody: {
@@ -395,7 +384,7 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     gap: 14,
     borderTopWidth: 0.5,
-    borderTopColor: C.border,
+    borderTopColor: t.colors.overlayLight,
     paddingTop: 14,
   },
   goalsBlock: {
@@ -404,7 +393,7 @@ const styles = StyleSheet.create({
   goalsLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -417,7 +406,7 @@ const styles = StyleSheet.create({
   goalText: {
     flex: 1,
     fontSize: 13,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 19,
   },
   exercisesBlock: {
@@ -426,18 +415,18 @@ const styles = StyleSheet.create({
   exercisesLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 2,
   },
   exerciseCard: {
-    backgroundColor: C.cardElevated,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 10,
     padding: 12,
     gap: 7,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   exerciseTop: {
     flexDirection: 'row',
@@ -448,13 +437,13 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   exerciseName: {
     flex: 1,
     fontSize: 14,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   exerciseMeta: {
     flexDirection: 'row',
@@ -463,21 +452,21 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   exerciseMetaTag: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   exerciseMetaTagText: {
     fontSize: 11,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     fontWeight: '600',
   },
   exerciseDesc: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 18,
   },
   centerContent: {
@@ -490,12 +479,12 @@ const styles = StyleSheet.create({
   comingSoonTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     textAlign: 'center',
   },
   comingSoonDesc: {
     fontSize: 14,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 21,
   },

@@ -66,6 +66,7 @@ const mockPurchasedPrograms = [
     id: 10,
     programId: 100,
     program: { id: 100, title: 'Purchased Sprint', level: 'Intermediate', coachName: 'Coach C' },
+    source: 'assigned' as const,
     isAssigned: true,
     assignerName: 'Coach C',
   },
@@ -73,6 +74,7 @@ const mockPurchasedPrograms = [
     id: 11,
     programId: 101,
     program: { id: 101, title: 'Bought Program', price: 25 },
+    source: 'purchased' as const,
     isAssigned: false,
     isCreated: false,
   },
@@ -98,7 +100,7 @@ function loadProgramsScreen() {
 function setupDefaultApi() {
   mockedApiRequest.mockImplementation((path: string) => {
     if (path === '/api/programs') return Promise.resolve(mockMyPrograms);
-    if (path === '/api/purchased-programs') return Promise.resolve(mockPurchasedPrograms);
+    if (path === '/api/my-programs') return Promise.resolve(mockPurchasedPrograms);
     if (path === '/api/workout-library') return Promise.resolve(mockWorkoutLibrary);
     return Promise.resolve([]);
   });
@@ -140,7 +142,7 @@ describe('ProgramsScreen', () => {
   it('shows empty state "No Programs Yet" when empty', async () => {
     mockedApiRequest.mockImplementation((path: string) => {
       if (path === '/api/programs') return Promise.resolve([]);
-      if (path === '/api/purchased-programs') return Promise.resolve([]);
+      if (path === '/api/my-programs') return Promise.resolve([]);
       if (path === '/api/workout-library') return Promise.resolve({ workouts: [] });
       return Promise.resolve([]);
     });
@@ -230,7 +232,7 @@ describe('ProgramsScreen', () => {
   it('shows empty state "No Purchased Programs"', async () => {
     mockedApiRequest.mockImplementation((path: string) => {
       if (path === '/api/programs') return Promise.resolve([]);
-      if (path === '/api/purchased-programs') return Promise.resolve([]);
+      if (path === '/api/my-programs') return Promise.resolve([]);
       if (path === '/api/workout-library') return Promise.resolve({ workouts: [] });
       return Promise.resolve([]);
     });

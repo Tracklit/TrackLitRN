@@ -223,7 +223,7 @@ export default function HomePage() {
 
   // Get purchased programs data (includes assigned, purchased, and created programs)
   const { data: purchasedPrograms = [], isLoading: isLoadingPrograms } = useQuery<any[]>({
-    queryKey: ['/api/purchased-programs'],
+    queryKey: ['/api/my-programs'],
     enabled: !!user,
   });
   

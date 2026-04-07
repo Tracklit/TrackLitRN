@@ -25,6 +25,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 const rehabProgram = {
@@ -105,6 +107,7 @@ const dailyPrograms = {
 };
 
 export const HamstringRehabProgramScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -129,7 +132,7 @@ export const HamstringRehabProgramScreen: React.FC = () => {
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['user-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['purchased-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs'] });
       Alert.alert(
         'Rehab Program Assigned!',
         'Your hamstring recovery program has been assigned and is ready in Programs and Practice.',
@@ -378,8 +381,8 @@ export const HamstringRehabProgramScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0E0F14' },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -387,13 +390,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: t.colors.overlaySubtle,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -401,7 +404,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
   badge: {
@@ -413,10 +416,10 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 10, fontWeight: '700', color: '#f87171' },
   scrollContent: { padding: 16, gap: 16 },
   titleBlock: { gap: 10 },
-  programTitle: { fontSize: 20, fontWeight: '800', color: '#FFFFFF', lineHeight: 26 },
+  programTitle: { fontSize: 20, fontWeight: '800', color: t.colors.textPrimary, lineHeight: 26 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
+  metaText: { fontSize: 11, color: t.colors.textMuted },
   assignCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -426,10 +429,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(34, 197, 94, 0.3)',
     padding: 16,
   },
-  assignTitle: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
-  assignDesc: { fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 16 },
+  assignTitle: { fontSize: 14, fontWeight: '700', color: t.colors.textPrimary },
+  assignDesc: { fontSize: 11, color: t.colors.textMuted, lineHeight: 16 },
   assignBtn: {
-    backgroundColor: '#FF7A00',
+    backgroundColor: t.colors.brandOrange,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
@@ -447,27 +450,27 @@ const styles = StyleSheet.create({
   proTitle: { fontSize: 12, fontWeight: '700', color: '#c084fc' },
   proToggle: {
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: t.colors.overlayMedium,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  proToggleText: { fontSize: 11, fontWeight: '600', color: '#FFFFFF' },
+  proToggleText: { fontSize: 11, fontWeight: '600', color: t.colors.textPrimary },
   dailyGrid: { gap: 16 },
-  weekLabel: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.7)', marginBottom: 8 },
+  weekLabel: { fontSize: 12, fontWeight: '700', color: t.colors.textSecondary, marginBottom: 8 },
   dailyCard: {
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: t.colors.overlayLight,
+    backgroundColor: t.colors.overlaySubtle,
     padding: 12,
     gap: 4,
     marginBottom: 6,
   },
   dailyHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  dailyDay: { fontSize: 12, fontWeight: '600', color: '#FFFFFF' },
-  dailyFocus: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
-  dailyExercises: { fontSize: 10, color: 'rgba(255,255,255,0.35)' },
+  dailyDay: { fontSize: 12, fontWeight: '600', color: t.colors.textPrimary },
+  dailyFocus: { fontSize: 11, color: t.colors.textMuted },
+  dailyExercises: { fontSize: 10, color: t.colors.textMuted },
   intensityPill: {
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -479,7 +482,7 @@ const styles = StyleSheet.create({
   warningCard: {
     flexDirection: 'row',
     gap: 10,
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
@@ -489,11 +492,11 @@ const styles = StyleSheet.create({
   warningText: { fontSize: 11, color: '#f59e0b', lineHeight: 16, opacity: 0.8 },
   phaseList: { gap: 10 },
   phaseCard: {
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: t.colors.overlaySubtle,
   },
   phaseCardActive: {
     borderColor: 'rgba(59, 130, 246, 0.5)',
@@ -509,37 +512,37 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   phaseNumberActive: { backgroundColor: '#3b82f6' },
-  phaseNumberText: { fontSize: 12, fontWeight: '800', color: '#FFFFFF' },
-  phaseName: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
-  phaseDays: { fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
+  phaseNumberText: { fontSize: 12, fontWeight: '800', color: t.colors.textPrimary },
+  phaseName: { fontSize: 13, fontWeight: '600', color: t.colors.textPrimary },
+  phaseDays: { fontSize: 11, color: t.colors.textMuted, marginTop: 2 },
   phaseActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   skipBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: t.colors.overlayMedium,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  skipText: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.6)' },
+  skipText: { fontSize: 10, fontWeight: '600', color: t.colors.textSecondary },
   phaseContent: { marginTop: 14, gap: 6 },
-  sectionLabel: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.7)', marginBottom: 4 },
+  sectionLabel: { fontSize: 12, fontWeight: '700', color: t.colors.textSecondary, marginBottom: 4 },
   goalRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2 },
-  goalText: { fontSize: 12, color: 'rgba(255,255,255,0.6)', flex: 1 },
+  goalText: { fontSize: 12, color: t.colors.textSecondary, flex: 1 },
   exerciseCard: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 10,
     padding: 12,
     gap: 4,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: t.colors.overlaySubtle,
   },
   exerciseHeader: {
     flexDirection: 'row',
@@ -547,29 +550,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  exerciseName: { fontSize: 13, fontWeight: '600', color: '#FFFFFF', flex: 1 },
+  exerciseName: { fontSize: 13, fontWeight: '600', color: t.colors.textPrimary, flex: 1 },
   exerciseBadge: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
-  exerciseBadgeText: { fontSize: 9, fontWeight: '700', color: '#FF7A00' },
-  exerciseDesc: { fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 16 },
+  exerciseBadgeText: { fontSize: 9, fontWeight: '700', color: t.colors.brandOrange },
+  exerciseDesc: { fontSize: 11, color: t.colors.textMuted, lineHeight: 16 },
   progressCard: {
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 16,
     gap: 8,
   },
-  progressTitle: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
-  progressSubtitle: { fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 16 },
+  progressTitle: { fontSize: 14, fontWeight: '700', color: t.colors.textPrimary },
+  progressSubtitle: { fontSize: 11, color: t.colors.textMuted, lineHeight: 16 },
   progressRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  progressLabel: { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
+  progressLabel: { fontSize: 11, color: t.colors.textMuted },
   progressBarBg: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     overflow: 'hidden',
   },
   progressBarFill: {
@@ -577,5 +580,5 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: '#3b82f6',
   },
-  progressNote: { fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 14 },
+  progressNote: { fontSize: 10, color: t.colors.textMuted, lineHeight: 14 },
 });

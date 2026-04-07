@@ -482,7 +482,7 @@ function PracticePage() {
   
   // Fetch available programs (purchased and assigned)
   const { data: availablePrograms = [], isLoading: isLoadingPrograms } = useQuery({
-    queryKey: ["/api/purchased-programs"],
+    queryKey: ["/api/my-programs"],
     enabled: !!user,
   });
   

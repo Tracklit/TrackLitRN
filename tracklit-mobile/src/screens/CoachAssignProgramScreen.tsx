@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CaretLeft,
   BookOpen,
@@ -21,20 +21,11 @@ import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import type { RootStackParamList } from '@/navigation/types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'CoachAssignProgram'>;
-
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  border: 'rgba(255,255,255,0.07)',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.65)',
-  textMuted: 'rgba(255,255,255,0.38)',
-  green: '#22c55e',
-};
 
 interface CoachProgram {
   id: number;
@@ -50,6 +41,8 @@ export const CoachAssignProgramScreen: React.FC = () => {
   const route = useRoute<Route>();
   const { athleteId, athleteName, athleteUsername } = route.params;
   const { isAuthenticated } = useAuth();
+  const { styles, theme } = useThemedStyles(createStyles);
+  const queryClient = useQueryClient();
 
   const [assignedIds, setAssignedIds] = useState<Set<number>>(new Set());
 
@@ -59,17 +52,32 @@ export const CoachAssignProgramScreen: React.FC = () => {
     enabled: isAuthenticated,
   });
 
+  const invalidateAssignmentQueries = () => {
+    void queryClient.invalidateQueries({ queryKey: ['coach-programs'] });
+    void queryClient.invalidateQueries({ queryKey: ['coach-athletes'] });
+    void queryClient.invalidateQueries({ queryKey: ['user-programs'] });
+    void queryClient.invalidateQueries({ queryKey: ['my-programs'] });
+    void queryClient.invalidateQueries({ queryKey: ['my-programs-home'] });
+    void queryClient.invalidateQueries({ queryKey: ['today-session'] });
+  };
+
   const assignMutation = useMutation({
     mutationFn: (programId: number) =>
       apiRequest(`/api/programs/${programId}/assign`, {
         method: 'POST',
-        data: { assigneeId: athleteId },
+        data: { assigneeId: Number(athleteId) },
       }),
     onSuccess: (_, programId) => {
       setAssignedIds(prev => new Set([...prev, programId]));
+      invalidateAssignmentQueries();
     },
-    onError: (err: any) => {
+    onError: (err: any, programId) => {
       const msg = err?.message || 'Failed to assign program';
+      if (msg === 'Program is already assigned to this user') {
+        setAssignedIds(prev => new Set([...prev, programId]));
+        invalidateAssignmentQueries();
+        return;
+      }
       Alert.alert('Could not assign', msg);
     },
   });
@@ -84,7 +92,7 @@ export const CoachAssignProgramScreen: React.FC = () => {
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
-          <CaretLeft size={22} color={C.textPrimary} weight="bold" />
+          <CaretLeft size={22} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 10 }}>
           <Text style={styles.headerTitle}>Assign Program</Text>
@@ -97,10 +105,10 @@ export const CoachAssignProgramScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {programsQuery.isLoading ? (
-          <ActivityIndicator color={C.orange} style={{ marginTop: 48 }} />
+          <ActivityIndicator color={theme.colors.brandOrange} style={{ marginTop: 48 }} />
         ) : programs.length === 0 ? (
           <View style={styles.empty}>
-            <BookOpen size={36} color={C.textMuted} weight="fill" />
+            <BookOpen size={36} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>
               You have no programs yet. Create a program first to assign it to athletes.
             </Text>
@@ -113,7 +121,7 @@ export const CoachAssignProgramScreen: React.FC = () => {
               return (
                 <View key={program.id} style={styles.programCard}>
                   <View style={styles.programIcon}>
-                    <BookOpen size={18} color={C.orange} weight="fill" />
+                    <BookOpen size={18} color={theme.colors.brandOrange} weight="fill" />
                   </View>
                   <View style={styles.programInfo}>
                     <Text style={styles.programTitle} numberOfLines={1}>
@@ -137,7 +145,7 @@ export const CoachAssignProgramScreen: React.FC = () => {
                     {isPending ? (
                       <ActivityIndicator size="small" color="#fff" />
                     ) : assigned ? (
-                      <CheckCircle size={16} color={C.green} weight="fill" />
+                      <CheckCircle size={16} color={theme.colors.success} weight="fill" />
                     ) : (
                       <Text style={styles.assignBtnText}>Assign</Text>
                     )}
@@ -152,22 +160,22 @@ export const CoachAssignProgramScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: C.textPrimary },
-  headerSub: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: t.colors.textPrimary },
+  headerSub: { fontSize: 12, color: t.colors.textMuted, marginTop: 2 },
   scroll: { padding: 20 },
   list: { gap: 10 },
   programCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
@@ -178,15 +186,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,122,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   programInfo: { flex: 1 },
-  programTitle: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
-  programDesc: { fontSize: 12, color: C.textMuted, marginTop: 3, lineHeight: 16 },
+  programTitle: { fontSize: 14, fontWeight: '600', color: t.colors.textPrimary },
+  programDesc: { fontSize: 12, color: t.colors.textMuted, marginTop: 3, lineHeight: 16 },
   assignBtn: {
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -198,5 +206,5 @@ const styles = StyleSheet.create({
   assignBtnDone: { backgroundColor: 'transparent' },
   assignBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
   empty: { alignItems: 'center', paddingVertical: 60, gap: 16 },
-  emptyText: { fontSize: 13, color: C.textMuted, textAlign: 'center', maxWidth: 260 },
+  emptyText: { fontSize: 13, color: t.colors.textMuted, textAlign: 'center', maxWidth: 260 },
 });
