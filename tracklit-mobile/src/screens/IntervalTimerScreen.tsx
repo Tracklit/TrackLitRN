@@ -23,21 +23,8 @@ import {
 
 import { Text } from '@/components/ui/Text';
 import type { RootStackParamList } from '@/navigation/types';
-
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  orangeDim: 'rgba(255,122,0,0.15)',
-  green: '#22C55E',
-  greenDim: 'rgba(34,197,94,0.15)',
-  blue: '#3B82F6',
-  blueDim: 'rgba(59,130,246,0.15)',
-  border: 'rgba(255,255,255,0.07)',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.6)',
-  textMuted: 'rgba(255,255,255,0.35)',
-};
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type TimerPhase = 'idle' | 'work' | 'rest' | 'complete';
 
@@ -64,10 +51,12 @@ interface StepperProps {
   max: number;
   step: number;
   accentColor?: string;
+  styles: any;
+  theme: ThemeValues;
 }
 
 const Stepper: React.FC<StepperProps> = ({
-  label, value, unit, onDecrement, onIncrement, min, max, accentColor = C.orange,
+  label, value, unit, onDecrement, onIncrement, min, max, accentColor, styles, theme,
 }) => (
   <View style={styles.stepperRow}>
     <View style={styles.stepperLeft}>
@@ -80,7 +69,7 @@ const Stepper: React.FC<StepperProps> = ({
         disabled={value <= min}
         activeOpacity={0.7}
       >
-        <Minus size={16} color={value <= min ? C.textMuted : C.textPrimary} weight="bold" />
+        <Minus size={16} color={value <= min ? theme.colors.textMuted : theme.colors.textPrimary} weight="bold" />
       </TouchableOpacity>
       <View style={[styles.stepValue, { borderColor: accentColor }]}>
         <Text style={[styles.stepValueText, { color: accentColor }]}>
@@ -94,7 +83,7 @@ const Stepper: React.FC<StepperProps> = ({
         disabled={value >= max}
         activeOpacity={0.7}
       >
-        <Plus size={16} color={value >= max ? C.textMuted : C.textPrimary} weight="bold" />
+        <Plus size={16} color={value >= max ? theme.colors.textMuted : theme.colors.textPrimary} weight="bold" />
       </TouchableOpacity>
     </View>
   </View>
@@ -103,6 +92,12 @@ const Stepper: React.FC<StepperProps> = ({
 export const IntervalTimerScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { styles, theme } = useThemedStyles(createStyles);
+
+  const green = theme.colors.success;
+  const greenDim = theme.colors.success + '26';
+  const blue = '#3B82F6';
+  const blueDim = 'rgba(59,130,246,0.15)';
 
   const [workDuration, setWorkDuration] = useState(30);
   const [restDuration, setRestDuration] = useState(15);
@@ -163,16 +158,16 @@ export const IntervalTimerScreen: React.FC = () => {
   }, [isRunning, phase, currentInterval, intervals, workDuration, restDuration]);
 
   const getPhaseColor = () => {
-    if (phase === 'work') return C.green;
-    if (phase === 'rest') return C.blue;
-    if (phase === 'complete') return C.orange;
-    return C.textPrimary;
+    if (phase === 'work') return green;
+    if (phase === 'rest') return blue;
+    if (phase === 'complete') return theme.colors.brandOrange;
+    return theme.colors.textPrimary;
   };
 
   const getPhaseBg = () => {
-    if (phase === 'work') return C.greenDim;
-    if (phase === 'rest') return C.blueDim;
-    if (phase === 'complete') return C.orangeDim;
+    if (phase === 'work') return greenDim;
+    if (phase === 'rest') return blueDim;
+    if (phase === 'complete') return theme.colors.brandOrangeLight;
     return 'transparent';
   };
 
@@ -194,14 +189,13 @@ export const IntervalTimerScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={20} color={C.textPrimary} weight="bold" />
+          <ArrowLeft size={20} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Interval Timer</Text>
         <View style={styles.backBtn} />
@@ -211,11 +205,10 @@ export const IntervalTimerScreen: React.FC = () => {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Timer Display */}
-        <View style={[styles.timerCard, { borderColor: phase !== 'idle' ? phaseColor + '40' : C.border }]}>
+        <View style={[styles.timerCard, { borderColor: phase !== 'idle' ? phaseColor + '40' : theme.colors.overlayLight }]}>
           <View style={[styles.phasePill, { backgroundColor: getPhaseBg() }]}>
-            <Timer size={12} color={phase !== 'idle' ? phaseColor : C.textMuted} weight="fill" />
-            <Text style={[styles.phaseLabel, { color: phase !== 'idle' ? phaseColor : C.textMuted }]}>
+            <Timer size={12} color={phase !== 'idle' ? phaseColor : theme.colors.textMuted} weight="fill" />
+            <Text style={[styles.phaseLabel, { color: phase !== 'idle' ? phaseColor : theme.colors.textMuted }]}>
               {getPhaseLabel()}
             </Text>
           </View>
@@ -240,13 +233,12 @@ export const IntervalTimerScreen: React.FC = () => {
 
           {phase === 'complete' && (
             <View style={styles.completeBadge}>
-              <Lightning size={16} color={C.orange} weight="fill" />
+              <Lightning size={16} color={theme.colors.brandOrange} weight="fill" />
               <Text style={styles.completeText}>{intervals} intervals complete!</Text>
             </View>
           )}
         </View>
 
-        {/* Settings — shown when idle */}
         {phase === 'idle' && (
           <View style={styles.settingsCard}>
             <Text style={styles.settingsTitle}>Configure</Text>
@@ -260,7 +252,9 @@ export const IntervalTimerScreen: React.FC = () => {
               min={5}
               max={300}
               step={5}
-              accentColor={C.green}
+              accentColor={green}
+              styles={styles}
+              theme={theme}
             />
             <View style={styles.divider} />
             <Stepper
@@ -272,7 +266,9 @@ export const IntervalTimerScreen: React.FC = () => {
               min={5}
               max={120}
               step={5}
-              accentColor={C.blue}
+              accentColor={blue}
+              styles={styles}
+              theme={theme}
             />
             <View style={styles.divider} />
             <Stepper
@@ -284,11 +280,13 @@ export const IntervalTimerScreen: React.FC = () => {
               min={1}
               max={30}
               step={1}
-              accentColor={C.orange}
+              accentColor={theme.colors.brandOrange}
+              styles={styles}
+              theme={theme}
             />
 
             <View style={styles.totalRow}>
-              <Timer size={14} color={C.textMuted} weight="fill" />
+              <Timer size={14} color={theme.colors.textMuted} weight="fill" />
               <Text style={styles.totalLabel}>
                 Total: {getTotalTime(intervals, workDuration, restDuration)}
               </Text>
@@ -296,7 +294,6 @@ export const IntervalTimerScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Controls */}
         <View style={styles.controls}>
           {phase === 'idle' && (
             <TouchableOpacity style={styles.primaryBtn} onPress={startTimer} activeOpacity={0.85}>
@@ -309,7 +306,7 @@ export const IntervalTimerScreen: React.FC = () => {
             <View style={styles.activeControls}>
               {isRunning ? (
                 <TouchableOpacity style={[styles.controlBtn, styles.pauseBtn]} onPress={pauseTimer} activeOpacity={0.8}>
-                  <Pause size={20} color={C.textPrimary} weight="fill" />
+                  <Pause size={20} color={theme.colors.textPrimary} weight="fill" />
                   <Text style={styles.controlBtnText}>Pause</Text>
                 </TouchableOpacity>
               ) : (
@@ -319,8 +316,8 @@ export const IntervalTimerScreen: React.FC = () => {
                 </TouchableOpacity>
               )}
               <TouchableOpacity style={[styles.controlBtn, styles.stopBtn]} onPress={resetTimer} activeOpacity={0.8}>
-                <Stop size={20} color={C.textMuted} weight="fill" />
-                <Text style={[styles.controlBtnText, { color: C.textMuted }]}>Stop</Text>
+                <Stop size={20} color={theme.colors.textMuted} weight="fill" />
+                <Text style={[styles.controlBtnText, { color: theme.colors.textMuted }]}>Stop</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -337,10 +334,10 @@ export const IntervalTimerScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: t.colors.backgroundSolid,
   },
   header: {
     flexDirection: 'row',
@@ -349,20 +346,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.2,
   },
   scrollContent: {
@@ -371,7 +368,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   timerCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 20,
     borderWidth: 1,
     alignItems: 'center',
@@ -400,13 +397,13 @@ const styles = StyleSheet.create({
   },
   intervalCounter: {
     fontSize: 14,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     fontWeight: '500',
   },
   progressBar: {
     width: '100%',
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     borderRadius: 2,
     overflow: 'hidden',
     marginTop: 4,
@@ -421,19 +418,19 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: C.orangeDim,
+    backgroundColor: t.colors.brandOrangeLight,
     borderRadius: 12,
   },
   completeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   settingsCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     paddingHorizontal: 20,
     paddingVertical: 20,
     gap: 4,
@@ -441,7 +438,7 @@ const styles = StyleSheet.create({
   settingsTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -458,7 +455,7 @@ const styles = StyleSheet.create({
   stepperLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   stepperControls: {
     flexDirection: 'row',
@@ -469,11 +466,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   stepBtnDisabled: {
     opacity: 0.35,
@@ -488,7 +485,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 3,
     paddingHorizontal: 8,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   stepValueText: {
     fontSize: 17,
@@ -496,12 +493,12 @@ const styles = StyleSheet.create({
   },
   stepUnit: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     fontWeight: '500',
   },
   divider: {
     height: 1,
-    backgroundColor: C.border,
+    backgroundColor: t.colors.overlayLight,
     marginHorizontal: -20,
   },
   totalRow: {
@@ -513,7 +510,7 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     fontWeight: '500',
   },
   controls: {
@@ -524,7 +521,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 24,
@@ -549,20 +546,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   pauseBtn: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: t.colors.overlaySubtle,
+    borderColor: t.colors.overlayMedium,
   },
   resumeBtn: {
-    backgroundColor: C.orange,
-    borderColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
+    borderColor: t.colors.brandOrange,
   },
   stopBtn: {
     backgroundColor: 'transparent',
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   controlBtnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
 });

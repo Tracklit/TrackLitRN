@@ -15,10 +15,12 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type TabKey = 'live' | 'manual' | 'calculator';
 
 interface TimeEntry {
@@ -48,6 +50,7 @@ function formatPacePer100m(speedMps: number): string {
 }
 
 export const VelocityTrackerScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -155,7 +158,7 @@ export const VelocityTrackerScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + themeStatic.spacing.xl }]}
         showsVerticalScrollIndicator={false}
         extraScrollHeight={80}
       >
@@ -224,7 +227,7 @@ export const VelocityTrackerScreen: React.FC = () => {
                 </Text>
               </CardTitle>
             </CardHeader>
-            <CardContent style={{ gap: theme.spacing.md }}>
+            <CardContent style={{ gap: themeStatic.spacing.md }}>
               <Text variant="h2" weight="bold" color="foreground" style={styles.monoTime}>
                 {formatTime(elapsedMs)}
               </Text>
@@ -276,7 +279,7 @@ export const VelocityTrackerScreen: React.FC = () => {
                 </Text>
               </CardTitle>
             </CardHeader>
-            <CardContent style={{ gap: theme.spacing.md }}>
+            <CardContent style={{ gap: themeStatic.spacing.md }}>
               <TextInput
                 style={styles.input}
                 placeholder="Distance (meters)"
@@ -313,7 +316,7 @@ export const VelocityTrackerScreen: React.FC = () => {
                 </Text>
               </CardTitle>
             </CardHeader>
-            <CardContent style={{ gap: theme.spacing.md }}>
+            <CardContent style={{ gap: themeStatic.spacing.md }}>
               <TextInput
                 style={styles.input}
                 placeholder="Distance (meters)"
@@ -364,7 +367,7 @@ export const VelocityTrackerScreen: React.FC = () => {
             No entries yet.
           </Text>
         ) : (
-          <View style={{ gap: theme.spacing.sm }}>
+          <View style={{ gap: themeStatic.spacing.sm }}>
             {entries.map((e) => (
               <Card key={e.id} style={{ marginBottom: 0 }}>
                 <CardContent style={styles.entryRow}>
@@ -402,7 +405,7 @@ export const VelocityTrackerScreen: React.FC = () => {
             style={styles.modalCard}
             contentContainerStyle={[
               styles.modalCardContent,
-              { paddingBottom: insets.bottom + theme.spacing.lg },
+              { paddingBottom: insets.bottom + themeStatic.spacing.lg },
             ]}
             showsVerticalScrollIndicator={false}
             extraScrollHeight={80}
@@ -433,17 +436,17 @@ export const VelocityTrackerScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.lg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   backButton: {
     width: 40,
@@ -453,32 +456,32 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
-    gap: theme.spacing.xs,
+    gap: themeStatic.spacing.xs,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   cardTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   tabs: {
     flexDirection: 'row',
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.card,
-    padding: theme.spacing.xs,
+    borderRadius: themeStatic.borderRadius.lg,
+    backgroundColor: t.colors.card,
+    padding: themeStatic.spacing.xs,
   },
   tab: {
     flex: 1,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    paddingVertical: themeStatic.spacing.sm,
+    borderRadius: themeStatic.borderRadius.md,
     alignItems: 'center',
   },
   activeTab: {
-    backgroundColor: theme.colors.backgroundSolid,
+    backgroundColor: t.colors.backgroundSolid,
   },
   monoTime: {
     textAlign: 'center',
@@ -486,39 +489,39 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   flex1: { flex: 1 },
-  buttonText: { marginLeft: theme.spacing.sm },
+  buttonText: { marginLeft: themeStatic.spacing.sm },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.md,
+    color: t.colors.foreground,
+    backgroundColor: t.colors.card,
   },
   calcResult: {
-    padding: theme.spacing.md,
+    padding: themeStatic.spacing.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    backgroundColor: t.colors.card,
     alignItems: 'center',
-    gap: theme.spacing.xs,
+    gap: themeStatic.spacing.xs,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: theme.spacing.sm,
+    marginTop: themeStatic.spacing.sm,
   },
-  emptyText: { textAlign: 'center', paddingVertical: theme.spacing.lg },
+  emptyText: { textAlign: 'center', paddingVertical: themeStatic.spacing.lg },
   entryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
+    paddingVertical: themeStatic.spacing.md,
   },
   entryLeft: { gap: 2 },
   entryRight: { alignItems: 'flex-end', gap: 2 },
@@ -528,20 +531,20 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: theme.colors.backgroundSolid,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
+    backgroundColor: t.colors.backgroundSolid,
+    borderTopLeftRadius: themeStatic.borderRadius.xl,
+    borderTopRightRadius: themeStatic.borderRadius.xl,
     maxHeight: '85%',
   },
   modalCardContent: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    padding: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.md,
   },
   modalTitle: { textAlign: 'center' },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   modalButton: { minWidth: 120 },
 });

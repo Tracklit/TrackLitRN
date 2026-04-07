@@ -9,7 +9,9 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import theme from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
+import { typography, spacing, borderRadius } from '@/utils/theme';
 
 interface ButtonProps extends TouchableOpacityProps {
   title?: string;
@@ -34,6 +36,8 @@ export const Button: React.FC<ButtonProps> = ({
   onPress,
   ...props
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
+
   const buttonStyle = [
     styles.base,
     styles[size],
@@ -51,7 +55,7 @@ export const Button: React.FC<ButtonProps> = ({
   ];
 
   const content = loading ? (
-    <ActivityIndicator 
+    <ActivityIndicator
       color={variant === 'outline' || variant === 'ghost' ? theme.colors.primary : theme.colors.primaryForeground}
       size="small"
     />
@@ -75,95 +79,90 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   base: {
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    ...theme.shadows.sm,
+    ...t.shadows.sm,
   },
-  
-  // Sizes
+
   sm: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    minHeight: 32,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    minHeight: 36,
   },
   md: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    minHeight: 40,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    minHeight: 44,
   },
   lg: {
-    paddingHorizontal: theme.spacing.xxl,
-    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.lg,
     minHeight: 48,
   },
-  
-  // Variants
+
   primary: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: t.colors.primary,
     borderWidth: 0,
   },
   default: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: t.colors.primary,
     borderWidth: 0,
   },
   secondary: {
-    backgroundColor: theme.colors.secondary,
+    backgroundColor: t.colors.secondary,
     borderWidth: 0,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: theme.colors.primary,
+    borderColor: t.colors.primary,
   },
   ghost: {
     backgroundColor: 'transparent',
     borderWidth: 0,
   },
   destructive: {
-    backgroundColor: theme.colors.destructive,
+    backgroundColor: t.colors.destructive,
     borderWidth: 0,
   },
-  
-  // Text styles
+
   baseText: {
-    fontWeight: theme.typography.weights.medium,
+    fontWeight: typography.weights.medium,
     textAlign: 'center',
   },
   smText: {
-    fontSize: theme.typography.sizes.sm,
+    fontSize: typography.sizes.sm,
   },
   mdText: {
-    fontSize: theme.typography.sizes.base,
+    fontSize: typography.sizes.base,
   },
   lgText: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: typography.sizes.lg,
   },
-  
-  // Text variants
+
   primaryText: {
-    color: theme.colors.primaryForeground,
+    color: t.colors.primaryForeground,
   },
   defaultText: {
-    color: theme.colors.primaryForeground,
+    color: t.colors.primaryForeground,
   },
   secondaryText: {
-    color: theme.colors.secondaryForeground,
+    color: t.colors.secondaryForeground,
   },
   outlineText: {
-    color: theme.colors.primary,
+    color: t.colors.primary,
   },
   ghostText: {
-    color: theme.colors.primary,
+    color: t.colors.primary,
   },
   destructiveText: {
-    color: theme.colors.destructiveForeground,
+    color: t.colors.destructiveForeground,
   },
-  
-  // Disabled states
+
   disabled: {
     opacity: 0.5,
   },

@@ -11,7 +11,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import type { RootStackParamList } from '@/navigation/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import theme from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
+import { spacing } from '@/utils/theme';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -21,6 +23,7 @@ export const MainScreenHeader: React.FC = () => {
   const { user } = useAuth();
   const userId = (user as any)?.id;
   const isGuest = !user || userId === 'guest';
+  const { styles } = useThemedStyles(createStyles);
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications-home'],
@@ -70,13 +73,13 @@ export const MainScreenHeader: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   wrapper: {
     zIndex: 10,
-    paddingHorizontal: theme.spacing.container,
+    paddingHorizontal: spacing.container,
   },
   header: {
-    paddingVertical: theme.spacing.xs,
+    paddingVertical: spacing.xs,
   },
   iconBtn: {
     width: 36,
@@ -93,7 +96,7 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#ef4444',
+    backgroundColor: t.colors.destructive,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 5,

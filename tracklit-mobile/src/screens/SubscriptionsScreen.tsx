@@ -26,22 +26,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type TabKey = 'subscriptions' | 'subscribers' | 'offering';
 
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.4)',
-  border: 'rgba(255,255,255,0.06)',
-  iconBg: 'rgba(255,255,255,0.05)',
-  red: '#ef4444',
-  blue: '#3b82f6',
-  green: '#22c55e',
-};
 
 interface MySubscription {
   id: number;
@@ -85,6 +74,7 @@ const formatPrice = (amountCents: number, currency = 'USD') => {
 };
 
 export const SubscriptionsScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
@@ -139,7 +129,7 @@ export const SubscriptionsScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
+          <CaretLeft size={18} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Subscriptions</Text>
         <View style={{ flex: 1 }} />
@@ -151,17 +141,17 @@ export const SubscriptionsScreen: React.FC = () => {
       >
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <Heart size={20} color={C.red} weight="fill" />
+            <Heart size={20} color={theme.colors.destructive} weight="fill" />
             <Text style={styles.statValue}>{activeSubCount}</Text>
             <Text style={styles.statLabel}>Active Subs</Text>
           </View>
           <View style={styles.statCard}>
-            <Users size={20} color={C.blue} weight="fill" />
+            <Users size={20} color={'#3b82f6'} weight="fill" />
             <Text style={styles.statValue}>{activeSubscriberCount}</Text>
             <Text style={styles.statLabel}>Subscribers</Text>
           </View>
           <View style={styles.statCard}>
-            <CurrencyDollar size={20} color={C.green} weight="fill" />
+            <CurrencyDollar size={20} color={theme.colors.success} weight="fill" />
             <Text style={styles.statValue}>{formatPrice(monthlyIncome)}</Text>
             <Text style={styles.statLabel}>Monthly</Text>
           </View>
@@ -186,14 +176,14 @@ export const SubscriptionsScreen: React.FC = () => {
           <>
             {isGuest ? (
               <View style={styles.emptyContainer}>
-                <Heart size={40} color={C.textMuted} weight="fill" />
+                <Heart size={40} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.emptyText}>Sign in to manage subscriptions.</Text>
               </View>
             ) : mySubsQuery.isLoading ? (
               <SkeletonListRows count={2} />
             ) : mySubscriptions.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Heart size={40} color={C.textMuted} weight="fill" />
+                <Heart size={40} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.emptyText}>No subscriptions yet.</Text>
               </View>
             ) : (
@@ -223,10 +213,10 @@ export const SubscriptionsScreen: React.FC = () => {
                       activeOpacity={0.6}
                     >
                       {cancelSubscription.isPending ? (
-                        <ActivityIndicator size="small" color={C.red} />
+                        <ActivityIndicator size="small" color={theme.colors.destructive} />
                       ) : (
                         <>
-                          <XCircle size={14} color={C.red} weight="bold" />
+                          <XCircle size={14} color={theme.colors.destructive} weight="bold" />
                           <Text style={styles.cancelText}>Cancel</Text>
                         </>
                       )}
@@ -242,14 +232,14 @@ export const SubscriptionsScreen: React.FC = () => {
           <>
             {isGuest ? (
               <View style={styles.emptyContainer}>
-                <Users size={40} color={C.textMuted} weight="fill" />
+                <Users size={40} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.emptyText}>Sign in to manage subscribers.</Text>
               </View>
             ) : mySubscribersQuery.isLoading ? (
               <SkeletonListRows count={2} />
             ) : mySubscribers.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Users size={40} color={C.textMuted} weight="fill" />
+                <Users size={40} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.emptyText}>No subscribers yet.</Text>
               </View>
             ) : (
@@ -281,7 +271,7 @@ export const SubscriptionsScreen: React.FC = () => {
           <>
             {isGuest ? (
               <View style={styles.emptyContainer}>
-                <GearSix size={40} color={C.textMuted} weight="fill" />
+                <GearSix size={40} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.emptyText}>Sign in to edit your offering.</Text>
               </View>
             ) : myOfferingQuery.isLoading ? (
@@ -300,7 +290,7 @@ export const SubscriptionsScreen: React.FC = () => {
                     : '$25.00 / month'}
                 </Text>
                 <TouchableOpacity style={styles.editButton} activeOpacity={0.6}>
-                  <GearSix size={14} color={C.orange} weight="bold" />
+                  <GearSix size={14} color={theme.colors.brandOrange} weight="bold" />
                   <Text style={styles.editButtonText}>Edit Offering</Text>
                 </TouchableOpacity>
               </View>
@@ -312,8 +302,8 @@ export const SubscriptionsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -321,20 +311,20 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
   content: {
@@ -347,7 +337,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
@@ -356,17 +346,17 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   statLabel: {
     fontSize: 10,
     fontWeight: '500',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 0.3,
   },
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 10,
     padding: 3,
   },
@@ -377,18 +367,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tabButtonActive: {
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   tabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   tabTextActive: {
     color: '#000',
   },
   card: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 16,
   },
@@ -400,20 +390,20 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   cardSub: {
     fontSize: 12,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
   },
   cardMeta: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   priceText: {
     fontSize: 14,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   badge: {
     paddingHorizontal: 8,
@@ -424,7 +414,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(34,197,94,0.15)',
   },
   badgeInactive: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   badgeText: {
     fontSize: 10,
@@ -432,10 +422,10 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   badgeTextActive: {
-    color: C.green,
+    color: t.colors.success,
   },
   badgeTextInactive: {
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   cancelButton: {
     flexDirection: 'row',
@@ -452,7 +442,7 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.red,
+    color: t.colors.destructive,
   },
   editButton: {
     flexDirection: 'row',
@@ -469,7 +459,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -478,7 +468,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },

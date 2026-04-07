@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import theme from '@/utils/theme';
+import { spacing, borderRadius } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Tone = 'dark' | 'muted' | 'light';
 
@@ -15,13 +17,15 @@ export const WebCard: React.FC<WebCardProps> = ({
   children,
   style,
   tone = 'dark',
-  padding = theme.spacing.lg,
+  padding = spacing.lg,
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
+
   const palette = tone === 'light'
-    ? { bg: '#f8fafc', border: '#e2e8f0' }
+    ? { bg: theme.colors.backgroundSolid, border: theme.colors.border }
     : tone === 'muted'
-      ? { bg: '#111827', border: '#1f2937' }
-      : { bg: '#0f172a', border: '#1f2937' };
+      ? { bg: theme.colors.darkNavy, border: theme.colors.darkGray }
+      : { bg: theme.colors.webChatBackground, border: theme.colors.darkGray };
 
   return (
     <View style={[styles.card, { backgroundColor: palette.bg, borderColor: palette.border, padding }, style]}>
@@ -33,14 +37,13 @@ export const WebCard: React.FC<WebCardProps> = ({
 export const WebCardSection: React.FC<{ children: React.ReactNode; style?: ViewStyle }> = ({
   children,
   style,
-}) => <View style={[{ gap: theme.spacing.sm }, style]}>{children}</View>;
+}) => <View style={[{ gap: spacing.sm }, style]}>{children}</View>;
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   card: {
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    ...theme.shadows.md,
-    gap: theme.spacing.sm,
+    ...t.shadows.md,
+    gap: spacing.sm,
   },
 });
-

@@ -1,16 +1,17 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import theme from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
-export const WebSeparator: React.FC<{ style?: ViewStyle }> = ({ style }) => (
-  <View style={[styles.sep, style]} />
-);
+export const WebSeparator: React.FC<{ style?: ViewStyle }> = ({ style }) => {
+  const { styles } = useThemedStyles(createStyles);
+  return <View style={[styles.sep, style]} />;
+};
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   sep: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: theme.colors.border,
+    backgroundColor: t.colors.border,
     width: '100%',
   },
 });
-

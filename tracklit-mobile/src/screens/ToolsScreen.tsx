@@ -24,6 +24,8 @@ import { Text } from '../components/ui/Text';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { MainScreenHeader } from '@/components/MainScreenHeader';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import type { ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -38,16 +40,6 @@ type ToolScreen = Extract<
   | 'Rehab'
 >;
 
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.4)',
-  border: 'rgba(255,255,255,0.06)',
-};
-
 interface Tool {
   id: string;
   title: string;
@@ -58,12 +50,82 @@ interface Tool {
   screen?: ToolScreen;
 }
 
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: t.colors.backgroundSolid,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cardTouchable: {
+    flex: 1,
+  },
+  toolCard: {
+    backgroundColor: t.colors.cardSolid,
+    borderRadius: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    gap: 8,
+    height: 148,
+  },
+  toolCardDisabled: {
+    backgroundColor: 'rgba(28,31,43,0.5)',
+  },
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  toolTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: t.colors.textPrimary,
+    textAlign: 'center',
+  },
+  toolTitleDisabled: {
+    color: t.colors.textMuted,
+  },
+  toolDescription: {
+    fontSize: 11,
+    color: t.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  toolDescDisabled: {
+    color: t.colors.textMuted,
+  },
+  comingSoonBadge: {
+    marginTop: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: t.colors.overlaySubtle,
+  },
+  comingSoonText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: t.colors.textMuted,
+    letterSpacing: 0.8,
+  },
+});
+
 export const ToolsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
+  const { styles, theme } = useThemedStyles(createStyles);
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
 
-  const ICON_COLOR = 'rgba(255,255,255,0.5)';
+  const ICON_COLOR = theme.colors.textMuted;
 
   const tools: Tool[] = [
     {
@@ -71,7 +133,7 @@ export const ToolsScreen: React.FC = () => {
       title: 'Photo Finish',
       description: 'Upload and analyze your videos',
       icon: <FilmStrip size={26} color={ICON_COLOR} weight="fill" />,
-      color: 'rgba(255,255,255,0.06)',
+      color: theme.colors.overlaySubtle,
       screen: 'PhotoFinish',
     },
     {
@@ -79,7 +141,7 @@ export const ToolsScreen: React.FC = () => {
       title: 'Start Gun',
       description: 'Simulate a race start signal',
       icon: <PersonSimpleThrow size={26} color={ICON_COLOR} weight="fill" />,
-      color: 'rgba(255,255,255,0.06)',
+      color: theme.colors.overlaySubtle,
       screen: 'StartGun',
     },
     {
@@ -87,7 +149,7 @@ export const ToolsScreen: React.FC = () => {
       title: 'Stopwatch',
       description: 'Track time with precision',
       icon: <Timer size={26} color={ICON_COLOR} weight="fill" />,
-      color: 'rgba(255,255,255,0.06)',
+      color: theme.colors.overlaySubtle,
       screen: 'Stopwatch',
     },
     {
@@ -95,7 +157,7 @@ export const ToolsScreen: React.FC = () => {
       title: 'Interval Timer',
       description: 'Customizable work/rest intervals',
       icon: <Clock size={26} color={ICON_COLOR} weight="fill" />,
-      color: 'rgba(255,255,255,0.06)',
+      color: theme.colors.overlaySubtle,
       screen: 'IntervalTimer',
     },
     {
@@ -103,7 +165,7 @@ export const ToolsScreen: React.FC = () => {
       title: 'Journal',
       description: 'Search your workout notes',
       icon: <BookOpen size={26} color={ICON_COLOR} weight="fill" />,
-      color: 'rgba(255,255,255,0.06)',
+      color: theme.colors.overlaySubtle,
       screen: 'Journal',
     },
     {
@@ -111,7 +173,7 @@ export const ToolsScreen: React.FC = () => {
       title: 'Exercise Library',
       description: 'Organize training videos',
       icon: <VideoCamera size={26} color={ICON_COLOR} weight="fill" />,
-      color: 'rgba(255,255,255,0.06)',
+      color: theme.colors.overlaySubtle,
       screen: 'ExerciseLibrary',
     },
     {
@@ -119,7 +181,7 @@ export const ToolsScreen: React.FC = () => {
       title: 'Rehab',
       description: 'Injury recovery programs',
       icon: <FirstAidKit size={26} color={ICON_COLOR} weight="fill" />,
-      color: 'rgba(255,255,255,0.06)',
+      color: theme.colors.overlaySubtle,
       screen: 'Rehab',
     },
   ];
@@ -152,7 +214,7 @@ export const ToolsScreen: React.FC = () => {
     >
       <View style={[styles.toolCard, tool.comingSoon && styles.toolCardDisabled]}>
         <View style={[styles.iconCircle, { backgroundColor: tool.color }]}>
-          {tool.comingSoon ? <Lock size={26} color={C.textMuted} weight="fill" /> : tool.icon}
+          {tool.comingSoon ? <Lock size={26} color={theme.colors.textMuted} weight="fill" /> : tool.icon}
         </View>
         <Text style={[styles.toolTitle, tool.comingSoon && styles.toolTitleDisabled]} numberOfLines={1}>
           {tool.title}
@@ -189,72 +251,3 @@ export const ToolsScreen: React.FC = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cardTouchable: {
-    flex: 1,
-  },
-  toolCard: {
-    backgroundColor: C.card,
-    borderRadius: 12,
-    paddingVertical: 20,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    gap: 8,
-    height: 148,
-  },
-  toolCardDisabled: {
-    backgroundColor: 'rgba(28,31,43,0.5)',
-  },
-  iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  toolTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: C.textPrimary,
-    textAlign: 'center',
-  },
-  toolTitleDisabled: {
-    color: C.textMuted,
-  },
-  toolDescription: {
-    fontSize: 11,
-    color: C.textSecondary,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  toolDescDisabled: {
-    color: C.textMuted,
-  },
-  comingSoonBadge: {
-    marginTop: 2,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  comingSoonText: {
-    fontSize: 8,
-    fontWeight: '800',
-    color: C.textMuted,
-    letterSpacing: 0.8,
-  },
-});

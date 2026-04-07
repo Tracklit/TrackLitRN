@@ -21,6 +21,8 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 import theme from '@/utils/theme';
 
 type TabRoute = 'Home' | 'Training' | 'CoachDashboard' | 'Feed' | 'Tools' | 'Sprinthia';
@@ -62,7 +64,8 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
   onLongPress,
   showBadge,
 }) => {
-  const contentColor = isActive ? theme.colors.accent : theme.colors.textSecondary;
+  const { styles, theme: t } = useThemedStyles(createStyles);
+  const contentColor = isActive ? t.colors.accent : t.colors.textSecondary;
   const IconComp = item.IconComponent;
 
   return (
@@ -97,18 +100,38 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { styles } = useThemedStyles(createStyles);
   const isCoach = (user as any)?.isCoach === true;
 
   const parent = navigation.getParent();
-  const parentState = parent?.getState();
-  const parentRoute = parentState?.routes[parentState.index ?? 0];
+
+  // Subscribe to parent navigator state so we re-render when the active
+  // route changes (e.g. push/pop of Settings).  A plain getState() snapshot
+  // becomes stale when a context change (like refreshUser) forces a render
+  // while a non-MainTabs screen is active.
+  const [parentRouteName, setParentRouteName] = useState<string | undefined>(
+    () => {
+      const s = parent?.getState();
+      return s?.routes[s.index ?? 0]?.name;
+    },
+  );
+
+  useEffect(() => {
+    if (!parent) return;
+    const update = () => {
+      const s = parent.getState();
+      setParentRouteName(s?.routes[s.index ?? 0]?.name);
+    };
+    update();
+    const unsubscribe = parent.addListener('state', update);
+    return unsubscribe;
+  }, [parent]);
 
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
   const isFeedActive = state.routeNames[state.index] === 'Feed';
 
   const navItems = useMemo<NavItem[]>(() => {
     if (isCoach) {
-      // Insert Coach Dashboard after Home, keep all other tabs
       const items = [...BASE_NAV_ITEMS];
       items.splice(1, 0, COACH_NAV_ITEM);
       return items;
@@ -155,7 +178,7 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
     }
   }, [isFeedActive]);
 
-  if (parentRoute?.name && parentRoute.name !== 'MainTabs') {
+  if (parentRouteName && parentRouteName !== 'MainTabs') {
     return null;
   }
 
@@ -203,15 +226,15 @@ export const BottomNavigation: React.FC<BottomTabBarProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     position: 'absolute',
     bottom: -15,
     left: 0,
     right: 0,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: t.colors.backgroundSolid,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: t.colors.overlayLight,
     paddingTop: 15,
   },
   navBar: {
@@ -240,12 +263,12 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ef4444',
+    backgroundColor: t.colors.destructive,
   },
   navLabel: {
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: theme.typography.weights.medium,
     textAlign: 'center',
-    lineHeight: 10,
+    lineHeight: 13,
   },
 });

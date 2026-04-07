@@ -38,6 +38,8 @@ import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 import { TIER_LIMITS, resolveUserTier } from '@/constants/tierEntitlements';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 interface Friend {
@@ -47,21 +49,11 @@ interface Friend {
   profileImageUrl?: string | null;
 }
 
-const C = {
-  bg:            '#0E0F14',
-  card:          '#1C1F2B',
-  orange:        '#FF7A00',
-  textPrimary:   '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted:     'rgba(255,255,255,0.4)',
-  border:        'rgba(255,255,255,0.06)',
-  iconBg:        'rgba(255,255,255,0.05)',
-  inputBg:       'rgba(255,255,255,0.04)',
-};
 
 const MAX_MEMBERS = 10;
 
 export const CreateGroupScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets    = useSafeAreaInsets();
   const nav       = useNavigation<Nav>();
   const { user, isAuthenticated } = useAuth();
@@ -269,7 +261,7 @@ export const CreateGroupScreen: React.FC = () => {
       {/* header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
-          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
+          <CaretLeft size={18} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Group</Text>
         <View style={{ flex: 1 }} />
@@ -294,7 +286,7 @@ export const CreateGroupScreen: React.FC = () => {
       >
         {!canUse ? (
           <View style={styles.centred}>
-            <UsersThree size={40} color={C.textMuted} weight="fill" />
+            <UsersThree size={40} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>Sign in to create a group.</Text>
           </View>
         ) : (
@@ -305,12 +297,12 @@ export const CreateGroupScreen: React.FC = () => {
                 <View style={styles.imageWrap}>
                   <Image source={{ uri: imageUri }} style={styles.imageThumb} />
                   <TouchableOpacity style={styles.removeImg} onPress={() => setImageUri(null)}>
-                    <X size={12} color={C.textPrimary} weight="bold" />
+                    <X size={12} color={theme.colors.textPrimary} weight="bold" />
                   </TouchableOpacity>
                 </View>
               ) : (
                 <View style={styles.imagePlaceholder}>
-                  <Camera size={22} color={C.textMuted} weight="fill" />
+                  <Camera size={22} color={theme.colors.textMuted} weight="fill" />
                 </View>
               )}
               <View style={{ flex: 1, gap: 2 }}>
@@ -327,7 +319,7 @@ export const CreateGroupScreen: React.FC = () => {
                 value={name}
                 onChangeText={setName}
                 placeholder="e.g. Sprint Squad"
-                placeholderTextColor={C.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 maxLength={50}
               />
             </View>
@@ -340,7 +332,7 @@ export const CreateGroupScreen: React.FC = () => {
                 value={description}
                 onChangeText={setDescription}
                 placeholder="What's this group about?"
-                placeholderTextColor={C.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 multiline
                 maxLength={200}
               />
@@ -349,13 +341,13 @@ export const CreateGroupScreen: React.FC = () => {
             {/* private toggle */}
             <View style={styles.switchRow}>
               <View style={styles.switchLabel}>
-                <Lock size={16} color={C.textSecondary} weight="fill" />
+                <Lock size={16} color={theme.colors.textSecondary} weight="fill" />
                 <Text style={styles.switchText}>Private group</Text>
               </View>
               <Switch
                 value={isPrivate}
                 onValueChange={setIsPrivate}
-                thumbColor={isPrivate ? C.orange : 'rgba(255,255,255,0.3)'}
+                thumbColor={isPrivate ? theme.colors.brandOrange : 'rgba(255,255,255,0.3)'}
                 trackColor={{ true: 'rgba(255,122,0,0.3)', false: 'rgba(255,255,255,0.08)' }}
               />
             </View>
@@ -370,7 +362,7 @@ export const CreateGroupScreen: React.FC = () => {
 
             {selected.length >= effectiveMaxMembers - 1 && (
               <View style={styles.limitBanner}>
-                <Warning size={14} color={C.orange} weight="fill" />
+                <Warning size={14} color={theme.colors.brandOrange} weight="fill" />
                 <Text style={styles.limitText}>Member limit reached ({effectiveMaxMembers})</Text>
               </View>
             )}
@@ -378,12 +370,12 @@ export const CreateGroupScreen: React.FC = () => {
             {/* members list */}
             {friendsQuery.isLoading ? (
               <View style={styles.centredRow}>
-                <ActivityIndicator size="small" color={C.orange} />
+                <ActivityIndicator size="small" color={theme.colors.brandOrange} />
                 <Text style={styles.mutedText}>Loading connections…</Text>
               </View>
             ) : friends.length === 0 ? (
               <View style={styles.centred}>
-                <Users size={24} color={C.textMuted} weight="fill" />
+                <Users size={24} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.emptyText}>
                   No connections to invite yet.{'\n'}Connect with athletes first.
                 </Text>
@@ -414,7 +406,7 @@ export const CreateGroupScreen: React.FC = () => {
                           </Text>
                         </View>
                         <View style={[styles.checkbox, isSelected && styles.checkboxOn]}>
-                          {isSelected && <CheckCircle size={18} color={C.orange} weight="fill" />}
+                          {isSelected && <CheckCircle size={18} color={theme.colors.brandOrange} weight="fill" />}
                         </View>
                       </TouchableOpacity>
                     </View>
@@ -466,8 +458,8 @@ export const CreateGroupScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container:    { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection:    'row',
     alignItems:       'center',
@@ -475,17 +467,17 @@ const styles = StyleSheet.create({
     paddingVertical:  14,
     gap:              10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   backBtn: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle:   { fontSize: 16, fontWeight: '700', color: C.textPrimary, letterSpacing: 0.3 },
+  headerTitle:   { fontSize: 16, fontWeight: '700', color: t.colors.textPrimary, letterSpacing: 0.3 },
   createBtn: {
     paddingHorizontal: 16, paddingVertical: 8,
-    borderRadius: 8, backgroundColor: C.orange,
+    borderRadius: 8, backgroundColor: t.colors.brandOrange,
   },
   createBtnDisabled: { backgroundColor: 'rgba(255,122,0,0.25)' },
   createBtnText:     { fontSize: 12, fontWeight: '700', color: '#000' },
@@ -493,13 +485,13 @@ const styles = StyleSheet.create({
   content:    { padding: 20, gap: 20 },
   centred:    { alignItems: 'center', paddingVertical: 40, gap: 12 },
   centredRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 20 },
-  emptyText:  { fontSize: 13, color: C.textMuted, textAlign: 'center', lineHeight: 20 },
-  mutedText:  { fontSize: 12, color: C.textMuted },
+  emptyText:  { fontSize: 13, color: t.colors.textMuted, textAlign: 'center', lineHeight: 20 },
+  mutedText:  { fontSize: 12, color: t.colors.textMuted },
   imageRow:   { flexDirection: 'row', alignItems: 'center', gap: 14 },
   imagePlaceholder: {
     width: 56, height: 56, borderRadius: 28,
-    backgroundColor: C.iconBg,
-    borderWidth: 1, borderColor: C.border, borderStyle: 'dashed',
+    backgroundColor: t.colors.overlaySubtle,
+    borderWidth: 1, borderColor: t.colors.overlayLight, borderStyle: 'dashed',
     alignItems: 'center', justifyContent: 'center',
   },
   imageWrap:   { width: 56, height: 56, borderRadius: 28, overflow: 'hidden' },
@@ -509,55 +501,55 @@ const styles = StyleSheet.create({
     width: 20, height: 20, borderRadius: 10,
     backgroundColor: 'rgba(0,0,0,0.7)',
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: C.border,
+    borderWidth: 1, borderColor: t.colors.overlayLight,
   },
-  imageLabel:  { fontSize: 13, fontWeight: '600', color: C.textPrimary },
-  imageSub:    { fontSize: 11, color: C.textMuted },
+  imageLabel:  { fontSize: 13, fontWeight: '600', color: t.colors.textPrimary },
+  imageSub:    { fontSize: 11, color: t.colors.textMuted },
   inputGroup:  { gap: 6 },
   label: {
-    fontSize: 11, fontWeight: '600', color: C.textSecondary,
+    fontSize: 11, fontWeight: '600', color: t.colors.textSecondary,
     textTransform: 'uppercase', letterSpacing: 0.8,
   },
   input: {
-    backgroundColor: C.inputBg,
-    borderWidth: 0.5, borderColor: C.border, borderRadius: 10,
+    backgroundColor: t.colors.overlaySubtle,
+    borderWidth: 0.5, borderColor: t.colors.overlayLight, borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 12,
-    color: C.textPrimary, fontSize: 14,
+    color: t.colors.textPrimary, fontSize: 14,
   },
   textArea:    { minHeight: 80, textAlignVertical: 'top' },
   switchRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   switchLabel: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  switchText:  { fontSize: 13, fontWeight: '500', color: C.textPrimary },
-  divider:     { height: 0.5, backgroundColor: C.border },
+  switchText:  { fontSize: 13, fontWeight: '500', color: t.colors.textPrimary },
+  divider:     { height: 0.5, backgroundColor: t.colors.overlayLight },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sectionTitle: { fontSize: 13, fontWeight: '600', color: C.textPrimary },
-  sectionCount: { fontSize: 11, fontWeight: '600', color: C.textMuted },
+  sectionTitle: { fontSize: 13, fontWeight: '600', color: t.colors.textPrimary },
+  sectionCount: { fontSize: 11, fontWeight: '600', color: t.colors.textMuted },
   limitBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: 'rgba(255,122,0,0.08)',
     borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
   },
-  limitText:      { fontSize: 11, color: C.orange, fontWeight: '500' },
-  memberDivider:  { height: 0.5, backgroundColor: C.border, marginLeft: 48 },
+  limitText:      { fontSize: 11, color: t.colors.brandOrange, fontWeight: '500' },
+  memberDivider:  { height: 0.5, backgroundColor: t.colors.overlayLight, marginLeft: 48 },
   memberRow: {
     flexDirection: 'row', alignItems: 'center',
     gap: 12, paddingVertical: 10,
   },
-  memberName:     { fontSize: 13, fontWeight: '600', color: C.textPrimary },
-  memberUsername: { fontSize: 11, color: C.textMuted },
+  memberName:     { fontSize: 13, fontWeight: '600', color: t.colors.textPrimary },
+  memberUsername: { fontSize: 11, color: t.colors.textMuted },
   checkbox: {
     width: 22, height: 22, borderRadius: 11,
-    borderWidth: 1, borderColor: C.border,
+    borderWidth: 1, borderColor: t.colors.overlayLight,
     alignItems: 'center', justifyContent: 'center',
   },
-  checkboxOn: { borderColor: C.orange, backgroundColor: 'rgba(255,122,0,0.1)' },
+  checkboxOn: { borderColor: t.colors.brandOrange, backgroundColor: t.colors.brandOrangeLight },
   paywallOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   paywallSheet: {
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 24,
@@ -568,24 +560,24 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: t.colors.overlayHeavy,
     alignSelf: 'center',
     marginBottom: 8,
   },
   paywallTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     textAlign: 'center',
   },
   paywallBody: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.7)',
+    color: t.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
   paywallUpgradeBtn: {
-    backgroundColor: '#FF7A00',
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 10,
     paddingVertical: 13,
     alignItems: 'center',
@@ -602,6 +594,6 @@ const styles = StyleSheet.create({
   },
   paywallDismissBtnText: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
+    color: t.colors.textMuted,
   },
 });

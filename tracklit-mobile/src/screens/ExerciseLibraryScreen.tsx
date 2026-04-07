@@ -26,9 +26,11 @@ import { env } from '@/config/env';
 import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import type { RootStackParamList } from '@/navigation/types';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface ExerciseItem {
   id: number;
   name: string;
@@ -50,6 +52,7 @@ interface ExerciseLibraryResponse {
 }
 
 export const ExerciseLibraryScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, isAuthenticated } = useAuth();
@@ -199,7 +202,7 @@ export const ExerciseLibraryScreen: React.FC = () => {
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }) },
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }) },
         ]}
         showsVerticalScrollIndicator={false}
         extraScrollHeight={80}
@@ -357,7 +360,7 @@ export const ExerciseLibraryScreen: React.FC = () => {
             style={styles.modalCard}
             contentContainerStyle={[
               styles.modalCardContent,
-              { paddingBottom: insets.bottom + theme.spacing.lg },
+              { paddingBottom: insets.bottom + themeStatic.spacing.lg },
             ]}
             showsVerticalScrollIndicator={false}
             extraScrollHeight={80}
@@ -404,17 +407,17 @@ export const ExerciseLibraryScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.lg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   backButton: {
     width: 40,
@@ -424,73 +427,73 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
-    gap: theme.spacing.xs,
+    gap: themeStatic.spacing.xs,
   },
   toolsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   viewToggle: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xs,
+    backgroundColor: t.colors.card,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.xs,
   },
   toggleButton: {
     width: 34,
     height: 34,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: themeStatic.borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   toggleActive: {
-    backgroundColor: theme.colors.backgroundSolid,
+    backgroundColor: t.colors.backgroundSolid,
   },
   searchWrap: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
+    gap: themeStatic.spacing.sm,
+    paddingHorizontal: themeStatic.spacing.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    backgroundColor: t.colors.card,
     height: 40,
   },
   searchInput: {
     flex: 1,
-    color: theme.colors.foreground,
+    color: t.colors.foreground,
   },
   actionsCard: { marginBottom: 0 },
-  actionRow: { flexDirection: 'row', gap: theme.spacing.md },
-  buttonText: { marginLeft: theme.spacing.sm },
-  helperText: { marginTop: theme.spacing.sm, textAlign: 'center' },
+  actionRow: { flexDirection: 'row', gap: themeStatic.spacing.md },
+  buttonText: { marginLeft: themeStatic.spacing.sm },
+  helperText: { marginTop: themeStatic.spacing.sm, textAlign: 'center' },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: theme.spacing.sm,
+    marginTop: themeStatic.spacing.sm,
   },
-  emptyText: { textAlign: 'center', paddingVertical: theme.spacing.lg },
-  list: { gap: theme.spacing.sm },
+  emptyText: { textAlign: 'center', paddingVertical: themeStatic.spacing.lg },
+  list: { gap: themeStatic.spacing.sm },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   itemCard: { marginBottom: 0 },
   itemCardGrid: {
     width: '48%',
   },
-  itemContent: { paddingVertical: theme.spacing.md },
-  itemRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  itemContent: { paddingVertical: themeStatic.spacing.md },
+  itemRow: { flexDirection: 'row', alignItems: 'center', gap: themeStatic.spacing.md },
   itemIcon: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.colors.primary + '20',
+    backgroundColor: t.colors.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -501,44 +504,44 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.card,
+    backgroundColor: t.colors.card,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: t.colors.border,
   },
   itemActions: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  urlText: { marginTop: theme.spacing.sm },
+  urlText: { marginTop: themeStatic.spacing.sm },
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: theme.colors.backgroundSolid,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
+    backgroundColor: t.colors.backgroundSolid,
+    borderTopLeftRadius: themeStatic.borderRadius.xl,
+    borderTopRightRadius: themeStatic.borderRadius.xl,
     maxHeight: '85%',
   },
   modalCardContent: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    padding: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.md,
   },
   modalTitle: { textAlign: 'center' },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.md,
+    color: t.colors.foreground,
+    backgroundColor: t.colors.card,
   },
   textArea: { minHeight: 90, textAlignVertical: 'top' },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   modalButton: { minWidth: 120 },
 });

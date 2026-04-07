@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import theme from '@/utils/theme';
+import { borderRadius } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 interface WebProgressProps {
   value: number; // 0-100
@@ -8,6 +10,7 @@ interface WebProgressProps {
 }
 
 export const WebProgress: React.FC<WebProgressProps> = ({ value, style }) => {
+  const { styles } = useThemedStyles(createStyles);
   const clamped = Math.min(Math.max(value, 0), 100);
   return (
     <View style={[styles.track, style]}>
@@ -16,16 +19,15 @@ export const WebProgress: React.FC<WebProgressProps> = ({ value, style }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   track: {
     height: 8,
-    backgroundColor: '#1f2937',
-    borderRadius: theme.borderRadius.round,
+    backgroundColor: t.colors.darkGray,
+    borderRadius: borderRadius.round,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
-    backgroundColor: theme.colors.primary,
+    backgroundColor: t.colors.primary,
   },
 });
-

@@ -38,6 +38,8 @@ import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface JournalEntry {
   id: number;
   userId: number;
@@ -53,28 +55,11 @@ interface JournalEntry {
 type SortDirection = 'asc' | 'desc';
 type Visibility = 'private' | 'coach' | 'public';
 
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  cardAlt: '#181B27',
-  orange: '#FF7A00',
-  border: 'rgba(255,255,255,0.07)',
-  borderStrong: 'rgba(255,255,255,0.12)',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.65)',
-  textMuted: 'rgba(255,255,255,0.38)',
-  green: '#22c55e',
-  yellow: '#eab308',
-  red: '#ef4444',
-  inputBg: 'rgba(255,255,255,0.05)',
-  modalBg: '#151821',
-  blue: '#60a5fa',
-};
 
-const VISIBILITY_OPTIONS: { key: Visibility; label: string; icon: React.ReactNode; color: string; desc: string }[] = [
-  { key: 'private', label: 'Private', icon: null, color: C.textMuted, desc: 'Only you' },
-  { key: 'coach',   label: 'Coach',   icon: null, color: C.blue,     desc: 'You + your coach' },
-  { key: 'public',  label: 'Public',  icon: null, color: C.green,    desc: 'Everyone' },
+const getVisibilityOptions = (themeColors: any) => [
+  { key: 'private' as Visibility, label: 'Private', icon: null, color: themeColors.textMuted, desc: 'Only you' },
+  { key: 'coach' as Visibility,   label: 'Coach',   icon: null, color: '#3b82f6',     desc: 'You + your coach' },
+  { key: 'public' as Visibility,  label: 'Public',  icon: null, color: themeColors.success,    desc: 'Everyone' },
 ];
 
 const visibilityToIsPublic = (v: Visibility) => v !== 'private';
@@ -103,19 +88,21 @@ const formatDate = (dateString: string) =>
     day: 'numeric',
   });
 
-const getMoodColor = (value: number) => {
-  if (value <= 3) return C.red;
-  if (value <= 6) return C.yellow;
-  return C.green;
+const getMoodColor = (value: number, themeColors: any) => {
+  if (value <= 3) return themeColors.destructive;
+  if (value <= 6) return themeColors.warning;
+  return themeColors.success;
 };
 
 const VisibilityIcon: React.FC<{ vis: Visibility; size: number; color?: string }> = ({ vis, size, color }) => {
-  if (vis === 'public') return <Globe size={size} color={color ?? C.green} weight="fill" />;
-  if (vis === 'coach') return <Eye size={size} color={color ?? C.blue} weight="fill" />;
-  return <Lock size={size} color={color ?? C.textMuted} weight="fill" />;
+  const { theme } = useThemedStyles(createStyles);
+  if (vis === 'public') return <Globe size={size} color={color ?? theme.colors.success} weight="fill" />;
+  if (vis === 'coach') return <Eye size={size} color={color ?? '#3b82f6'} weight="fill" />;
+  return <Lock size={size} color={color ?? theme.colors.textMuted} weight="fill" />;
 };
 
 export const JournalScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, isAuthenticated } = useAuth();
@@ -257,13 +244,13 @@ export const JournalScreen: React.FC = () => {
     ]);
   };
 
-  const moodColor = getMoodColor(formMoodRating);
+  const moodColor = getMoodColor(formMoodRating, theme.colors);
 
   const VisibilitySelector: React.FC = () => (
     <View style={styles.visibilityWrap}>
       <Text style={styles.inputLabel}>Visibility</Text>
       <View style={styles.visibilityRow}>
-        {VISIBILITY_OPTIONS.map((opt) => {
+        {getVisibilityOptions(theme.colors).map((opt) => {
           const isActive = formVisibility === opt.key;
           return (
             <TouchableOpacity
@@ -272,11 +259,11 @@ export const JournalScreen: React.FC = () => {
               onPress={() => setFormVisibility(opt.key)}
               activeOpacity={0.7}
             >
-              <VisibilityIcon vis={opt.key} size={14} color={isActive ? opt.color : C.textMuted} />
-              <Text style={[styles.visibilityBtnLabel, { color: isActive ? opt.color : C.textMuted }]}>
+              <VisibilityIcon vis={opt.key} size={14} color={isActive ? opt.color : theme.colors.textMuted} />
+              <Text style={[styles.visibilityBtnLabel, { color: isActive ? opt.color : theme.colors.textMuted }]}>
                 {opt.label}
               </Text>
-              <Text style={[styles.visibilityBtnDesc, { color: isActive ? opt.color : C.textMuted, opacity: 0.7 }]}>
+              <Text style={[styles.visibilityBtnDesc, { color: isActive ? opt.color : theme.colors.textMuted, opacity: 0.7 }]}>
                 {opt.desc}
               </Text>
             </TouchableOpacity>
@@ -300,11 +287,11 @@ export const JournalScreen: React.FC = () => {
       {/* Search + Sort */}
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
-          <MagnifyingGlass size={15} color={C.textMuted} weight="bold" />
+          <MagnifyingGlass size={15} color={theme.colors.textMuted} weight="bold" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search entries..."
-            placeholderTextColor={C.textMuted}
+            placeholderTextColor={theme.colors.textMuted}
             value={searchTerm}
             onChangeText={setSearchTerm}
             returnKeyType="search"
@@ -316,8 +303,8 @@ export const JournalScreen: React.FC = () => {
           activeOpacity={0.7}
         >
           {sortDirection === 'desc'
-            ? <SortDescending size={18} color={C.textSecondary} weight="bold" />
-            : <SortAscending size={18} color={C.textSecondary} weight="bold" />
+            ? <SortDescending size={18} color={theme.colors.textSecondary} weight="bold" />
+            : <SortAscending size={18} color={theme.colors.textSecondary} weight="bold" />
           }
         </TouchableOpacity>
       </View>
@@ -329,15 +316,15 @@ export const JournalScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
       >
         {journalQuery.isLoading ? (
-          <ActivityIndicator color={C.orange} style={{ marginTop: 48 }} />
+          <ActivityIndicator color={theme.colors.brandOrange} style={{ marginTop: 48 }} />
         ) : !canUse ? (
           <View style={styles.emptyState}>
-            <Lock size={36} color={C.textMuted} weight="fill" />
+            <Lock size={36} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>Sign in to view your journal</Text>
           </View>
         ) : filteredEntries.length === 0 ? (
           <View style={styles.emptyState}>
-            <NotePencil size={36} color={C.textMuted} weight="fill" />
+            <NotePencil size={36} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>
               {searchTerm ? 'No entries match your search.' : 'No journal entries yet. Tap + New Entry to get started.'}
             </Text>
@@ -346,7 +333,7 @@ export const JournalScreen: React.FC = () => {
           filteredEntries.map((entry) => {
             const mood = entry.content?.moodRating;
             const isExpanded = expandedId === entry.id;
-            const entryMoodColor = mood ? getMoodColor(mood) : null;
+            const entryMoodColor = mood ? getMoodColor(mood, theme.colors) : null;
             const vis = contentToVisibility(entry.content);
 
             return (
@@ -359,12 +346,12 @@ export const JournalScreen: React.FC = () => {
                 <View style={styles.entryTop}>
                   <View style={styles.entryTopLeft}>
                     <View style={styles.entryIconWrap}>
-                      <NotePencil size={14} color={C.orange} weight="fill" />
+                      <NotePencil size={14} color={theme.colors.brandOrange} weight="fill" />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.entryTitle} numberOfLines={1}>{entry.title || 'Untitled'}</Text>
                       <View style={styles.entryMeta}>
-                        <CalendarBlank size={10} color={C.textMuted} weight="bold" />
+                        <CalendarBlank size={10} color={theme.colors.textMuted} weight="bold" />
                         <Text style={styles.entryDate}>{formatDate(entry.createdAt)}</Text>
                         <VisibilityIcon vis={vis} size={10} />
                       </View>
@@ -379,7 +366,7 @@ export const JournalScreen: React.FC = () => {
                     )}
                     <CaretRight
                       size={12}
-                      color={C.textMuted}
+                      color={theme.colors.textMuted}
                       weight="bold"
                       style={{ transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}
                     />
@@ -397,7 +384,7 @@ export const JournalScreen: React.FC = () => {
                         onPress={() => handleOpenEdit(entry)}
                         activeOpacity={0.7}
                       >
-                        <PencilSimple size={13} color={C.orange} weight="bold" />
+                        <PencilSimple size={13} color={theme.colors.brandOrange} weight="bold" />
                         <Text style={styles.actionBtnText}>Edit</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -405,8 +392,8 @@ export const JournalScreen: React.FC = () => {
                         onPress={() => handleDelete(entry.id, entry.title)}
                         activeOpacity={0.7}
                       >
-                        <Trash size={13} color={C.red} weight="bold" />
-                        <Text style={[styles.actionBtnText, { color: C.red }]}>Delete</Text>
+                        <Trash size={13} color={theme.colors.destructive} weight="bold" />
+                        <Text style={[styles.actionBtnText, { color: theme.colors.destructive }]}>Delete</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -449,7 +436,7 @@ export const JournalScreen: React.FC = () => {
               <TextInput
                 style={styles.modalInput}
                 placeholder="Entry title..."
-                placeholderTextColor={C.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 value={formTitle}
                 onChangeText={setFormTitle}
                 returnKeyType="next"
@@ -459,7 +446,7 @@ export const JournalScreen: React.FC = () => {
               <TextInput
                 style={[styles.modalInput, styles.modalTextArea]}
                 placeholder="Write your notes here..."
-                placeholderTextColor={C.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 value={formNotes}
                 onChangeText={setFormNotes}
                 multiline
@@ -525,8 +512,8 @@ export const JournalScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
 
   topBar: {
     flexDirection: 'row',
@@ -536,17 +523,17 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
   },
-  screenTitle: { fontSize: 22, fontWeight: '800', color: C.textPrimary, letterSpacing: -0.5 },
+  screenTitle: { fontSize: 22, fontWeight: '800', color: t.colors.textPrimary, letterSpacing: -0.5 },
   newBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
   },
-  newBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  newBtnText: { fontSize: 13, fontWeight: '700', color: t.colors.textPrimary },
 
   searchRow: {
     flexDirection: 'row',
@@ -559,20 +546,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: C.inputBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 40,
   },
-  searchInput: { flex: 1, color: C.textPrimary, fontSize: 13 },
+  searchInput: { flex: 1, color: t.colors.textPrimary, fontSize: 13 },
   sortBtn: {
     width: 40,
     height: 40,
-    backgroundColor: C.inputBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -581,10 +568,10 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 20, gap: 10 },
 
   entryCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     overflow: 'hidden',
   },
   entryTop: {
@@ -598,13 +585,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  entryTitle: { fontSize: 14, fontWeight: '700', color: C.textPrimary },
+  entryTitle: { fontSize: 14, fontWeight: '700', color: t.colors.textPrimary },
   entryMeta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 },
-  entryDate: { fontSize: 10, color: C.textMuted },
+  entryDate: { fontSize: 10, color: t.colors.textMuted },
   entryTopRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   moodBadge: {
     flexDirection: 'row',
@@ -618,11 +605,11 @@ const styles = StyleSheet.create({
 
   entryExpanded: {
     borderTopWidth: 1,
-    borderTopColor: C.border,
+    borderTopColor: t.colors.overlayLight,
     padding: 14,
     gap: 12,
   },
-  entryNotes: { fontSize: 13, color: C.textSecondary, lineHeight: 20 },
+  entryNotes: { fontSize: 13, color: t.colors.textSecondary, lineHeight: 20 },
   entryActions: { flexDirection: 'row', gap: 8 },
   actionBtn: {
     flexDirection: 'row',
@@ -630,7 +617,7 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: 'rgba(255,122,0,0.10)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderRadius: 8,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.25)',
@@ -639,10 +626,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239,68,68,0.08)',
     borderColor: 'rgba(239,68,68,0.2)',
   },
-  actionBtnText: { fontSize: 12, fontWeight: '600', color: C.orange },
+  actionBtnText: { fontSize: 12, fontWeight: '600', color: t.colors.brandOrange },
 
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 12 },
-  emptyText: { fontSize: 14, color: C.textMuted, textAlign: 'center', maxWidth: 260, lineHeight: 20 },
+  emptyText: { fontSize: 14, color: t.colors.textMuted, textAlign: 'center', maxWidth: 260, lineHeight: 20 },
 
   modalOverlay: {
     flex: 1,
@@ -650,7 +637,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: C.modalBg,
+    backgroundColor: t.colors.cardSolid,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '90%',
@@ -661,21 +648,21 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: t.colors.overlayMedium,
     alignSelf: 'center',
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: C.textPrimary, marginBottom: 20 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: t.colors.textPrimary, marginBottom: 20 },
 
-  inputLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 0.8, marginBottom: 6, textTransform: 'uppercase' },
+  inputLabel: { fontSize: 11, fontWeight: '700', color: t.colors.textMuted, letterSpacing: 0.8, marginBottom: 6, textTransform: 'uppercase' },
   modalInput: {
-    backgroundColor: C.inputBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     fontSize: 14,
     marginBottom: 16,
   },
@@ -697,7 +684,7 @@ const styles = StyleSheet.create({
   moodValueText: { fontSize: 12, fontWeight: '700' },
   slider: { width: '100%', height: 40 },
   moodLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -4 },
-  moodLabelText: { fontSize: 10, color: C.textMuted },
+  moodLabelText: { fontSize: 10, color: t.colors.textMuted },
 
   visibilityWrap: { marginBottom: 20 },
   visibilityRow: { flexDirection: 'row', gap: 8 },
@@ -708,8 +695,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.inputBg,
+    borderColor: t.colors.overlayLight,
+    backgroundColor: t.colors.overlaySubtle,
   },
   visibilityBtnLabel: { fontSize: 12, fontWeight: '700' },
   visibilityBtnDesc: { fontSize: 9, textAlign: 'center' },
@@ -719,18 +706,18 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 13,
     borderRadius: 12,
-    backgroundColor: C.inputBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     alignItems: 'center',
   },
-  cancelBtnText: { fontSize: 14, fontWeight: '600', color: C.textSecondary },
+  cancelBtnText: { fontSize: 14, fontWeight: '600', color: t.colors.textSecondary },
   saveBtn: {
     flex: 2,
     paddingVertical: 13,
     borderRadius: 12,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     alignItems: 'center',
   },
-  saveBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  saveBtnText: { fontSize: 14, fontWeight: '700', color: t.colors.textPrimary },
 });

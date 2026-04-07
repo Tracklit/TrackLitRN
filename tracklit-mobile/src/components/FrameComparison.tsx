@@ -6,6 +6,8 @@ import { Text } from '@/components/ui/Text';
 import { PoseOverlay } from '@/components/PoseOverlay';
 import type { PoseLandmark } from '@/components/MediaPipeBridge';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface CapturedFrame {
   uri: string;
   landmarks: PoseLandmark[];
@@ -31,6 +33,7 @@ export const FrameComparison: React.FC<FrameComparisonProps> = ({
   onClear,
   canCapture,
 }) => {
+  const { styles } = useThemedStyles(createStyles);
   const hasFrames = frameA || frameB;
 
   return (
@@ -125,15 +128,15 @@ export const FrameComparison: React.FC<FrameComparisonProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 16,
     marginHorizontal: 12,
     marginTop: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: t.colors.overlayLight,
   },
   header: {
     flexDirection: 'row',
@@ -142,7 +145,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    color: '#fff',
+    color: t.colors.textPrimary,
   },
   clearBtn: {
     flexDirection: 'row',
@@ -183,7 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   frameLabelText: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 9,
   },
   emptyFrame: {
@@ -192,7 +195,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: t.colors.overlayMedium,
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',

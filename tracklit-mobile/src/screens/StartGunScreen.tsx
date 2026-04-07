@@ -28,9 +28,11 @@ import { Audio } from 'expo-av';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 const marksAudio = require('../../assets/audio/on-your-marks.mp3');
 const setAudio = require('../../assets/audio/set.mp3');
 const bangAudio = require('../../assets/audio/bang.mp3');
@@ -46,6 +48,7 @@ const delay = (ms: number) =>
 type SequencePhase = 'idle' | 'marks' | 'marks-wait' | 'set' | 'set-wait' | 'bang' | 'done';
 
 export const StartGunScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [marksDelay, setMarksDelay] = useState(2);
@@ -401,12 +404,12 @@ export const StartGunScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: themeStatic.spacing.xl,
     gap: 16,
   },
   header: {
@@ -430,7 +433,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 16,
     paddingHorizontal: 32,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 12,
     borderWidth: 0.5,
     borderColor: 'rgba(148,163,184,0.25)',
@@ -457,7 +460,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: 'rgba(255,152,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
   },
   glowActive: {
     backgroundColor: 'rgba(0,255,136,0.25)',
@@ -485,18 +488,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: t.colors.overlayMedium,
   },
   resetButtonDisabled: {
     opacity: 0.3,
   },
   resetText: {
-    color: '#fff',
+    color: t.colors.textPrimary,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 12,
     padding: 16,
     borderWidth: 0.5,
@@ -512,7 +515,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -520,7 +523,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   volumeLabel: {
-    color: 'rgba(255,255,255,0.5)',
+    color: t.colors.textMuted,
     width: 50,
     textAlign: 'right',
   },
@@ -531,7 +534,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
     borderColor: 'rgba(148,163,184,0.25)',
   },
@@ -541,7 +544,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   settingsToggleText: {
-    color: '#fff',
+    color: t.colors.textPrimary,
   },
   sectionLabel: {
     color: '#FF9800',
@@ -555,10 +558,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   settingLabel: {
-    color: 'rgba(255,255,255,0.6)',
+    color: t.colors.textSecondary,
   },
   settingValue: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontWeight: '600',
   },
   switchRow: {

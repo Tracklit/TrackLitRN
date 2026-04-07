@@ -25,10 +25,12 @@ import { getToken } from '@/lib/tokenStorage';
 import { env } from '@/config/env';
 import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 type Tab = 'upload' | 'youtube';
@@ -39,6 +41,7 @@ interface LibraryLimits {
 }
 
 export const ExerciseLibraryAddScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
@@ -46,7 +49,7 @@ export const ExerciseLibraryAddScreen: React.FC = () => {
   const canUse = isAuthenticated && !isGuest;
 
   const contentBottomPadding = useMemo(
-    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
+    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }),
     [insets.bottom],
   );
 
@@ -356,16 +359,16 @@ export const ExerciseLibraryAddScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   iconBtn: {
     width: 40,
@@ -377,27 +380,27 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   cardContent: {
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   tabs: {
     flexDirection: 'row',
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.muted,
-    padding: theme.spacing.xs,
+    borderRadius: themeStatic.borderRadius.lg,
+    backgroundColor: t.colors.muted,
+    padding: themeStatic.spacing.xs,
   },
   tab: {
     flex: 1,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    paddingVertical: themeStatic.spacing.sm,
+    borderRadius: themeStatic.borderRadius.md,
     alignItems: 'center',
   },
   tabActive: {
-    backgroundColor: theme.colors.backgroundSolid,
+    backgroundColor: t.colors.backgroundSolid,
   },
   tabDisabled: {
     opacity: 0.5,
@@ -408,22 +411,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   label: {
-    marginTop: theme.spacing.sm,
+    marginTop: themeStatic.spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.md,
+    color: t.colors.foreground,
+    backgroundColor: t.colors.card,
   },
   textArea: {
     minHeight: 90,
     textAlignVertical: 'top',
   },
   btnText: {
-    marginLeft: theme.spacing.sm,
+    marginLeft: themeStatic.spacing.sm,
   },
 });
 

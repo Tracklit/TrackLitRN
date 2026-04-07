@@ -9,6 +9,8 @@ import { FrameComparison } from '@/components/FrameComparison';
 import type { PoseLandmark } from '@/components/MediaPipeBridge';
 import type { FrameAnalysis, LandmarkSnapshot } from '@/utils/poseAnalysis';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface CapturedFrame {
@@ -47,6 +49,7 @@ export const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
   canCapture,
   landmarkHistory,
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
 
   return (
@@ -94,7 +97,7 @@ export const FullAnalysisModal: React.FC<FullAnalysisModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -113,7 +116,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: t.colors.overlayHeavy,
     alignSelf: 'center',
     marginTop: 10,
     marginBottom: 4,
@@ -125,16 +128,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: t.colors.overlayLight,
   },
   headerTitle: {
-    color: '#fff',
+    color: t.colors.textPrimary,
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
     alignItems: 'center',
     justifyContent: 'center',
   },

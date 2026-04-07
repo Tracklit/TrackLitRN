@@ -8,28 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		21D8480261151AD52CB5B11B /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C9716FBA099A743DCCE9DE /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		887A01076CD58438B0D498FA /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A0876FA7A3BE61F8179D3B /* ExpoModulesProvider.swift */; };
-		A64304223CE3725D5B3D0706 /* libPods-TrackLitMobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EC9C93F2F2CC18786C72DE11 /* libPods-TrackLitMobile.a */; };
+		5DE3419E7CED4DC8D8CA1D59 /* libPods-TrackLitMobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 98BE98C7AF6F8B99B9DCB434 /* libPods-TrackLitMobile.a */; };
+		722291673D685E82819DA683 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 770E3AB6502FF0593AD1F03C /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F7661704B3381FC5CE2475EF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C7B081ACD1A45AAA1105FF1C /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* TrackLitMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrackLitMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = TrackLitMobile/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = TrackLitMobile/Info.plist; sourceTree = "<group>"; };
-		2A96DE421BFF17AF0E0C861D /* Pods-TrackLitMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrackLitMobile.release.xcconfig"; path = "Target Support Files/Pods-TrackLitMobile/Pods-TrackLitMobile.release.xcconfig"; sourceTree = "<group>"; };
-		83A0876FA7A3BE61F8179D3B /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-TrackLitMobile/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		770E3AB6502FF0593AD1F03C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = TrackLitMobile/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		98BE98C7AF6F8B99B9DCB434 /* libPods-TrackLitMobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TrackLitMobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A3C9716FBA099A743DCCE9DE /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-TrackLitMobile/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = TrackLitMobile/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C7B081ACD1A45AAA1105FF1C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = TrackLitMobile/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		DB21981D08D0F49E7E736515 /* Pods-TrackLitMobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrackLitMobile.debug.xcconfig"; path = "Target Support Files/Pods-TrackLitMobile/Pods-TrackLitMobile.debug.xcconfig"; sourceTree = "<group>"; };
-		EC9C93F2F2CC18786C72DE11 /* libPods-TrackLitMobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TrackLitMobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C50FFEF52F924808261C236D /* Pods-TrackLitMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrackLitMobile.release.xcconfig"; path = "Target Support Files/Pods-TrackLitMobile/Pods-TrackLitMobile.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = TrackLitMobile/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* TrackLitMobile-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "TrackLitMobile-Bridging-Header.h"; path = "TrackLitMobile/TrackLitMobile-Bridging-Header.h"; sourceTree = "<group>"; };
+		FF1EDCA7D96D5D035B472139 /* Pods-TrackLitMobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrackLitMobile.debug.xcconfig"; path = "Target Support Files/Pods-TrackLitMobile/Pods-TrackLitMobile.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,29 +37,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A64304223CE3725D5B3D0706 /* libPods-TrackLitMobile.a in Frameworks */,
+				5DE3419E7CED4DC8D8CA1D59 /* libPods-TrackLitMobile.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		03764136C4706867F08B0C4A /* TrackLitMobile */ = {
-			isa = PBXGroup;
-			children = (
-				83A0876FA7A3BE61F8179D3B /* ExpoModulesProvider.swift */,
-			);
-			name = TrackLitMobile;
-			sourceTree = "<group>";
-		};
-		131E0DA3D17A2BD2467084A8 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				03764136C4706867F08B0C4A /* TrackLitMobile */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* TrackLitMobile */ = {
 			isa = PBXGroup;
 			children = (
@@ -69,7 +53,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				C7B081ACD1A45AAA1105FF1C /* PrivacyInfo.xcprivacy */,
+				770E3AB6502FF0593AD1F03C /* PrivacyInfo.xcprivacy */,
 			);
 			name = TrackLitMobile;
 			sourceTree = "<group>";
@@ -78,9 +62,18 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				EC9C93F2F2CC18786C72DE11 /* libPods-TrackLitMobile.a */,
+				98BE98C7AF6F8B99B9DCB434 /* libPods-TrackLitMobile.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4E1E2A847D7FD985052AA28E /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				FF1EDCA7D96D5D035B472139 /* Pods-TrackLitMobile.debug.xcconfig */,
+				C50FFEF52F924808261C236D /* Pods-TrackLitMobile.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -97,8 +90,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				8F962815AE68A81F42EBEE4C /* Pods */,
-				131E0DA3D17A2BD2467084A8 /* ExpoModulesProviders */,
+				4E1E2A847D7FD985052AA28E /* Pods */,
+				9A4EE9E62000D79B895857A5 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -113,14 +106,12 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		8F962815AE68A81F42EBEE4C /* Pods */ = {
+		9A4EE9E62000D79B895857A5 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				DB21981D08D0F49E7E736515 /* Pods-TrackLitMobile.debug.xcconfig */,
-				2A96DE421BFF17AF0E0C861D /* Pods-TrackLitMobile.release.xcconfig */,
+				DB884E5AFC4AD3905129C49C /* TrackLitMobile */,
 			);
-			name = Pods;
-			path = Pods;
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -132,6 +123,14 @@
 			path = TrackLitMobile/Supporting;
 			sourceTree = "<group>";
 		};
+		DB884E5AFC4AD3905129C49C /* TrackLitMobile */ = {
+			isa = PBXGroup;
+			children = (
+				A3C9716FBA099A743DCCE9DE /* ExpoModulesProvider.swift */,
+			);
+			name = TrackLitMobile;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -140,13 +139,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "TrackLitMobile" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				2BEB88E8898CD4F302E97530 /* [Expo] Configure project */,
+				8201BE5547340AFC27F01249 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				507F559F6543EEE967CCEAA6 /* [CP] Embed Pods Frameworks */,
+				366CCD77238129F8C866E4E0 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -167,8 +166,6 @@
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1250;
-						DevelopmentTeam = "3J66W9Z8S7";
-						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -198,7 +195,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				F7661704B3381FC5CE2475EF /* PrivacyInfo.xcprivacy in Resources */,
+				722291673D685E82819DA683 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,31 +241,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		2BEB88E8898CD4F302E97530 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/TrackLitMobile/TrackLitMobile.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-TrackLitMobile/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-TrackLitMobile/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-TrackLitMobile/expo-configure-project.sh\"\n";
-		};
-		507F559F6543EEE967CCEAA6 /* [CP] Embed Pods Frameworks */ = {
+		366CCD77238129F8C866E4E0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -300,6 +273,8 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXNotifications/ExpoNotifications_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoMediaLibrary/ExpoMediaLibrary_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/Mute/Mute.bundle",
@@ -333,6 +308,8 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoMediaLibrary_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Mute.bundle",
@@ -366,6 +343,30 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-TrackLitMobile/Pods-TrackLitMobile-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		8201BE5547340AFC27F01249 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/TrackLitMobile/TrackLitMobile.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-TrackLitMobile/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-TrackLitMobile/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-TrackLitMobile/expo-configure-project.sh\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -374,7 +375,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				887A01076CD58438B0D498FA /* ExpoModulesProvider.swift in Sources */,
+				21D8480261151AD52CB5B11B /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,12 +384,13 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DB21981D08D0F49E7E736515 /* Pods-TrackLitMobile.debug.xcconfig */;
+			baseConfigurationReference = FF1EDCA7D96D5D035B472139 /* Pods-TrackLitMobile.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = TrackLitMobile/TrackLitMobile.entitlements;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 16;
+				DEVELOPMENT_TEAM = 3J66W9Z8S7;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -400,7 +402,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -414,27 +416,25 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
-				DEVELOPMENT_TEAM = "3J66W9Z8S7";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2A96DE421BFF17AF0E0C861D /* Pods-TrackLitMobile.release.xcconfig */;
+			baseConfigurationReference = C50FFEF52F924808261C236D /* Pods-TrackLitMobile.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = TrackLitMobile/TrackLitMobile.entitlements;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 16;
+				DEVELOPMENT_TEAM = 3J66W9Z8S7;
 				INFOPLIST_FILE = TrackLitMobile/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -447,9 +447,6 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
-				DEVELOPMENT_TEAM = "3J66W9Z8S7";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 			};
 			name = Release;
 		};

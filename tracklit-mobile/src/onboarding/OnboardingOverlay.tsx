@@ -27,6 +27,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 import type { OnboardingStep } from '@/onboarding/steps';
 
 type Props = {
@@ -42,28 +44,6 @@ type ClaimResponse = {
 
 type RoleChoice = 'athlete' | 'coach';
 
-const COLORS = {
-  bg: '#0E0F14',
-  surface: '#161823',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  glass: 'rgba(255,255,255,0.05)',
-  success: '#22c55e',
-  successBg: 'rgba(34,197,94,0.08)',
-  successBorder: 'rgba(34,197,94,0.15)',
-  amberBg: 'rgba(245,158,11,0.08)',
-  amberBorder: 'rgba(245,158,11,0.15)',
-  dotInactive: 'rgba(255,255,255,0.15)',
-  blue: '#60a5fa',
-  blueBg: 'rgba(96,165,250,0.10)',
-  blueBorder: 'rgba(96,165,250,0.25)',
-};
-
 const isAlreadyClaimedError = (err: any) => {
   const msg = (err?.message ?? '').toString().toLowerCase();
   return msg.includes('already claimed') || msg.includes('welcome spikes already claimed');
@@ -71,33 +51,10 @@ const isAlreadyClaimedError = (err: any) => {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const StepDots: React.FC<{ total: number; current: number; onDotPress: (index: number) => void }> = ({
-  total,
-  current,
-  onDotPress,
-}) => (
-  <View style={styles.dotsRow}>
-    {Array.from({ length: total }).map((_, index) => (
-      <TouchableOpacity
-        key={index}
-        onPress={() => onDotPress(index)}
-        hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-        activeOpacity={0.6}
-      >
-        <View
-          style={[
-            styles.dot,
-            index === current ? styles.dotActive : styles.dotInactive,
-          ]}
-        />
-      </TouchableOpacity>
-    ))}
-  </View>
-);
-
 export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
   const insets = useSafeAreaInsets();
   const { refreshUser } = useAuth();
+  const { styles, theme } = useThemedStyles(createStyles);
   const {
     isReady,
     isActive,
@@ -118,7 +75,6 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimedBonus, setClaimedBonus] = useState<number | null>(null);
 
-  // Role selection state — shown after the final onboarding step
   const [showRoleSelect, setShowRoleSelect] = useState(false);
   const [roleChoice, setRoleChoice] = useState<RoleChoice | null>(null);
 
@@ -153,7 +109,6 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       await refreshUser();
-      // Fade the overlay out then mark onboarding complete
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 500,
@@ -199,7 +154,6 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     }
   }, [currentStepIndex, totalSteps, goToStep]);
 
-  // Instead of calling complete() directly on Finish, show the role picker
   const handleFinish = useCallback(() => {
     setShowRoleSelect(true);
   }, []);
@@ -210,7 +164,6 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
   }, [roleChoice, roleSetMutation]);
 
   const handleSkipRole = useCallback(async () => {
-    // Default to athlete, fade out, complete
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 500,
@@ -237,7 +190,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     if (claimedSpikes) {
       return (
         <View style={styles.claimedRow} testID="onboarding-claimed">
-          <CheckCircle size={18} color={COLORS.success} weight="fill" />
+          <CheckCircle size={18} color={theme.colors.success} weight="fill" />
           <Text style={styles.claimedText}>
             Welcome bonus claimed{claimedBonus ? ` (+${claimedBonus})` : ''}.
           </Text>
@@ -248,7 +201,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     return (
       <View style={styles.claimBlock}>
         <View style={styles.claimHeader}>
-          <Gift size={20} color={COLORS.success} weight="fill" />
+          <Gift size={20} color={theme.colors.success} weight="fill" />
           <View style={{ flex: 1 }}>
             <Text style={styles.claimTitle}>Welcome Bonus Available</Text>
             <Text style={styles.claimSubtext}>Claim your first 100 Spikes.</Text>
@@ -268,7 +221,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
           disabled={claimMutation.isPending}
         >
           <LinearGradient
-            colors={[COLORS.orange, COLORS.orangeLight]}
+            colors={['#FF7A00', '#FF9D00']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.claimBtnInner}
@@ -293,7 +246,30 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     </View>
   );
 
-  // ── Role selection screen ────────────────────────────────────────────────
+  const StepDots: React.FC<{ total: number; current: number; onDotPress: (index: number) => void }> = ({
+    total,
+    current,
+    onDotPress,
+  }) => (
+    <View style={styles.dotsRow}>
+      {Array.from({ length: total }).map((_, index) => (
+        <TouchableOpacity
+          key={index}
+          onPress={() => onDotPress(index)}
+          hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+          activeOpacity={0.6}
+        >
+          <View
+            style={[
+              styles.dot,
+              index === current ? styles.dotActive : styles.dotInactive,
+            ]}
+          />
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
   if (showRoleSelect) {
     return (
       <Animated.View
@@ -302,7 +278,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
           {
             paddingTop: insets.top + 16,
             paddingBottom: insets.bottom + 24,
-            backgroundColor: COLORS.bg,
+            backgroundColor: theme.colors.backgroundSolid,
             opacity: fadeAnim,
           },
         ]}
@@ -313,7 +289,6 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
             This personalises your TrackLit experience from the start.
           </Text>
 
-          {/* Athlete card */}
           <TouchableOpacity
             style={[
               styles.roleCard,
@@ -323,7 +298,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
             onPress={() => setRoleChoice('athlete')}
           >
             <View style={[styles.roleIconWrap, { backgroundColor: 'rgba(255,122,0,0.12)' }]}>
-              <Barbell size={28} color={COLORS.orange} weight="fill" />
+              <Barbell size={28} color={theme.colors.brandOrange} weight="fill" />
             </View>
             <View style={styles.roleCardText}>
               <Text style={styles.roleCardTitle}>Athlete</Text>
@@ -332,11 +307,10 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
               </Text>
             </View>
             {roleChoice === 'athlete' && (
-              <CheckCircle size={22} color={COLORS.orange} weight="fill" />
+              <CheckCircle size={22} color={theme.colors.brandOrange} weight="fill" />
             )}
           </TouchableOpacity>
 
-          {/* Coach card */}
           <TouchableOpacity
             style={[
               styles.roleCard,
@@ -345,8 +319,8 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
             activeOpacity={0.8}
             onPress={() => setRoleChoice('coach')}
           >
-            <View style={[styles.roleIconWrap, { backgroundColor: COLORS.blueBg }]}>
-              <ClipboardText size={28} color={COLORS.blue} weight="fill" />
+            <View style={[styles.roleIconWrap, { backgroundColor: 'rgba(96,165,250,0.10)' }]}>
+              <ClipboardText size={28} color="#60a5fa" weight="fill" />
             </View>
             <View style={styles.roleCardText}>
               <Text style={styles.roleCardTitle}>Coach</Text>
@@ -355,19 +329,17 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
               </Text>
             </View>
             {roleChoice === 'coach' && (
-              <CheckCircle size={22} color={COLORS.blue} weight="fill" />
+              <CheckCircle size={22} color="#60a5fa" weight="fill" />
             )}
           </TouchableOpacity>
 
-          {/* Info row */}
           <View style={styles.roleInfoRow}>
-            <Info size={13} color={COLORS.textMuted} weight="fill" />
+            <Info size={13} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.roleInfoText}>
               You can change this later in Account Settings.
             </Text>
           </View>
 
-          {/* Confirm button */}
           <TouchableOpacity
             style={[styles.roleConfirmBtn, !roleChoice && styles.roleConfirmBtnDisabled]}
             activeOpacity={0.85}
@@ -394,12 +366,11 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
     );
   }
 
-  // ── Standard onboarding slides ───────────────────────────────────────────
   return (
     <Animated.View
       style={[
         styles.fullScreen,
-        { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16, backgroundColor: COLORS.bg, opacity: fadeAnim },
+        { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16, backgroundColor: theme.colors.backgroundSolid, opacity: fadeAnim },
       ]}
     >
       <FlatList
@@ -439,7 +410,7 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
               style={styles.footerSideBtn}
               activeOpacity={0.7}
             >
-              <ArrowLeft size={14} color={COLORS.orange} weight="bold" />
+              <ArrowLeft size={14} color={theme.colors.brandOrange} weight="bold" />
               <Text style={styles.footerSideBtnText}>Back</Text>
             </TouchableOpacity>
           ) : (
@@ -463,14 +434,14 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[COLORS.orange, COLORS.orangeLight]}
+              colors={['#FF7A00', '#FF9D00']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.footerPrimaryBtnInner}
             >
               <Text style={styles.footerPrimaryBtnText}>{primaryLabel}</Text>
               {!isLastStep ? (
-                <ArrowRight size={14} color={COLORS.textPrimary} weight="bold" />
+                <ArrowRight size={14} color={theme.colors.textPrimary} weight="bold" />
               ) : null}
             </LinearGradient>
           </TouchableOpacity>
@@ -479,14 +450,14 @@ export const OnboardingOverlay: React.FC<Props> = ({ navigationRef }) => {
 
       {claimMutation.isPending ? (
         <View style={styles.loadingOverlay} pointerEvents="none">
-          <ActivityIndicator size="large" color={COLORS.textPrimary} />
+          <ActivityIndicator size="large" color={theme.colors.textPrimary} />
         </View>
       ) : null}
     </Animated.View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   fullScreen: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
@@ -510,7 +481,7 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     textAlign: 'center',
     letterSpacing: -0.3,
     marginBottom: 16,
@@ -526,7 +497,7 @@ const styles = StyleSheet.create({
   },
   stepCounter: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -544,17 +515,17 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: COLORS.glass,
+    backgroundColor: t.colors.overlaySubtle,
   },
   footerSideBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.orange,
+    color: t.colors.brandOrange,
   },
   footerSkipText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
   },
   footerPrimaryBtn: {
     flex: 1,
@@ -572,7 +543,7 @@ const styles = StyleSheet.create({
   footerPrimaryBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   dotsRow: {
     flexDirection: 'row',
@@ -585,18 +556,18 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dotActive: {
-    backgroundColor: COLORS.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   dotInactive: {
-    backgroundColor: COLORS.dotInactive,
+    backgroundColor: t.colors.overlayHeavy,
   },
   claimBlock: {
     marginTop: 20,
     padding: 16,
     borderRadius: 14,
-    backgroundColor: COLORS.successBg,
+    backgroundColor: 'rgba(34,197,94,0.08)',
     borderWidth: 0.5,
-    borderColor: COLORS.successBorder,
+    borderColor: 'rgba(34,197,94,0.15)',
     gap: 10,
     width: '100%',
     maxWidth: 400,
@@ -609,11 +580,11 @@ const styles = StyleSheet.create({
   claimTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   claimSubtext: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     marginTop: 1,
   },
   claimError: {
@@ -633,7 +604,7 @@ const styles = StyleSheet.create({
   claimBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   claimedRow: {
     marginTop: 20,
@@ -643,16 +614,16 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 14,
     borderRadius: 14,
-    backgroundColor: COLORS.successBg,
+    backgroundColor: 'rgba(34,197,94,0.08)',
     borderWidth: 0.5,
-    borderColor: COLORS.successBorder,
+    borderColor: 'rgba(34,197,94,0.15)',
     width: '100%',
     maxWidth: 400,
   },
   claimedText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.success,
+    color: t.colors.success,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -660,7 +631,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // ── Role selection styles ────────────────────────────────────────────────
   roleContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -670,14 +640,14 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     textAlign: 'center',
     letterSpacing: -0.5,
     marginBottom: 4,
   },
   roleSubtitle: {
     fontSize: 14,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 8,
@@ -686,19 +656,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 16,
     padding: 18,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderColor: t.colors.overlayLight,
   },
   roleCardActive: {
-    borderColor: COLORS.orange,
+    borderColor: t.colors.brandOrange,
     backgroundColor: 'rgba(255,122,0,0.07)',
   },
   roleCardActiveBlue: {
-    borderColor: COLORS.blue,
-    backgroundColor: COLORS.blueBg,
+    borderColor: '#60a5fa',
+    backgroundColor: 'rgba(96,165,250,0.10)',
   },
   roleIconWrap: {
     width: 56,
@@ -714,11 +684,11 @@ const styles = StyleSheet.create({
   roleCardTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   roleCardDesc: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 18,
   },
   roleInfoRow: {
@@ -730,7 +700,7 @@ const styles = StyleSheet.create({
   },
   roleInfoText: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
   },
   roleConfirmBtn: {
@@ -738,7 +708,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: COLORS.orange,
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 14,
     paddingVertical: 15,
     marginTop: 4,
@@ -757,7 +727,7 @@ const styles = StyleSheet.create({
   },
   roleSkipText: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     fontWeight: '500',
   },
 });

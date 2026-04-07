@@ -43,7 +43,7 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/queryClient';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import theme from '../utils/theme';
+import themeStatic from '../utils/theme';
 import { FormattedSprinthiaText } from '../utils/sprinthiaFormat';
 import { getBottomNavOverlayHeight, getScreenContentBottomPadding } from '../utils/layoutPadding';
 import { cleanSpeechText } from '../utils/speechText';
@@ -52,6 +52,8 @@ import type { RootStackParamList } from '@/navigation/types';
 import { goBackOrNavigateToScreen, goBackOrNavigateToTab } from '@/navigation/appNavigation';
 import { TIER_LIMITS, TIER_DISPLAY_NAMES, type Tier } from '@/constants/tierEntitlements';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Role = 'user' | 'assistant';
 
 interface Message {
@@ -102,6 +104,7 @@ const languageOptions = [
 const WHITE = '#ffffff';
 
 const TypingDots: React.FC = () => {
+  const { styles } = useThemedStyles(createStyles);
   const dots = useMemo(
     () => [
       new Animated.Value(0.3),
@@ -162,6 +165,7 @@ const TypingDots: React.FC = () => {
 };
 
 export const SprinthiaScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'Sprinthia'>>();
@@ -697,7 +701,7 @@ export const SprinthiaScreen: React.FC = () => {
           onRequestClose={() => setShowHistory(false)}
         >
           <View style={styles.historyOverlay}>
-            <View style={[styles.historyPanel, { paddingTop: insets.top + theme.spacing.lg }]}>
+            <View style={[styles.historyPanel, { paddingTop: insets.top + themeStatic.spacing.lg }]}>
               <View style={styles.historyHeader}>
                 <Text weight="semiBold" color="foreground" style={styles.historyTitle}>
                   Conversation History
@@ -705,7 +709,7 @@ export const SprinthiaScreen: React.FC = () => {
                 <View style={styles.historyHeaderActions}>
                   <TouchableOpacity style={styles.newButton} onPress={handleNewConversation}>
                     <FontAwesome5 name="plus" size={14} color="#FF7A00" />
-                    <Text weight="semiBold" color="foreground" style={{ color: '#FF7A00' }}>
+                    <Text weight="semiBold" color="foreground" style={{ color: theme.colors.brandOrange }}>
                       New
                     </Text>
                   </TouchableOpacity>
@@ -1002,28 +1006,28 @@ export const SprinthiaScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0E0F14',
+    backgroundColor: t.colors.backgroundSolid,
   },
   keyboardAvoid: {
     flex: 1,
   },
   header: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
     paddingTop: 8,
-    paddingBottom: theme.spacing.md,
+    paddingBottom: themeStatic.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,122,0,0.15)',
-    backgroundColor: '#0E0F14',
-    gap: theme.spacing.sm,
+    backgroundColor: t.colors.backgroundSolid,
+    gap: themeStatic.spacing.sm,
   },
   backButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1037,25 +1041,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
     flexWrap: 'wrap',
   },
   drawerButton: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: theme.colors.card,
+    backgroundColor: t.colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: t.colors.border,
   },
   titleGroup: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   titleText: {
     fontSize: 20,
@@ -1075,13 +1079,13 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   promptCounterEmpty: {
-    color: '#ef4444',
+    color: t.colors.destructive,
     opacity: 1,
   },
   headerControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
     justifyContent: 'flex-end',
   },
   iconToggle: {
@@ -1091,19 +1095,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: t.colors.overlaySubtle,
+    backgroundColor: t.colors.overlaySubtle,
   },
   autoSpeakActive: {
-    backgroundColor: '#22c55e',
+    backgroundColor: t.colors.success,
     borderColor: '#22c55e',
   },
   autoSpeakInactive: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
+    borderColor: t.colors.overlaySubtle,
   },
   languageButton: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   historyButton: {
     flexDirection: 'row',
@@ -1113,18 +1117,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 0,
     borderRadius: 9,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.25)',
   },
   historyLabel: {
-    color: '#FF7A00',
+    color: t.colors.brandOrange,
     fontSize: 14,
   },
   remainingBadge: {
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: t.colors.overlaySubtle,
+    backgroundColor: t.colors.overlaySubtle,
     height: 44,
     paddingHorizontal: 12,
     paddingVertical: 0,
@@ -1146,14 +1150,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.15)',
-    paddingRight: theme.spacing.lg,
+    paddingRight: themeStatic.spacing.lg,
   },
   languageMenu: {
     width: 200,
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: t.colors.overlaySubtle,
     overflow: 'hidden',
   },
   languageOption: {
@@ -1161,7 +1165,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   languageOptionActive: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
   },
   historyOverlay: {
     flex: 1,
@@ -1169,18 +1173,18 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   historyPanel: {
-    backgroundColor: '#0E0F14',
+    backgroundColor: t.colors.backgroundSolid,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingHorizontal: themeStatic.spacing.lg,
+    paddingBottom: themeStatic.spacing.xl,
     minHeight: '65%',
   },
   historyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.lg,
+    marginBottom: themeStatic.spacing.lg,
   },
   historyTitle: {
     fontSize: 18,
@@ -1188,7 +1192,7 @@ const styles = StyleSheet.create({
   historyHeaderActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   newButton: {
     flexDirection: 'row',
@@ -1196,27 +1200,27 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderRadius: 10,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.25)',
   },
   historyContent: {
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
-    padding: theme.spacing.md,
+    gap: themeStatic.spacing.md,
+    padding: themeStatic.spacing.md,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: '#1C1F2B',
+    borderColor: t.colors.overlaySubtle,
+    backgroundColor: t.colors.cardSolid,
   },
   historyRowActive: {
     borderColor: 'rgba(255,122,0,0.25)',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
   },
   historyDate: {
     marginTop: 4,
@@ -1226,18 +1230,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesContent: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    gap: theme.spacing.md,
+    paddingHorizontal: themeStatic.spacing.lg,
+    paddingBottom: themeStatic.spacing.lg,
+    paddingTop: themeStatic.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   greetingCard: {
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: '#1C1F2B',
+    borderColor: t.colors.overlaySubtle,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 16,
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
+    padding: themeStatic.spacing.md,
+    gap: themeStatic.spacing.sm,
   },
   greetingTitle: {
     fontSize: 18,
@@ -1249,16 +1253,16 @@ const styles = StyleSheet.create({
   suggestionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
+    marginTop: themeStatic.spacing.sm,
   },
   suggestionGridItem: {
     flexBasis: '48%',
     flexGrow: 1,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: '#1C1F2B',
+    borderColor: t.colors.overlaySubtle,
+    backgroundColor: t.colors.cardSolid,
     paddingHorizontal: 12,
     paddingVertical: 12,
     minHeight: 52,
@@ -1267,8 +1271,8 @@ const styles = StyleSheet.create({
   suggestionChip: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: '#1C1F2B',
+    borderColor: t.colors.overlaySubtle,
+    backgroundColor: t.colors.cardSolid,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
@@ -1287,9 +1291,9 @@ const styles = StyleSheet.create({
   messageBubble: {
     borderRadius: 14,
     borderLeftWidth: 4,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: themeStatic.spacing.md,
     paddingVertical: 10,
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
     shadowColor: '#000',
     shadowOpacity: 0.08,
     shadowRadius: 6,
@@ -1297,12 +1301,12 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     backgroundColor: 'rgba(255,122,0,0.08)',
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: t.colors.overlaySubtle,
     borderLeftColor: '#FF7A00',
   },
   aiBubble: {
-    backgroundColor: '#1C1F2B',
-    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.cardSolid,
+    borderColor: t.colors.overlaySubtle,
     borderLeftColor: 'rgba(255,255,255,0.2)',
   },
   messageFooter: {
@@ -1340,16 +1344,16 @@ const styles = StyleSheet.create({
     backgroundColor: WHITE,
   },
   inputWrapper: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopColor: t.colors.overlaySubtle,
     backgroundColor: 'rgba(14,15,20,0.95)',
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   micButton: {
     width: 48,
@@ -1360,19 +1364,19 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   micButtonActive: {
-    backgroundColor: '#ef4444',
+    backgroundColor: t.colors.destructive,
     borderColor: '#ef4444',
   },
   micButtonInactive: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderColor: 'rgba(255,122,0,0.25)',
   },
   inputShell: {
     position: 'relative',
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: t.colors.overlaySubtle,
     paddingRight: 56,
     paddingLeft: 14,
     paddingVertical: 6,
@@ -1381,7 +1385,7 @@ const styles = StyleSheet.create({
   textInput: {
     minHeight: 48,
     maxHeight: 140,
-    color: theme.colors.foreground,
+    color: t.colors.foreground,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -1401,9 +1405,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,122,0,0.4)',
   },
   sendButtonDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: t.colors.overlaySubtle,
   },
   promptWarning: {
     marginTop: 8,
@@ -1413,12 +1417,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
     paddingVertical: 10,
     backgroundColor: '#fef3c7',
     borderTopWidth: 1,
     borderTopColor: '#fde68a',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   lowPromptsBannerText: {
     flex: 1,
@@ -1431,8 +1435,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(239,68,68,0.25)',
     backgroundColor: 'rgba(239,68,68,0.08)',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
+    padding: themeStatic.spacing.md,
+    gap: themeStatic.spacing.sm,
   },
   outOfPromptsTitle: {
     fontSize: 15,
@@ -1447,7 +1451,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#FF7A00',
+    backgroundColor: t.colors.brandOrange,
   },
   upgradeButtonText: {
     color: WHITE,

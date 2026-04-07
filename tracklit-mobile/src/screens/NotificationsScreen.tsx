@@ -33,27 +33,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
-
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  cardUnread: '#1A1D2A',
-  orange: '#FF7A00',
-  orangeDim: 'rgba(255,122,0,0.12)',
-  border: 'rgba(255,255,255,0.06)',
-  borderUnread: 'rgba(255,122,0,0.35)',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.4)',
-  unreadDot: '#FF7A00',
-  iconBg: 'rgba(255,255,255,0.05)',
-  divider: 'rgba(255,255,255,0.06)',
-  red: '#ef4444',
-  green: '#22c55e',
-  blue: '#3b82f6',
-};
 
 interface NotificationItem {
   id: number;
@@ -125,37 +108,38 @@ const throttleSystemNotifications = (items: NotificationItem[]): NotificationIte
   return result;
 };
 
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case 'friend_request':
-    case 'friend_request_received':
-    case 'connection_request':
-      return { Icon: UserPlus, color: C.blue };
-    case 'friend_accepted':
-      return { Icon: CheckCircle, color: C.green };
-    case 'meet_invitation':
-      return { Icon: Trophy, color: C.orange };
-    case 'message':
-    case 'chat':
-      return { Icon: ChatDots, color: C.orange };
-    case 'program_assigned':
-    case 'program_shared':
-      return { Icon: Barbell, color: C.orange };
-    case 'system':
-    case 'system_update':
-    case 'announcement':
-    case 'feature_update':
-      return { Icon: MegaphoneSimple, color: C.textMuted };
-    default:
-      return { Icon: Bell, color: C.textMuted };
-  }
-};
-
 export const NotificationsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated, hasValidToken, logout } = useAuth();
   const isGuest = user?.id === 'guest';
+  const { styles, theme } = useThemedStyles(createStyles);
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'friend_request':
+      case 'friend_request_received':
+      case 'connection_request':
+        return { Icon: UserPlus, color: '#3b82f6' };
+      case 'friend_accepted':
+        return { Icon: CheckCircle, color: theme.colors.success };
+      case 'meet_invitation':
+        return { Icon: Trophy, color: theme.colors.brandOrange };
+      case 'message':
+      case 'chat':
+        return { Icon: ChatDots, color: theme.colors.brandOrange };
+      case 'program_assigned':
+      case 'program_shared':
+        return { Icon: Barbell, color: theme.colors.brandOrange };
+      case 'system':
+      case 'system_update':
+      case 'announcement':
+      case 'feature_update':
+        return { Icon: MegaphoneSimple, color: theme.colors.textMuted };
+      default:
+        return { Icon: Bell, color: theme.colors.textMuted };
+    }
+  };
 
   const notificationsQuery = useQuery({
     queryKey: ['notifications'],
@@ -264,7 +248,7 @@ export const NotificationsScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
+          <CaretLeft size={18} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
         {unreadCount > 0 && (
@@ -288,7 +272,7 @@ export const NotificationsScreen: React.FC = () => {
       >
         {isGuest || !hasValidToken ? (
           <View style={styles.emptyContainer}>
-            <Bell size={40} color={C.textMuted} weight="fill" />
+            <Bell size={40} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>Sign in to view notifications.</Text>
           </View>
         ) : notificationsQuery.isLoading ? (
@@ -306,7 +290,7 @@ export const NotificationsScreen: React.FC = () => {
           </View>
         ) : notifications.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Bell size={40} color={C.textMuted} weight="fill" />
+            <Bell size={40} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>You're all caught up.</Text>
           </View>
         ) : (
@@ -372,10 +356,10 @@ export const NotificationsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: t.colors.backgroundSolid,
   },
   header: {
     flexDirection: 'row',
@@ -384,27 +368,27 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlaySubtle,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
   unreadBadge: {
     minWidth: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
@@ -420,7 +404,7 @@ const styles = StyleSheet.create({
   markAllText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   content: {
     padding: 16,
@@ -433,7 +417,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -449,18 +433,18 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 0.5,
-    backgroundColor: C.divider,
+    backgroundColor: t.colors.overlaySubtle,
   },
   dividerText: {
     fontSize: 10,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   itemSeparator: {
     height: 0.5,
-    backgroundColor: C.divider,
+    backgroundColor: t.colors.overlaySubtle,
     marginLeft: 56,
   },
   itemRow: {
@@ -468,7 +452,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 14,
     paddingHorizontal: 4,
-    backgroundColor: C.bg,
+    backgroundColor: t.colors.backgroundSolid,
   },
   itemIcon: {
     width: 32,
@@ -492,26 +476,26 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   itemMessage: {
     fontSize: 11,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 16,
   },
   itemTime: {
     fontSize: 10,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     marginTop: 2,
   },
   unreadDot: {
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: C.unreadDot,
+    backgroundColor: t.colors.brandOrange,
   },
   swipeDeleteAction: {
-    backgroundColor: '#ef4444',
+    backgroundColor: t.colors.destructive,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,

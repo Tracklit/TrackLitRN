@@ -9,13 +9,8 @@ import { Input } from '../../components/ui/Input';
 import { Text } from '../../components/ui/Text';
 import { useAuth } from '../../contexts/AuthContext';
 import { LinearGradient } from '@/components/LinearGradient';
-
-const COLORS = {
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textMuted: '#8A90B5',
-};
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 interface LoginFormData {
   usernameOrEmail: string;
@@ -29,6 +24,7 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForgotPassword }) => {
   const { login } = useAuth();
+  const { styles, theme } = useThemedStyles(createStyles);
   const [formData, setFormData] = useState<LoginFormData>({
     usernameOrEmail: '',
     password: '',
@@ -96,7 +92,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
 
         <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} activeOpacity={0.8} disabled={loading}>
           <LinearGradient
-            colors={[COLORS.orange, COLORS.orangeLight]}
+            colors={['#FF7A00', '#FF9D00']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.primaryBtnInner}
@@ -123,7 +119,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onForg
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -143,7 +139,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   linksArea: {
     alignItems: 'center',
@@ -156,12 +152,12 @@ const styles = StyleSheet.create({
   },
   mutedText: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
   },
   linkText: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.orange,
+    color: t.colors.brandOrange,
   },
   forgotLink: {
     marginTop: 2,

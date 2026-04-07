@@ -3,7 +3,9 @@ import { Modal, View, StyleSheet, PanResponder, Animated } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
-import theme from '@/utils/theme';
+import { spacing, borderRadius } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 interface ProfileImageCropModalProps {
   visible: boolean;
@@ -20,6 +22,7 @@ export const ProfileImageCropModal: React.FC<ProfileImageCropModalProps> = ({
 }) => {
   const [scale, setScale] = useState(1);
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const panResponder = useMemo(
     () =>
@@ -44,7 +47,7 @@ export const ProfileImageCropModal: React.FC<ProfileImageCropModalProps> = ({
             Adjust Profile Image
           </Text>
           <Text variant="small" color="muted" style={styles.helper}>
-            Drag to reposition and use the slider to zoom. We’ll upload the original image.
+            Drag to reposition and use the slider to zoom. We'll upload the original image.
           </Text>
 
           <View style={styles.previewContainer}>
@@ -112,20 +115,20 @@ export const ProfileImageCropModal: React.FC<ProfileImageCropModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.lg,
+    padding: spacing.lg,
   },
   modal: {
     width: '100%',
-    borderRadius: theme.borderRadius.xl,
-    backgroundColor: '#0f172a',
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    borderRadius: borderRadius.xl,
+    backgroundColor: t.colors.cardSolid,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
   title: {
     textAlign: 'center',
@@ -142,9 +145,9 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 110,
     overflow: 'hidden',
-    backgroundColor: '#1e293b',
+    backgroundColor: t.colors.lightGray,
     borderWidth: 2,
-    borderColor: theme.colors.primary,
+    borderColor: t.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
     height: 220,
   },
   sliderRow: {
-    gap: theme.spacing.sm,
+    gap: spacing.sm,
   },
   slider: {
     width: '100%',
@@ -161,10 +164,9 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: spacing.sm,
   },
   actionButton: {
     flex: 1,
   },
 });
-

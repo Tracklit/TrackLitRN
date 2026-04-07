@@ -1,16 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/Text';
-
-const COLORS = {
-  orange: '#FF7A00',
-  textPrimary: '#FFFFFF',
-  textMuted: '#8A90B5',
-  glass: 'rgba(255,255,255,0.05)',
-  border: 'rgba(255,255,255,0.08)',
-  amberBg: 'rgba(245,158,11,0.08)',
-  amberBorder: 'rgba(245,158,11,0.15)',
-};
+import { colors } from '@/utils/theme';
 
 export type OnboardingStep = {
   id: string;
@@ -34,30 +25,30 @@ const styles = StyleSheet.create({
     width: 14,
     textAlign: 'center',
     fontSize: 14,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
   },
   bulletText: {
     flex: 1,
     fontSize: 14,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     lineHeight: 20,
   },
   panel: {
     padding: 16,
     borderRadius: 14,
-    backgroundColor: COLORS.glass,
+    backgroundColor: colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: COLORS.border,
+    borderColor: colors.overlayLight,
   },
   panelLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 10,
   },
   bodyText: {
     fontSize: 15,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 22,
   },

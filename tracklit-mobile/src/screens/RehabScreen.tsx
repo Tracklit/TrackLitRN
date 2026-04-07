@@ -23,29 +23,17 @@ import { LinearGradient } from '@/components/LinearGradient';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  glass: 'rgba(255,255,255,0.05)',
-  red: '#ef4444',
-  blue: '#60a5fa',
-  purple: '#a855f7',
-};
 
-const rehabCategories = [
+const getRehabCategories = (theme: ThemeValues) => [
   {
     id: 'acute-muscle',
     title: 'Acute Muscle Injuries',
     description: 'Evidence-based recovery programs for sudden muscle injuries',
-    iconColor: C.red,
+    iconColor: theme.colors.destructive,
     IconComponent: Heart,
     accentBorder: 'rgba(239,68,68,0.25)',
     subpages: [
@@ -59,7 +47,7 @@ const rehabCategories = [
     id: 'chronic-injuries',
     title: 'Chronic Injuries',
     description: 'Long-term management for persistent and overuse injuries',
-    iconColor: C.orange,
+    iconColor: theme.colors.brandOrange,
     IconComponent: Lightning,
     accentBorder: 'rgba(255,122,0,0.25)',
     subpages: [
@@ -75,7 +63,7 @@ const rehabCategories = [
     id: 'back-injuries',
     title: 'Back Injuries',
     description: 'Specialized programs for spinal and back-related issues',
-    iconColor: C.blue,
+    iconColor: '#3b82f6',
     IconComponent: FirstAidKit,
     accentBorder: 'rgba(96,165,250,0.25)',
     subpages: [
@@ -88,7 +76,7 @@ const rehabCategories = [
     id: 'bone-breaks',
     title: 'Bone Breaks',
     description: 'Recovery protocols for fractures and bone injuries',
-    iconColor: C.purple,
+    iconColor: '#a855f7',
     IconComponent: Bone,
     accentBorder: 'rgba(168,85,247,0.25)',
     subpages: [
@@ -102,6 +90,7 @@ const rehabCategories = [
 ];
 
 export const RehabScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user } = useAuth();
@@ -109,7 +98,7 @@ export const RehabScreen: React.FC = () => {
   const isStarUser = (user as any)?.subscriptionTier === 'star' || (user as any)?.isPremium;
   const spikes = Number((user as any)?.spikes ?? 0);
 
-  const categories = useMemo(() => rehabCategories, []);
+  const categories = useMemo(() => getRehabCategories(theme), [theme]);
 
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
@@ -155,7 +144,7 @@ export const RehabScreen: React.FC = () => {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={18} color={C.textPrimary} weight="bold" />
+          <ArrowLeft size={18} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
       </View>
 
@@ -166,7 +155,7 @@ export const RehabScreen: React.FC = () => {
         <View style={styles.hero}>
           <View style={styles.heroIconRow}>
             <View style={styles.heroIconCircle}>
-              <Heart size={24} color={C.red} weight="fill" />
+              <Heart size={24} color={theme.colors.destructive} weight="fill" />
             </View>
           </View>
           <Text style={styles.heroTitle}>Rehabilitation Center</Text>
@@ -182,7 +171,7 @@ export const RehabScreen: React.FC = () => {
           style={styles.aiCard}
         >
           <View style={styles.aiHeaderRow}>
-            <Robot size={20} color={C.purple} weight="fill" />
+            <Robot size={20} color="#a855f7" weight="fill" />
             <Text style={styles.aiTitle}>AI Rehabilitation Consultant</Text>
             <View style={styles.aiBadge}>
               <Text style={styles.aiBadgeText}>
@@ -199,7 +188,7 @@ export const RehabScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[C.orange, C.orangeLight]}
+              colors={[theme.colors.brandOrange, theme.colors.brandOrangeLight]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.aiButtonInner}
@@ -242,7 +231,7 @@ export const RehabScreen: React.FC = () => {
                       activeOpacity={0.7}
                     >
                       <Text style={styles.subButtonText}>{subpage.name}</Text>
-                      <ArrowRight size={12} color={C.textMuted} weight="bold" />
+                      <ArrowRight size={12} color={theme.colors.textMuted} weight="bold" />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -263,7 +252,7 @@ export const RehabScreen: React.FC = () => {
           <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 24 }]}>
             <View style={styles.modalIconRow}>
               <View style={styles.modalIconWrap}>
-                <Info size={26} color={C.blue} weight="fill" />
+                <Info size={26} color={'#3b82f6'} weight="fill" />
               </View>
             </View>
             <Text style={styles.modalTitle}>Professional Guidance</Text>
@@ -276,7 +265,7 @@ export const RehabScreen: React.FC = () => {
               activeOpacity={0.85}
             >
               <LinearGradient
-                colors={[C.orange, C.orangeLight]}
+                colors={[theme.colors.brandOrange, theme.colors.brandOrangeLight]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.acceptBtnInner}
@@ -292,8 +281,8 @@ export const RehabScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -304,9 +293,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: C.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -314,7 +303,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   content: {
     paddingHorizontal: 20,
@@ -341,13 +330,13 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: -0.3,
     textAlign: 'center',
   },
   heroSubtitle: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 20,
     textAlign: 'center',
     maxWidth: 320,
@@ -368,7 +357,7 @@ const styles = StyleSheet.create({
   aiTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   aiBadge: {
     paddingHorizontal: 8,
@@ -381,11 +370,11 @@ const styles = StyleSheet.create({
   aiBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: C.purple,
+    color: '#a855f7',
   },
   aiDescription: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 19,
   },
   aiButton: {
@@ -403,18 +392,18 @@ const styles = StyleSheet.create({
   aiButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#fff',
+    color: t.colors.textPrimary,
   },
   aiCost: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
   },
   categoriesContainer: {
     gap: 12,
   },
   categoryCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     borderWidth: 0.5,
     padding: 16,
@@ -439,17 +428,17 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   categoryDescription: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 17,
   },
   availableLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -466,15 +455,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: C.border,
-    backgroundColor: C.glass,
+    borderColor: t.colors.overlayLight,
+    backgroundColor: t.colors.overlaySubtle,
     minWidth: 120,
     gap: 8,
   },
   subButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   modalOverlay: {
     flex: 1,
@@ -488,7 +477,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 28,
     borderTopWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: t.colors.overlayLight,
   },
   modalIconRow: {
     alignItems: 'center',
@@ -507,13 +496,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 12,
   },
   modalBody: {
     fontSize: 14,
-    color: '#8A90B5',
+    color: t.colors.textMuted,
     lineHeight: 22,
     textAlign: 'center',
     marginBottom: 28,
@@ -530,7 +519,7 @@ const styles = StyleSheet.create({
   acceptBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
 });

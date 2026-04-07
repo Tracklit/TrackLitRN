@@ -32,6 +32,8 @@ import {
   type PerformanceMetrics,
 } from '@/utils/poseAnalysis';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface AdvancedAnalysisProps {
   landmarks: PoseLandmark[] | null;
   timestamp: number;
@@ -41,6 +43,7 @@ interface AdvancedAnalysisProps {
 }
 
 function AngleBar({ angle, max = 180 }: { angle: number; max?: number }) {
+  const { styles } = useThemedStyles(createStyles);
   const pct = Math.min((angle / max) * 100, 100);
   return (
     <View style={styles.barTrack}>
@@ -50,6 +53,7 @@ function AngleBar({ angle, max = 180 }: { angle: number; max?: number }) {
 }
 
 function SymmetryBar({ metric }: { metric: SymmetryMetric }) {
+  const { styles } = useThemedStyles(createStyles);
   const color = metric.status === 'balanced' ? '#00FF88' : metric.status === 'slight' ? '#FFD600' : '#FF3366';
   return (
     <View style={styles.symmetryRow}>
@@ -65,6 +69,7 @@ function SymmetryBar({ metric }: { metric: SymmetryMetric }) {
 }
 
 function ConfidenceDot({ score, name }: { score: number; name: string }) {
+  const { styles } = useThemedStyles(createStyles);
   const color = score >= 70 ? '#00FF88' : score >= 40 ? '#FFD600' : '#FF3366';
   return (
     <View style={styles.confItem}>
@@ -76,6 +81,7 @@ function ConfidenceDot({ score, name }: { score: number; name: string }) {
 }
 
 function MotionRow({ vector }: { vector: MotionVector }) {
+  const { styles } = useThemedStyles(createStyles);
   const dirIcon = () => {
     if (vector.velocity.magnitude < 0.01) return null;
     const angle = Math.atan2(-vector.velocity.y, vector.velocity.x) * (180 / Math.PI);
@@ -114,6 +120,7 @@ export const AdvancedAnalysis: React.FC<AdvancedAnalysisProps> = ({
   aiLoading = false,
   landmarkHistory,
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'angles' | 'symmetry' | 'position' | 'confidence' | 'motion' | 'performance'>('angles');
 
@@ -406,15 +413,15 @@ export const AdvancedAnalysis: React.FC<AdvancedAnalysisProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 16,
     marginHorizontal: 12,
     marginTop: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: t.colors.overlayLight,
   },
   header: {
     flexDirection: 'row',
@@ -429,7 +436,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   headerTitle: {
-    color: '#fff',
+    color: t.colors.textPrimary,
   },
   headerRight: {
     flexDirection: 'row',
@@ -463,14 +470,14 @@ const styles = StyleSheet.create({
   },
   quickDivider: {
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
   },
   quickLabel: {
     color: '#888',
     fontSize: 11,
   },
   quickValue: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 18,
     marginVertical: 2,
   },
@@ -489,11 +496,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: t.colors.overlaySubtle,
     marginRight: 8,
   },
   tabActive: {
-    backgroundColor: 'rgba(255,152,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 1,
     borderColor: 'rgba(255,152,0,0.3)',
   },
@@ -513,7 +520,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: t.colors.overlaySubtle,
   },
   angleInfo: {
     flex: 1,
@@ -542,13 +549,13 @@ const styles = StyleSheet.create({
   barTrack: {
     flex: 1,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
     borderRadius: 2,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
-    backgroundColor: '#FF9800',
+    backgroundColor: t.colors.warning,
     borderRadius: 2,
   },
   symmetryRow: {
@@ -556,7 +563,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: t.colors.overlaySubtle,
   },
   symmetryValues: {
     flexDirection: 'row',
@@ -583,7 +590,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(255,152,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
     padding: 12,
     borderRadius: 10,
     marginBottom: 8,
@@ -601,7 +608,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   leanValue: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 14,
   },
   leanDesc: {
@@ -615,7 +622,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: t.colors.overlaySubtle,
   },
   strideLabel: {
     color: '#ccc',
@@ -633,13 +640,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   overallConfText: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 13,
     marginBottom: 8,
   },
   overallConfBar: {
     height: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 4,
@@ -659,7 +666,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: t.colors.overlaySubtle,
   },
   confDot: {
     width: 10,
@@ -715,7 +722,7 @@ const styles = StyleSheet.create({
   },
   perfDivider: {
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
   },
   perfLabel: {
     color: '#888',
@@ -723,7 +730,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   perfValue: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 17,
   },
   perfUnit: {
@@ -749,7 +756,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#FF9800',
+    backgroundColor: t.colors.warning,
     paddingVertical: 14,
     borderRadius: 12,
     marginTop: 16,
@@ -758,7 +765,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   aiButtonText: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 15,
   },
   motionOverview: {
@@ -778,7 +785,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: t.colors.overlaySubtle,
   },
   motionLeft: {
     flexDirection: 'row',

@@ -14,10 +14,12 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
 import { Card, CardContent } from '@/components/ui/Card';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 const distances = [
   { value: '30', label: '30m' },
   { value: '40', label: '40m' },
@@ -58,6 +60,7 @@ const parseInputTime = (value: string): number | null => {
 };
 
 export const SprintTimePredictionScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selectedDistance, setSelectedDistance] = useState('100');
@@ -99,7 +102,7 @@ export const SprintTimePredictionScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         style={{ paddingTop: insets.top }}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.xl }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + themeStatic.spacing.xl }]}
         showsVerticalScrollIndicator={false}
         extraScrollHeight={80}
       >
@@ -236,19 +239,19 @@ export const SprintTimePredictionScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.lg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   backButton: {
     width: 40,
@@ -266,68 +269,68 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   cardContent: {
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   fieldGroup: {
-    gap: theme.spacing.xs,
+    gap: themeStatic.spacing.xs,
   },
   selectButton: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    paddingHorizontal: themeStatic.spacing.md,
+    paddingVertical: themeStatic.spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.card,
+    backgroundColor: t.colors.card,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    paddingHorizontal: themeStatic.spacing.md,
+    paddingVertical: themeStatic.spacing.sm,
+    color: t.colors.foreground,
+    backgroundColor: t.colors.card,
   },
   errorText: {
-    color: theme.colors.destructive,
+    color: t.colors.destructive,
   },
   resultsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   resultTile: {
     width: '48%',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
+    padding: themeStatic.spacing.md,
+    borderRadius: themeStatic.borderRadius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.card,
     alignItems: 'center',
-    gap: theme.spacing.xs,
+    gap: themeStatic.spacing.xs,
   },
   resultTileActive: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primary + '20',
+    borderColor: t.colors.primary,
+    backgroundColor: t.colors.primary + '20',
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
-    padding: theme.spacing.lg,
+    padding: themeStatic.spacing.lg,
   },
   modalCard: {
-    backgroundColor: theme.colors.cardSolid,
-    borderRadius: theme.borderRadius.xl,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    backgroundColor: t.colors.cardSolid,
+    borderRadius: themeStatic.borderRadius.xl,
+    padding: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.md,
     maxHeight: '80%',
   },
   modalRow: {
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: themeStatic.spacing.sm,
   },
   modalClose: {
     alignSelf: 'flex-end',

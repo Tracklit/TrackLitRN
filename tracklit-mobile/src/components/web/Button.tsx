@@ -1,6 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text as RNText, ViewStyle } from 'react-native';
-import theme from '@/utils/theme';
+import { spacing, borderRadius, typography } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Variant = 'default' | 'secondary' | 'outline' | 'ghost' | 'destructive';
 type Size = 'sm' | 'md' | 'lg';
@@ -22,6 +24,8 @@ export const WebButton: React.FC<WebButtonProps> = ({
   disabled = false,
   style,
 }) => {
+  const { styles } = useThemedStyles(createStyles);
+
   return (
     <Pressable
       onPress={onPress}
@@ -44,42 +48,41 @@ export const WebButton: React.FC<WebButtonProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.sm,
+    borderRadius: borderRadius.md,
+    gap: spacing.sm,
     flexWrap: 'wrap',
   },
-  sm: { paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm },
-  md: { paddingHorizontal: theme.spacing.lg, paddingVertical: theme.spacing.md },
-  lg: { paddingHorizontal: theme.spacing.xl, paddingVertical: theme.spacing.lg },
+  sm: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  md: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  lg: { paddingHorizontal: spacing.xl, paddingVertical: spacing.lg },
 
   textBase: {
-    fontWeight: theme.typography.weights.semiBold as any,
+    fontWeight: typography.weights.semiBold as any,
     flexShrink: 1,
     flexWrap: 'wrap',
     textAlign: 'center',
   },
-  smText: { fontSize: theme.typography.sizes.sm },
-  mdText: { fontSize: theme.typography.sizes.base },
-  lgText: { fontSize: theme.typography.sizes.lg },
+  smText: { fontSize: typography.sizes.sm },
+  mdText: { fontSize: typography.sizes.base },
+  lgText: { fontSize: typography.sizes.lg },
 
-  default: { backgroundColor: theme.colors.primary },
-  secondary: { backgroundColor: theme.colors.secondary },
-  destructive: { backgroundColor: theme.colors.destructive },
-  outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.colors.border },
+  default: { backgroundColor: t.colors.primary },
+  secondary: { backgroundColor: t.colors.secondary },
+  destructive: { backgroundColor: t.colors.destructive },
+  outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: t.colors.border },
   ghost: { backgroundColor: 'transparent' },
 
-  defaultText: { color: theme.colors.primaryForeground },
-  secondaryText: { color: theme.colors.secondaryForeground },
-  destructiveText: { color: theme.colors.destructiveForeground },
-  outlineText: { color: theme.colors.foreground },
-  ghostText: { color: theme.colors.foreground },
+  defaultText: { color: t.colors.primaryForeground },
+  secondaryText: { color: t.colors.secondaryForeground },
+  destructiveText: { color: t.colors.destructiveForeground },
+  outlineText: { color: t.colors.foreground },
+  ghostText: { color: t.colors.foreground },
 
   disabled: { opacity: 0.5 },
   pressed: { transform: [{ scale: 0.99 }] },
 });
-

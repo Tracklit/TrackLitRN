@@ -33,13 +33,194 @@ import { apiRequest } from '@/lib/api';
 import { getToken, setToken } from '@/lib/tokenStorage';
 import { env } from '@/config/env';
 import { countries } from '@/lib/countries';
-import theme from '@/utils/theme';
+import { spacing, borderRadius } from '@/utils/theme';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import type { RootStackParamList, TabParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import type { ThemeValues } from '@/contexts/ThemeContext';
 
 type BackgroundType = 'color' | 'image';
+
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: t.colors.backgroundSolid,
+  },
+  content: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.lg,
+  },
+  title: {
+    marginTop: spacing.lg,
+  },
+  subtitle: {
+    marginBottom: spacing.sm,
+  },
+  headerCard: {
+    backgroundColor: t.colors.darkNavy,
+    borderColor: t.colors.overlayLight,
+    borderWidth: 1,
+  },
+  cardVariant: {
+    backgroundColor: t.colors.darkNavy,
+    borderColor: t.colors.overlayLight,
+    borderWidth: 1,
+  },
+  cardHeaderVariant: {
+    paddingVertical: spacing.md,
+  },
+  cardContentVariant: {
+    paddingBottom: spacing.lg,
+  },
+  publicProfileContent: {
+    paddingBottom: spacing.lg,
+    gap: spacing.md,
+  },
+  headerContent: {
+  },
+  nonStretchingCard: {
+    flex: 0,
+  },
+  nonStretchingCardContent: {
+    flex: 0,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    flexWrap: 'wrap',
+  },
+  headerTopNarrow: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
+  headerIdentity: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIdentityNarrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 0,
+  },
+  headerTextBlock: {
+    flexShrink: 1,
+  },
+  headerTextBlockNarrow: {
+    flexShrink: 1,
+  },
+  avatarRing: {
+    padding: 4,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: '#f5c842',
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: t.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: t.colors.darkNavy,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  headerActionsNarrow: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    width: '100%',
+    marginTop: spacing.md,
+  },
+  headerActionButton: {
+    minWidth: 140,
+  },
+  headerActionButtonNarrow: {
+    minWidth: 0,
+    width: '100%',
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  switchTrack: {
+    width: 42,
+    height: 24,
+    borderRadius: 12,
+    padding: 3,
+    justifyContent: 'center',
+  },
+  switchThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#fff',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+  },
+  listBlock: {
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  sectionActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  colorRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginVertical: spacing.md,
+  },
+  colorSwatch: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.md,
+  },
+  inputGroup: {
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: t.colors.border,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    color: t.colors.foreground,
+    backgroundColor: t.colors.card,
+  },
+  textArea: {
+    minHeight: 80,
+  },
+  saveButton: {
+    marginTop: spacing.sm,
+  },
+  formGrid: {
+    gap: spacing.sm,
+  },
+  logoutButton: {
+    marginTop: spacing.lg,
+    borderColor: t.colors.destructive,
+  },
+});
 
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -49,6 +230,7 @@ export const ProfileScreen: React.FC = () => {
   const { user, logout, refreshUser, setUserAndPersist } = useAuth();
   const { resetAndStart: replayOnboarding } = useOnboarding();
   const queryClient = useQueryClient();
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
   const [backgroundColor, setBackgroundColor] = useState('#1e293b');
@@ -74,7 +256,6 @@ export const ProfileScreen: React.FC = () => {
     coachMode: (user as any)?.coachMode || '',
   });
 
-  // Keep local form state in sync with canonical user state.
   useEffect(() => {
     setProfileForm({
       username: user?.username || '',
@@ -164,8 +345,6 @@ export const ProfileScreen: React.FC = () => {
       if (data?.token) {
         await setToken(String(data.token));
       }
-      // Update canonical user immediately from the PATCH response so headers/UI
-      // reflect the new username without depending on a subsequent fetch.
       if (data && typeof data === 'object') {
         const nextUser = { ...(data as any) };
         delete nextUser.token;
@@ -350,7 +529,6 @@ export const ProfileScreen: React.FC = () => {
     saveProfileMutation.mutate(payload);
   };
 
-  // Always use vertical layout on phones; row layout only for tablets (600+)
   const isNarrowHeader = screenWidth < 600;
 
   return (
@@ -360,13 +538,13 @@ export const ProfileScreen: React.FC = () => {
         keyboardDismissMode="on-drag"
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + theme.spacing.lg, paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },
+          { paddingTop: insets.top + spacing.lg, paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: spacing.xl }) },
         ]}
         showsVerticalScrollIndicator={false}
         extraScrollHeight={80}
         refreshControl={
           <RefreshControl
-            tintColor="#fff"
+            tintColor={theme.colors.textPrimary}
             refreshing={isRefreshing}
             onRefresh={onRefresh}
           />
@@ -380,7 +558,6 @@ export const ProfileScreen: React.FC = () => {
           Manage your personal information and settings
         </Text>
 
-        {/* Header Card */}
         <Card style={styles.headerCard} contentStyle={styles.nonStretchingCard}>
           <CardContent style={styles.nonStretchingCardContent}>
             <View style={[styles.headerTop, isNarrowHeader && styles.headerTopNarrow]}>
@@ -428,7 +605,6 @@ export const ProfileScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* App Tour */}
         <Card style={styles.cardVariant} contentStyle={styles.nonStretchingCard}>
           <CardContent style={styles.nonStretchingCardContent}>
             <View style={styles.rowBetween}>
@@ -436,7 +612,7 @@ export const ProfileScreen: React.FC = () => {
                 <Text variant="body" weight="semiBold" color="foreground">
                   App Tour
                 </Text>
-                <Text variant="caption" color="muted" style={{ marginTop: theme.spacing.xs }}>
+                <Text variant="caption" color="muted" style={{ marginTop: spacing.xs }}>
                   Replay the onboarding flow to refresh what each tab does.
                 </Text>
               </View>
@@ -452,7 +628,6 @@ export const ProfileScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Coach Status */}
         <CollapsibleCard
           title="Coach Status"
           subtitle="Enable coaching tools and athlete management"
@@ -510,7 +685,6 @@ export const ProfileScreen: React.FC = () => {
           ) : null}
         </CollapsibleCard>
 
-        {/* Public Profile / Trading Card */}
         <CollapsibleCard
           title="Your Public Profile"
           subtitle="This is how others see your card"
@@ -595,7 +769,6 @@ export const ProfileScreen: React.FC = () => {
           </Button>
         </CollapsibleCard>
 
-        {/* Profile Settings */}
         <CollapsibleCard
           title="Profile Settings"
           subtitle="Private settings and preferences"
@@ -786,185 +959,3 @@ export const ProfileScreen: React.FC = () => {
     );
   }
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#010a18',
-  },
-  content: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
-  },
-  title: {
-    marginTop: theme.spacing.lg,
-  },
-  subtitle: {
-    marginBottom: theme.spacing.sm,
-  },
-  headerCard: {
-    backgroundColor: '#0a1529',
-    borderColor: '#1e3a8a33',
-    borderWidth: 1,
-  },
-  cardVariant: {
-    backgroundColor: '#0a1529',
-    borderColor: '#1e3a8a33',
-    borderWidth: 1,
-  },
-  cardHeaderVariant: {
-    paddingVertical: theme.spacing.md,
-  },
-  cardContentVariant: {
-    paddingBottom: theme.spacing.lg,
-  },
-  publicProfileContent: {
-    paddingBottom: theme.spacing.lg,
-    gap: theme.spacing.md,
-  },
-  headerContent: {
-  },
-  nonStretchingCard: {
-    // Prevent Card's internal wrapper from stretching in ScrollView (Android in particular).
-    flex: 0,
-  },
-  nonStretchingCardContent: {
-    // Prevent `CardContent` from stretching to fill ScrollView viewport on Android
-    // (which can cause the header card to become huge / visually glitchy).
-    flex: 0,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing.md,
-    flexWrap: 'wrap',
-  },
-  headerTopNarrow: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
-  },
-  headerIdentity: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    alignItems: 'center',
-    flex: 1,
-  },
-  headerIdentityNarrow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 0,
-  },
-  headerTextBlock: {
-    flexShrink: 1,
-  },
-  headerTextBlockNarrow: {
-    flexShrink: 1,
-  },
-  avatarRing: {
-    padding: 4,
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: '#f5c842',
-  },
-  cameraBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: theme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#0a1529',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  headerActionsNarrow: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    width: '100%',
-    marginTop: theme.spacing.md,
-  },
-  headerActionButton: {
-    minWidth: 140,
-  },
-  headerActionButtonNarrow: {
-    minWidth: 0,
-    width: '100%',
-  },
-  rowBetween: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  switchTrack: {
-    width: 42,
-    height: 24,
-    borderRadius: 12,
-    padding: 3,
-    justifyContent: 'center',
-  },
-  switchThumb: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#fff',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: theme.spacing.sm,
-  },
-  listBlock: {
-    marginTop: theme.spacing.sm,
-    gap: theme.spacing.xs,
-  },
-  sectionActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.md,
-  },
-  colorRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    marginVertical: theme.spacing.md,
-  },
-  colorSwatch: {
-    width: 32,
-    height: 32,
-    borderRadius: theme.borderRadius.md,
-  },
-  inputGroup: {
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.sm,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
-  },
-  textArea: {
-    minHeight: 80,
-  },
-  saveButton: {
-    marginTop: theme.spacing.sm,
-  },
-  formGrid: {
-    gap: theme.spacing.sm,
-  },
-  logoutButton: {
-    marginTop: theme.spacing.lg,
-    borderColor: theme.colors.destructive,
-  },
-});

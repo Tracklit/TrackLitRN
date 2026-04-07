@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { Eye, EyeSlash } from 'phosphor-react-native';
 import { Text } from './Text';
-import theme from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
+import { typography, spacing, borderRadius } from '@/utils/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -30,6 +32,7 @@ export const Input: React.FC<InputProps> = ({
   secureTextEntry,
   ...props
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const variantStyle = variant === 'filled' ? styles.filled : styles.default;
   const [hidden, setHidden] = useState(true);
   const isPassword = secureTextEntry !== undefined && secureTextEntry;
@@ -37,7 +40,7 @@ export const Input: React.FC<InputProps> = ({
   return (
     <View style={[styles.container, containerStyle]}>
       {label && (
-        <Text variant="caption" weight="medium" style={styles.label}>
+        <Text variant="caption" weight="medium" style={[styles.label, { color: theme.colors.foreground }]}>
           {label}
         </Text>
       )}
@@ -80,23 +83,22 @@ export const Input: React.FC<InputProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
-    marginBottom: theme.spacing.md,
+    marginBottom: spacing.md,
   },
   label: {
-    marginBottom: theme.spacing.sm,
-    color: theme.colors.foreground,
+    marginBottom: spacing.sm,
   },
   inputRow: {
     position: 'relative',
   },
   base: {
-    borderRadius: theme.borderRadius.lg,
-    fontSize: theme.typography.sizes.base,
-    color: theme.colors.foreground,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    borderRadius: borderRadius.lg,
+    fontSize: typography.sizes.base,
+    color: t.colors.foreground,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     minHeight: 48,
   },
   inputWithIcon: {
@@ -105,17 +107,17 @@ const styles = StyleSheet.create({
   default: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: t.colors.border,
   },
   filled: {
-    backgroundColor: theme.colors.muted,
+    backgroundColor: t.colors.muted,
     borderWidth: 0,
   },
   error: {
-    borderColor: theme.colors.destructive,
+    borderColor: t.colors.destructive,
   },
   errorText: {
-    marginTop: theme.spacing.xs,
+    marginTop: spacing.xs,
   },
   eyeButton: {
     position: 'absolute',

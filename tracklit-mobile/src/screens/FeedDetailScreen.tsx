@@ -23,8 +23,10 @@ import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedPost'>;
 
 interface FeedComment {
@@ -65,6 +67,7 @@ const PLACEHOLDER_COMMENTS: FeedComment[] = [
 ];
 
 export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const postId = route.params?.id;
   const postData = route.params?.postData;
@@ -235,7 +238,7 @@ export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.md }]}>
+        <View style={[styles.topBar, { paddingTop: insets.top + themeStatic.spacing.md }]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -283,7 +286,7 @@ export const FeedDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -294,22 +297,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.md,
+    paddingHorizontal: themeStatic.spacing.xl,
+    paddingBottom: themeStatic.spacing.md,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.md,
+    paddingHorizontal: themeStatic.spacing.xl,
+    paddingBottom: themeStatic.spacing.md,
   },
   postSection: {
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
+    paddingTop: themeStatic.spacing.md,
+    paddingBottom: themeStatic.spacing.sm,
   },
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-    gap: theme.spacing.md,
+    marginBottom: themeStatic.spacing.sm,
+    gap: themeStatic.spacing.md,
   },
   postAvatar: {
     width: 40,
@@ -322,13 +325,13 @@ const styles = StyleSheet.create({
   postContent: {
     lineHeight: 22,
     fontSize: 14,
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   postActions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   actionButton: {
     flexDirection: 'row',
@@ -337,16 +340,16 @@ const styles = StyleSheet.create({
   },
   commentsDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
   },
   commentRow: {
     flexDirection: 'row',
-    paddingVertical: theme.spacing.md,
+    paddingVertical: themeStatic.spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.04)',
+    borderBottomColor: t.colors.overlaySubtle,
   },
   commentAvatarCol: {
-    marginRight: theme.spacing.md,
+    marginRight: themeStatic.spacing.md,
   },
   commentAvatar: {
     width: 28,
@@ -359,7 +362,7 @@ const styles = StyleSheet.create({
   commentNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   commentTime: {
     fontSize: 11,
@@ -371,22 +374,22 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: themeStatic.spacing.xl,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-    gap: theme.spacing.sm,
+    borderTopColor: t.colors.overlayLight,
+    gap: themeStatic.spacing.sm,
     backgroundColor: '#111',
   },
   commentInput: {
     flex: 1,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: t.colors.overlayMedium,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    color: theme.colors.foreground,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    color: t.colors.foreground,
+    backgroundColor: t.colors.overlaySubtle,
     fontSize: 14,
   },
   sendButton: {

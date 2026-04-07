@@ -39,20 +39,10 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { goBackOrNavigateToTab } from '@/navigation/appNavigation';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  red: '#FF4444',
-  green: '#22C55E',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.4)',
-  border: 'rgba(255,255,255,0.06)',
-  iconBg: 'rgba(255,255,255,0.05)',
-};
 
 interface AdminUser {
   id: number;
@@ -106,18 +96,23 @@ async function fetchAdminStats(): Promise<AdminStats> {
 }
 
 const StatCard: React.FC<{ label: string; value: string | number; Icon: any; color?: string }> = ({
-  label, value, Icon, color = C.orange,
-}) => (
-  <View style={styles.statCard}>
-    <View style={[styles.statIcon, { backgroundColor: `${color}18` }]}>
-      <Icon size={18} color={color} weight="fill" />
+  label, value, Icon, color,
+}) => {
+  const { styles, theme } = useThemedStyles(createStyles);
+  const c = color || theme.colors.brandOrange;
+  return (
+    <View style={styles.statCard}>
+      <View style={[styles.statIcon, { backgroundColor: `${c}18` }]}>
+        <Icon size={18} color={c} weight="fill" />
+      </View>
+      <Text style={styles.statValue}>{value ?? '\u2014'}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
     </View>
-    <Text style={styles.statValue}>{value ?? '—'}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
+  );
+};
 
 export const AdminPanelWebViewScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const queryClient = useQueryClient();
@@ -283,14 +278,14 @@ export const AdminPanelWebViewScreen: React.FC = () => {
           style={styles.backButton}
           onPress={() => goBackOrNavigateToTab(navigation, 'Home')}
         >
-          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
+          <CaretLeft size={18} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Admin Panel</Text>
           <Text style={styles.headerSub}>Tracklit Management</Text>
         </View>
         <TouchableOpacity style={styles.iconBtn} onPress={handleRefresh}>
-          <ArrowClockwise size={18} color={C.textMuted} weight="bold" />
+          <ArrowClockwise size={18} color={theme.colors.textMuted} weight="bold" />
         </TouchableOpacity>
       </View>
 
@@ -302,8 +297,8 @@ export const AdminPanelWebViewScreen: React.FC = () => {
             onPress={() => setActiveTab(t)}
           >
             {t === 'users'
-              ? <Users size={13} color={activeTab === t ? C.orange : C.textMuted} weight="fill" />
-              : <ChartBar size={13} color={activeTab === t ? C.orange : C.textMuted} weight="fill" />}
+              ? <Users size={13} color={activeTab === t ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" />
+              : <ChartBar size={13} color={activeTab === t ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" />}
             <Text style={[styles.tabLabel, activeTab === t && styles.tabLabelActive]}>
               {t === 'users' ? 'Users' : 'Stats'}
             </Text>
@@ -315,11 +310,11 @@ export const AdminPanelWebViewScreen: React.FC = () => {
         <>
           <View style={styles.searchWrap}>
             <View style={styles.searchRow}>
-              <MagnifyingGlass size={13} color={C.textMuted} weight="bold" />
+              <MagnifyingGlass size={13} color={theme.colors.textMuted} weight="bold" />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search by name, username or email…"
-                placeholderTextColor={C.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 value={search}
                 onChangeText={setSearch}
                 autoCapitalize="none"
@@ -331,23 +326,23 @@ export const AdminPanelWebViewScreen: React.FC = () => {
             contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.orange} />
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.colors.brandOrange} />
             }
           >
             {!searchReady ? (
               <View style={styles.center}>
-                <MagnifyingGlass size={36} color={C.textMuted} weight="fill" />
+                <MagnifyingGlass size={36} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.errorHeading}>Search for a user</Text>
                 <Text style={styles.mutedText}>Type at least 2 characters{'\n'}to find users by name, username, or email.</Text>
               </View>
             ) : usersQuery.isLoading || usersQuery.isFetching ? (
               <View style={styles.center}>
-                <ActivityIndicator size="large" color={C.orange} />
+                <ActivityIndicator size="large" color={theme.colors.brandOrange} />
                 <Text style={styles.mutedText}>Searching…</Text>
               </View>
             ) : usersQuery.isError ? (
               <View style={styles.center}>
-                <Warning size={40} color={C.red} weight="fill" />
+                <Warning size={40} color={theme.colors.destructive} weight="fill" />
                 <Text style={styles.errorHeading}>Could not load users</Text>
                 <Text style={styles.errorDetail}>
                   {getErrorStatus(usersQuery.error) === 401 || getErrorStatus(usersQuery.error) === 403
@@ -377,7 +372,7 @@ export const AdminPanelWebViewScreen: React.FC = () => {
                     }}
                     activeOpacity={0.7}
                   >
-                    <SignOut size={15} color={C.textPrimary} weight="fill" />
+                    <SignOut size={15} color={theme.colors.textPrimary} weight="fill" />
                     <Text style={styles.logoutBtnText}>Log Out & Re-login</Text>
                   </TouchableOpacity>
                 )}
@@ -391,7 +386,7 @@ export const AdminPanelWebViewScreen: React.FC = () => {
               </View>
             ) : filteredUsers.length === 0 ? (
               <View style={styles.center}>
-                <Users size={36} color={C.textMuted} weight="fill" />
+                <Users size={36} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.mutedText}>No users found for "{search.trim()}"</Text>
               </View>
             ) : (
@@ -411,20 +406,20 @@ export const AdminPanelWebViewScreen: React.FC = () => {
                           <Text style={styles.userName} numberOfLines={1}>{u.name || u.username}</Text>
                           {u.role === 'admin' && (
                             <View style={styles.badge}>
-                              <Crown size={9} color={C.orange} weight="fill" />
-                              <Text style={[styles.badgeText, { color: C.orange }]}>Admin</Text>
+                              <Crown size={9} color={theme.colors.brandOrange} weight="fill" />
+                              <Text style={[styles.badgeText, { color: theme.colors.brandOrange }]}>Admin</Text>
                             </View>
                           )}
                           {u.isCoach && (
                             <View style={[styles.badge, styles.badgeGreen]}>
-                              <Barbell size={9} color={C.green} weight="fill" />
-                              <Text style={[styles.badgeText, { color: C.green }]}>Coach</Text>
+                              <Barbell size={9} color={theme.colors.success} weight="fill" />
+                              <Text style={[styles.badgeText, { color: theme.colors.success }]}>Coach</Text>
                             </View>
                           )}
                           {(u.isActive === false || u.disabled === true) && (
                             <View style={[styles.badge, styles.badgeRed]}>
-                              <ProhibitInset size={9} color={C.red} weight="fill" />
-                              <Text style={[styles.badgeText, { color: C.red }]}>Disabled</Text>
+                              <ProhibitInset size={9} color={theme.colors.destructive} weight="fill" />
+                              <Text style={[styles.badgeText, { color: theme.colors.destructive }]}>Disabled</Text>
                             </View>
                           )}
                         </View>
@@ -436,7 +431,7 @@ export const AdminPanelWebViewScreen: React.FC = () => {
                         onPress={() => openMenu(u)}
                         activeOpacity={0.7}
                       >
-                        <DotsThreeVertical size={18} color={C.textMuted} weight="bold" />
+                        <DotsThreeVertical size={18} color={theme.colors.textMuted} weight="bold" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -452,20 +447,20 @@ export const AdminPanelWebViewScreen: React.FC = () => {
           contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.orange} />
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.colors.brandOrange} />
           }
         >
           {statsQuery.isLoading ? (
             <View style={styles.center}>
-              <ActivityIndicator size="large" color={C.orange} />
+              <ActivityIndicator size="large" color={theme.colors.brandOrange} />
               <Text style={styles.mutedText}>Loading stats…</Text>
             </View>
           ) : (
             <>
               <Text style={styles.sectionTitle}>Platform Overview</Text>
               <View style={styles.statsGrid}>
-                <StatCard label="Total Users" value={totalUsers ?? '—'} Icon={Users} color={C.orange} />
-                <StatCard label="Coaches" value={totalCoaches ?? '—'} Icon={ShieldStar} color={C.green} />
+                <StatCard label="Total Users" value={totalUsers ?? '—'} Icon={Users} color={theme.colors.brandOrange} />
+                <StatCard label="Coaches" value={totalCoaches ?? '—'} Icon={ShieldStar} color={theme.colors.success} />
                 <StatCard label="Athletes" value={totalAthletes ?? '—'} Icon={UserCircle} color="#6366F1" />
                 <StatCard label="Programs" value={totalPrograms ?? '—'} Icon={Barbell} color="#F59E0B" />
               </View>
@@ -511,7 +506,7 @@ export const AdminPanelWebViewScreen: React.FC = () => {
                     disabled={isBusy}
                     activeOpacity={0.7}
                   >
-                    <Crown size={18} color={C.orange} weight="fill" />
+                    <Crown size={18} color={theme.colors.brandOrange} weight="fill" />
                     <Text style={styles.sheetActionText}>Make Admin</Text>
                   </TouchableOpacity>
                 )}
@@ -522,7 +517,7 @@ export const AdminPanelWebViewScreen: React.FC = () => {
                   disabled={isBusy}
                   activeOpacity={0.7}
                 >
-                  <LockSimple size={18} color={C.textSecondary} weight="fill" />
+                  <LockSimple size={18} color={theme.colors.textSecondary} weight="fill" />
                   <Text style={styles.sheetActionText}>Reset Password</Text>
                 </TouchableOpacity>
 
@@ -544,8 +539,8 @@ export const AdminPanelWebViewScreen: React.FC = () => {
                   disabled={isBusy}
                   activeOpacity={0.7}
                 >
-                  <Trash size={18} color={C.red} weight="fill" />
-                  <Text style={[styles.sheetActionText, { color: C.red }]}>Delete User</Text>
+                  <Trash size={18} color={theme.colors.destructive} weight="fill" />
+                  <Text style={[styles.sheetActionText, { color: theme.colors.destructive }]}>Delete User</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -559,7 +554,7 @@ export const AdminPanelWebViewScreen: React.FC = () => {
             )}
             {isBusy && (
               <View style={styles.sheetBusy}>
-                <ActivityIndicator size="small" color={C.orange} />
+                <ActivityIndicator size="small" color={theme.colors.brandOrange} />
               </View>
             )}
           </View>
@@ -569,33 +564,33 @@ export const AdminPanelWebViewScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
     gap: 12,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerCenter: { flex: 1 },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, letterSpacing: 0.3 },
-  headerSub: { fontSize: 11, color: C.textMuted, marginTop: 1 },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: t.colors.textPrimary, letterSpacing: 0.3 },
+  headerSub: { fontSize: 11, color: t.colors.textMuted, marginTop: 1 },
   iconBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -605,7 +600,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 8,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   tab: {
     flexDirection: 'row',
@@ -615,67 +610,67 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
-  tabActive: { borderColor: C.orange, backgroundColor: 'rgba(255,122,0,0.08)' },
-  tabLabel: { fontSize: 12, fontWeight: '600', color: C.textMuted },
-  tabLabelActive: { color: C.orange },
+  tabActive: { borderColor: t.colors.brandOrange, backgroundColor: 'rgba(255,122,0,0.08)' },
+  tabLabel: { fontSize: 12, fontWeight: '600', color: t.colors.textMuted },
+  tabLabelActive: { color: t.colors.brandOrange },
   searchWrap: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 10,
     paddingHorizontal: 12,
   },
-  searchInput: { flex: 1, paddingVertical: 9, color: C.textPrimary, fontSize: 13 },
+  searchInput: { flex: 1, paddingVertical: 9, color: t.colors.textPrimary, fontSize: 13 },
   scroll: { padding: 16 },
   center: { paddingVertical: 60, alignItems: 'center', gap: 12 },
-  mutedText: { fontSize: 13, color: C.textMuted, textAlign: 'center', lineHeight: 20 },
-  errorHeading: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginTop: 12, textAlign: 'center' },
-  errorDetail: { fontSize: 13, color: C.textMuted, textAlign: 'center', lineHeight: 18, marginTop: 8, paddingHorizontal: 16, maxWidth: 300 },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.red, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, marginTop: 16 },
-  logoutBtnText: { fontSize: 13, fontWeight: '700', color: C.textPrimary },
-  retryBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, marginTop: 10, borderWidth: 1, borderColor: C.border },
-  retryBtnText: { fontSize: 13, fontWeight: '600', color: C.textMuted },
-  countText: { fontSize: 11, color: C.textMuted, marginBottom: 10 },
-  separator: { height: 0.5, backgroundColor: C.border, marginLeft: 52 },
+  mutedText: { fontSize: 13, color: t.colors.textMuted, textAlign: 'center', lineHeight: 20 },
+  errorHeading: { fontSize: 16, fontWeight: '700', color: t.colors.textPrimary, marginTop: 12, textAlign: 'center' },
+  errorDetail: { fontSize: 13, color: t.colors.textMuted, textAlign: 'center', lineHeight: 18, marginTop: 8, paddingHorizontal: 16, maxWidth: 300 },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.colors.destructive, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, marginTop: 16 },
+  logoutBtnText: { fontSize: 13, fontWeight: '700', color: t.colors.textPrimary },
+  retryBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, marginTop: 10, borderWidth: 1, borderColor: t.colors.overlayLight },
+  retryBtnText: { fontSize: 13, fontWeight: '600', color: t.colors.textMuted },
+  countText: { fontSize: 11, color: t.colors.textMuted, marginBottom: 10 },
+  separator: { height: 0.5, backgroundColor: t.colors.overlayLight, marginLeft: 52 },
   userRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
   userInfo: { flex: 1, gap: 2 },
   userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  userName: { fontSize: 13, fontWeight: '600', color: C.textPrimary, flexShrink: 1 },
+  userName: { fontSize: 13, fontWeight: '600', color: t.colors.textPrimary, flexShrink: 1 },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: 4,
   },
   badgeGreen: { backgroundColor: 'rgba(34,197,94,0.12)' },
   badgeRed: { backgroundColor: 'rgba(255,68,68,0.12)' },
-  badgeText: { fontSize: 9, fontWeight: '700', color: C.orange },
-  userHandle: { fontSize: 11, color: C.textMuted },
-  userEmail: { fontSize: 10, color: 'rgba(255,255,255,0.3)' },
+  badgeText: { fontSize: 9, fontWeight: '700', color: t.colors.brandOrange },
+  userHandle: { fontSize: 11, color: t.colors.textMuted },
+  userEmail: { fontSize: 10, color: t.colors.textMuted },
   menuBtn: {
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginBottom: 14,
@@ -684,7 +679,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '44%',
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 16,
     gap: 6,
@@ -698,15 +693,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 4,
   },
-  statValue: { fontSize: 24, fontWeight: '700', color: C.textPrimary, lineHeight: 28 },
-  statLabel: { fontSize: 11, color: C.textMuted },
+  statValue: { fontSize: 24, fontWeight: '700', color: t.colors.textPrimary, lineHeight: 28 },
+  statLabel: { fontSize: 11, color: t.colors.textMuted },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   actionSheet: {
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 28,
@@ -716,9 +711,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
-  sheetTitle: { fontSize: 15, fontWeight: '700', color: C.textPrimary },
-  sheetSub: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-  sheetDivider: { height: 0.5, backgroundColor: C.border, marginVertical: 4 },
+  sheetTitle: { fontSize: 15, fontWeight: '700', color: t.colors.textPrimary },
+  sheetSub: { fontSize: 12, color: t.colors.textMuted, marginTop: 2 },
+  sheetDivider: { height: 0.5, backgroundColor: t.colors.overlayLight, marginVertical: 4 },
   sheetAction: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -726,9 +721,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  sheetActionText: { fontSize: 15, color: C.textPrimary, fontWeight: '500' },
+  sheetActionText: { fontSize: 15, color: t.colors.textPrimary, fontWeight: '500' },
   sheetCancel: { marginTop: 4 },
-  sheetCancelText: { fontSize: 15, color: C.textMuted, fontWeight: '500' },
+  sheetCancelText: { fontSize: 15, color: t.colors.textMuted, fontWeight: '500' },
   sheetBusy: {
     position: 'absolute',
     top: 0,

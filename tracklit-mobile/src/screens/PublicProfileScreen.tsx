@@ -55,24 +55,16 @@ import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { useTheme, type ThemeValues } from '@/contexts/ThemeContext';
 const stadiumBg = require('../../assets/stadium-bg.png');
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
 
-const COLORS = {
-  bg: '#0E0F14',
-  surface: '#161823',
-  card: '#1C1F2B',
-  glass: 'rgba(255,255,255,0.05)',
+const DECORATIVE = {
   gradStart: '#4B00FF',
   gradMid: '#7F00FF',
   gradEnd: '#00D4FF',
-  orange: '#FF7A00',
-  orangeGlow: 'rgba(255,122,0,0.6)',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  xpBarBg: '#2A2D3E',
 };
 
 const STORAGE_KEY_PREFIX = 'tracklit_profile_';
@@ -97,6 +89,7 @@ interface ProfileData {
 const PLACEHOLDER_FORM = [10.12, 10.05, 9.98, 10.08, 10.03, 10.05];
 
 function RecentFormGraph({ data }: { data: number[] }) {
+  const { theme: t } = useTheme();
   const graphW = CARD_WIDTH - 68;
   const graphH = 60;
   const padX = 20;
@@ -137,18 +130,18 @@ function RecentFormGraph({ data }: { data: number[] }) {
       <Polyline
         points={polyPoints}
         fill="none"
-        stroke={COLORS.orange}
+        stroke={t.colors.brandOrange}
         strokeWidth={2}
         strokeLinejoin="round"
         strokeLinecap="round"
       />
       {points.map((p, i) => (
         <React.Fragment key={i}>
-          <Circle cx={p.x} cy={p.y} r={3.5} fill={COLORS.orange} />
+          <Circle cx={p.x} cy={p.y} r={3.5} fill={t.colors.brandOrange} />
           <SvgText
             x={p.x}
             y={p.y + 16}
-            fill={COLORS.textMuted}
+            fill={t.colors.textMuted}
             fontSize={9}
             textAnchor="middle"
           >
@@ -163,6 +156,7 @@ function RecentFormGraph({ data }: { data: number[] }) {
 function XPBar({ current, max }: { current: number; max: number }) {
   const progress = useSharedValue(0);
   const pct = Math.min(current / max, 1);
+  const { theme: t } = useTheme();
 
   useEffect(() => {
     progress.value = withTiming(pct, { duration: 800, easing: Easing.out(Easing.cubic) });
@@ -174,13 +168,13 @@ function XPBar({ current, max }: { current: number; max: number }) {
 
   return (
     <View style={xpStyles.container}>
-      <Text style={xpStyles.label}>
-        <Text style={xpStyles.labelOrange}>{current.toLocaleString()}</Text> / {max.toLocaleString()} XP
+      <Text style={[xpStyles.label, { color: t.colors.textSecondary }]}>
+        <Text style={{ color: t.colors.brandOrange, fontWeight: '700' }}>{current.toLocaleString()}</Text> / {max.toLocaleString()} XP
       </Text>
-      <View style={xpStyles.track}>
+      <View style={[xpStyles.track, { backgroundColor: t.colors.darkGray }]}>
         <Animated.View style={[xpStyles.fill, animStyle]}>
           <LinearGradient
-            colors={[COLORS.orange, COLORS.gradEnd]}
+            colors={[t.colors.brandOrange, DECORATIVE.gradEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={StyleSheet.absoluteFill}
@@ -193,12 +187,10 @@ function XPBar({ current, max }: { current: number; max: number }) {
 
 const xpStyles = StyleSheet.create({
   container: { alignItems: 'center', marginTop: 8, marginBottom: 4 },
-  label: { fontSize: 11, color: COLORS.textSecondary, marginBottom: 4 },
-  labelOrange: { color: COLORS.orange, fontWeight: '700' },
+  label: { fontSize: 11, marginBottom: 4 },
   track: {
     width: '80%',
     height: 8,
-    backgroundColor: COLORS.xpBarBg,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -261,6 +253,7 @@ async function takePhoto(): Promise<string | null> {
 }
 
 export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const { userId, name, username, profileImageUrl } = route.params;
   const { user, isAuthenticated } = useAuth();
@@ -501,7 +494,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
   const rank = 4;
 
   return (
-    <View style={[styles.root, { backgroundColor: COLORS.bg }]}>
+    <View style={[styles.root, { backgroundColor: theme.colors.backgroundSolid }]}>
       <RNAnimated.View style={[styles.flex, { opacity: fadeAnim }]}>
         <ScrollView
           style={styles.flex}
@@ -539,14 +532,14 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                 style={styles.headerLeft}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <ArrowLeft size={20} color={COLORS.textPrimary} weight="bold" />
+                <ArrowLeft size={20} color={theme.colors.textPrimary} weight="bold" />
                 <Text style={styles.headerTitle}>
                   {isOwnProfile ? 'My Profile' : 'Profile'}
                 </Text>
               </TouchableOpacity>
               <View style={styles.headerRight}>
                 <View style={styles.currencyBadge}>
-                  <Lightning size={14} color={COLORS.orange} weight="fill" />
+                  <Lightning size={14} color={theme.colors.brandOrange} weight="fill" />
                   <Text style={styles.currencyText}>
                     {spikesCount.toLocaleString()}
                   </Text>
@@ -557,7 +550,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                     onPress={startEditing}
                     activeOpacity={0.7}
                   >
-                    <PencilSimple size={14} color={COLORS.orange} weight="fill" />
+                    <PencilSimple size={14} color={theme.colors.brandOrange} weight="fill" />
                     <Text style={styles.currencyText}>Edit</Text>
                   </TouchableOpacity>
                 )}
@@ -568,7 +561,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                     activeOpacity={0.7}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Gear size={18} color={COLORS.textSecondary} weight="fill" />
+                    <Gear size={18} color={theme.colors.textSecondary} weight="fill" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -593,7 +586,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                   disabled={!isOwnProfile}
                 >
                   <LinearGradient
-                    colors={[COLORS.gradStart, COLORS.gradMid, COLORS.gradEnd]}
+                    colors={['#4B00FF', '#7F00FF', '#00D4FF']}
                     style={styles.avatarBorder}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
@@ -610,7 +603,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                   </LinearGradient>
                   {isEditing && (
                     <View style={styles.avatarEditBadge}>
-                      <Camera size={14} color={COLORS.textPrimary} weight="fill" />
+                      <Camera size={14} color={theme.colors.textPrimary} weight="fill" />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -627,12 +620,12 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
 
               <View style={styles.leaderboardBadge}>
                 <LinearGradient
-                  colors={[COLORS.gradStart, COLORS.gradMid]}
+                  colors={['#4B00FF', '#7F00FF']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.leaderboardGradient}
                 >
-                  <Crown size={12} color={COLORS.textPrimary} weight="fill" />
+                  <Crown size={12} color={theme.colors.textPrimary} weight="fill" />
                   <Text style={styles.leaderboardText}>
                     Leaderboard Rank{' '}
                     <Text style={styles.leaderboardNumber}>#{leaderboardRank}</Text>
@@ -645,14 +638,14 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
           <View style={styles.cardSection}>
             <View style={styles.cardOuter}>
               <LinearGradient
-                colors={[COLORS.gradStart, COLORS.gradMid, COLORS.gradEnd]}
+                colors={['#4B00FF', '#7F00FF', '#00D4FF']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.cardBorder}
               >
                 <View style={styles.cardInner}>
                   <LinearGradient
-                    colors={['rgba(75,0,255,0.15)', 'rgba(28,31,43,0.95)', COLORS.card]}
+                    colors={['rgba(75,0,255,0.15)', 'rgba(28,31,43,0.95)', theme.colors.cardSolid]}
                     locations={[0, 0.3, 1]}
                     start={{ x: 0.5, y: 0 }}
                     end={{ x: 0.5, y: 1 }}
@@ -667,7 +660,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                         value={editEvent}
                         onChangeText={setEditEvent}
                         placeholder="e.g. 100M SPRINT"
-                        placeholderTextColor={COLORS.textMuted}
+                        placeholderTextColor={theme.colors.textMuted}
                         autoCapitalize="characters"
                       />
                     ) : (
@@ -690,13 +683,13 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                           <Image source={{ uri: displayActionShot }} style={styles.athleteImage} />
                         ) : (
                           <View style={styles.athleteImagePlaceholder}>
-                            <Camera size={36} color={COLORS.textMuted} weight="fill" />
-                            <Text style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 4, fontWeight: '600', letterSpacing: 1 }}>ACTION SHOT</Text>
+                            <Camera size={36} color={theme.colors.textMuted} weight="fill" />
+                            <Text style={{ fontSize: 10, color: theme.colors.textMuted, marginTop: 4, fontWeight: '600', letterSpacing: 1 }}>ACTION SHOT</Text>
                           </View>
                         )}
                         {isEditing && (
                           <View style={styles.actionShotOverlay}>
-                            <Camera size={28} color={COLORS.textPrimary} weight="fill" />
+                            <Camera size={28} color={theme.colors.textPrimary} weight="fill" />
                             <Text style={styles.actionShotLabel}>
                               {displayActionShot ? 'Change Action Shot' : 'Upload Action Shot'}
                             </Text>
@@ -705,7 +698,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                       </TouchableOpacity>
                       <View style={styles.levelBadge}>
                         <LinearGradient
-                          colors={[COLORS.orange, '#FF9D00']}
+                          colors={[theme.colors.brandOrange, '#FF9D00']}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 1 }}
                           style={styles.levelGradient}
@@ -728,7 +721,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                         <Text style={styles.statLabel}>PB</Text>
                         <Text style={styles.statValue}>{editPB}</Text>
                         {isEditing && (
-                          <PencilSimple size={10} color={COLORS.orange} weight="fill" style={{ position: 'absolute', top: 4, right: 4 }} />
+                          <PencilSimple size={10} color={theme.colors.brandOrange} weight="fill" style={{ position: 'absolute', top: 4, right: 4 }} />
                         )}
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -740,7 +733,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                         <Text style={styles.statLabel}>SB</Text>
                         <Text style={styles.statValueBold}>{editSB}</Text>
                         {isEditing && (
-                          <PencilSimple size={10} color={COLORS.orange} weight="fill" style={{ position: 'absolute', top: 4, right: 4 }} />
+                          <PencilSimple size={10} color={theme.colors.brandOrange} weight="fill" style={{ position: 'absolute', top: 4, right: 4 }} />
                         )}
                       </TouchableOpacity>
                       <View style={styles.statPanel}>
@@ -777,7 +770,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                       ? ['#22c55e', '#16a34a']
                       : connectionState === 'pending'
                       ? ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.08)']
-                      : [COLORS.orange, '#FF9D00']
+                      : [theme.colors.brandOrange, '#FF9D00']
                   }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
@@ -809,7 +802,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={[COLORS.gradStart, COLORS.gradMid]}
+                  colors={['#4B00FF', '#7F00FF']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.actionBtnGradient}
@@ -847,8 +840,8 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                   end={{ x: 1, y: 0 }}
                   style={styles.actionBtnGradient}
                 >
-                  <X size={18} color={COLORS.textSecondary} weight="bold" />
-                  <Text style={[styles.actionBtnText, { color: COLORS.textSecondary }]}>CANCEL</Text>
+                  <X size={18} color={theme.colors.textSecondary} weight="bold" />
+                  <Text style={[styles.actionBtnText, { color: theme.colors.textSecondary }]}>CANCEL</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -857,10 +850,10 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
           <View style={styles.connectionsSection}>
             <Text style={styles.sectionTitle}>Connections</Text>
             {friendsQuery.isLoading ? (
-              <ActivityIndicator color={COLORS.gradMid} style={{ marginTop: 16 }} />
+              <ActivityIndicator color={'#7F00FF'} style={{ marginTop: 16 }} />
             ) : (friendsQuery.data?.length ?? 0) === 0 ? (
               <View style={styles.emptyConnections}>
-                <Users size={28} color={COLORS.textMuted} weight="fill" />
+                <Users size={28} color={theme.colors.textMuted} weight="fill" />
                 <Text style={styles.emptyText}>No connections yet</Text>
               </View>
             ) : (
@@ -930,14 +923,14 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
               style={styles.photoSheetOption}
               onPress={() => handlePickPhoto(showPhotoModal!, 'camera')}
             >
-              <Camera size={20} color={COLORS.orange} weight="fill" />
+              <Camera size={20} color={theme.colors.brandOrange} weight="fill" />
               <Text style={styles.photoSheetOptionText}>Take Photo</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.photoSheetOption}
               onPress={() => handlePickPhoto(showPhotoModal!, 'library')}
             >
-              <ImageIcon size={20} color={COLORS.gradEnd} weight="fill" />
+              <ImageIcon size={20} color={'#00D4FF'} weight="fill" />
               <Text style={styles.photoSheetOptionText}>Choose From Library</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -945,7 +938,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
               onPress={() => handlePickPhoto(showPhotoModal!, 'remove')}
             >
               <Trash size={20} color="#ef4444" weight="fill" />
-              <Text style={[styles.photoSheetOptionText, { color: '#ef4444' }]}>Remove Photo</Text>
+              <Text style={[styles.photoSheetOptionText, { color: theme.colors.destructive }]}>Remove Photo</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.photoSheetCancel}
@@ -983,7 +976,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                 value={editModal?.value ?? ''}
                 onChangeText={(val) => setEditModal(prev => prev ? { ...prev, value: val } : null)}
                 placeholder="e.g. 9.92"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 keyboardType="decimal-pad"
                 autoFocus
                 selectTextOnFocus
@@ -1016,7 +1009,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
                   }}
                 >
                   <LinearGradient
-                    colors={[COLORS.orange, '#FF9D00']}
+                    colors={[theme.colors.brandOrange, '#FF9D00']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.editSheetSaveBtnInner}
@@ -1033,7 +1026,7 @@ export const PublicProfileScreen: React.FC<Props> = ({ route, navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
 
@@ -1057,7 +1050,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   headerRight: {
     flexDirection: 'row',
@@ -1068,7 +1061,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 16,
@@ -1077,7 +1070,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1087,7 +1080,7 @@ const styles = StyleSheet.create({
   currencyText: {
     fontSize: 13,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
 
   avatarSection: {
@@ -1114,12 +1107,12 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 13,
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
   },
   summaryValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
 
   avatarContainer: {
@@ -1132,7 +1125,7 @@ const styles = StyleSheet.create({
     borderRadius: 58,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.gradMid,
+    shadowColor: '#7F00FF',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
@@ -1143,7 +1136,7 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 55,
     overflow: 'hidden',
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
   },
   avatarImage: {
     width: 110,
@@ -1156,7 +1149,7 @@ const styles = StyleSheet.create({
     borderRadius: 55,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
   },
   avatarEditBadge: {
     position: 'absolute',
@@ -1165,11 +1158,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: COLORS.orange,
+    backgroundColor: t.colors.brandOrange,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: COLORS.bg,
+    borderColor: t.colors.backgroundSolid,
   },
 
   leaderboardBadge: {
@@ -1186,12 +1179,12 @@ const styles = StyleSheet.create({
   },
   leaderboardText: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
     fontWeight: '500',
   },
   leaderboardNumber: {
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
 
   cardSection: {
@@ -1205,7 +1198,7 @@ const styles = StyleSheet.create({
   cardBorder: {
     borderRadius: 26,
     padding: 3,
-    shadowColor: COLORS.gradMid,
+    shadowColor: '#7F00FF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 24,
@@ -1223,24 +1216,24 @@ const styles = StyleSheet.create({
   athleteName: {
     fontSize: 24,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 1.5,
     textAlign: 'center',
   },
   athleteEvent: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
     marginTop: 2,
     letterSpacing: 0.5,
   },
   eventInput: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
     marginTop: 2,
     letterSpacing: 0.5,
     textAlign: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.orange,
+    borderBottomColor: t.colors.brandOrange,
     paddingVertical: 4,
     paddingHorizontal: 16,
     minWidth: 150,
@@ -1257,7 +1250,7 @@ const styles = StyleSheet.create({
     aspectRatio: 4 / 5,
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: COLORS.surface,
+    backgroundColor: t.colors.darkGray,
     position: 'relative',
   },
   athleteImage: {
@@ -1270,7 +1263,7 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: t.colors.darkGray,
   },
   actionShotOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -1283,7 +1276,7 @@ const styles = StyleSheet.create({
   actionShotLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   actionShotHintOverlay: {
     position: 'absolute',
@@ -1295,7 +1288,7 @@ const styles = StyleSheet.create({
   actionShotHintText: {
     fontSize: 10,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.3)',
+    color: t.colors.textMuted,
     letterSpacing: 2,
   },
   levelBadge: {
@@ -1304,7 +1297,7 @@ const styles = StyleSheet.create({
     top: 12,
     borderRadius: 10,
     overflow: 'hidden',
-    shadowColor: COLORS.orange,
+    shadowColor: t.colors.brandOrange,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
@@ -1319,13 +1312,13 @@ const styles = StyleSheet.create({
   levelLabel: {
     fontSize: 9,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 1,
   },
   levelNumber: {
     fontSize: 20,
     fontWeight: '900',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     marginTop: -2,
   },
 
@@ -1337,12 +1330,12 @@ const styles = StyleSheet.create({
   },
   statPanel: {
     flex: 1,
-    backgroundColor: COLORS.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 10,
     paddingVertical: 8,
     alignItems: 'center',
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: t.colors.overlayLight,
     position: 'relative',
   },
   statPanelMiddle: {
@@ -1352,19 +1345,19 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 0.5,
   },
   statValue: {
     fontSize: 16,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     marginTop: 1,
   },
   statValueBold: {
     fontSize: 16,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     marginTop: 1,
   },
 
@@ -1381,12 +1374,12 @@ const styles = StyleSheet.create({
   formLine: {
     flex: 1,
     height: 0.5,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
   },
   formTitle: {
     fontSize: 11,
     fontWeight: '700',
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 1.5,
   },
 
@@ -1417,7 +1410,7 @@ const styles = StyleSheet.create({
   actionBtnText: {
     fontSize: 15,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 1,
   },
 
@@ -1428,20 +1421,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     marginBottom: 14,
   },
   emptyConnections: {
     alignItems: 'center',
     paddingVertical: 24,
-    backgroundColor: COLORS.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 16,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: t.colors.overlaySubtle,
   },
   emptyText: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     marginTop: 8,
   },
   connectionsList: {
@@ -1450,12 +1443,12 @@ const styles = StyleSheet.create({
   connectionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.glass,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 14,
     padding: 12,
     gap: 12,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.04)',
+    borderColor: t.colors.overlaySubtle,
   },
   connectionAvatarWrap: {
     width: 44,
@@ -1472,14 +1465,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: COLORS.surface,
+    backgroundColor: t.colors.darkGray,
     alignItems: 'center',
     justifyContent: 'center',
   },
   connectionAvatarLetter: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
   },
   connectionInfo: {
     flex: 1,
@@ -1487,11 +1480,11 @@ const styles = StyleSheet.create({
   connectionName: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   connectionUsername: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     marginTop: 1,
   },
 
@@ -1507,7 +1500,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   photoSheet: {
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 20,
@@ -1517,7 +1510,7 @@ const styles = StyleSheet.create({
   photoSheetTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -1527,11 +1520,11 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingVertical: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: t.colors.overlaySubtle,
   },
   photoSheetOptionText: {
     fontSize: 16,
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     fontWeight: '500',
   },
   photoSheetCancel: {
@@ -1541,12 +1534,12 @@ const styles = StyleSheet.create({
   },
   photoSheetCancelText: {
     fontSize: 16,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     fontWeight: '600',
   },
 
   editSheet: {
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 20,
     paddingTop: 20,
     paddingBottom: 24,
@@ -1554,21 +1547,21 @@ const styles = StyleSheet.create({
   },
   editSheetHint: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     marginBottom: 16,
   },
   editSheetInput: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: t.colors.darkGray,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     textAlign: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: t.colors.overlayMedium,
     marginBottom: 20,
   },
   editSheetButtons: {
@@ -1580,12 +1573,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   editSheetCancelText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
   },
   editSheetSaveBtn: {
     flex: 1,
@@ -1600,6 +1593,6 @@ const styles = StyleSheet.create({
   editSheetSaveText: {
     fontSize: 15,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
 });

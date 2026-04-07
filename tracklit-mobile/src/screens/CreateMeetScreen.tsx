@@ -14,20 +14,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export const CreateMeetScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user } = useAuth();
   const isGuest = user?.id === 'guest';
 
   const contentBottomPadding = useMemo(
-    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
+    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }),
     [insets.bottom],
   );
 
@@ -171,7 +174,7 @@ export const CreateMeetScreen: React.FC = () => {
               disabled={isGuest || createMeetMutation.isPending}
             >
               <FontAwesome5 name="plus" size={16} color="white" solid />
-              <Text variant="body" weight="bold" color="primary-foreground" style={{ marginLeft: theme.spacing.sm }}>
+              <Text variant="body" weight="bold" color="primary-foreground" style={{ marginLeft: themeStatic.spacing.sm }}>
                 Create
               </Text>
             </Button>
@@ -182,28 +185,28 @@ export const CreateMeetScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   card: { marginBottom: 0 },
-  cardContent: { gap: theme.spacing.sm },
+  cardContent: { gap: themeStatic.spacing.sm },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
-    marginBottom: theme.spacing.sm,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.md,
+    color: t.colors.foreground,
+    backgroundColor: t.colors.card,
+    marginBottom: themeStatic.spacing.sm,
   },
 });
 

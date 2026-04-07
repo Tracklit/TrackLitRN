@@ -11,13 +11,16 @@ import { Text } from '@/components/ui/Text';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type PhotoFinishAnalysisRouteProp = RouteProp<RootStackParamList, 'PhotoFinishAnalysis'>;
 
 export const PhotoFinishAnalysisScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const route = useRoute<PhotoFinishAnalysisRouteProp>();
@@ -39,7 +42,7 @@ export const PhotoFinishAnalysisScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={styles.container}
     >
-      <View style={[styles.content, { paddingTop: insets.top, paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }) }]}>
+      <View style={[styles.content, { paddingTop: insets.top, paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }) }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
             <FontAwesome5 name="arrow-left" size={18} color={theme.colors.foreground} solid />
@@ -59,10 +62,10 @@ export const PhotoFinishAnalysisScreen: React.FC = () => {
           <CardHeader>
             <CardTitle>Pick a finish video</CardTitle>
           </CardHeader>
-          <CardContent style={{ gap: theme.spacing.md }}>
+          <CardContent style={{ gap: themeStatic.spacing.md }}>
             <Button variant="default" size="lg" onPress={pickPhoto}>
               <FontAwesome5 name="video" size={16} color="white" solid />
-              <Text variant="body" weight="bold" color="primary-foreground" style={{ marginLeft: theme.spacing.sm }}>
+              <Text variant="body" weight="bold" color="primary-foreground" style={{ marginLeft: themeStatic.spacing.sm }}>
                 Choose from library
               </Text>
             </Button>
@@ -86,7 +89,7 @@ export const PhotoFinishAnalysisScreen: React.FC = () => {
           <CardHeader>
             <CardTitle>Coming next</CardTitle>
           </CardHeader>
-          <CardContent style={{ gap: theme.spacing.sm }}>
+          <CardContent style={{ gap: themeStatic.spacing.sm }}>
             <Text variant="body" color="muted">
               - Zoom + pan
             </Text>
@@ -96,7 +99,7 @@ export const PhotoFinishAnalysisScreen: React.FC = () => {
             <Text variant="body" color="muted">
               - Frame-by-frame (video) + export
             </Text>
-            <Text variant="small" color="muted" style={{ marginTop: theme.spacing.md }}>
+            <Text variant="small" color="muted" style={{ marginTop: themeStatic.spacing.md }}>
               This screen exists to ensure Photo Finish has a real destination on mobile and never crashes. We’ll fill it out further in the next iteration.
             </Text>
           </CardContent>
@@ -106,17 +109,17 @@ export const PhotoFinishAnalysisScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
   content: {
     flex: 1,
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   iconBtn: {
     width: 40,
@@ -128,18 +131,18 @@ const styles = StyleSheet.create({
   previewWrap: {
     width: '100%',
     height: 240,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: themeStatic.borderRadius.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: t.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   preview: {
     width: '100%',
     height: '100%',
-    backgroundColor: theme.colors.backgroundSolid,
+    backgroundColor: t.colors.backgroundSolid,
   },
 });
 

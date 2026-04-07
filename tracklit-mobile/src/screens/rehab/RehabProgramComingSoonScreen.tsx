@@ -10,10 +10,13 @@ import { Text } from '@/components/ui/Text';
 import { ScreenTabBar } from '@/components/ScreenTabBar';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'RehabProgramComingSoon'>;
 
 export const RehabProgramComingSoonScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
   const insets = useSafeAreaInsets();
@@ -52,10 +55,10 @@ export const RehabProgramComingSoonScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0E0F14',
+    backgroundColor: t.colors.backgroundSolid,
   },
   headerBar: {
     flexDirection: 'row',
@@ -64,13 +67,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: t.colors.overlaySubtle,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -78,7 +81,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   scrollContent: {
     padding: 20,
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
   card: {
     alignItems: 'center',
     gap: 16,
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 32,
     marginTop: 20,
@@ -95,7 +98,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
@@ -103,12 +106,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     textAlign: 'center',
   },
   cardSubtext: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -118,7 +121,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: t.colors.overlayMedium,
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -128,6 +131,6 @@ const styles = StyleSheet.create({
   goBackText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
 });

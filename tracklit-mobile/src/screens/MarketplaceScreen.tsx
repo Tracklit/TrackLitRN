@@ -20,10 +20,12 @@ import { apiRequest } from '@/lib/api';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { SkeletonGrid } from '@/components/Skeleton';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type ListingType = 'program' | 'consulting';
 
 interface MarketplaceListing {
@@ -65,6 +67,7 @@ const formatPrice = (priceCents: number, currency: string = 'USD') => {
 };
 
 export const MarketplaceScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, isAuthenticated } = useAuth();
@@ -263,104 +266,104 @@ export const MarketplaceScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
   },
   header: {
     alignItems: 'center',
-    marginTop: theme.spacing.xl,
-    marginBottom: theme.spacing.xl,
+    marginTop: themeStatic.spacing.xl,
+    marginBottom: themeStatic.spacing.xl,
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    gap: themeStatic.spacing.md,
+    marginBottom: themeStatic.spacing.lg,
   },
   actionChip: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.card,
+    paddingVertical: themeStatic.spacing.md,
+    borderRadius: themeStatic.borderRadius.lg,
+    backgroundColor: t.colors.card,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: t.colors.border,
     alignItems: 'center',
   },
   searchInput: {
     width: '100%',
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.background + 'CC',
+    borderRadius: themeStatic.borderRadius.lg,
+    backgroundColor: t.colors.background + 'CC',
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    color: theme.colors.foreground,
-    marginBottom: theme.spacing.lg,
+    borderColor: t.colors.border,
+    paddingHorizontal: themeStatic.spacing.lg,
+    paddingVertical: themeStatic.spacing.md,
+    color: t.colors.foreground,
+    marginBottom: themeStatic.spacing.lg,
   },
   categoryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.xl,
+    gap: themeStatic.spacing.sm,
+    marginBottom: themeStatic.spacing.xl,
   },
   categoryChip: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.muted,
+    paddingHorizontal: themeStatic.spacing.md,
+    paddingVertical: themeStatic.spacing.sm,
+    borderRadius: themeStatic.borderRadius.lg,
+    backgroundColor: t.colors.muted,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: t.colors.border,
   },
   categoryChipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+    backgroundColor: t.colors.primary,
+    borderColor: t.colors.primary,
   },
   listingsContainer: {
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   listingCard: {
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   listingHeader: {
-    paddingBottom: theme.spacing.sm,
+    paddingBottom: themeStatic.spacing.sm,
   },
   listingTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.xs,
+    gap: themeStatic.spacing.md,
+    marginBottom: themeStatic.spacing.xs,
   },
   listingTitle: {
     flex: 1,
-    marginRight: theme.spacing.md,
+    marginRight: themeStatic.spacing.md,
   },
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.sm,
+    gap: themeStatic.spacing.xs,
+    marginBottom: themeStatic.spacing.sm,
   },
   emptyState: {
     alignItems: 'center',
-    paddingTop: theme.spacing.xl * 2,
+    paddingTop: themeStatic.spacing.xl * 2,
   },
   emptyTitle: {
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   emptyDescription: {
     textAlign: 'center',
-    marginTop: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
+    marginTop: themeStatic.spacing.md,
+    paddingHorizontal: themeStatic.spacing.lg,
   },
 });

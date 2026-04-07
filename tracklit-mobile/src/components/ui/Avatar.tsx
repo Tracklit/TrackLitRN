@@ -10,7 +10,8 @@ import {
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from './Text';
-import theme from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 interface AvatarProps {
   src?: string;
@@ -36,8 +37,9 @@ export const Avatar: React.FC<AvatarProps> = ({
   style,
   imageStyle,
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const avatarSize = sizes[size];
-  
+
   const avatarStyle: StyleProp<ViewStyle> = [
     styles.avatar,
     { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 },
@@ -58,16 +60,15 @@ export const Avatar: React.FC<AvatarProps> = ({
       <View style={avatarStyle}>
         <Image
           source={{ uri: src }}
-          style={[styles.image, imageStyle, { borderRadius: avatarSize / 2 }]}
+          style={[staticStyles.image, imageStyle, { borderRadius: avatarSize / 2 }]}
           accessibilityLabel={alt}
         />
       </View>
     );
   }
 
-  // Fallback with initials
   const initials = fallback || alt?.substring(0, 2)?.toUpperCase() || null;
-  
+
   return (
     <View style={[avatarStyle, styles.fallback]}>
       {initials ? (
@@ -85,17 +86,20 @@ export const Avatar: React.FC<AvatarProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   avatar: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.muted,
+    backgroundColor: t.colors.muted,
   },
+  fallback: {
+    backgroundColor: t.colors.primary,
+  },
+});
+
+const staticStyles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-  },
-  fallback: {
-    backgroundColor: theme.colors.primary,
   },
 });

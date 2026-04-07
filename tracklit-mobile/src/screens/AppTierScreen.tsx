@@ -27,32 +27,22 @@ import {
   type SubscriptionTier,
 } from '@/constants/tierEntitlements';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  cardHighlight: '#1E2235',
-  orange: '#FF7A00',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.4)',
-  border: 'rgba(255,255,255,0.06)',
-  borderHighlight: '#FF7A00',
-  iconBg: 'rgba(255,255,255,0.05)',
-  green: '#22c55e',
-  gold: '#FBBF24',
-};
 
 const TIERS: SubscriptionTier[] = ['free', 'pro', 'elite'];
 
 const TierIcon: React.FC<{ tier: SubscriptionTier; size?: number }> = ({ tier, size = 20 }) => {
-  if (tier === 'elite') return <Crown size={size} color={C.gold} weight="fill" />;
-  if (tier === 'pro') return <Star size={size} color={C.orange} weight="fill" />;
-  return <CheckCircle size={size} color={C.textMuted} weight="fill" />;
+  const { styles, theme } = useThemedStyles(createStyles);
+  if (tier === 'elite') return <Crown size={size} color={theme.colors.deepGold} weight="fill" />;
+  if (tier === 'pro') return <Star size={size} color={theme.colors.brandOrange} weight="fill" />;
+  return <CheckCircle size={size} color={theme.colors.textMuted} weight="fill" />;
 };
 
 export const AppTierScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user } = useAuth();
@@ -67,7 +57,7 @@ export const AppTierScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
+          <CaretLeft size={18} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>App Plan</Text>
         <View style={{ flex: 1 }} />
@@ -130,7 +120,7 @@ export const AppTierScreen: React.FC = () => {
                   <View key={label} style={styles.entitlementRow}>
                     <CheckCircle
                       size={13}
-                      color={tier === 'elite' ? C.gold : tier === 'pro' ? C.orange : C.green}
+                      color={tier === 'elite' ? theme.colors.deepGold : tier === 'pro' ? theme.colors.brandOrange : theme.colors.success}
                       weight="fill"
                     />
                     <Text style={styles.entitlementText}>{label}</Text>
@@ -174,8 +164,8 @@ export const AppTierScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -183,20 +173,20 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
   content: {
@@ -205,12 +195,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 13,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 4,
   },
   tierCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     padding: 18,
     gap: 14,
@@ -218,8 +208,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   tierCardActive: {
-    borderColor: C.orange,
-    backgroundColor: C.cardHighlight,
+    borderColor: t.colors.brandOrange,
+    backgroundColor: t.colors.cardSolid,
   },
   tierHeader: {
     flexDirection: 'row',
@@ -234,16 +224,16 @@ const styles = StyleSheet.create({
   tierName: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   tierNamePro: {
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   tierNameElite: {
-    color: C.gold,
+    color: t.colors.deepGold,
   },
   currentBadge: {
-    backgroundColor: 'rgba(255,122,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 6,
@@ -253,7 +243,7 @@ const styles = StyleSheet.create({
   currentBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
     letterSpacing: 0.3,
   },
   priceRow: {
@@ -263,11 +253,11 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: 14,
     fontWeight: '700',
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
   },
   priceSep: {
     fontSize: 14,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   entitlementList: {
     gap: 8,
@@ -279,17 +269,17 @@ const styles = StyleSheet.create({
   },
   entitlementText: {
     fontSize: 13,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     flex: 1,
   },
   upgradeButton: {
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
   },
   upgradeButtonElite: {
-    backgroundColor: C.gold,
+    backgroundColor: t.colors.deepGold,
   },
   upgradeButtonText: {
     fontSize: 13,
@@ -297,7 +287,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   manageButton: {
-    backgroundColor: 'rgba(255,122,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
@@ -307,11 +297,11 @@ const styles = StyleSheet.create({
   manageButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   disclaimer: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 16,

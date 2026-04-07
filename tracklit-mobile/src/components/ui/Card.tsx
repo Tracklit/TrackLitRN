@@ -9,7 +9,9 @@ import {
   TextStyle,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
-import theme from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
+import { spacing, borderRadius } from '@/utils/theme';
 import { Text } from './Text';
 
 interface CardProps extends TouchableOpacityProps {
@@ -46,15 +48,17 @@ interface CardDescriptionProps {
   style?: StyleProp<TextStyle>;
 }
 
-export const Card: React.FC<CardProps> = ({ 
-  children, 
-  style, 
-  contentStyle, 
+export const Card: React.FC<CardProps> = ({
+  children,
+  style,
+  contentStyle,
   gradient = false,
   opacity = 0.8,
   onPress,
-  ...props 
+  ...props
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
+
   const cardStyle = [
     styles.card,
     gradient && styles.gradientCard,
@@ -68,14 +72,12 @@ export const Card: React.FC<CardProps> = ({
   );
 
   if (gradient) {
+    const gradientDef = theme.gradients.cardGradient;
     const gradientContent = (
       <LinearGradient
-        colors={[
-          `rgba(37, 42, 52, ${opacity})`,
-          `rgba(26, 32, 44, ${opacity - 0.1})`
-        ]}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}
+        colors={gradientDef.colors}
+        start={gradientDef.start}
+        end={gradientDef.end}
         style={styles.gradientBackground}
       >
         {content}
@@ -112,45 +114,54 @@ export const Card: React.FC<CardProps> = ({
   );
 };
 
-export const CardHeader: React.FC<CardHeaderProps> = ({ children, style }) => (
-  <View style={[styles.cardHeader, style]}>
-    {children}
-  </View>
-);
+export const CardHeader: React.FC<CardHeaderProps> = ({ children, style }) => {
+  const { styles } = useThemedStyles(createStyles);
+  return (
+    <View style={[styles.cardHeader, style]}>
+      {children}
+    </View>
+  );
+};
 
-export const CardContent: React.FC<CardContentProps> = ({ children, style }) => (
-  <View style={[styles.cardContentInner, style]}>
-    {children}
-  </View>
-);
+export const CardContent: React.FC<CardContentProps> = ({ children, style }) => {
+  const { styles } = useThemedStyles(createStyles);
+  return (
+    <View style={[styles.cardContentInner, style]}>
+      {children}
+    </View>
+  );
+};
 
-export const CardFooter: React.FC<CardFooterProps> = ({ children, style }) => (
-  <View style={[styles.cardFooter, style]}>
-    {children}
-  </View>
-);
+export const CardFooter: React.FC<CardFooterProps> = ({ children, style }) => {
+  const { styles } = useThemedStyles(createStyles);
+  return (
+    <View style={[styles.cardFooter, style]}>
+      {children}
+    </View>
+  );
+};
 
 export const CardTitle: React.FC<CardTitleProps> = ({ children, style }) => (
-  <Text variant="h4" weight="semiBold" style={[styles.cardTitle, style]}>
+  <Text variant="h4" weight="semiBold" style={[staticStyles.cardTitle, style]}>
     {children}
   </Text>
 );
 
 export const CardDescription: React.FC<CardDescriptionProps> = ({ children, style }) => (
-  <Text variant="body" color="secondary" style={[styles.cardDescription, style]}>
+  <Text variant="body" color="secondary" style={[staticStyles.cardDescription, style]}>
     {children}
   </Text>
 );
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   card: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.md,
+    backgroundColor: t.colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    ...t.shadows.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: t.colors.border,
   },
   gradientCard: {
     backgroundColor: 'transparent',
@@ -159,27 +170,30 @@ const styles = StyleSheet.create({
   },
   gradientBackground: {
     flex: 1,
-    padding: theme.spacing.lg,
+    padding: spacing.lg,
   },
   cardContent: {
     flex: 1,
   },
   cardHeader: {
-    marginBottom: theme.spacing.md,
+    marginBottom: spacing.md,
   },
   cardContentInner: {
     flex: 1,
   },
   cardFooter: {
-    marginTop: theme.spacing.md,
-    paddingTop: theme.spacing.md,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    borderTopColor: t.colors.border,
   },
+});
+
+const staticStyles = StyleSheet.create({
   cardTitle: {
-    marginBottom: theme.spacing.sm,
+    marginBottom: spacing.sm,
   },
   cardDescription: {
-    marginBottom: theme.spacing.md,
+    marginBottom: spacing.md,
   },
 });

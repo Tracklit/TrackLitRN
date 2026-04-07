@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Text } from './Text';
-import theme from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
+import { typography, spacing, borderRadius } from '@/utils/theme';
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -16,6 +18,8 @@ export const Badge: React.FC<BadgeProps> = ({
   size = 'md',
   style,
 }) => {
+  const { styles } = useThemedStyles(createStyles);
+
   const badgeStyle = [
     styles.base,
     styles[size],
@@ -25,8 +29,8 @@ export const Badge: React.FC<BadgeProps> = ({
 
   return (
     <View style={badgeStyle}>
-      <Text 
-        variant="small" 
+      <Text
+        variant="small"
         weight="medium"
         style={[styles.baseText, styles[`${variant}Text`]]}
       >
@@ -36,70 +40,67 @@ export const Badge: React.FC<BadgeProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   base: {
-    borderRadius: theme.borderRadius.md,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start',
   },
-  
-  // Sizes
+
   sm: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   md: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   lg: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
-  
-  // Variants
+
   default: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: t.colors.primary,
   },
   secondary: {
-    backgroundColor: theme.colors.secondary,
+    backgroundColor: t.colors.secondary,
   },
   destructive: {
-    backgroundColor: theme.colors.destructive,
+    backgroundColor: t.colors.destructive,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: t.colors.border,
   },
   success: {
-    backgroundColor: theme.colors.success,
+    backgroundColor: t.colors.success,
   },
   warning: {
-    backgroundColor: theme.colors.warning,
+    backgroundColor: t.colors.warning,
   },
-  
-  // Text styles
+
   baseText: {
-    fontSize: theme.typography.sizes.xs,
+    fontSize: typography.sizes.xs,
   },
   defaultText: {
-    color: theme.colors.primaryForeground,
+    color: t.colors.primaryForeground,
   },
   secondaryText: {
-    color: theme.colors.secondaryForeground,
+    color: t.colors.secondaryForeground,
   },
   destructiveText: {
-    color: theme.colors.destructiveForeground,
+    color: t.colors.destructiveForeground,
   },
   outlineText: {
-    color: theme.colors.foreground,
+    color: t.colors.foreground,
   },
   successText: {
-    color: theme.colors.destructiveForeground,
+    color: t.colors.destructiveForeground,
   },
   warningText: {
-    color: theme.colors.primaryForeground,
+    color: t.colors.primaryForeground,
   },
 });

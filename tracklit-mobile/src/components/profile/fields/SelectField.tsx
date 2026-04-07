@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View, FlatList } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
-import theme from '@/utils/theme';
+import { spacing, borderRadius } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 interface Option {
   label: string;
@@ -26,6 +28,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const selected = options.find((o) => o.value === value);
+  const { styles } = useThemedStyles(createStyles);
 
   return (
     <View style={styles.container}>
@@ -83,49 +86,48 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
-    gap: theme.spacing.xs,
+    gap: spacing.xs,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    backgroundColor: t.colors.card,
   },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.lg,
+    padding: spacing.lg,
   },
   modal: {
     width: '100%',
     maxHeight: '70%',
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+    backgroundColor: t.colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    gap: theme.spacing.md,
+    borderColor: t.colors.border,
+    gap: spacing.md,
   },
   modalHeader: {
-    marginBottom: theme.spacing.xs,
+    marginBottom: spacing.xs,
   },
   option: {
-    paddingVertical: theme.spacing.md,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   separator: {
     height: 1,
-    backgroundColor: theme.colors.border,
+    backgroundColor: t.colors.border,
   },
   closeButton: {
-    marginTop: theme.spacing.sm,
+    marginTop: spacing.sm,
   },
 });
-

@@ -4,7 +4,8 @@ import { List } from 'phosphor-react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import { spacing } from '@/utils/theme';
 
 type Props = {
   title: string;
@@ -15,6 +16,7 @@ type Props = {
 
 export const ScreenHeader: React.FC<Props> = ({ title, subtitle, right, containerStyle }) => {
   const navigation = useNavigation();
+  const { theme } = useTheme();
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -41,7 +43,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: spacing.lg,
   },
   sideButton: {
     width: 44,
@@ -56,18 +58,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: spacing.sm,
   },
   center: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
   },
   title: {
     textAlign: 'center',
   },
   subtitle: {
-    marginTop: theme.spacing.xs,
+    marginTop: spacing.xs,
     textAlign: 'center',
   },
 });

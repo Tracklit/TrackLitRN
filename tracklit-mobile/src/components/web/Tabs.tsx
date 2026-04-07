@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
+import { spacing, borderRadius } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 interface TabsContextValue {
   value: string;
@@ -40,9 +42,10 @@ export const WebTabs: React.FC<TabsProps> = ({ defaultValue, value, onValueChang
   );
 };
 
-export const WebTabsList: React.FC<{ children: React.ReactNode; style?: ViewStyle }> = ({ children, style }) => (
-  <View style={[styles.list, style]}>{children}</View>
-);
+export const WebTabsList: React.FC<{ children: React.ReactNode; style?: ViewStyle }> = ({ children, style }) => {
+  const { styles } = useThemedStyles(createStyles);
+  return <View style={[styles.list, style]}>{children}</View>;
+};
 
 interface TriggerProps {
   value: string;
@@ -53,6 +56,7 @@ interface TriggerProps {
 export const WebTabsTrigger: React.FC<TriggerProps> = ({ value, children, style }) => {
   const ctx = useTabs();
   const active = ctx.value === value;
+  const { styles } = useThemedStyles(createStyles);
   return (
     <Pressable
       onPress={() => ctx.setValue(value)}
@@ -78,7 +82,7 @@ interface ContentProps {
 export const WebTabsContent: React.FC<ContentProps> = ({ value, children, style }) => {
   const ctx = useTabs();
   if (ctx.value !== value) return null;
-  return <View style={[style, { marginTop: theme.spacing.md }]}>{children}</View>;
+  return <View style={[style, { marginTop: spacing.md }]}>{children}</View>;
 };
 
 const useTabs = () => {
@@ -87,26 +91,25 @@ const useTabs = () => {
   return ctx;
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   list: {
     flexDirection: 'row',
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: '#0f172a',
+    borderRadius: borderRadius.lg,
+    backgroundColor: t.colors.webChatBackground,
     borderWidth: 1,
-    borderColor: '#1f2937',
-    padding: theme.spacing.xs,
-    gap: theme.spacing.xs,
+    borderColor: t.colors.darkGray,
+    padding: spacing.xs,
+    gap: spacing.xs,
   },
   trigger: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
   },
   triggerActive: {
-    backgroundColor: '#111827',
+    backgroundColor: t.colors.darkNavy,
     borderWidth: 1,
-    borderColor: '#1f2937',
+    borderColor: t.colors.darkGray,
   },
 });
-

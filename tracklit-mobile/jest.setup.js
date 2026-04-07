@@ -224,6 +224,42 @@ jest.mock('lucide-react-native', () => new Proxy({}, {
   },
 }));
 
+// ──────────────────────── Theme Context ────────────────────────
+const {
+  darkColors,
+  darkGradients,
+  darkShadows,
+} = require('./src/utils/theme/colors');
+
+const mockThemeValues = {
+  colors: darkColors,
+  gradients: darkGradients,
+  shadows: darkShadows,
+  gradient: {
+    background: darkGradients.background.colors,
+    locations: darkGradients.background.locations,
+  },
+};
+
+jest.mock('@/contexts/ThemeContext', () => ({
+  useTheme: () => ({
+    mode: 'dark',
+    resolvedTheme: 'dark',
+    isDark: true,
+    theme: mockThemeValues,
+    setMode: jest.fn(),
+  }),
+  ThemeProvider: ({ children }) => children,
+}));
+
+jest.mock('@/hooks/useThemedStyles', () => ({
+  useThemedStyles: (createStyles) => ({
+    styles: createStyles(mockThemeValues),
+    theme: mockThemeValues,
+    isDark: true,
+  }),
+}));
+
 // ──────────────────────── Silence logs in tests ────────────────────────
 global.console.log = jest.fn();
 global.console.debug = jest.fn();

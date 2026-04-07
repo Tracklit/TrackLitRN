@@ -22,15 +22,10 @@ import {
 import { LinearGradient } from '@/components/LinearGradient';
 
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
 
-const C = {
-  orange: '#FF7A00',
-  card: '#1C1F2B',
-  textMuted: 'rgba(255,255,255,0.5)',
-  border: 'rgba(255,255,255,0.06)',
-};
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface EarnMethod {
   icon: React.ReactNode;
   title: string;
@@ -38,39 +33,39 @@ interface EarnMethod {
   amount: string;
 }
 
-const EARN_METHODS: EarnMethod[] = [
+const getEarnMethods = (brandOrange: string): EarnMethod[] => [
   {
-    icon: <Trophy size={18} color={C.orange} weight="fill" />,
+    icon: <Trophy size={18} color={brandOrange} weight="fill" />,
     title: 'Compete in Meets',
     description: 'Earn spikes every time you race or compete in a track event.',
     amount: '20–100',
   },
   {
-    icon: <Timer size={18} color={C.orange} weight="fill" />,
+    icon: <Timer size={18} color={brandOrange} weight="fill" />,
     title: 'Complete Training',
     description: 'Log and finish a practice session to earn spikes.',
     amount: '10–30',
   },
   {
-    icon: <CalendarCheck size={18} color={C.orange} weight="fill" />,
+    icon: <CalendarCheck size={18} color={brandOrange} weight="fill" />,
     title: 'Daily Login',
     description: 'Open the app each day. Consecutive days earn bonus spikes.',
     amount: '5–15',
   },
   {
-    icon: <UsersThree size={18} color={C.orange} weight="fill" />,
+    icon: <UsersThree size={18} color={brandOrange} weight="fill" />,
     title: 'Group Participation',
     description: 'Engage with your training groups and community.',
     amount: '5',
   },
   {
-    icon: <Target size={18} color={C.orange} weight="fill" />,
+    icon: <Target size={18} color={brandOrange} weight="fill" />,
     title: 'Personal Records',
     description: 'Set a new PR in any event to earn a big spike bonus.',
     amount: '50',
   },
   {
-    icon: <Medal size={18} color={C.orange} weight="fill" />,
+    icon: <Medal size={18} color={brandOrange} weight="fill" />,
     title: 'Achievements',
     description: 'Unlock milestones and badges as you progress.',
     amount: 'Varies',
@@ -84,9 +79,9 @@ interface Tier {
   perks: string[];
 }
 
-const TIERS: Tier[] = [
+const getTiers = (brandOrange: string): Tier[] => [
   {
-    icon: <Crown size={20} color={C.orange} weight="fill" />,
+    icon: <Crown size={20} color={brandOrange} weight="fill" />,
     name: 'Pro Tier',
     cost: '1,000 Spikes',
     perks: [
@@ -97,7 +92,7 @@ const TIERS: Tier[] = [
     ],
   },
   {
-    icon: <Star size={20} color={C.orange} weight="fill" />,
+    icon: <Star size={20} color={brandOrange} weight="fill" />,
     name: 'Star Tier',
     cost: '2,500 Spikes',
     perks: [
@@ -110,6 +105,7 @@ const TIERS: Tier[] = [
 ];
 
 export const SpikesInfoScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
@@ -136,7 +132,7 @@ export const SpikesInfoScreen: React.FC = () => {
       >
         <View style={styles.introSection}>
           <View style={styles.introIconWrap}>
-            <PushPin size={24} color={C.orange} weight="fill" />
+            <PushPin size={24} color={theme.colors.brandOrange} weight="fill" />
           </View>
           <Text style={styles.introText}>
             Spikes are Tracklit's in-app currency. You earn them automatically
@@ -147,7 +143,7 @@ export const SpikesInfoScreen: React.FC = () => {
 
         <Text style={styles.sectionTitle}>How to Earn</Text>
         <View style={styles.earnList}>
-          {EARN_METHODS.map((method, i) => (
+          {getEarnMethods(theme.colors.brandOrange).map((method, i) => (
             <View key={i} style={styles.earnRow}>
               <View style={styles.earnIcon}>{method.icon}</View>
               <View style={styles.earnContent}>
@@ -162,7 +158,7 @@ export const SpikesInfoScreen: React.FC = () => {
         </View>
 
         <Text style={styles.sectionTitle}>Unlock Tiers</Text>
-        {TIERS.map((tier, i) => (
+        {getTiers(theme.colors.brandOrange).map((tier, i) => (
           <View key={i} style={styles.tierCard}>
             <View style={styles.tierHeader}>
               {tier.icon}
@@ -186,7 +182,7 @@ export const SpikesInfoScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -200,14 +196,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   scroll: {
     paddingHorizontal: 20,
     gap: 20,
   },
   introSection: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
@@ -218,7 +214,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
@@ -227,16 +223,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
-    color: 'rgba(255,255,255,0.7)',
+    color: t.colors.textSecondary,
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     marginTop: 4,
   },
   earnList: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -246,13 +242,13 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   earnIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,122,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -263,15 +259,15 @@ const styles = StyleSheet.create({
   earnTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   earnDesc: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 15,
   },
   earnBadge: {
-    backgroundColor: 'rgba(255,122,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -279,10 +275,10 @@ const styles = StyleSheet.create({
   earnAmount: {
     fontSize: 11,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   tierCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 16,
     gap: 12,
@@ -295,13 +291,13 @@ const styles = StyleSheet.create({
   tierName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     flex: 1,
   },
   tierCost: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   tierPerks: {
     gap: 8,
@@ -316,11 +312,11 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   perkText: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
+    color: t.colors.textSecondary,
     lineHeight: 17,
   },
 });

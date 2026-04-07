@@ -6,7 +6,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import theme from '@/utils/theme';
+import { spacing } from '@/utils/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 interface WebScreenProps {
@@ -19,22 +20,24 @@ interface WebScreenProps {
 
 export const WebScreen: React.FC<WebScreenProps> = ({
   children,
-  backgroundColor = '#0b1220',
+  backgroundColor,
   scrollable = true,
   contentStyle,
   style,
 }) => {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const bg = backgroundColor ?? theme.colors.webChatBackground;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>
       {scrollable ? (
         <KeyboardAwareScreenScrollView
           style={[styles.container, style]}
           contentContainerStyle={[
             styles.content,
             contentStyle,
-            { paddingBottom: insets.bottom + theme.spacing.xl },
+            { paddingBottom: insets.bottom + spacing.xl },
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -53,7 +56,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   container: { flex: 1 },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.lg,
   },
 });

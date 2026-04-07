@@ -25,21 +25,8 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 import { getQueryParam } from '@/utils/url';
-
-const COLORS = {
-  bg: '#0E0F14',
-  surface: '#161823',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  tabBg: 'rgba(255,255,255,0.04)',
-  tabActive: 'rgba(255,122,0,0.15)',
-  divider: 'rgba(255,255,255,0.06)',
-};
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 export const AuthScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -52,6 +39,7 @@ export const AuthScreen: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const insets = useSafeAreaInsets();
   const { loginWithToken } = useAuth();
+  const { styles, theme } = useThemedStyles(createStyles);
 
   useEffect(() => {
     const handleUrl = async (url: string | null) => {
@@ -198,7 +186,7 @@ export const AuthScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: COLORS.bg }]}>
+    <View style={[styles.root, { backgroundColor: theme.colors.backgroundSolid }]}>
       <KeyboardAwareScreenScrollView
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
@@ -276,7 +264,7 @@ export const AuthScreen: React.FC = () => {
               disabled={isGoogleLoading}
               activeOpacity={0.7}
             >
-              <GoogleLogo size={18} color={COLORS.textPrimary} weight="bold" />
+              <GoogleLogo size={18} color={theme.colors.textPrimary} weight="bold" />
               <Text style={styles.socialBtnText}>
                 {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
               </Text>
@@ -289,7 +277,7 @@ export const AuthScreen: React.FC = () => {
                 disabled={isAppleLoading}
                 activeOpacity={0.7}
               >
-                <AppleLogo size={18} color={COLORS.textPrimary} weight="fill" />
+                <AppleLogo size={18} color={theme.colors.textPrimary} weight="fill" />
                 <Text style={styles.socialBtnText}>
                   {isAppleLoading ? 'Connecting...' : 'Continue with Apple'}
                 </Text>
@@ -302,7 +290,7 @@ export const AuthScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   root: {
     flex: 1,
   },
@@ -323,22 +311,22 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: -0.5,
   },
   welcomeSubtitle: {
     fontSize: 15,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     marginTop: 8,
   },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: COLORS.tabBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 14,
     padding: 4,
     marginBottom: 24,
     borderWidth: 0.5,
-    borderColor: COLORS.border,
+    borderColor: t.colors.overlayLight,
   },
   tab: {
     flex: 1,
@@ -347,17 +335,17 @@ const styles = StyleSheet.create({
     borderRadius: 11,
   },
   tabActive: {
-    backgroundColor: COLORS.tabActive,
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.25)',
   },
   tabText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
   },
   tabTextActive: {
-    color: COLORS.orange,
+    color: t.colors.brandOrange,
   },
   formArea: {
     marginBottom: 8,
@@ -371,11 +359,11 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 0.5,
-    backgroundColor: COLORS.divider,
+    backgroundColor: t.colors.overlaySubtle,
   },
   dividerText: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     fontWeight: '500',
   },
   socialBtn: {
@@ -385,9 +373,9 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
     borderWidth: 0.5,
-    borderColor: COLORS.border,
+    borderColor: t.colors.overlayLight,
     marginBottom: 12,
   },
   appleSocialBtn: {
@@ -396,6 +384,6 @@ const styles = StyleSheet.create({
   socialBtnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
 });

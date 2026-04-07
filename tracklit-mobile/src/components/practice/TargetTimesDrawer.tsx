@@ -20,36 +20,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { X, Timer, Target, MapPin, Gauge, CaretDown, CaretRight } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DRAWER_WIDTH = Math.min(SCREEN_WIDTH * 0.85, 420);
 const ANIM_DURATION = 280;
 const easeOut = Easing.bezier(0.33, 1, 0.68, 1);
 
-const COLORS = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  cardBorder: 'rgba(255,255,255,0.06)',
-  accent: '#FF7A00',
-  accentMuted: 'rgba(255,122,0,0.15)',
-  accentBorder: 'rgba(255,122,0,0.3)',
-  surface: 'rgba(255,255,255,0.04)',
-  surfaceBorder: 'rgba(255,255,255,0.08)',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.6)',
-  textMuted: 'rgba(255,255,255,0.35)',
-  inputBg: 'rgba(255,255,255,0.05)',
-  inputBorder: 'rgba(255,255,255,0.1)',
-  inputFocusBorder: 'rgba(255,122,0,0.4)',
-  tableHeaderBg: 'rgba(255,122,0,0.08)',
-  tableRowEven: 'rgba(28,31,43,0.9)',
-  tableRowOdd: 'rgba(14,15,20,0.9)',
-  drawerBorder: 'rgba(255,122,0,0.12)',
-  switchTrack: 'rgba(255,255,255,0.12)',
-  switchActive: '#FF7A00',
-};
 
 const STORAGE_KEYS = {
   adjustForTrackType: 'tracklit_adjustForTrackType',
@@ -73,6 +52,7 @@ interface TargetTimesDrawerProps {
 type OptionsSubPage = 'trackType' | 'timingMethod' | 'goalTimes';
 
 export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, onClose }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const [adjustForTrackType, setAdjustForTrackType] = useState(false);
   const [currentTrackType, setCurrentTrackType] = useState<TrackType>('outdoor');
@@ -222,11 +202,11 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
           {/* Compact header */}
           <View style={styles.drawerHeader}>
             <View style={styles.drawerTitleRow}>
-              <Timer size={16} color={COLORS.accent} weight="fill" />
+              <Timer size={16} color={theme.colors.brandOrange} weight="fill" />
               <Text style={styles.drawerTitle}>Target Times</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <X size={13} color={COLORS.textSecondary} weight="bold" />
+              <X size={13} color={theme.colors.textSecondary} weight="bold" />
             </TouchableOpacity>
           </View>
 
@@ -244,12 +224,12 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                 onPress={() => setOptionsExpanded((v) => !v)}
                 activeOpacity={0.7}
               >
-                <Gauge size={13} color={COLORS.accent} weight="fill" />
+                <Gauge size={13} color={theme.colors.brandOrange} weight="fill" />
                 <Text style={styles.sectionTitle}>Options</Text>
                 <View style={styles.sectionCaret}>
                   {optionsExpanded
-                    ? <CaretDown size={12} color={COLORS.textMuted} weight="bold" />
-                    : <CaretRight size={12} color={COLORS.textMuted} weight="bold" />
+                    ? <CaretDown size={12} color={theme.colors.textMuted} weight="bold" />
+                    : <CaretRight size={12} color={theme.colors.textMuted} weight="bold" />
                   }
                 </View>
               </TouchableOpacity>
@@ -259,9 +239,9 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                   {/* Sub-page tab bar */}
                   <View style={styles.subTabBar}>
                     {([
-                      { key: 'trackType', label: 'Track', icon: <MapPin size={11} color={optionsSubPage === 'trackType' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
-                      { key: 'timingMethod', label: 'Timing', icon: <Gauge size={11} color={optionsSubPage === 'timingMethod' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
-                      { key: 'goalTimes', label: 'Race Goals', icon: <Target size={11} color={optionsSubPage === 'goalTimes' ? COLORS.accent : COLORS.textMuted} weight="fill" /> },
+                      { key: 'trackType', label: 'Track', icon: <MapPin size={11} color={optionsSubPage === 'trackType' ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" /> },
+                      { key: 'timingMethod', label: 'Timing', icon: <Gauge size={11} color={optionsSubPage === 'timingMethod' ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" /> },
+                      { key: 'goalTimes', label: 'Race Goals', icon: <Target size={11} color={optionsSubPage === 'goalTimes' ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" /> },
                     ] as { key: OptionsSubPage; label: string; icon: React.ReactNode }[]).map((tab) => (
                       <TouchableOpacity
                         key={tab.key}
@@ -352,7 +332,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
                               style={styles.input}
                               keyboardType="numeric"
                               value={item.value}
-                              placeholderTextColor={COLORS.textMuted}
+                              placeholderTextColor={theme.colors.textMuted}
                               onChangeText={(text) => {
                                 const normalized = text.replace(',', '.');
                                 item.setter(normalized);
@@ -372,7 +352,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
             {/* Speed Table — always visible, table scrolls from right */}
             <View style={styles.section}>
               <View style={styles.sectionHeaderStatic}>
-                <Timer size={13} color={COLORS.accent} weight="fill" />
+                <Timer size={13} color={theme.colors.brandOrange} weight="fill" />
                 <Text style={styles.sectionTitle}>
                   Speed Table{'  '}
                   <Text style={styles.sectionSubtitle}>Change under options</Text>
@@ -445,7 +425,7 @@ export const TargetTimesDrawer: React.FC<TargetTimesDrawerProps> = ({ visible, o
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
@@ -463,11 +443,11 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderLeftWidth: 1,
-    borderLeftColor: COLORS.drawerBorder,
+    borderLeftColor: t.colors.border,
   },
   drawerContent: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: t.colors.backgroundSolid,
     paddingHorizontal: 16,
   },
   drawerHeader: {
@@ -477,7 +457,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceBorder,
+    borderBottomColor: t.colors.border,
   },
   drawerTitleRow: {
     flexDirection: 'row',
@@ -485,7 +465,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   drawerTitle: {
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.2,
@@ -494,9 +474,9 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: COLORS.surface,
+    backgroundColor: t.colors.darkGray,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    borderColor: t.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -521,7 +501,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   sectionTitle: {
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -529,7 +509,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionSubtitle: {
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     fontSize: 10,
     fontWeight: '500',
     marginTop: 1,
@@ -543,10 +523,10 @@ const styles = StyleSheet.create({
   },
   subTabBar: {
     flexDirection: 'row',
-    backgroundColor: COLORS.surface,
+    backgroundColor: t.colors.darkGray,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    borderColor: t.colors.border,
     padding: 3,
     gap: 2,
   },
@@ -560,17 +540,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   subTabActive: {
-    backgroundColor: COLORS.accentMuted,
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 1,
-    borderColor: COLORS.accentBorder,
+    borderColor: t.colors.brandOrange + '40',
   },
   subTabText: {
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     fontSize: 11,
     fontWeight: '600',
   },
   subTabTextActive: {
-    color: COLORS.accent,
+    color: t.colors.brandOrange,
   },
   subPageContent: {
     gap: 8,
@@ -584,39 +564,39 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     alignItems: 'center',
     borderRadius: 10,
-    backgroundColor: COLORS.surface,
+    backgroundColor: t.colors.darkGray,
     borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    borderColor: t.colors.border,
   },
   toggleButtonActive: {
-    backgroundColor: COLORS.accentMuted,
-    borderColor: COLORS.accentBorder,
+    backgroundColor: t.colors.brandOrangeLight,
+    borderColor: t.colors.brandOrange + '40',
   },
   toggleText: {
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
     fontSize: 12,
     fontWeight: '600',
   },
   toggleTextActive: {
-    color: COLORS.accent,
+    color: t.colors.brandOrange,
   },
   inlineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: t.colors.border,
   },
   inlineLabel: {
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     fontSize: 12,
     fontWeight: '600',
   },
   inlineHint: {
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     fontSize: 10,
     marginTop: 2,
   },
@@ -624,11 +604,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 22,
     borderRadius: 11,
-    backgroundColor: COLORS.switchTrack,
+    backgroundColor: t.colors.overlayMedium,
     padding: 2,
   },
   switchActive: {
-    backgroundColor: COLORS.switchActive,
+    backgroundColor: t.colors.brandOrange,
   },
   switchKnob: {
     width: 18,
@@ -641,11 +621,11 @@ const styles = StyleSheet.create({
     transform: [{ translateX: 16 }],
   },
   inputGroup: {
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: t.colors.border,
   },
   inputRow: {
     flexDirection: 'row',
@@ -655,28 +635,28 @@ const styles = StyleSheet.create({
   },
   inputRowBorder: {
     borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceBorder,
+    borderTopColor: t.colors.border,
   },
   inputLabel: {
     width: 52,
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
     fontSize: 12,
     fontWeight: '600',
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: COLORS.inputBorder,
+    borderColor: t.colors.border,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     fontSize: 13,
     fontWeight: '500',
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: t.colors.overlaySubtle,
   },
   inputUnit: {
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     fontSize: 11,
     fontWeight: '500',
     marginLeft: 7,
@@ -684,17 +664,17 @@ const styles = StyleSheet.create({
   },
   tableContainer: {
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: t.colors.border,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
   },
   tableEmpty: {
     padding: 20,
     alignItems: 'center',
   },
   tableEmptyText: {
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     fontSize: 12,
   },
   tableWrapper: {
@@ -703,7 +683,7 @@ const styles = StyleSheet.create({
   tableFrozenColumn: {
     width: 52,
     borderRightWidth: 1,
-    borderRightColor: COLORS.surfaceBorder,
+    borderRightColor: t.colors.border,
   },
   tableScrollable: {
     flexDirection: 'row',
@@ -714,44 +694,44 @@ const styles = StyleSheet.create({
   tableHeaderCell: {
     paddingVertical: 7,
     alignItems: 'center',
-    backgroundColor: COLORS.tableHeaderBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceBorder,
+    borderBottomColor: t.colors.border,
   },
   tableHeaderText: {
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   tableHeaderAccent: {
-    color: COLORS.accent,
+    color: t.colors.brandOrange,
   },
   tableCell: {
     paddingVertical: 6,
     alignItems: 'center',
   },
   tableRowEven: {
-    backgroundColor: COLORS.tableRowEven,
+    backgroundColor: t.colors.overlaySubtle,
   },
   tableRowOdd: {
-    backgroundColor: COLORS.tableRowOdd,
+    backgroundColor: 'transparent',
   },
   tableCellDistText: {
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     fontSize: 11,
     fontWeight: '600',
   },
   tableCellText: {
-    color: COLORS.textSecondary,
+    color: t.colors.textSecondary,
     fontSize: 11,
   },
   tableCellAccent: {
-    color: COLORS.accent,
+    color: t.colors.brandOrange,
     fontWeight: '600',
   },
   footnote: {
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     fontSize: 10,
     textAlign: 'center',
     lineHeight: 15,

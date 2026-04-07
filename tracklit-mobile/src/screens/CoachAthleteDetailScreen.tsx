@@ -23,26 +23,13 @@ import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import type { RootStackParamList } from '@/navigation/types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'CoachAthleteDetail'>;
 
 const PAGE_SIZE = 12;
-
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  cardAlt: '#181B27',
-  orange: '#FF7A00',
-  border: 'rgba(255,255,255,0.07)',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.65)',
-  textMuted: 'rgba(255,255,255,0.38)',
-  green: '#22c55e',
-  lime: '#84cc16',
-  yellow: '#eab308',
-  red: '#ef4444',
-};
 
 interface MoodEntry {
   id: number;
@@ -69,18 +56,18 @@ type TimelineItem =
   | { kind: 'journal'; data: JournalEntry; sortDate: number };
 
 const getMoodColor = (rating: number): string => {
-  if (rating >= 8) return C.green;
-  if (rating >= 6) return C.lime;
-  if (rating >= 4) return C.yellow;
-  return C.red;
+  if (rating >= 8) return '#22c55e';
+  if (rating >= 6) return '#84cc16';
+  if (rating >= 4) return '#eab308';
+  return '#ef4444';
 };
 
 const getMoodEmoji = (rating: number): string => {
-  if (rating >= 9) return '😄';
-  if (rating >= 7) return '🙂';
-  if (rating >= 5) return '😐';
-  if (rating >= 3) return '😕';
-  return '😞';
+  if (rating >= 9) return '\uD83D\uDE04';
+  if (rating >= 7) return '\uD83D\uDE42';
+  if (rating >= 5) return '\uD83D\uDE10';
+  if (rating >= 3) return '\uD83D\uDE15';
+  return '\uD83D\uDE1E';
 };
 
 const formatDate = (dateStr: string): string => {
@@ -97,6 +84,7 @@ export const CoachAthleteDetailScreen: React.FC = () => {
   const route = useRoute<Route>();
   const { athleteId, athleteName, athleteUsername, athleteProfileImageUrl } = route.params;
   const { isAuthenticated } = useAuth();
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
@@ -156,7 +144,7 @@ export const CoachAthleteDetailScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <CaretLeft size={22} color={C.textPrimary} weight="bold" />
+          <CaretLeft size={22} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {athleteName || `@${athleteUsername}`}
@@ -168,7 +156,6 @@ export const CoachAthleteDetailScreen: React.FC = () => {
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile card with avg mood */}
         <View style={styles.profileCard}>
           <Avatar
             size="md"
@@ -193,7 +180,7 @@ export const CoachAthleteDetailScreen: React.FC = () => {
         <Text style={styles.doubleTapHint}>Double-tap any card to acknowledge</Text>
 
         {isLoading ? (
-          <ActivityIndicator color={C.orange} style={{ marginTop: 32 }} />
+          <ActivityIndicator color={theme.colors.brandOrange} style={{ marginTop: 32 }} />
         ) : timeline.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No activity recorded yet.</Text>
@@ -229,7 +216,7 @@ export const CoachAthleteDetailScreen: React.FC = () => {
                               <View style={styles.itemHeaderRight}>
                                 <ThumbsUp
                                   size={13}
-                                  color={liked ? C.orange : C.textMuted}
+                                  color={liked ? theme.colors.brandOrange : theme.colors.textMuted}
                                   weight={liked ? 'fill' : 'regular'}
                                 />
                                 <Text style={styles.itemDate}>{formatDate(m.date || m.createdAt)}</Text>
@@ -263,13 +250,13 @@ export const CoachAthleteDetailScreen: React.FC = () => {
                     onPress={() => handleTap(key)}
                   >
                     <View style={styles.timelineLeft}>
-                      <View style={[styles.timelineDot, { backgroundColor: C.orange }]} />
+                      <View style={[styles.timelineDot, { backgroundColor: theme.colors.brandOrange }]} />
                       {idx < visibleTimeline.length - 1 && <View style={styles.timelineLine} />}
                     </View>
                     <View style={[styles.itemCard, styles.journalItemCard]}>
                       <View style={styles.itemCardRow}>
-                        <View style={[styles.itemIcon, { backgroundColor: 'rgba(255,122,0,0.12)' }]}>
-                          <NotePencil size={16} color={C.orange} weight="fill" />
+                        <View style={[styles.itemIcon, { backgroundColor: theme.colors.brandOrangeLight }]}>
+                          <NotePencil size={16} color={theme.colors.brandOrange} weight="fill" />
                         </View>
                         <View style={{ flex: 1 }}>
                           <View style={styles.itemHeaderRow}>
@@ -277,7 +264,7 @@ export const CoachAthleteDetailScreen: React.FC = () => {
                             <View style={styles.itemHeaderRight}>
                               <ThumbsUp
                                 size={13}
-                                color={liked ? C.orange : C.textMuted}
+                                color={liked ? theme.colors.brandOrange : theme.colors.textMuted}
                                 weight={liked ? 'fill' : 'regular'}
                               />
                               <Text style={styles.itemDate}>{formatDate(j.createdAt)}</Text>
@@ -304,7 +291,7 @@ export const CoachAthleteDetailScreen: React.FC = () => {
                 onPress={() => setVisibleCount(c => c + PAGE_SIZE)}
               >
                 <Text style={styles.loadMoreText}>
-                  Load {Math.min(PAGE_SIZE, timeline.length - visibleCount)} more · {timeline.length - visibleCount} remaining
+                  Load {Math.min(PAGE_SIZE, timeline.length - visibleCount)} more \u00B7 {timeline.length - visibleCount} remaining
                 </Text>
               </TouchableOpacity>
             )}
@@ -315,8 +302,8 @@ export const CoachAthleteDetailScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -324,19 +311,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   headerTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     flex: 1,
     textAlign: 'center',
     marginHorizontal: 8,
   },
   scroll: { padding: 20 },
   profileCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     padding: 16,
     flexDirection: 'row',
@@ -344,28 +331,28 @@ const styles = StyleSheet.create({
     gap: 14,
     marginBottom: 24,
   },
-  profileName: { fontSize: 16, fontWeight: '700', color: C.textPrimary },
-  profileUsername: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  profileName: { fontSize: 16, fontWeight: '700', color: t.colors.textPrimary },
+  profileUsername: { fontSize: 12, color: t.colors.textMuted, marginTop: 2 },
   avgMoodBadge: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
     minWidth: 54,
   },
   avgMoodValue: { fontSize: 20, fontWeight: '800' },
-  avgMoodLabel: { fontSize: 9, color: C.textMuted, fontWeight: '600', marginTop: 1, letterSpacing: 0.5 },
+  avgMoodLabel: { fontSize: 9, color: t.colors.textMuted, fontWeight: '600', marginTop: 1, letterSpacing: 0.5 },
   sectionLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 1,
     marginBottom: 4,
   },
   doubleTapHint: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     marginBottom: 14,
     fontStyle: 'italic',
   },
@@ -373,10 +360,10 @@ const styles = StyleSheet.create({
   timelineItem: { flexDirection: 'row', gap: 12 },
   timelineLeft: { alignItems: 'center', width: 14 },
   timelineDot: { width: 10, height: 10, borderRadius: 5, marginTop: 14 },
-  timelineLine: { flex: 1, width: 1.5, backgroundColor: C.border, marginTop: 3 },
+  timelineLine: { flex: 1, width: 1.5, backgroundColor: t.colors.overlayLight, marginTop: 3 },
   itemCard: { flex: 1, borderRadius: 12, marginBottom: 12, padding: 12 },
-  moodItemCard: { backgroundColor: C.card },
-  journalItemCard: { backgroundColor: C.card },
+  moodItemCard: { backgroundColor: t.colors.cardSolid },
+  journalItemCard: { backgroundColor: t.colors.cardSolid },
   itemCardRow: { flexDirection: 'row', gap: 10 },
   itemIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   itemHeaderRow: {
@@ -386,31 +373,31 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  itemKind: { fontSize: 11, fontWeight: '600', color: C.textSecondary },
-  itemDate: { fontSize: 10, color: C.textMuted },
+  itemKind: { fontSize: 11, fontWeight: '600', color: t.colors.textSecondary },
+  itemDate: { fontSize: 10, color: t.colors.textMuted },
   moodRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
   moodEmoji: { fontSize: 16 },
   moodRatingValue: { fontSize: 14, fontWeight: '700', minWidth: 32 },
   moodRatingBar: {
     flex: 1,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     borderRadius: 2,
     overflow: 'hidden',
   },
   moodRatingFill: { height: '100%', borderRadius: 2 },
-  itemNote: { fontSize: 12, color: C.textSecondary, marginTop: 4, lineHeight: 18 },
-  journalTitle: { fontSize: 13, fontWeight: '600', color: C.textPrimary, marginBottom: 4 },
-  journalBody: { fontSize: 12, color: C.textSecondary, lineHeight: 18 },
+  itemNote: { fontSize: 12, color: t.colors.textSecondary, marginTop: 4, lineHeight: 18 },
+  journalTitle: { fontSize: 13, fontWeight: '600', color: t.colors.textPrimary, marginBottom: 4 },
+  journalBody: { fontSize: 12, color: t.colors.textSecondary, lineHeight: 18 },
   empty: { alignItems: 'center', paddingVertical: 48, gap: 8 },
-  emptyText: { fontSize: 13, color: C.textMuted, textAlign: 'center' },
+  emptyText: { fontSize: 13, color: t.colors.textMuted, textAlign: 'center' },
   loadMoreBtn: {
     marginTop: 4,
     marginBottom: 8,
     paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 10,
   },
-  loadMoreText: { fontSize: 13, color: C.orange, fontWeight: '600' },
+  loadMoreText: { fontSize: 13, color: t.colors.brandOrange, fontWeight: '600' },
 });

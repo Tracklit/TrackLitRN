@@ -1,7 +1,9 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
+import { spacing, borderRadius } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 interface ReadOnlyFieldProps {
   label: string;
@@ -10,6 +12,8 @@ interface ReadOnlyFieldProps {
 }
 
 export const ReadOnlyField: React.FC<ReadOnlyFieldProps> = ({ label, value, placeholder }) => {
+  const { styles } = useThemedStyles(createStyles);
+
   return (
     <View style={styles.container}>
       <Text variant="body" weight="medium" color="foreground">
@@ -24,16 +28,15 @@ export const ReadOnlyField: React.FC<ReadOnlyFieldProps> = ({ label, value, plac
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
-    gap: theme.spacing.xs,
+    gap: spacing.xs,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    backgroundColor: t.colors.card,
   },
 });
-

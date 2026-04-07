@@ -9,8 +9,10 @@ import { WebView } from 'react-native-webview';
 import { X } from 'phosphor-react-native';
 
 import { Text } from '@/components/ui/Text';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Props = {
   url: string;
   title?: string;
@@ -18,6 +20,7 @@ type Props = {
 };
 
 export const DocumentViewer: React.FC<Props> = ({ url, title, onClose }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const [loading, setLoading] = useState(true);
 
   const googleViewerUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`;
@@ -38,7 +41,7 @@ export const DocumentViewer: React.FC<Props> = ({ url, title, onClose }) => {
         {loading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="small" color={theme.colors.primary} />
-            <Text variant="small" color="muted" style={{ marginTop: theme.spacing.sm }}>
+            <Text variant="small" color="muted" style={{ marginTop: themeStatic.spacing.sm }}>
               Loading document...
             </Text>
           </View>
@@ -58,11 +61,11 @@ export const DocumentViewer: React.FC<Props> = ({ url, title, onClose }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: themeStatic.borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: t.colors.overlayLight,
     backgroundColor: 'rgba(10, 21, 41, 0.6)',
     overflow: 'hidden',
     height: 559,
@@ -72,14 +75,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: themeStatic.spacing.md,
+    paddingVertical: themeStatic.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: t.colors.overlayLight,
   },
   title: {
     flex: 1,
-    marginRight: theme.spacing.sm,
+    marginRight: themeStatic.spacing.sm,
   },
   closeButton: {
     width: 28,
@@ -87,7 +90,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: t.colors.overlayLight,
   },
   webviewWrap: {
     flex: 1,

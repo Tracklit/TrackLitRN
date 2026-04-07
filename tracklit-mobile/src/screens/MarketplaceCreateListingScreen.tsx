@@ -15,14 +15,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type ListingType = 'program' | 'consulting';
 
 export const MarketplaceCreateListingScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user } = useAuth();
@@ -96,7 +99,7 @@ export const MarketplaceCreateListingScreen: React.FC = () => {
   });
 
   const contentBottomPadding = useMemo(
-    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
+    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }),
     [insets.bottom],
   );
 
@@ -129,7 +132,7 @@ export const MarketplaceCreateListingScreen: React.FC = () => {
           <CardHeader>
             <CardTitle>Type</CardTitle>
           </CardHeader>
-          <CardContent style={{ gap: theme.spacing.sm }}>
+          <CardContent style={{ gap: themeStatic.spacing.sm }}>
             <View style={styles.typeRow}>
               <TouchableOpacity style={[styles.typeChip, type === 'program' && styles.typeChipActive]} onPress={() => setType('program')}>
                 <Badge variant={type === 'program' ? 'default' : 'outline'} size="sm">
@@ -154,7 +157,7 @@ export const MarketplaceCreateListingScreen: React.FC = () => {
           <CardHeader>
             <CardTitle>Details</CardTitle>
           </CardHeader>
-          <CardContent style={{ gap: theme.spacing.sm }}>
+          <CardContent style={{ gap: themeStatic.spacing.sm }}>
             <Text variant="body" color="foreground" weight="semiBold">
               Title
             </Text>
@@ -211,7 +214,7 @@ export const MarketplaceCreateListingScreen: React.FC = () => {
 
             <Button variant="default" size="lg" onPress={() => createMutation.mutate()} loading={createMutation.isPending} disabled={createMutation.isPending || isGuest}>
               <FontAwesome5 name="plus" size={16} color="white" solid />
-              <Text variant="body" weight="bold" color="primary-foreground" style={{ marginLeft: theme.spacing.sm }}>
+              <Text variant="body" weight="bold" color="primary-foreground" style={{ marginLeft: themeStatic.spacing.sm }}>
                 Create listing
               </Text>
             </Button>
@@ -227,32 +230,32 @@ export const MarketplaceCreateListingScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: theme.spacing.lg, gap: theme.spacing.lg },
-  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: theme.spacing.lg },
+  content: { paddingHorizontal: themeStatic.spacing.lg, gap: themeStatic.spacing.lg },
+  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: themeStatic.spacing.lg },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   card: { marginBottom: 0 },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.md,
+    color: t.colors.foreground,
+    backgroundColor: t.colors.card,
   },
-  typeRow: { flexDirection: 'row', gap: theme.spacing.md },
+  typeRow: { flexDirection: 'row', gap: themeStatic.spacing.md },
   typeChip: {
     flex: 1,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.md,
     alignItems: 'center',
-    backgroundColor: theme.colors.card,
+    backgroundColor: t.colors.card,
   },
   typeChipActive: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primary + '12',
+    borderColor: t.colors.primary,
+    backgroundColor: t.colors.primary + '12',
   },
 });

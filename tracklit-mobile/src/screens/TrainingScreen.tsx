@@ -5,20 +5,51 @@ import { Text } from '@/components/ui/Text';
 import { MainScreenHeader } from '@/components/MainScreenHeader';
 import { PracticeScreen } from './PracticeScreen';
 import { ProgramsScreen } from './ProgramsScreen';
-import theme from '@/utils/theme';
 import { useRoute, useFocusEffect, type RouteProp } from '@react-navigation/native';
 import type { TabParamList } from '@/navigation/types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import type { ThemeValues } from '@/contexts/ThemeContext';
 
-const C = {
-  orange: '#FF7A00',
-  textMuted: '#8A90B5',
-  tabBg: 'rgba(255,255,255,0.04)',
-  tabActive: 'rgba(255,122,0,0.15)',
-  tabBorder: 'rgba(255,255,255,0.08)',
-};
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    marginHorizontal: 24,
+    marginBottom: 4,
+    backgroundColor: t.colors.overlaySubtle,
+    borderRadius: 10,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: t.colors.overlayLight,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  tabActive: {
+    backgroundColor: t.colors.brandOrangeLight,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: t.colors.textMuted,
+  },
+  tabTextActive: {
+    color: t.colors.brandOrange,
+    fontWeight: '600',
+  },
+  content: {
+    flex: 1,
+  },
+});
 
 export const TrainingScreen: React.FC = () => {
   const route = useRoute<RouteProp<TabParamList, 'Training'>>();
+  const { styles, theme } = useThemedStyles(createStyles);
   const [activeTab, setActiveTab] = useState<'practice' | 'programs'>(
     route.params?.tab ?? 'practice'
   );
@@ -64,40 +95,3 @@ export const TrainingScreen: React.FC = () => {
     </LinearGradient>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    marginHorizontal: 24,
-    marginBottom: 4,
-    backgroundColor: C.tabBg,
-    borderRadius: 10,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: C.tabBorder,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  tabActive: {
-    backgroundColor: C.tabActive,
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: C.textMuted,
-  },
-  tabTextActive: {
-    color: C.orange,
-    fontWeight: '600',
-  },
-  content: {
-    flex: 1,
-  },
-});

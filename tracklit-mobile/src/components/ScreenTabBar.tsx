@@ -6,6 +6,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { House, Barbell, Newspaper, Timer } from 'phosphor-react-native';
 
 import type { RootStackParamList, TabParamList } from '@/navigation/types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -19,6 +21,7 @@ const TAB_ITEMS: { label: string; tab: keyof TabParamList; Icon: any }[] = [
 export const ScreenTabBar: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const handleTabPress = (tab: keyof TabParamList) => {
     navigation.navigate('MainTabs', { screen: tab });
@@ -35,7 +38,7 @@ export const ScreenTabBar: React.FC = () => {
             activeOpacity={0.7}
           >
             <View style={styles.iconWrap}>
-              <Icon size={23} color="rgba(255,255,255,0.45)" weight="fill" />
+              <Icon size={23} color={theme.colors.textSecondary} weight="fill" />
             </View>
             <Text style={styles.navLabel}>{label}</Text>
           </TouchableOpacity>
@@ -45,11 +48,11 @@ export const ScreenTabBar: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: t.colors.backgroundSolid,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: t.colors.overlayLight,
     paddingTop: 12,
   },
   navBar: {
@@ -71,10 +74,10 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   navLabel: {
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.35)',
+    color: t.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 10,
+    lineHeight: 13,
   },
 });

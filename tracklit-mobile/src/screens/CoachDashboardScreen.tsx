@@ -42,26 +42,11 @@ import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type PageKey = 'teamBoard' | 'myAthletes' | 'subscriptions';
-
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  cardAlt: '#181B27',
-  orange: '#FF7A00',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.65)',
-  textMuted: 'rgba(255,255,255,0.38)',
-  border: 'rgba(255,255,255,0.07)',
-  iconBg: 'rgba(255,255,255,0.05)',
-  green: '#22c55e',
-  yellow: '#eab308',
-  red: '#ef4444',
-  blue: '#3b82f6',
-  purple: '#a855f7',
-};
 
 interface Friend {
   id: number;
@@ -139,7 +124,7 @@ interface SubscriptionOffering {
 }
 
 const formatPrice = (amountCents: number, currency = 'USD') => {
-  const symbol = currency === 'EUR' ? '€' : '$';
+  const symbol = currency === 'EUR' ? '\u20AC' : '$';
   return `${symbol}${(amountCents / 100).toFixed(2)}`;
 };
 
@@ -154,12 +139,12 @@ const formatRelativeTime = (dateStr: string) => {
   return `${days}d ago`;
 };
 
-const getMoodColor = (avg: number | null): string => {
-  if (avg === null) return C.textMuted;
-  if (avg >= 8) return C.green;
+const getMoodColor = (avg: number | null, mutedColor: string): string => {
+  if (avg === null) return mutedColor;
+  if (avg >= 8) return '#22c55e';
   if (avg >= 6) return '#84cc16';
-  if (avg >= 4) return C.yellow;
-  return C.red;
+  if (avg >= 4) return '#eab308';
+  return '#ef4444';
 };
 
 const getMoodLabel = (avg: number | null): string => {
@@ -170,22 +155,12 @@ const getMoodLabel = (avg: number | null): string => {
   return 'Low';
 };
 
-const MoodDot: React.FC<{ avg: number | null; size?: number }> = ({ avg, size = 8 }) => (
-  <View
-    style={{
-      width: size,
-      height: size,
-      borderRadius: size / 2,
-      backgroundColor: getMoodColor(avg),
-    }}
-  />
-);
-
 export const CoachDashboardScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const [page, setPage] = useState<PageKey>('teamBoard');
   const [athleteListOpen, setAthleteListOpen] = useState(true);
@@ -340,6 +315,92 @@ export const CoachDashboardScreen: React.FC = () => {
     return map;
   }, [moodStats]);
 
+  const MoodDot: React.FC<{ avg: number | null; size?: number }> = ({ avg, size = 8 }) => (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: getMoodColor(avg, theme.colors.textMuted),
+      }}
+    />
+  );
+
+  const MoodSummaryCard: React.FC<{
+    overallAvg: number | null;
+    overallTrend: number[];
+    athleteCount: number;
+    isLoading: boolean;
+    onPress: () => void;
+  }> = ({ overallAvg: oAvg, overallTrend: oTrend, athleteCount, isLoading: loading, onPress }) => {
+    const color = getMoodColor(oAvg, theme.colors.textMuted);
+    const label = getMoodLabel(oAvg);
+    const avgDisplay = oAvg !== null ? oAvg.toFixed(1) : '\u2014';
+
+    return (
+      <TouchableOpacity style={styles.moodCard} activeOpacity={0.75} onPress={onPress}>
+        <View style={styles.moodCardLeft}>
+          <View style={[styles.moodIcon, { backgroundColor: `${color}20` }]}>
+            <Smiley size={22} color={color} weight="fill" />
+          </View>
+          <View style={{ gap: 3 }}>
+            <Text style={styles.moodLabel}>Team Mood</Text>
+            <Text style={styles.moodSub}>
+              {athleteCount} athlete{athleteCount !== 1 ? 's' : ''} \u00B7 7-day avg
+            </Text>
+            {oTrend.length >= 2 && (
+              <MiniSparkline data={oTrend} width={90} height={22} strokeWidth={2} showDots />
+            )}
+          </View>
+        </View>
+        <View style={styles.moodRight}>
+          {loading ? (
+            <ActivityIndicator size="small" color={theme.colors.brandOrange} />
+          ) : (
+            <>
+              <Text style={[styles.moodScore, { color }]}>{avgDisplay}</Text>
+              <Text style={[styles.moodStatus, { color }]}>{label}</Text>
+            </>
+          )}
+          <CaretRight size={14} color={theme.colors.textMuted} weight="bold" style={{ marginLeft: 4 }} />
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const StatCard: React.FC<{ label: string; value: string; color: string }> = ({
+    label,
+    value,
+    color,
+  }) => (
+    <View style={styles.statCard}>
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+
+  const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+    const isActive = status === 'active';
+    return (
+      <View style={[styles.badge, isActive ? styles.badgeActive : styles.badgeInactive]}>
+        <Text style={[styles.badgeText, isActive ? styles.badgeTextActive : styles.badgeTextInactive]}>
+          {status}
+        </Text>
+      </View>
+    );
+  };
+
+  const EmptyState: React.FC<{
+    icon: React.ReactNode;
+    text: string;
+    compact?: boolean;
+  }> = ({ icon, text, compact }) => (
+    <View style={[styles.emptyContainer, compact && styles.emptyContainerCompact]}>
+      {icon}
+      <Text style={styles.emptyText}>{text}</Text>
+    </View>
+  );
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
@@ -347,7 +408,7 @@ export const CoachDashboardScreen: React.FC = () => {
           style={styles.drawerButton}
           onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
         >
-          <List size={20} color={C.textPrimary} weight="bold" />
+          <List size={20} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Coach's Dashboard</Text>
         <View style={{ flex: 1 }} />
@@ -375,7 +436,7 @@ export const CoachDashboardScreen: React.FC = () => {
         {page === 'teamBoard' && (
           <>
             {isGuest ? (
-              <EmptyState icon={<ChartLineUp size={40} color={C.textMuted} weight="fill" />} text="Sign in to view your team board." />
+              <EmptyState icon={<ChartLineUp size={40} color={theme.colors.textMuted} weight="fill" />} text="Sign in to view your team board." />
             ) : (
               <>
                 <MoodSummaryCard
@@ -389,7 +450,7 @@ export const CoachDashboardScreen: React.FC = () => {
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
                     <View style={styles.sectionHeaderLeft}>
-                      <NotePencil size={14} color={C.orange} weight="fill" />
+                      <NotePencil size={14} color={theme.colors.brandOrange} weight="fill" />
                       <Text style={styles.sectionTitle}>Recent Journal Entries</Text>
                     </View>
                   </View>
@@ -399,7 +460,7 @@ export const CoachDashboardScreen: React.FC = () => {
                   ) : journalEntries.length === 0 ? (
                     <View style={styles.card}>
                       <EmptyState
-                        icon={<NotePencil size={32} color={C.textMuted} weight="fill" />}
+                        icon={<NotePencil size={32} color={theme.colors.textMuted} weight="fill" />}
                         text="No journal entries yet. Entries from your athletes will appear here."
                         compact
                       />
@@ -435,7 +496,7 @@ export const CoachDashboardScreen: React.FC = () => {
                               <Text style={styles.journalTime}>
                                 {formatRelativeTime(entry.createdAt)}
                               </Text>
-                              <CaretRight size={12} color={C.textMuted} weight="bold" />
+                              <CaretRight size={12} color={theme.colors.textMuted} weight="bold" />
                             </View>
                           </View>
                           {entry.title ? (
@@ -459,7 +520,7 @@ export const CoachDashboardScreen: React.FC = () => {
         {page === 'myAthletes' && (
           <>
             {isGuest ? (
-              <EmptyState icon={<Users size={40} color={C.textMuted} weight="fill" />} text="Sign in to view your athletes." />
+              <EmptyState icon={<Users size={40} color={theme.colors.textMuted} weight="fill" />} text="Sign in to view your athletes." />
             ) : (
               <View style={styles.section}>
                 <View style={styles.sectionHeaderRow}>
@@ -469,14 +530,14 @@ export const CoachDashboardScreen: React.FC = () => {
                     activeOpacity={0.7}
                   >
                     <View style={styles.sectionHeaderLeft}>
-                      <Users size={14} color={C.orange} weight="fill" />
+                      <Users size={14} color={theme.colors.brandOrange} weight="fill" />
                       <Text style={styles.sectionTitle}>
                         Athletes ({athletes.length})
                       </Text>
                     </View>
                     {athleteListOpen
-                      ? <CaretDown size={14} color={C.textMuted} weight="bold" />
-                      : <CaretRight size={14} color={C.textMuted} weight="bold" />
+                      ? <CaretDown size={14} color={theme.colors.textMuted} weight="bold" />
+                      : <CaretRight size={14} color={theme.colors.textMuted} weight="bold" />
                     }
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -484,7 +545,7 @@ export const CoachDashboardScreen: React.FC = () => {
                     onPress={() => setShowAddModal(true)}
                     activeOpacity={0.6}
                   >
-                    <UserPlus size={14} color={C.orange} weight="bold" />
+                    <UserPlus size={14} color={theme.colors.brandOrange} weight="bold" />
                     <Text style={styles.addAthleteHeaderBtnText}>Add</Text>
                   </TouchableOpacity>
                 </View>
@@ -495,7 +556,7 @@ export const CoachDashboardScreen: React.FC = () => {
                       <SkeletonListRows count={4} />
                     ) : athletes.length === 0 ? (
                       <EmptyState
-                        icon={<Users size={32} color={C.textMuted} weight="fill" />}
+                        icon={<Users size={32} color={theme.colors.textMuted} weight="fill" />}
                         text="No athletes yet. Athletes will appear once they connect with you."
                         compact
                       />
@@ -541,7 +602,7 @@ export const CoachDashboardScreen: React.FC = () => {
                                   onPress={() => startDMMutation.mutate(athlete.id)}
                                   activeOpacity={0.7}
                                 >
-                                  <PaperPlaneTilt size={14} color={C.orange} weight="fill" />
+                                  <PaperPlaneTilt size={14} color={theme.colors.brandOrange} weight="fill" />
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                   style={styles.assignButton}
@@ -554,7 +615,7 @@ export const CoachDashboardScreen: React.FC = () => {
                                   }
                                   activeOpacity={0.7}
                                 >
-                                  <ClipboardText size={14} color={C.orange} weight="fill" />
+                                  <ClipboardText size={14} color={theme.colors.brandOrange} weight="fill" />
                                 </TouchableOpacity>
                               </View>
                             </View>
@@ -572,31 +633,31 @@ export const CoachDashboardScreen: React.FC = () => {
         {page === 'subscriptions' && (
           <>
             {isGuest ? (
-              <EmptyState icon={<CurrencyDollar size={40} color={C.textMuted} weight="fill" />} text="Sign in to view subscriptions." />
+              <EmptyState icon={<CurrencyDollar size={40} color={theme.colors.textMuted} weight="fill" />} text="Sign in to view subscriptions." />
             ) : (
               <>
                 <View style={styles.statsRow}>
                   <StatCard
                     label="Active Subs"
-                    value={mySubscribersQuery.isLoading ? '…' : String(activeSubscribers.length)}
-                    color={C.green}
+                    value={mySubscribersQuery.isLoading ? '\u2026' : String(activeSubscribers.length)}
+                    color={theme.colors.success}
                   />
                   <StatCard
                     label="Est. Monthly"
-                    value={mySubscribersQuery.isLoading ? '…' : formatPrice(monthlyRevenue)}
-                    color={C.orange}
+                    value={mySubscribersQuery.isLoading ? '\u2026' : formatPrice(monthlyRevenue)}
+                    color={theme.colors.brandOrange}
                   />
                   <StatCard
                     label="My Plans"
-                    value={mySubsQuery.isLoading ? '…' : String(mySubscriptions.length)}
-                    color={C.blue}
+                    value={mySubsQuery.isLoading ? '\u2026' : String(mySubscriptions.length)}
+                    color="#3b82f6"
                   />
                 </View>
 
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
                     <View style={styles.sectionHeaderLeft}>
-                      <Users size={14} color={C.orange} weight="fill" />
+                      <Users size={14} color={theme.colors.brandOrange} weight="fill" />
                       <Text style={styles.sectionTitle}>Your Subscribers</Text>
                     </View>
                   </View>
@@ -606,7 +667,7 @@ export const CoachDashboardScreen: React.FC = () => {
                   ) : mySubscribers.length === 0 ? (
                     <View style={styles.card}>
                       <EmptyState
-                        icon={<Users size={32} color={C.textMuted} weight="fill" />}
+                        icon={<Users size={32} color={theme.colors.textMuted} weight="fill" />}
                         text="No subscribers yet."
                         compact
                       />
@@ -619,7 +680,7 @@ export const CoachDashboardScreen: React.FC = () => {
                             <View style={{ flex: 1, gap: 3 }}>
                               <Text style={styles.subCardName}>{s.subscriberName}</Text>
                               <Text style={styles.subCardMeta}>
-                                @{s.subscriberUsername} · {formatPrice(s.totalAmount)} / {s.priceInterval}
+                                @{s.subscriberUsername} \u00B7 {formatPrice(s.totalAmount)} / {s.priceInterval}
                               </Text>
                               <Text style={styles.subCardPlan} numberOfLines={1}>
                                 {s.subscriptionTitle}
@@ -636,7 +697,7 @@ export const CoachDashboardScreen: React.FC = () => {
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
                     <View style={styles.sectionHeaderLeft}>
-                      <GearSix size={14} color={C.orange} weight="fill" />
+                      <GearSix size={14} color={theme.colors.brandOrange} weight="fill" />
                       <Text style={styles.sectionTitle}>My Offering</Text>
                     </View>
                   </View>
@@ -657,7 +718,7 @@ export const CoachDashboardScreen: React.FC = () => {
                           : '$25.00 / month'}
                       </Text>
                       <TouchableOpacity style={styles.editButton} activeOpacity={0.6}>
-                        <GearSix size={13} color={C.orange} weight="bold" />
+                        <GearSix size={13} color={theme.colors.brandOrange} weight="bold" />
                         <Text style={styles.editButtonText}>Edit Offering</Text>
                       </TouchableOpacity>
                     </View>
@@ -667,7 +728,7 @@ export const CoachDashboardScreen: React.FC = () => {
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
                     <View style={styles.sectionHeaderLeft}>
-                      <Heart size={14} color={C.orange} weight="fill" />
+                      <Heart size={14} color={theme.colors.brandOrange} weight="fill" />
                       <Text style={styles.sectionTitle}>My Subscriptions</Text>
                     </View>
                   </View>
@@ -677,7 +738,7 @@ export const CoachDashboardScreen: React.FC = () => {
                   ) : mySubscriptions.length === 0 ? (
                     <View style={styles.card}>
                       <EmptyState
-                        icon={<Heart size={32} color={C.textMuted} weight="fill" />}
+                        icon={<Heart size={32} color={theme.colors.textMuted} weight="fill" />}
                         text="You haven't subscribed to any coaches yet."
                         compact
                       />
@@ -690,7 +751,7 @@ export const CoachDashboardScreen: React.FC = () => {
                             <View style={{ flex: 1, gap: 3 }}>
                               <Text style={styles.subCardName}>{s.coachName}</Text>
                               <Text style={styles.subCardMeta}>
-                                @{s.coachUsername} · {formatPrice(s.totalAmount)} / {s.priceInterval}
+                                @{s.coachUsername} \u00B7 {formatPrice(s.totalAmount)} / {s.priceInterval}
                               </Text>
                               <Text style={styles.subCardPlan} numberOfLines={1}>
                                 {s.subscriptionTitle}
@@ -706,10 +767,10 @@ export const CoachDashboardScreen: React.FC = () => {
                               activeOpacity={0.6}
                             >
                               {cancelSubscription.isPending ? (
-                                <ActivityIndicator size="small" color={C.red} />
+                                <ActivityIndicator size="small" color={theme.colors.destructive} />
                               ) : (
                                 <>
-                                  <XCircle size={13} color={C.red} weight="bold" />
+                                  <XCircle size={13} color={theme.colors.destructive} weight="bold" />
                                   <Text style={styles.cancelText}>Cancel</Text>
                                 </>
                               )}
@@ -726,7 +787,6 @@ export const CoachDashboardScreen: React.FC = () => {
         )}
       </ScrollView>
 
-      {/* Add Athlete Modal */}
       <Modal
         visible={showAddModal}
         animationType="slide"
@@ -741,16 +801,16 @@ export const CoachDashboardScreen: React.FC = () => {
                 onPress={() => { setShowAddModal(false); setAddSearch(''); }}
                 hitSlop={12}
               >
-                <X size={20} color={C.textSecondary} weight="bold" />
+                <X size={20} color={theme.colors.textSecondary} weight="bold" />
               </TouchableOpacity>
             </View>
 
             <View style={styles.modalSearchRow}>
-              <MagnifyingGlass size={14} color={C.textMuted} weight="bold" />
+              <MagnifyingGlass size={14} color={theme.colors.textMuted} weight="bold" />
               <TextInput
                 style={styles.modalSearchInput}
                 placeholder="Search connections..."
-                placeholderTextColor={C.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 value={addSearch}
                 onChangeText={setAddSearch}
                 autoFocus
@@ -759,11 +819,11 @@ export const CoachDashboardScreen: React.FC = () => {
 
             <ScrollView style={styles.modalList} showsVerticalScrollIndicator={false}>
               {friendsQuery.isLoading ? (
-                <ActivityIndicator color={C.orange} style={{ marginTop: 32 }} />
+                <ActivityIndicator color={theme.colors.brandOrange} style={{ marginTop: 32 }} />
               ) : availableConnections.length === 0 ? (
                 <View style={{ alignItems: 'center', paddingVertical: 40, gap: 10 }}>
-                  <Users size={32} color={C.textMuted} weight="fill" />
-                  <Text style={{ fontSize: 13, color: C.textMuted, textAlign: 'center' }}>
+                  <Users size={32} color={theme.colors.textMuted} weight="fill" />
+                  <Text style={{ fontSize: 13, color: theme.colors.textMuted, textAlign: 'center' }}>
                     {friends.length === 0
                       ? 'No connections yet. Add friends first.'
                       : 'All connections are already your athletes.'}
@@ -784,10 +844,10 @@ export const CoachDashboardScreen: React.FC = () => {
                       src={friend.profileImageUrl || undefined}
                     />
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: C.textPrimary }} numberOfLines={1}>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: theme.colors.textPrimary }} numberOfLines={1}>
                         {friend.name || 'TrackLit User'}
                       </Text>
-                      <Text style={{ fontSize: 11, color: C.textMuted }} numberOfLines={1}>
+                      <Text style={{ fontSize: 11, color: theme.colors.textMuted }} numberOfLines={1}>
                         @{friend.username}
                       </Text>
                     </View>
@@ -806,83 +866,8 @@ export const CoachDashboardScreen: React.FC = () => {
   );
 };
 
-const MoodSummaryCard: React.FC<{
-  overallAvg: number | null;
-  overallTrend: number[];
-  athleteCount: number;
-  isLoading: boolean;
-  onPress: () => void;
-}> = ({ overallAvg, overallTrend, athleteCount, isLoading, onPress }) => {
-  const color = getMoodColor(overallAvg);
-  const label = getMoodLabel(overallAvg);
-  const avgDisplay = overallAvg !== null ? overallAvg.toFixed(1) : '—';
-
-  return (
-    <TouchableOpacity style={styles.moodCard} activeOpacity={0.75} onPress={onPress}>
-      <View style={styles.moodCardLeft}>
-        <View style={[styles.moodIcon, { backgroundColor: `${color}20` }]}>
-          <Smiley size={22} color={color} weight="fill" />
-        </View>
-        <View style={{ gap: 3 }}>
-          <Text style={styles.moodLabel}>Team Mood</Text>
-          <Text style={styles.moodSub}>
-            {athleteCount} athlete{athleteCount !== 1 ? 's' : ''} · 7-day avg
-          </Text>
-          {overallTrend.length >= 2 && (
-            <MiniSparkline data={overallTrend} width={90} height={22} strokeWidth={2} showDots />
-          )}
-        </View>
-      </View>
-      <View style={styles.moodRight}>
-        {isLoading ? (
-          <ActivityIndicator size="small" color={C.orange} />
-        ) : (
-          <>
-            <Text style={[styles.moodScore, { color }]}>{avgDisplay}</Text>
-            <Text style={[styles.moodStatus, { color }]}>{label}</Text>
-          </>
-        )}
-        <CaretRight size={14} color={C.textMuted} weight="bold" style={{ marginLeft: 4 }} />
-      </View>
-    </TouchableOpacity>
-  );
-};
-
-const StatCard: React.FC<{ label: string; value: string; color: string }> = ({
-  label,
-  value,
-  color,
-}) => (
-  <View style={styles.statCard}>
-    <Text style={[styles.statValue, { color }]}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
-
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const isActive = status === 'active';
-  return (
-    <View style={[styles.badge, isActive ? styles.badgeActive : styles.badgeInactive]}>
-      <Text style={[styles.badgeText, isActive ? styles.badgeTextActive : styles.badgeTextInactive]}>
-        {status}
-      </Text>
-    </View>
-  );
-};
-
-const EmptyState: React.FC<{
-  icon: React.ReactNode;
-  text: string;
-  compact?: boolean;
-}> = ({ icon, text, compact }) => (
-  <View style={[styles.emptyContainer, compact && styles.emptyContainerCompact]}>
-    {icon}
-    <Text style={styles.emptyText}>{text}</Text>
-  </View>
-);
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
 
   header: {
     flexDirection: 'row',
@@ -891,26 +876,26 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   drawerButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
 
   pageTabRow: {
     flexDirection: 'row',
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     margin: 14,
     borderRadius: 10,
     padding: 3,
@@ -922,12 +907,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   pageTabActive: {
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   pageTabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   pageTabTextActive: {
     color: '#000',
@@ -939,7 +924,7 @@ const styles = StyleSheet.create({
   },
 
   moodCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     padding: 16,
     flexDirection: 'row',
@@ -947,7 +932,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 18,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   moodCardLeft: {
     flexDirection: 'row',
@@ -964,11 +949,11 @@ const styles = StyleSheet.create({
   moodLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   moodSub: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   moodRight: {
     alignItems: 'flex-end',
@@ -1003,21 +988,21 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.2,
   },
 
   card: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 14,
     padding: 14,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
 
   rowDivider: {
     height: 0.5,
-    backgroundColor: C.border,
+    backgroundColor: t.colors.overlayLight,
     marginLeft: 48,
   },
   athleteRow: {
@@ -1044,12 +1029,12 @@ const styles = StyleSheet.create({
   athleteName: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     flexShrink: 1,
   },
   athleteUsername: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   athleteActions: {
     flexDirection: 'row',
@@ -1060,7 +1045,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 0.5,
@@ -1070,7 +1055,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 0.5,
@@ -1081,11 +1066,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   journalCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 14,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     gap: 6,
   },
   journalCardHeader: {
@@ -1102,21 +1087,21 @@ const styles = StyleSheet.create({
   journalAthleteName: {
     fontSize: 12,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
     flexShrink: 1,
   },
   journalTime: {
     fontSize: 10,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   journalTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   journalBody: {
     fontSize: 12,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 17,
   },
 
@@ -1127,13 +1112,13 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
     gap: 4,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   statValue: {
     fontSize: 20,
@@ -1142,7 +1127,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 10,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
@@ -1152,11 +1137,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   subCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 14,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   subCardRow: {
     flexDirection: 'row',
@@ -1166,15 +1151,15 @@ const styles = StyleSheet.create({
   subCardName: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   subCardMeta: {
     fontSize: 11,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
   },
   subCardPlan: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
 
   badge: {
@@ -1184,20 +1169,20 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   badgeActive: { backgroundColor: 'rgba(34,197,94,0.15)' },
-  badgeInactive: { backgroundColor: 'rgba(255,255,255,0.06)' },
+  badgeInactive: { backgroundColor: t.colors.overlaySubtle },
   badgeText: { fontSize: 10, fontWeight: '700', textTransform: 'capitalize' },
-  badgeTextActive: { color: C.green },
-  badgeTextInactive: { color: C.textMuted },
+  badgeTextActive: { color: t.colors.success },
+  badgeTextInactive: { color: t.colors.textMuted },
 
   offeringTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   offeringPrice: {
     fontSize: 15,
     fontWeight: '800',
-    color: C.orange,
+    color: t.colors.brandOrange,
     marginTop: 10,
   },
 
@@ -1212,12 +1197,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255,122,0,0.3)',
-    backgroundColor: 'rgba(255,122,0,0.07)',
+    backgroundColor: t.colors.brandOrangeLight,
   },
   editButtonText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
 
   cancelButton: {
@@ -1235,7 +1220,7 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.red,
+    color: t.colors.destructive,
   },
 
   emptyContainer: {
@@ -1248,7 +1233,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 19,
     maxWidth: 260,
@@ -1271,7 +1256,7 @@ const styles = StyleSheet.create({
   addAthleteHeaderBtnText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   modalOverlay: {
     flex: 1,
@@ -1279,7 +1264,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: C.bg,
+    backgroundColor: t.colors.backgroundSolid,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '75%',
@@ -1295,13 +1280,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   modalSearchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 10,
     paddingHorizontal: 12,
     marginHorizontal: 20,
@@ -1310,7 +1295,7 @@ const styles = StyleSheet.create({
   modalSearchInput: {
     flex: 1,
     paddingVertical: 10,
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     fontSize: 13,
   },
   modalList: {
@@ -1322,13 +1307,13 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   addAthleteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,

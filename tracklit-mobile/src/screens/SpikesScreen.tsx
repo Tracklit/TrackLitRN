@@ -20,20 +20,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const C = {
-  bg: '#0E0F14',
-  orange: '#FF7A00',
-  card: '#1C1F2B',
-  border: 'rgba(255,255,255,0.06)',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.5)',
-  iconBg: 'rgba(255,255,255,0.05)',
-};
 
 export const SpikesScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user } = useAuth();
@@ -44,7 +37,7 @@ export const SpikesScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
+          <CaretLeft size={18} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Spikes</Text>
         <View style={{ flex: 1 }} />
@@ -72,7 +65,7 @@ export const SpikesScreen: React.FC = () => {
             onPress={() => navigation.navigate('SpikesInfo')}
           >
             <View style={styles.cardIconWrap}>
-              <Info size={22} color={C.orange} weight="fill" />
+              <Info size={22} color={theme.colors.brandOrange} weight="fill" />
             </View>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>What are Spikes?</Text>
@@ -80,7 +73,7 @@ export const SpikesScreen: React.FC = () => {
                 Learn how spikes work, how to earn them, and what you can unlock.
               </Text>
             </View>
-            <ArrowRight size={18} color={C.textMuted} />
+            <ArrowRight size={18} color={theme.colors.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -89,7 +82,7 @@ export const SpikesScreen: React.FC = () => {
             onPress={() => navigation.navigate('SpikesProgress')}
           >
             <View style={styles.cardIconWrap}>
-              <ChartLineUp size={22} color={C.orange} weight="fill" />
+              <ChartLineUp size={22} color={theme.colors.brandOrange} weight="fill" />
             </View>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>My Progress</Text>
@@ -97,7 +90,7 @@ export const SpikesScreen: React.FC = () => {
                 View your streak, achievements, and transaction history.
               </Text>
             </View>
-            <ArrowRight size={18} color={C.textMuted} />
+            <ArrowRight size={18} color={theme.colors.textMuted} />
           </TouchableOpacity>
         </View>
 
@@ -121,10 +114,10 @@ export const SpikesScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: t.colors.backgroundSolid,
   },
   header: {
     flexDirection: 'row',
@@ -133,20 +126,20 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
   scroll: {
@@ -162,7 +155,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -171,18 +164,18 @@ const styles = StyleSheet.create({
     fontSize: 42,
     lineHeight: 52,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: -1,
   },
   balanceLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
     marginTop: 6,
   },
   balanceSub: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     marginTop: 8,
     maxWidth: 260,
@@ -194,7 +187,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 16,
     gap: 14,
@@ -203,7 +196,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,122,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -214,16 +207,16 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   cardDesc: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 17,
   },
   quickStats: {
     flexDirection: 'row',
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -235,15 +228,15 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 36,
-    backgroundColor: C.border,
+    backgroundColor: t.colors.overlayLight,
   },
   statValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   statLabel: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
 });

@@ -25,10 +25,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 interface Club {
@@ -45,6 +47,7 @@ interface Club {
 type Tab = 'discover' | 'my-clubs';
 
 export const ClubsScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
@@ -113,7 +116,7 @@ export const ClubsScreen: React.FC = () => {
   });
 
   const contentBottomPadding = useMemo(
-    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
+    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }),
     [insets.bottom],
   );
 
@@ -193,7 +196,7 @@ export const ClubsScreen: React.FC = () => {
                 onPress={() => navigation.navigate('ClubDetail', { id: club.id })}
               >
                 <Card style={styles.card}>
-                  <CardHeader style={{ paddingBottom: theme.spacing.sm }}>
+                  <CardHeader style={{ paddingBottom: themeStatic.spacing.sm }}>
                     <View style={styles.titleRow}>
                       <CardTitle style={{ flex: 1 }}>{club.name}</CardTitle>
                       {club.isPrivate ? (
@@ -203,7 +206,7 @@ export const ClubsScreen: React.FC = () => {
                       )}
                     </View>
                   </CardHeader>
-                  <CardContent style={{ gap: theme.spacing.sm }}>
+                  <CardContent style={{ gap: themeStatic.spacing.sm }}>
                     {!!club.description && (
                       <Text variant="small" color="muted">
                         {club.description}
@@ -298,45 +301,45 @@ export const ClubsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: theme.spacing.lg, gap: theme.spacing.lg },
-  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: theme.spacing.lg },
+  content: { paddingHorizontal: themeStatic.spacing.lg, gap: themeStatic.spacing.lg },
+  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: themeStatic.spacing.lg },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.muted,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xs,
+    backgroundColor: t.colors.muted,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.xs,
   },
-  tab: { flex: 1, paddingVertical: theme.spacing.sm, borderRadius: theme.borderRadius.md, alignItems: 'center' },
-  tabActive: { backgroundColor: theme.colors.backgroundSolid },
-  loadingRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: theme.spacing.sm },
-  emptyText: { textAlign: 'center', paddingVertical: theme.spacing.lg },
-  list: { gap: theme.spacing.md },
+  tab: { flex: 1, paddingVertical: themeStatic.spacing.sm, borderRadius: themeStatic.borderRadius.md, alignItems: 'center' },
+  tabActive: { backgroundColor: t.colors.backgroundSolid },
+  loadingRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: themeStatic.spacing.sm },
+  emptyText: { textAlign: 'center', paddingVertical: themeStatic.spacing.lg },
+  list: { gap: themeStatic.spacing.md },
   card: { marginBottom: 0 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: themeStatic.spacing.md },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
   modalCard: {
-    backgroundColor: theme.colors.backgroundSolid,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
+    backgroundColor: t.colors.backgroundSolid,
+    borderTopLeftRadius: themeStatic.borderRadius.xl,
+    borderTopRightRadius: themeStatic.borderRadius.xl,
     maxHeight: '85%',
   },
   modalCardContent: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    padding: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.md,
   },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.md,
+    color: t.colors.foreground,
+    backgroundColor: t.colors.card,
   },
   textArea: { minHeight: 90, textAlignVertical: 'top' },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  modalActions: { flexDirection: 'row', gap: theme.spacing.md },
+  modalActions: { flexDirection: 'row', gap: themeStatic.spacing.md },
 });

@@ -32,42 +32,14 @@ import { queryClient } from '@/lib/queryClient';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding, getBottomNavOverlayHeight } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import { spacing } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import type { ThemeValues } from '@/contexts/ThemeContext';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
 type FeedFilter = 'all' | 'connections';
 
-const SkeletonPostCard: React.FC = () => {
-  const shimmer = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
-      ])
-    ).start();
-  }, [shimmer]);
-
-  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.55] });
-
-  return (
-    <Animated.View style={[skeletonStyles.card, { opacity }]}>
-      <View style={skeletonStyles.headerRow}>
-        <View style={skeletonStyles.avatar} />
-        <View style={skeletonStyles.nameBlock}>
-          <View style={skeletonStyles.nameLine} />
-          <View style={skeletonStyles.subLine} />
-        </View>
-      </View>
-      <View style={skeletonStyles.bodyLine} />
-      <View style={[skeletonStyles.bodyLine, skeletonStyles.bodyLineMid]} />
-      <View style={[skeletonStyles.bodyLine, skeletonStyles.bodyLineShort]} />
-    </Animated.View>
-  );
-};
-
-const skeletonStyles = StyleSheet.create({
+const createSkeletonStyles = (t: ThemeValues) => StyleSheet.create({
   card: {
     paddingHorizontal: 20,
     paddingVertical: 18,
@@ -83,30 +55,61 @@ const skeletonStyles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
   },
   nameBlock: { gap: 6, flex: 1 },
   nameLine: {
     height: 13,
     width: '45%',
     borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
   },
   subLine: {
     height: 11,
     width: '30%',
     borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: t.colors.overlayLight,
   },
   bodyLine: {
     height: 12,
     width: '95%',
     borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
   },
   bodyLineMid: { width: '80%' },
   bodyLineShort: { width: '55%' },
 });
+
+const SkeletonPostCard: React.FC = () => {
+  const shimmer = useRef(new Animated.Value(0)).current;
+  const { styles: skStyles } = useThemedStyles(createSkeletonStyles);
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [shimmer]);
+
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.55] });
+
+  return (
+    <Animated.View style={[skStyles.card, { opacity }]}>
+      <View style={skStyles.headerRow}>
+        <View style={skStyles.avatar} />
+        <View style={skStyles.nameBlock}>
+          <View style={skStyles.nameLine} />
+          <View style={skStyles.subLine} />
+        </View>
+      </View>
+      <View style={skStyles.bodyLine} />
+      <View style={[skStyles.bodyLine, skStyles.bodyLineMid]} />
+      <View style={[skStyles.bodyLine, skStyles.bodyLineShort]} />
+    </Animated.View>
+  );
+};
 
 interface FeedItem {
   id: number;
@@ -127,6 +130,171 @@ interface FeedItem {
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+    marginHorizontal: spacing.xl,
+    gap: spacing.lg,
+  },
+  filterButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeFilterButton: {
+    borderBottomColor: t.colors.brandOrange,
+  },
+  listContent: {
+    paddingHorizontal: spacing.xl,
+  },
+  postContainer: {
+    paddingVertical: spacing.lg,
+  },
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  avatarFallback: {
+    width: 36,
+    height: 36,
+  },
+  postMeta: {
+    flex: 1,
+  },
+  postContent: {
+    marginTop: spacing.sm,
+    marginLeft: 48,
+    lineHeight: 20,
+    fontSize: 13,
+  },
+  journalLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+    marginLeft: 48,
+  },
+  postFooter: {
+    flexDirection: 'row',
+    marginTop: spacing.md,
+    marginBottom: 4,
+    marginLeft: 48,
+    gap: spacing.xl,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  socialLabel: {
+    marginTop: 1,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: t.colors.overlayLight,
+  },
+  emptyState: {
+    alignItems: 'center',
+    marginTop: spacing.xl,
+  },
+  emptyStateText: {
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.xl,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    zIndex: 50,
+    elevation: 20,
+  },
+  fabCircle: {
+    flex: 1,
+    borderRadius: 28,
+    backgroundColor: t.colors.brandOrange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: t.colors.backgroundSolid,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '85%',
+  },
+  modalCardContent: {
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  composerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalInput: {
+    minHeight: 120,
+    padding: spacing.md,
+    color: t.colors.foreground,
+    textAlignVertical: 'top',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  journalModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  journalModalContent: {
+    backgroundColor: t.colors.backgroundSolid,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: spacing.lg,
+    maxHeight: '80%',
+  },
+  journalModalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: t.colors.overlayHeavy,
+    alignSelf: 'center',
+    marginBottom: spacing.lg,
+  },
+  journalModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  journalModalAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  journalModalDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: t.colors.overlayLight,
+    marginVertical: spacing.lg,
+  },
+  journalModalBody: {
+    lineHeight: 22,
+  },
+});
+
 export const FeedScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
@@ -135,6 +303,7 @@ export const FeedScreen: React.FC = () => {
   const [filter, setFilter] = useState<FeedFilter>('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerText, setComposerText] = useState('');
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const feedQuery = useQuery({
     queryKey: ['feed', filter],
@@ -298,7 +467,7 @@ export const FeedScreen: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
-            <Book size={13} color="#FF9800" weight="fill" />
+            <Book size={13} color={theme.colors.brandOrange} weight="fill" />
             <Text variant="small" color="primary" weight="medium">
               View full journal entry
             </Text>
@@ -310,7 +479,7 @@ export const FeedScreen: React.FC = () => {
             onPress={(e) => { e.stopPropagation(); handleLocalLike(item); }}
             disabled={likeMutation.isPending}
           >
-            <Heart size={20} color={liked ? '#FF9800' : 'rgba(255,255,255,0.3)'} weight={liked ? 'fill' : 'regular'} />
+            <Heart size={20} color={liked ? theme.colors.brandOrange : theme.colors.textMuted} weight={liked ? 'fill' : 'regular'} />
             <Text variant="small" color={liked ? 'primary' : 'muted'} style={styles.socialLabel}>
               {likeCount}
             </Text>
@@ -319,7 +488,7 @@ export const FeedScreen: React.FC = () => {
             style={styles.socialButton}
             onPress={() => navigateToPost(item)}
           >
-            <ChatCircle size={20} color="rgba(255,255,255,0.3)" weight="regular" />
+            <ChatCircle size={20} color={theme.colors.textMuted} weight="regular" />
             <Text variant="small" color="muted" style={styles.socialLabel}>
               {item.commentsCount}
             </Text>
@@ -377,7 +546,7 @@ export const FeedScreen: React.FC = () => {
       {feedQuery.isLoading ? (
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) }}
+          contentContainerStyle={{ paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: spacing.xl }) }}
           showsVerticalScrollIndicator={false}
         >
           {[1, 2, 3, 4, 5].map((i) => (
@@ -393,13 +562,13 @@ export const FeedScreen: React.FC = () => {
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: theme.spacing.xl }) },
+            { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true, extra: spacing.xl }) },
           ]}
           renderItem={renderItem}
           ItemSeparatorComponent={renderDivider}
           refreshControl={
             <RefreshControl
-              tintColor="#fff"
+              tintColor={theme.colors.textPrimary}
               refreshing={isRefreshing}
               onRefresh={onRefresh}
             />
@@ -428,7 +597,7 @@ export const FeedScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.fab,
-            { bottom: getBottomNavOverlayHeight(insets.bottom) + theme.spacing.lg },
+            { bottom: getBottomNavOverlayHeight(insets.bottom) + spacing.lg },
           ]}
           onPress={() => setIsComposerOpen(true)}
         >
@@ -449,7 +618,7 @@ export const FeedScreen: React.FC = () => {
             style={styles.modalCard}
             contentContainerStyle={[
               styles.modalCardContent,
-              { paddingBottom: insets.bottom + theme.spacing.lg },
+              { paddingBottom: insets.bottom + spacing.lg },
             ]}
             showsVerticalScrollIndicator={false}
             extraScrollHeight={80}
@@ -493,7 +662,7 @@ export const FeedScreen: React.FC = () => {
           onPress={() => setJournalModalVisible(false)}
         >
           <TouchableOpacity
-            style={[styles.journalModalContent, { paddingBottom: insets.bottom + theme.spacing.lg }]}
+            style={[styles.journalModalContent, { paddingBottom: insets.bottom + spacing.lg }]}
             activeOpacity={1}
           >
             <View style={styles.journalModalHandle} />
@@ -505,7 +674,7 @@ export const FeedScreen: React.FC = () => {
                   ) : (
                     <Avatar fallback={(selectedJournalPost.name?.[0] || '?').toUpperCase()} size="md" />
                   )}
-                  <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
+                  <View style={{ flex: 1, marginLeft: spacing.md }}>
                     <Text variant="body" weight="bold" color="foreground">
                       {selectedJournalPost.journalTitle || 'Journal Entry'}
                     </Text>
@@ -526,168 +695,3 @@ export const FeedScreen: React.FC = () => {
     </LinearGradient>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    marginBottom: theme.spacing.sm,
-    marginHorizontal: theme.spacing.xl,
-    gap: theme.spacing.lg,
-  },
-  filterButton: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.xs,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  activeFilterButton: {
-    borderBottomColor: '#FF9800',
-  },
-  listContent: {
-    paddingHorizontal: theme.spacing.xl,
-  },
-  postContainer: {
-    paddingVertical: theme.spacing.lg,
-  },
-  postHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  avatarImage: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  },
-  avatarFallback: {
-    width: 36,
-    height: 36,
-  },
-  postMeta: {
-    flex: 1,
-  },
-  postContent: {
-    marginTop: theme.spacing.sm,
-    marginLeft: 48,
-    lineHeight: 20,
-    fontSize: 13,
-  },
-  journalLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 6,
-    marginLeft: 48,
-  },
-  postFooter: {
-    flexDirection: 'row',
-    marginTop: theme.spacing.md,
-    marginBottom: 4,
-    marginLeft: 48,
-    gap: theme.spacing.xl,
-  },
-  socialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  socialLabel: {
-    marginTop: 1,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  emptyState: {
-    alignItems: 'center',
-    marginTop: theme.spacing.xl,
-  },
-  emptyStateText: {
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  fab: {
-    position: 'absolute',
-    right: theme.spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    zIndex: 50,
-    elevation: 20,
-  },
-  fabCircle: {
-    flex: 1,
-    borderRadius: 28,
-    backgroundColor: '#FF9800',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: '#1a1a1a',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    maxHeight: '85%',
-  },
-  modalCardContent: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
-  },
-  composerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  modalInput: {
-    minHeight: 120,
-    padding: theme.spacing.md,
-    color: theme.colors.foreground,
-    textAlignVertical: 'top',
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  journalModalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  journalModalContent: {
-    backgroundColor: '#1a1a1a',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: theme.spacing.lg,
-    maxHeight: '80%',
-  },
-  journalModalHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignSelf: 'center',
-    marginBottom: theme.spacing.lg,
-  },
-  journalModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  journalModalAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  journalModalDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginVertical: theme.spacing.lg,
-  },
-  journalModalBody: {
-    lineHeight: 22,
-  },
-});

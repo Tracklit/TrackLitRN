@@ -3,7 +3,9 @@ import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
-import theme from '@/utils/theme';
+import { spacing, borderRadius } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 interface DateFieldProps {
   label: string;
@@ -21,6 +23,7 @@ export const DateField: React.FC<DateFieldProps> = ({
   maximumDate,
 }) => {
   const [showPicker, setShowPicker] = useState(false);
+  const { styles, isDark } = useThemedStyles(createStyles);
 
   const currentDate = value ? new Date(value) : undefined;
   const displayValue = currentDate
@@ -59,7 +62,7 @@ export const DateField: React.FC<DateFieldProps> = ({
             onChange={handleChange}
             maximumDate={maximumDate}
             minimumDate={minimumDate}
-            themeVariant="dark"
+            themeVariant={isDark ? 'dark' : 'light'}
           />
           {Platform.OS === 'ios' && (
             <Button variant="outline" onPress={() => setShowPicker(false)} style={styles.closeButton}>
@@ -72,23 +75,22 @@ export const DateField: React.FC<DateFieldProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
-    gap: theme.spacing.xs,
+    gap: spacing.xs,
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    backgroundColor: t.colors.card,
   },
   pickerContainer: {
-    marginTop: theme.spacing.sm,
-    gap: theme.spacing.sm,
+    marginTop: spacing.sm,
+    gap: spacing.sm,
   },
   closeButton: {
     alignSelf: 'flex-end',
   },
 });
-

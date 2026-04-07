@@ -42,8 +42,9 @@ import { queryClient } from '@/lib/queryClient';
 import { getToken } from '@/lib/tokenStorage';
 import { env } from '@/config/env';
 import type { RootStackParamList } from '@/navigation/types';
-import theme from '../utils/theme';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type ChatConversationRouteProp = RouteProp<RootStackParamList, 'ChatConversation'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -170,6 +171,7 @@ const normalizeMessage = (raw: any): Message => {
 };
 
 export const ChatConversationScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const route = useRoute<ChatConversationRouteProp>();
@@ -718,7 +720,7 @@ export const ChatConversationScreen: React.FC = () => {
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.optionRow} onPress={handleDeleteMessage}>
                   <Trash size={20} color="#ef4444" weight="fill" />
-                  <Text variant="body" style={{ color: '#ef4444' }}>Delete</Text>
+                  <Text variant="body" style={{ color: theme.colors.destructive }}>Delete</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -752,10 +754,10 @@ export const ChatConversationScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0e1621',
+    backgroundColor: t.colors.backgroundSolid,
   },
   keyboardAvoid: {
     flex: 1,
@@ -768,7 +770,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: t.colors.overlayLight,
   },
   backBtn: {
     width: 36,
@@ -784,20 +786,20 @@ const styles = StyleSheet.create({
   },
   groupNamePill: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: t.colors.overlayLight,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 5,
     maxWidth: '100%',
   },
   groupNameText: {
-    color: '#ffffff',
+    color: t.colors.textPrimary,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
   groupSubtitleText: {
-    color: 'rgba(255,255,255,0.45)',
+    color: t.colors.textMuted,
     fontSize: 12,
     marginTop: 1,
   },
@@ -830,7 +832,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   datePillText: {
-    color: '#94a3b8',
+    color: t.colors.textMuted,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -871,7 +873,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   bubbleOwn: {
-    backgroundColor: '#FF7A00',
+    backgroundColor: t.colors.brandOrange,
     borderBottomRightRadius: 4,
   },
   bubbleOther: {
@@ -884,7 +886,7 @@ const styles = StyleSheet.create({
   likeHeart: {
     position: 'absolute',
     bottom: -9,
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 10,
     width: 20,
     height: 20,
@@ -901,7 +903,7 @@ const styles = StyleSheet.create({
     right: 8,
   },
   senderLabel: {
-    color: '#FF7A00',
+    color: t.colors.brandOrange,
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 3,
@@ -911,7 +913,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   msgTextOwn: {
-    color: '#ffffff',
+    color: t.colors.textPrimary,
   },
   msgTextOther: {
     color: '#1a1a2e',
@@ -935,7 +937,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   metaOwn: {
-    color: 'rgba(255,255,255,0.65)',
+    color: t.colors.textSecondary,
   },
   metaOther: {
     color: 'rgba(0,0,0,0.4)',
@@ -961,7 +963,7 @@ const styles = StyleSheet.create({
     borderLeftColor: 'rgba(255,255,255,0.7)',
   },
   replyBlockOther: {
-    backgroundColor: 'rgba(255,122,0,0.1)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderLeftColor: '#FF7A00',
   },
   replyAuthor: {
@@ -973,13 +975,13 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.85)',
   },
   replyAuthorOther: {
-    color: '#FF7A00',
+    color: t.colors.brandOrange,
   },
   replyText: {
     fontSize: 12,
   },
   replyTextOwn: {
-    color: 'rgba(255,255,255,0.6)',
+    color: t.colors.textSecondary,
   },
   replyTextOther: {
     color: 'rgba(0,0,0,0.55)',
@@ -989,9 +991,9 @@ const styles = StyleSheet.create({
   inputBar: {
     paddingHorizontal: 8,
     paddingTop: 8,
-    backgroundColor: '#0e1621',
+    backgroundColor: t.colors.backgroundSolid,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: t.colors.overlayLight,
   },
   editReplyBar: {
     flexDirection: 'row',
@@ -1001,24 +1003,24 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingLeft: 0,
     paddingRight: 4,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 10,
     paddingHorizontal: 10,
   },
   editReplyAccent: {
     width: 3,
     alignSelf: 'stretch',
-    backgroundColor: '#FF7A00',
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 2,
     marginRight: 10,
   },
   editReplyTitle: {
-    color: '#FF7A00',
+    color: t.colors.brandOrange,
     fontSize: 13,
     fontWeight: '600',
   },
   editReplyPreview: {
-    color: 'rgba(255,255,255,0.5)',
+    color: t.colors.textMuted,
     fontSize: 12,
     marginTop: 1,
   },
@@ -1033,7 +1035,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   attachThumb: {
     width: 48,
@@ -1054,7 +1056,7 @@ const styles = StyleSheet.create({
   },
   textInputWrap: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === 'ios' ? 10 : 2,
@@ -1063,7 +1065,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     fontSize: 16,
-    color: '#ffffff',
+    color: t.colors.textPrimary,
     maxHeight: 100,
     padding: 0,
   },
@@ -1075,7 +1077,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendBtnActive: {
-    backgroundColor: '#FF7A00',
+    backgroundColor: t.colors.brandOrange,
   },
   sendBtnInactive: {
     backgroundColor: 'transparent',
@@ -1089,7 +1091,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   optionsCard: {
-    backgroundColor: '#1a2332',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 16,
     paddingVertical: 4,
     minWidth: 200,
@@ -1104,7 +1106,7 @@ const styles = StyleSheet.create({
   },
   optionCancel: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: t.colors.overlayLight,
     justifyContent: 'center',
   },
 

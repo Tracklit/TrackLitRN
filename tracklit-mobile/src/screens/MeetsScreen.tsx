@@ -23,8 +23,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
 import { SkeletonListRows } from '@/components/Skeleton';
-import theme from '../utils/theme';
+import themeStatic from '../utils/theme';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 interface Meet {
@@ -43,6 +45,7 @@ interface Meet {
 type MeetFilter = 'upcoming' | 'past' | 'all';
 
 export const MeetsScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
@@ -281,7 +284,7 @@ export const MeetsScreen: React.FC = () => {
 
       {!isGuest && (
         <TouchableOpacity
-          style={[styles.fab, { bottom: theme.layout.bottomNavHeight + insets.bottom + theme.spacing.lg }]}
+          style={[styles.fab, { bottom: themeStatic.layout.bottomNavHeight + insets.bottom + themeStatic.spacing.lg }]}
           onPress={() => navigation.navigate('CreateMeet')}
           accessibilityRole="button"
           accessibilityLabel="Create meet"
@@ -293,69 +296,69 @@ export const MeetsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: themeStatic.spacing.lg,
+    paddingVertical: themeStatic.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: t.colors.border,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.card,
+    backgroundColor: t.colors.card,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
+    marginRight: themeStatic.spacing.md,
   },
   headerSpacer: {
     flex: 1,
   },
   filterContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: themeStatic.spacing.lg,
+    paddingVertical: themeStatic.spacing.md,
   },
   filterTabs: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.muted,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xs,
+    backgroundColor: t.colors.muted,
+    borderRadius: themeStatic.borderRadius.lg,
+    padding: themeStatic.spacing.xs,
   },
   filterTab: {
     flex: 1,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: themeStatic.spacing.sm,
     alignItems: 'center',
-    borderRadius: theme.borderRadius.md,
+    borderRadius: themeStatic.borderRadius.md,
   },
   filterTabActive: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: t.colors.background,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl * 2,
+    paddingVertical: themeStatic.spacing.xl * 2,
   },
   emptyTitle: {
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
+    marginTop: themeStatic.spacing.lg,
+    marginBottom: themeStatic.spacing.sm,
   },
   emptyText: {
     textAlign: 'center',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
   },
   meetCard: {
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   meetHeader: {
-    paddingBottom: theme.spacing.sm,
+    paddingBottom: themeStatic.spacing.sm,
   },
   meetTitleRow: {
     flexDirection: 'row',
@@ -364,42 +367,42 @@ const styles = StyleSheet.create({
   },
   meetTitle: {
     flex: 1,
-    marginRight: theme.spacing.md,
+    marginRight: themeStatic.spacing.md,
   },
   meetInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: themeStatic.spacing.sm,
   },
   meetInfoText: {
-    marginLeft: theme.spacing.sm,
+    marginLeft: themeStatic.spacing.sm,
     flex: 1,
   },
   meetDescription: {
-    marginTop: theme.spacing.sm,
+    marginTop: themeStatic.spacing.sm,
     lineHeight: 20,
   },
   eventsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.xs,
-    marginTop: theme.spacing.md,
+    gap: themeStatic.spacing.xs,
+    marginTop: themeStatic.spacing.md,
   },
   meetActions: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.md,
+    gap: themeStatic.spacing.md,
+    marginTop: themeStatic.spacing.md,
   },
   fab: {
     position: 'absolute',
-    right: theme.spacing.lg,
+    right: themeStatic.spacing.lg,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: t.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.lg,
+    ...t.shadows.lg,
   },
 });
 

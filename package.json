@@ -114,6 +114,7 @@
     "build:client": "vite build",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
+    "db:seed:programs": "tsx server/scripts/seed-sample-programs.ts",
     "test:server": "vitest run server/",
     "android": "expo run:android",
     "ios": "expo run:ios"

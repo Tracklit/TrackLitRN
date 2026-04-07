@@ -12,9 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 interface ResultItem {
@@ -30,6 +32,7 @@ interface ResultItem {
 }
 
 export const ResultsScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, isAuthenticated } = useAuth();
@@ -53,7 +56,7 @@ export const ResultsScreen: React.FC = () => {
         style={{ paddingTop: insets.top }}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }) },
+          { paddingBottom: getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }) },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -95,10 +98,10 @@ export const ResultsScreen: React.FC = () => {
           <View style={styles.list}>
             {items.map((r) => (
               <Card key={r.id} style={styles.card}>
-                <CardHeader style={{ paddingBottom: theme.spacing.sm }}>
+                <CardHeader style={{ paddingBottom: themeStatic.spacing.sm }}>
                   <CardTitle>{r.event || 'Event'}</CardTitle>
                 </CardHeader>
-                <CardContent style={{ gap: theme.spacing.xs }}>
+                <CardContent style={{ gap: themeStatic.spacing.xs }}>
                   <Text variant="body" color="foreground" weight="semiBold">
                     Result: {r.result}
                   </Text>
@@ -127,21 +130,21 @@ export const ResultsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
+    gap: themeStatic.spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, justifyContent: 'center' },
-  emptyText: { textAlign: 'center', paddingVertical: theme.spacing.lg },
-  list: { gap: theme.spacing.md },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: themeStatic.spacing.sm, justifyContent: 'center' },
+  emptyText: { textAlign: 'center', paddingVertical: themeStatic.spacing.lg },
+  list: { gap: themeStatic.spacing.md },
   card: { marginBottom: 0 },
 });
 

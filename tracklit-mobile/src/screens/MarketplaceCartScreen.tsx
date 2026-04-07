@@ -13,9 +13,11 @@ import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 interface CartItem {
@@ -33,6 +35,7 @@ interface CartItem {
 }
 
 export const MarketplaceCartScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user } = useAuth();
@@ -77,7 +80,7 @@ export const MarketplaceCartScreen: React.FC = () => {
   };
 
   const contentBottomPadding = useMemo(
-    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
+    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }),
     [insets.bottom],
   );
 
@@ -115,7 +118,7 @@ export const MarketplaceCartScreen: React.FC = () => {
             Unable to load cart.
           </Text>
         ) : items.length === 0 ? (
-          <Text variant="body" color="muted" style={{ textAlign: 'center', paddingVertical: theme.spacing.lg }}>
+          <Text variant="body" color="muted" style={{ textAlign: 'center', paddingVertical: themeStatic.spacing.lg }}>
             Your cart is empty.
           </Text>
         ) : (
@@ -141,7 +144,7 @@ export const MarketplaceCartScreen: React.FC = () => {
                       <Text variant="small" color="muted">
                         {item.type === 'program' ? 'Training Program' : 'Consulting'} • {item.listing?.coach?.name ? `by ${item.listing.coach.name}` : ''}
                       </Text>
-                      <Text variant="body" color="foreground" style={{ marginTop: theme.spacing.xs }}>
+                      <Text variant="body" color="foreground" style={{ marginTop: themeStatic.spacing.xs }}>
                         {formatPrice(item.listing?.priceCents || 0, item.listing?.currency || 'USD')}
                       </Text>
 
@@ -181,10 +184,10 @@ export const MarketplaceCartScreen: React.FC = () => {
             </View>
 
             <Card style={styles.card}>
-              <CardHeader style={{ paddingBottom: theme.spacing.sm }}>
+              <CardHeader style={{ paddingBottom: themeStatic.spacing.sm }}>
                 <CardTitle>Summary</CardTitle>
               </CardHeader>
-              <CardContent style={{ gap: theme.spacing.sm }}>
+              <CardContent style={{ gap: themeStatic.spacing.sm }}>
                 <View style={styles.summaryRow}>
                   <Text variant="body" color="muted">
                     Subtotal
@@ -205,26 +208,26 @@ export const MarketplaceCartScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: theme.spacing.lg, gap: theme.spacing.lg },
-  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: theme.spacing.lg },
+  content: { paddingHorizontal: themeStatic.spacing.lg, gap: themeStatic.spacing.lg },
+  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: themeStatic.spacing.lg },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  loadingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.spacing.sm },
-  list: { gap: theme.spacing.md },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: themeStatic.spacing.sm },
+  list: { gap: themeStatic.spacing.md },
   card: { marginBottom: 0 },
-  itemRow: { flexDirection: 'row', gap: theme.spacing.md, paddingVertical: theme.spacing.md },
+  itemRow: { flexDirection: 'row', gap: themeStatic.spacing.md, paddingVertical: themeStatic.spacing.md },
   thumb: {
     width: 64,
     height: 64,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: themeStatic.borderRadius.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.card,
   },
   thumbPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, marginTop: theme.spacing.sm },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: themeStatic.spacing.sm, marginTop: themeStatic.spacing.sm },
   qtyBtn: {
     width: 36,
     height: 36,
@@ -232,8 +235,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.card,
   },
   removeBtn: {
     marginLeft: 'auto',
@@ -243,8 +246,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.card,
   },
   summaryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

@@ -2,6 +2,8 @@ import React from 'react';
 import { View, StyleSheet, Text as RNText } from 'react-native';
 import type { PoseLandmark } from './MediaPipeBridge';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface PoseOverlayProps {
   landmarks: PoseLandmark[];
   width: number;
@@ -63,6 +65,7 @@ function calcJointAngle(lmA: PoseLandmark, lmB: PoseLandmark, lmC: PoseLandmark)
 }
 
 export const PoseOverlay: React.FC<PoseOverlayProps> = ({ landmarks, width, height, colorByConfidence = true, showAngles = false }) => {
+  const { styles } = useThemedStyles(createStyles);
   if (!landmarks || landmarks.length === 0 || width === 0 || height === 0) return null;
 
   const getPos = (idx: number) => {
@@ -154,7 +157,7 @@ export const PoseOverlay: React.FC<PoseOverlayProps> = ({ landmarks, width, heig
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     position: 'absolute',
     top: 0,

@@ -24,16 +24,10 @@ import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import theme from '@/utils/theme';
 
-const C = {
-  orange: '#FF7A00',
-  card: '#1C1F2B',
-  textMuted: 'rgba(255,255,255,0.5)',
-  border: 'rgba(255,255,255,0.06)',
-  green: '#22c55e',
-};
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface LoginStreak {
   currentStreak: number;
   longestStreak: number;
@@ -58,6 +52,7 @@ interface UserAchievement {
 }
 
 export const SpikesProgressScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { user, isAuthenticated, refreshUser } = useAuth();
@@ -139,7 +134,7 @@ export const SpikesProgressScreen: React.FC = () => {
 
         <View style={styles.streakCard}>
           <View style={styles.streakHeader}>
-            <Fire size={18} color={C.orange} weight="fill" />
+            <Fire size={18} color={theme.colors.brandOrange} weight="fill" />
             <Text style={styles.streakTitle}>Login Streak</Text>
             <TouchableOpacity
               style={styles.checkInBtn}
@@ -179,7 +174,7 @@ export const SpikesProgressScreen: React.FC = () => {
         </View>
 
         {achievementsQuery.isLoading ? (
-          <ActivityIndicator color={C.orange} style={{ paddingVertical: 20 }} />
+          <ActivityIndicator color={theme.colors.brandOrange} style={{ paddingVertical: 20 }} />
         ) : achievements.length > 0 ? (
           <View>
             <View style={styles.sectionHeader}>
@@ -200,9 +195,9 @@ export const SpikesProgressScreen: React.FC = () => {
                       ]}
                     >
                       {a.isCompleted ? (
-                        <CheckCircle size={16} color={C.green} weight="fill" />
+                        <CheckCircle size={16} color={theme.colors.success} weight="fill" />
                       ) : (
-                        <Trophy size={16} color={C.textMuted} weight="fill" />
+                        <Trophy size={16} color={theme.colors.textMuted} weight="fill" />
                       )}
                     </View>
                     <View style={styles.achieveContent}>
@@ -227,7 +222,7 @@ export const SpikesProgressScreen: React.FC = () => {
         ) : null}
 
         {transactionsQuery.isLoading ? (
-          <ActivityIndicator color={C.orange} style={{ paddingVertical: 20 }} />
+          <ActivityIndicator color={theme.colors.brandOrange} style={{ paddingVertical: 20 }} />
         ) : transactions.length > 0 ? (
           <View>
             <Text style={styles.sectionTitle}>Recent Activity</Text>
@@ -244,7 +239,7 @@ export const SpikesProgressScreen: React.FC = () => {
                     >
                       <PushPin
                         size={12}
-                        color={isPositive ? C.orange : '#ef4444'}
+                        color={isPositive ? theme.colors.brandOrange : '#ef4444'}
                         weight="fill"
                       />
                     </View>
@@ -259,7 +254,7 @@ export const SpikesProgressScreen: React.FC = () => {
                     <Text
                       style={[
                         styles.txAmount,
-                        { color: isPositive ? C.green : '#ef4444' },
+                        { color: isPositive ? theme.colors.success : '#ef4444' },
                       ]}
                     >
                       {isPositive ? '+' : ''}
@@ -278,7 +273,7 @@ export const SpikesProgressScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -292,7 +287,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   scroll: {
     paddingHorizontal: 20,
@@ -308,10 +303,10 @@ const styles = StyleSheet.create({
   balanceText: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   tierProgress: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 16,
     gap: 8,
@@ -324,30 +319,30 @@ const styles = StyleSheet.create({
   tierLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   tierPercent: {
     fontSize: 13,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   progressBar: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: 3,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   tierSub: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   streakCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 16,
     gap: 12,
@@ -360,11 +355,11 @@ const styles = StyleSheet.create({
   streakTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     flex: 1,
   },
   checkInBtn: {
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -372,7 +367,7 @@ const styles = StyleSheet.create({
   checkInText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   streakStats: {
     flexDirection: 'row',
@@ -386,16 +381,16 @@ const styles = StyleSheet.create({
   streakDivider: {
     width: 1,
     height: 28,
-    backgroundColor: C.border,
+    backgroundColor: t.colors.overlayLight,
   },
   streakValue: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   streakLabel: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   dotsRow: {
     flexDirection: 'row',
@@ -408,10 +403,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dotActive: {
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   dotInactive: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -422,17 +417,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
     marginBottom: 10,
   },
   sectionCount: {
     fontSize: 12,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
     marginBottom: 10,
   },
   achievementList: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -442,7 +437,7 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   achieveIcon: {
     width: 32,
@@ -455,7 +450,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(34,197,94,0.12)',
   },
   achieveIconPending: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   achieveContent: {
     flex: 1,
@@ -464,11 +459,11 @@ const styles = StyleSheet.create({
   achieveName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   achieveDone: {
     fontSize: 11,
-    color: C.green,
+    color: t.colors.success,
     fontWeight: '500',
   },
   miniProgress: {
@@ -480,26 +475,26 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     overflow: 'hidden',
   },
   miniFill: {
     height: '100%',
     borderRadius: 2,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   miniLabel: {
     fontSize: 10,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     minWidth: 30,
   },
   achieveReward: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   transactionList: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -509,7 +504,7 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   txIcon: {
     width: 28,
@@ -519,7 +514,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   txPositive: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
   },
   txNegative: {
     backgroundColor: 'rgba(239,68,68,0.12)',
@@ -531,11 +526,11 @@ const styles = StyleSheet.create({
   txDesc: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#FFFFFF',
+    color: t.colors.textPrimary,
   },
   txTime: {
     fontSize: 10,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   txAmount: {
     fontSize: 13,

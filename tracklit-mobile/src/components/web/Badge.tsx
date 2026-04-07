@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, Text as RNText, ViewStyle } from 'react-native';
-import theme from '@/utils/theme';
+import { spacing, borderRadius, typography } from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Variant = 'default' | 'secondary' | 'outline' | 'success' | 'warning';
 
@@ -11,6 +13,8 @@ interface WebBadgeProps {
 }
 
 export const WebBadge: React.FC<WebBadgeProps> = ({ children, variant = 'default', style }) => {
+  const { styles } = useThemedStyles(createStyles);
+
   return (
     <View style={[styles.base, styles[variant], style]}>
       <RNText style={[styles.text, styles[`${variant}Text`]]}>{children}</RNText>
@@ -18,28 +22,27 @@ export const WebBadge: React.FC<WebBadgeProps> = ({ children, variant = 'default
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   base: {
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     alignSelf: 'flex-start',
   },
   text: {
-    fontSize: theme.typography.sizes.xs,
-    fontWeight: theme.typography.weights.medium as any,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.medium as any,
     flexShrink: 1,
     flexWrap: 'wrap',
   },
-  default: { backgroundColor: '#1f2937' },
-  defaultText: { color: '#f8fafc' },
-  secondary: { backgroundColor: '#e2e8f0' },
-  secondaryText: { color: '#0f172a' },
-  outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.colors.border },
-  outlineText: { color: theme.colors.foreground },
-  success: { backgroundColor: '#16a34a' },
-  successText: { color: '#ecfeff' },
-  warning: { backgroundColor: '#f59e0b' },
-  warningText: { color: '#0f172a' },
+  default: { backgroundColor: t.colors.darkGray },
+  defaultText: { color: t.colors.foreground },
+  secondary: { backgroundColor: t.colors.lightGray },
+  secondaryText: { color: t.colors.cardForeground },
+  outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: t.colors.border },
+  outlineText: { color: t.colors.foreground },
+  success: { backgroundColor: t.colors.success },
+  successText: { color: t.colors.foreground },
+  warning: { backgroundColor: t.colors.warning },
+  warningText: { color: t.colors.cardForeground },
 });
-

@@ -38,7 +38,7 @@ import {
 
 import { Text } from '@/components/ui/Text';
 import { Card, CardContent } from '@/components/ui/Card';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 import { MediaPipeBridge, type MediaPipeBridgeRef, type PoseLandmark } from '@/components/MediaPipeBridge';
 import { PoseOverlay } from '@/components/PoseOverlay';
@@ -48,6 +48,8 @@ import { env } from '@/config/env';
 import { getToken } from '@/lib/tokenStorage';
 import { formatAnalysisForAI, formatComparisonForAI, computeFullAnalysis, type FrameAnalysis, type LandmarkSnapshot } from '@/utils/poseAnalysis';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCRUB_HEIGHT = 56;
 const THUMB_SIZE = 24;
@@ -68,6 +70,7 @@ interface SavedVideo {
 }
 
 export const PhotoFinishScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const videoRef = useRef<Video>(null);
@@ -464,7 +467,7 @@ export const PhotoFinishScreen: React.FC = () => {
             <FlatList
               data={savedVideos}
               keyExtractor={(item) => item.id}
-              contentContainerStyle={{ paddingHorizontal: theme.spacing.lg, gap: 12 }}
+              contentContainerStyle={{ paddingHorizontal: themeStatic.spacing.lg, gap: 12 }}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => openSavedVideo(item)} activeOpacity={0.8}>
                   <Card style={styles.libraryCard}>
@@ -765,13 +768,13 @@ export const PhotoFinishScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
   uploadContainer: {
     flex: 1,
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: themeStatic.spacing.xl,
   },
   uploadHeader: {
     flexDirection: 'row',
@@ -796,9 +799,9 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     paddingHorizontal: 24,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: t.colors.overlayMedium,
     borderStyle: 'dashed',
     width: '100%',
   },
@@ -806,7 +809,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: t.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -817,7 +820,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: t.colors.overlayLight,
   },
   videoContainer: {
     flex: 1,
@@ -895,7 +898,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   timeText: {
-    color: 'rgba(255,255,255,0.7)',
+    color: t.colors.textSecondary,
     fontSize: 12,
     fontVariant: ['tabular-nums'],
   },
@@ -921,7 +924,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     height: 3,
-    backgroundColor: '#FF9800',
+    backgroundColor: t.colors.warning,
     borderRadius: 1.5,
   },
   scrubThumb: {
@@ -941,7 +944,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
     marginBottom: 16,
   },
   emptyLibrary: {
@@ -956,7 +959,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     borderWidth: 0.5,
     borderColor: 'rgba(148, 163, 184, 0.25)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   libraryCardContent: {
     flexDirection: 'row',
@@ -974,7 +977,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   fpsBtnText: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -985,7 +988,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: t.colors.overlayMedium,
     zIndex: 100,
   },
   fpsOption: {
@@ -993,10 +996,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   fpsOptionActive: {
-    backgroundColor: 'rgba(255,152,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
   },
   fpsOptionText: {
-    color: 'rgba(255,255,255,0.7)',
+    color: t.colors.textSecondary,
     fontSize: 14,
   },
   fpsOptionTextActive: {
@@ -1045,7 +1048,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   scrubFrameLabel: {
-    color: 'rgba(255,255,255,0.5)',
+    color: t.colors.textMuted,
     fontSize: 9,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -1054,7 +1057,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,152,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -1069,7 +1072,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF9800',
   },
   topBtnAnalysis: {
-    backgroundColor: 'rgba(255,152,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 1,
     borderColor: 'rgba(255,152,0,0.4)',
   },

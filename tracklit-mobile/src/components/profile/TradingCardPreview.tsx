@@ -2,7 +2,7 @@ import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
-import theme from '@/utils/theme';
+import { spacing, borderRadius } from '@/utils/theme';
 
 type BackgroundType = 'color' | 'image';
 
@@ -157,19 +157,19 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: theme.spacing.xl,
-    gap: theme.spacing.lg,
+    padding: spacing.xl,
+    gap: spacing.lg,
     alignItems: 'center',
   },
   tierPill: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.round,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.round,
     backgroundColor: '#f5c842',
   },
   avatarBlock: {
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: spacing.md,
   },
   avatarRing: {
     padding: 3,

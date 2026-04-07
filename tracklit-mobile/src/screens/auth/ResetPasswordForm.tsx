@@ -5,15 +5,8 @@ import { Text } from '@/components/ui/Text';
 import { LinearGradient } from '@/components/LinearGradient';
 import { ArrowLeft } from 'phosphor-react-native';
 import { apiRequest } from '@/lib/api';
-
-const COLORS = {
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textMuted: '#8A90B5',
-  success: '#22c55e',
-  destructive: '#ef4444',
-};
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 interface ResetPasswordFormProps {
   resetToken: string | null;
@@ -26,6 +19,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
   isVerifyingToken,
   onBackToLogin,
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
@@ -100,7 +94,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
 
       <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit} activeOpacity={0.8} disabled={loading || isVerifyingToken}>
         <LinearGradient
-          colors={[COLORS.orange, COLORS.orangeLight]}
+          colors={['#FF7A00', '#FF9D00']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.primaryBtnInner}
@@ -112,42 +106,42 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.backRow} onPress={onBackToLogin} activeOpacity={0.7}>
-        <ArrowLeft size={14} color={COLORS.orange} weight="bold" />
+        <ArrowLeft size={14} color={theme.colors.brandOrange} weight="bold" />
         <Text style={styles.linkText}>Back to Login</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     gap: 12,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     marginBottom: 4,
   },
   successText: {
     fontSize: 13,
-    color: COLORS.success,
+    color: t.colors.success,
     textAlign: 'center',
   },
   errorText: {
     fontSize: 13,
-    color: COLORS.destructive,
+    color: t.colors.destructive,
     textAlign: 'center',
   },
   mutedText: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
   },
   primaryBtn: {
@@ -163,7 +157,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   backRow: {
     flexDirection: 'row',
@@ -175,6 +169,6 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.orange,
+    color: t.colors.brandOrange,
   },
 });

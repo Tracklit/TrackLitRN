@@ -30,20 +30,10 @@ import { SkeletonListRows } from '@/components/Skeleton';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
-
-const C = {
-  bg: '#0E0F14',
-  orange: '#FF7A00',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.4)',
-  border: 'rgba(255,255,255,0.06)',
-  iconBg: 'rgba(255,255,255,0.05)',
-  connected: 'rgba(255,255,255,0.5)',
-  requested: 'rgba(255,255,255,0.35)',
-};
 
 interface Coach {
   id: number;
@@ -77,6 +67,7 @@ export const CoachesScreen: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
   const queryClient = useQueryClient();
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const [search, setSearch] = useState('');
 
@@ -226,8 +217,8 @@ export const CoachesScreen: React.FC = () => {
     if (isMyCoach(coach.id)) {
       return (
         <View style={styles.statusBadge}>
-          <CheckCircle size={12} color={C.connected} weight="fill" />
-          <Text style={[styles.statusText, { color: C.connected }]}>Your Coach</Text>
+          <CheckCircle size={12} color={theme.colors.textSecondary} weight="fill" />
+          <Text style={[styles.statusText, { color: theme.colors.textSecondary }]}>Your Coach</Text>
         </View>
       );
     }
@@ -235,8 +226,8 @@ export const CoachesScreen: React.FC = () => {
     if (hasPendingCoachRequest(coach.id) || pendingCoachRequests.has(coach.id)) {
       return (
         <View style={styles.statusBadge}>
-          <Clock size={12} color={C.requested} weight="fill" />
-          <Text style={[styles.statusText, { color: C.requested }]}>Requested</Text>
+          <Clock size={12} color={theme.colors.textMuted} weight="fill" />
+          <Text style={[styles.statusText, { color: theme.colors.textMuted }]}>Requested</Text>
         </View>
       );
     }
@@ -262,8 +253,8 @@ export const CoachesScreen: React.FC = () => {
     if (pendingConnects.has(coach.id)) {
       return (
         <View style={styles.statusBadge}>
-          <UserCircle size={12} color={C.connected} weight="fill" />
-          <Text style={[styles.statusText, { color: C.connected }]}>Connected</Text>
+          <UserCircle size={12} color={theme.colors.textSecondary} weight="fill" />
+          <Text style={[styles.statusText, { color: theme.colors.textSecondary }]}>Connected</Text>
         </View>
       );
     }
@@ -277,10 +268,10 @@ export const CoachesScreen: React.FC = () => {
         activeOpacity={0.6}
       >
         {isConnecting ? (
-          <ActivityIndicator size="small" color={C.orange} />
+          <ActivityIndicator size="small" color={theme.colors.brandOrange} />
         ) : (
           <>
-            <UserPlus size={10} color={C.orange} weight="bold" />
+            <UserPlus size={10} color={theme.colors.brandOrange} weight="bold" />
             <Text style={styles.connectText}>Connect</Text>
           </>
         )}
@@ -296,13 +287,15 @@ export const CoachesScreen: React.FC = () => {
     handleConnect,
     connectMutation.isPending,
     requestCoachingMutation.isPending,
+    styles,
+    theme,
   ]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
+          <CaretLeft size={18} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Coaches</Text>
         <View style={{ flex: 1 }} />
@@ -310,11 +303,11 @@ export const CoachesScreen: React.FC = () => {
 
       <View style={styles.searchContainer}>
         <View style={styles.searchRow}>
-          <MagnifyingGlass size={14} color={C.textMuted} weight="bold" />
+          <MagnifyingGlass size={14} color={theme.colors.textMuted} weight="bold" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by name or bio"
-            placeholderTextColor={C.textMuted}
+            placeholderTextColor={theme.colors.textMuted}
             value={search}
             onChangeText={setSearch}
           />
@@ -333,7 +326,7 @@ export const CoachesScreen: React.FC = () => {
       >
         {isGuest ? (
           <View style={styles.emptyContainer}>
-            <Trophy size={40} color={C.textMuted} weight="fill" />
+            <Trophy size={40} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>Sign in to browse coaches.</Text>
           </View>
         ) : coachesQuery.isLoading ? (
@@ -344,7 +337,7 @@ export const CoachesScreen: React.FC = () => {
           </View>
         ) : filtered.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Trophy size={40} color={C.textMuted} weight="fill" />
+            <Trophy size={40} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>No coaches found.</Text>
           </View>
         ) : (
@@ -368,13 +361,13 @@ export const CoachesScreen: React.FC = () => {
                         {coach.name}
                       </Text>
                       {!!coach.isVerified && (
-                        <SealCheck size={13} color={C.orange} weight="fill" />
+                        <SealCheck size={13} color={theme.colors.brandOrange} weight="fill" />
                       )}
                     </View>
                     <Text style={styles.itemUsername} numberOfLines={1}>@{coach.username}</Text>
                     {!!coach.location && (
                       <View style={styles.locationRow}>
-                        <MapPin size={10} color={C.textMuted} weight="fill" />
+                        <MapPin size={10} color={theme.colors.textMuted} weight="fill" />
                         <Text style={styles.itemMeta} numberOfLines={1}>{coach.location}</Text>
                       </View>
                     )}
@@ -393,8 +386,8 @@ export const CoachesScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -402,51 +395,51 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlaySubtle,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
   searchContainer: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlaySubtle,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 10,
     paddingHorizontal: 12,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 10,
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     fontSize: 13,
   },
   layerHint: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlaySubtle,
   },
   layerHintText: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 16,
   },
   content: {
@@ -459,7 +452,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -468,7 +461,7 @@ const styles = StyleSheet.create({
   },
   itemSeparator: {
     height: 0.5,
-    backgroundColor: C.border,
+    backgroundColor: t.colors.overlaySubtle,
     marginLeft: 48,
   },
   itemRow: {
@@ -490,12 +483,12 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     flexShrink: 1,
   },
   itemUsername: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   locationRow: {
     flexDirection: 'row',
@@ -505,11 +498,11 @@ const styles = StyleSheet.create({
   },
   itemMeta: {
     fontSize: 10,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   itemBio: {
     fontSize: 11,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 15,
     marginTop: 1,
   },
@@ -521,18 +514,18 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: C.orange,
+    borderColor: t.colors.brandOrange,
   },
   connectText: {
     fontSize: 10,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   requestButton: {
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   requestText: {
     fontSize: 10,

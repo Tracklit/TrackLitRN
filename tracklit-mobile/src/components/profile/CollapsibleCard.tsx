@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/Card';
 import { CardContent, CardHeader } from '@/components/ui/Card';
 import { Text } from '@/components/ui/Text';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import theme from '@/utils/theme';
+import { spacing } from '@/utils/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -30,6 +31,7 @@ export const CollapsibleCard: React.FC<CollapsibleCardProps> = ({
   contentStyle,
 }) => {
   const [open, setOpen] = useState(defaultOpen);
+  const { theme } = useTheme();
 
   const toggle = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -66,26 +68,25 @@ export const CollapsibleCard: React.FC<CollapsibleCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: spacing.lg,
   },
   header: {
-    paddingVertical: theme.spacing.md,
+    paddingVertical: spacing.md,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: theme.spacing.sm,
+    gap: spacing.sm,
   },
   titleBlock: {
     flex: 1,
-    gap: theme.spacing.xs / 2,
+    gap: spacing.xs / 2,
   },
   subtitle: {
     marginTop: 0,
   },
   content: {
-    paddingBottom: theme.spacing.lg,
+    paddingBottom: spacing.lg,
   },
 });
-

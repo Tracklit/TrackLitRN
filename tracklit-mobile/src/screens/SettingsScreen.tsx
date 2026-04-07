@@ -34,33 +34,23 @@ import {
 
 import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme, type ThemeMode } from '@/contexts/ThemeContext';
+import { type ThemeValues } from '@/contexts/ThemeContext';
+import { Sun, Moon, DeviceMobile } from 'phosphor-react-native';
 import { apiRequest } from '@/lib/api';
 import { setToken, setProfileFields } from '@/lib/tokenStorage';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import type { RootStackParamList } from '@/navigation/types';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
-
-const COLORS = {
-  bg: '#0E0F14',
-  surface: '#161823',
-  card: '#1C1F2B',
-  glass: 'rgba(255,255,255,0.05)',
-  gradStart: '#4B00FF',
-  gradMid: '#7F00FF',
-  gradEnd: '#00D4FF',
-  orange: '#FF7A00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  destructive: '#ef4444',
-};
 
 export const SettingsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const { user, logout, refreshUser, setUserAndPersist } = useAuth();
   const queryClient = useQueryClient();
+  const { mode: themeMode, setMode: setThemeMode } = useTheme();
+  const { styles, theme } = useThemedStyles(createStyles);
   const isGuest = user?.id === 'guest';
   const isCoach = user?.isCoach === true;
 
@@ -145,7 +135,6 @@ export const SettingsScreen: React.FC = () => {
       if (weight.trim()) nextUser.weight = parseFloat(weight.trim());
       if (gender) nextUser.gender = gender;
       delete nextUser.token;
-      // Persist athlete profile fields to the dedicated store — survives logout.
       await setProfileFields({
         age: nextUser.age ?? null,
         height: nextUser.height ?? null,
@@ -247,26 +236,26 @@ export const SettingsScreen: React.FC = () => {
       <Switch
         value={value}
         onValueChange={onToggle}
-        thumbColor={value ? COLORS.orange : '#555'}
+        thumbColor={value ? theme.colors.brandOrange : '#555'}
         trackColor={{ true: 'rgba(255,122,0,0.4)', false: 'rgba(255,255,255,0.1)' }}
       />
     </View>
   );
 
   return (
-    <View style={[styles.root, { backgroundColor: COLORS.bg }]}>
+    <View style={[styles.root, { backgroundColor: theme.colors.backgroundSolid }]}>
       <View style={[styles.headerBar, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.headerLeft}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <ArrowLeft size={20} color={COLORS.textPrimary} weight="bold" />
+          <ArrowLeft size={20} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Account Settings</Text>
         {hasChanges ? (
           <TouchableOpacity onPress={handleSave} style={styles.headerSaveBtn}>
-            <FloppyDisk size={18} color={COLORS.orange} weight="fill" />
+            <FloppyDisk size={18} color={theme.colors.brandOrange} weight="fill" />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 40 }} />
@@ -289,7 +278,7 @@ export const SettingsScreen: React.FC = () => {
               value={fullName}
               onChangeText={setFullName}
               placeholder="Your full name"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={theme.colors.textMuted}
               autoCapitalize="words"
             />
           </View>
@@ -301,7 +290,7 @@ export const SettingsScreen: React.FC = () => {
               value={username}
               onChangeText={setUsername}
               placeholder="your_username"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={theme.colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               maxLength={30}
@@ -316,7 +305,7 @@ export const SettingsScreen: React.FC = () => {
               value={email}
               onChangeText={setEmail}
               placeholder="your@email.com"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={theme.colors.textMuted}
               autoCapitalize="none"
               keyboardType="email-address"
             />
@@ -328,10 +317,10 @@ export const SettingsScreen: React.FC = () => {
             activeOpacity={0.7}
           >
             <View style={styles.settingIconWrap}>
-              <Lock size={18} color={COLORS.orange} weight="fill" />
+              <Lock size={18} color={theme.colors.brandOrange} weight="fill" />
             </View>
             <Text style={styles.actionRowText}>Change Password</Text>
-            <CaretRight size={16} color={COLORS.textMuted} weight="bold" />
+            <CaretRight size={16} color={theme.colors.textMuted} weight="bold" />
           </TouchableOpacity>
 
           {hasChanges && (
@@ -341,7 +330,7 @@ export const SettingsScreen: React.FC = () => {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[COLORS.orange, '#FF9D00']}
+                colors={['#FF7A00', '#FF9D00']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.saveBtnInner}
@@ -364,7 +353,7 @@ export const SettingsScreen: React.FC = () => {
                 value={age}
                 onChangeText={setAge}
                 placeholder="Years"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 keyboardType="numeric"
                 maxLength={3}
               />
@@ -376,7 +365,7 @@ export const SettingsScreen: React.FC = () => {
                 value={height}
                 onChangeText={setHeight}
                 placeholder="cm"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 keyboardType="numeric"
                 maxLength={4}
               />
@@ -388,7 +377,7 @@ export const SettingsScreen: React.FC = () => {
                 value={weight}
                 onChangeText={setWeight}
                 placeholder="kg"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={theme.colors.textMuted}
                 keyboardType="numeric"
                 maxLength={4}
               />
@@ -429,7 +418,7 @@ export const SettingsScreen: React.FC = () => {
               if (isGuest) return;
               coachStatusMutation.mutate(val);
             },
-            <UsersThree size={18} color={COLORS.gradEnd} weight="fill" />,
+            <UsersThree size={18} color="#00D4FF" weight="fill" />,
           )}
         </View>
 
@@ -445,7 +434,7 @@ export const SettingsScreen: React.FC = () => {
               setIsPrivate(val);
               updateSettingsMutation.mutate({ isPrivate: val });
             },
-            <ShieldCheck size={18} color={COLORS.gradMid} weight="fill" />,
+            <ShieldCheck size={18} color="#7F00FF" weight="fill" />,
           )}
         </View>
 
@@ -457,7 +446,7 @@ export const SettingsScreen: React.FC = () => {
             'Receive alerts for messages and updates',
             pushNotifications,
             handleTogglePush,
-            <Bell size={18} color={COLORS.orange} weight="fill" />,
+            <Bell size={18} color={theme.colors.brandOrange} weight="fill" />,
           )}
           <View style={styles.rowDivider} />
           {renderToggleRow(
@@ -465,8 +454,32 @@ export const SettingsScreen: React.FC = () => {
             'Display the activity carousel on home screen',
             showTicker,
             handleToggleTicker,
-            <Newspaper size={18} color={COLORS.gradEnd} weight="fill" />,
+            <Newspaper size={18} color="#00D4FF" weight="fill" />,
           )}
+          <View style={styles.rowDivider} />
+          <View style={styles.themeSection}>
+            <Text style={styles.settingLabel}>Theme</Text>
+            <Text style={[styles.settingSubtext, { marginBottom: 10 }]}>Choose your preferred appearance</Text>
+            <View style={styles.themePillRow}>
+              {([
+                { value: 'dark' as ThemeMode, label: 'Dark', Icon: Moon },
+                { value: 'light' as ThemeMode, label: 'Light', Icon: Sun },
+                { value: 'system' as ThemeMode, label: 'System', Icon: DeviceMobile },
+              ]).map(({ value, label, Icon }) => (
+                <TouchableOpacity
+                  key={value}
+                  style={[styles.themePill, themeMode === value && styles.themePillActive]}
+                  onPress={() => setThemeMode(value)}
+                  activeOpacity={0.7}
+                >
+                  <Icon size={16} color={themeMode === value ? theme.colors.brandOrange : theme.colors.textMuted} weight={themeMode === value ? 'fill' : 'regular'} />
+                  <Text style={[styles.themePillText, themeMode === value && styles.themePillTextActive]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
         </View>
 
         {renderSectionHeader('SUPPORT')}
@@ -474,10 +487,10 @@ export const SettingsScreen: React.FC = () => {
         <View style={styles.card}>
           <TouchableOpacity style={styles.actionRow} activeOpacity={0.7}>
             <View style={styles.settingIconWrap}>
-              <EnvelopeSimple size={18} color={COLORS.textSecondary} weight="fill" />
+              <EnvelopeSimple size={18} color={theme.colors.textSecondary} weight="fill" />
             </View>
             <Text style={styles.actionRowText}>Email Support</Text>
-            <CaretRight size={16} color={COLORS.textMuted} weight="bold" />
+            <CaretRight size={16} color={theme.colors.textMuted} weight="bold" />
           </TouchableOpacity>
           <View style={styles.rowDivider} />
           <View style={styles.versionRow}>
@@ -490,7 +503,7 @@ export const SettingsScreen: React.FC = () => {
           onPress={logout}
           activeOpacity={0.8}
         >
-          <SignOut size={18} color={COLORS.destructive} weight="fill" />
+          <SignOut size={18} color={theme.colors.destructive} weight="fill" />
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -519,12 +532,12 @@ export const SettingsScreen: React.FC = () => {
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
                   placeholder="Current password"
-                  placeholderTextColor={COLORS.textMuted}
+                  placeholderTextColor={theme.colors.textMuted}
                   secureTextEntry={!showCurrentPw}
                   autoCapitalize="none"
                 />
                 <TouchableOpacity onPress={() => setShowCurrentPw(!showCurrentPw)} style={styles.pwEye}>
-                  {showCurrentPw ? <EyeSlash size={18} color={COLORS.textMuted} /> : <Eye size={18} color={COLORS.textMuted} />}
+                  {showCurrentPw ? <EyeSlash size={18} color={theme.colors.textMuted} /> : <Eye size={18} color={theme.colors.textMuted} />}
                 </TouchableOpacity>
               </View>
 
@@ -534,12 +547,12 @@ export const SettingsScreen: React.FC = () => {
                   value={newPassword}
                   onChangeText={setNewPassword}
                   placeholder="New password (min 6 chars)"
-                  placeholderTextColor={COLORS.textMuted}
+                  placeholderTextColor={theme.colors.textMuted}
                   secureTextEntry={!showNewPw}
                   autoCapitalize="none"
                 />
                 <TouchableOpacity onPress={() => setShowNewPw(!showNewPw)} style={styles.pwEye}>
-                  {showNewPw ? <EyeSlash size={18} color={COLORS.textMuted} /> : <Eye size={18} color={COLORS.textMuted} />}
+                  {showNewPw ? <EyeSlash size={18} color={theme.colors.textMuted} /> : <Eye size={18} color={theme.colors.textMuted} />}
                 </TouchableOpacity>
               </View>
 
@@ -549,7 +562,7 @@ export const SettingsScreen: React.FC = () => {
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   placeholder="Confirm new password"
-                  placeholderTextColor={COLORS.textMuted}
+                  placeholderTextColor={theme.colors.textMuted}
                   secureTextEntry={!showNewPw}
                   autoCapitalize="none"
                   returnKeyType="done"
@@ -574,7 +587,7 @@ export const SettingsScreen: React.FC = () => {
                   onPress={handleChangePassword}
                 >
                   <LinearGradient
-                    colors={[COLORS.orange, '#FF9D00']}
+                    colors={['#FF7A00', '#FF9D00']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.modalSaveBtnInner}
@@ -593,7 +606,7 @@ export const SettingsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
 
@@ -613,7 +626,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     textAlign: 'center',
   },
   headerSaveBtn: {
@@ -633,21 +646,21 @@ const styles = StyleSheet.create({
   sectionLine: {
     flex: 1,
     height: 0.5,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: '700',
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 1.5,
   },
 
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 16,
     padding: 16,
     borderWidth: 0.5,
-    borderColor: COLORS.border,
+    borderColor: t.colors.overlayLight,
   },
 
   inputGroup: {
@@ -656,25 +669,25 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 0.5,
     marginBottom: 6,
     textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: t.colors.darkGray,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
     fontWeight: '500',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: t.colors.overlayLight,
   },
   inputHint: {
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     marginTop: 4,
   },
 
@@ -700,21 +713,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    borderColor: t.colors.overlayLight,
+    backgroundColor: t.colors.darkGray,
     alignItems: 'center',
   },
   genderBtnActive: {
-    borderColor: COLORS.orange,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    borderColor: t.colors.brandOrange,
+    backgroundColor: t.colors.brandOrangeLight,
   },
   genderBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
   },
   genderBtnTextActive: {
-    color: COLORS.orange,
+    color: t.colors.brandOrange,
   },
 
   actionRow: {
@@ -726,7 +739,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '500',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
 
   settingRow: {
@@ -738,7 +751,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: COLORS.glass,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -750,17 +763,17 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   settingSubtext: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
     marginTop: 1,
   },
 
   rowDivider: {
     height: 0.5,
-    backgroundColor: COLORS.border,
+    backgroundColor: t.colors.overlayLight,
     marginVertical: 4,
   },
 
@@ -770,7 +783,7 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
   },
 
   saveBtn: {
@@ -789,7 +802,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
 
   logoutBtn: {
@@ -807,7 +820,7 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.destructive,
+    color: t.colors.destructive,
   },
 
   modalOverlay: {
@@ -817,24 +830,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   modalSheet: {
-    backgroundColor: COLORS.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 20,
     padding: 24,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 20,
   },
   pwInputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: t.colors.darkGray,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: t.colors.overlayLight,
     marginBottom: 12,
   },
   pwInput: {
@@ -842,7 +855,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
   },
   pwEye: {
     paddingHorizontal: 12,
@@ -858,12 +871,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   modalCancelText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: t.colors.textMuted,
   },
   modalSaveBtn: {
     flex: 1,
@@ -878,6 +891,38 @@ const styles = StyleSheet.create({
   modalSaveText: {
     fontSize: 15,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: t.colors.textPrimary,
+  },
+
+  themeSection: {
+    paddingVertical: 8,
+  },
+  themePillRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  themePill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: t.colors.overlayLight,
+    backgroundColor: t.colors.darkGray,
+  },
+  themePillActive: {
+    borderColor: t.colors.brandOrange,
+    backgroundColor: t.colors.brandOrangeLight,
+  },
+  themePillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: t.colors.textMuted,
+  },
+  themePillTextActive: {
+    color: t.colors.brandOrange,
   },
 });

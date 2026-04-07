@@ -33,24 +33,11 @@ import type { RootStackParamList } from '@/navigation/types';
 import { env } from '@/config/env';
 import { KeyboardAwareScreenScrollView } from '@/components/keyboard/KeyboardAwareScroll';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type JournalEntryRouteProp = RouteProp<RootStackParamList, 'JournalEntry'>;
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  cardAlt: '#22263A',
-  orange: '#FF7A00',
-  orangeDim: 'rgba(255,122,0,0.15)',
-  border: 'rgba(255,255,255,0.08)',
-  borderFocus: 'rgba(255,122,0,0.5)',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: '#8A90B5',
-  inputBg: 'rgba(255,255,255,0.04)',
-  danger: '#ef4444',
-  dangerDim: 'rgba(239,68,68,0.15)',
-};
 
 const getMoodLabel = (val: number) => {
   if (val <= 2) return 'Poor';
@@ -68,6 +55,7 @@ const getMoodColor = (val: number) => {
 };
 
 export const JournalEntryScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const route = useRoute<JournalEntryRouteProp>();
   const insets = useSafeAreaInsets();
@@ -213,7 +201,7 @@ export const JournalEntryScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <ArrowLeft size={18} color={C.textSecondary} weight="bold" />
+          <ArrowLeft size={18} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Journal Entry</Text>
         <View style={{ width: 36 }} />
@@ -235,8 +223,8 @@ export const JournalEntryScreen: React.FC = () => {
             value={title}
             onChangeText={setTitle}
             placeholder="Enter journal entry title..."
-            placeholderTextColor={C.textMuted}
-            selectionColor={C.orange}
+            placeholderTextColor={theme.colors.textMuted}
+            selectionColor={theme.colors.brandOrange}
           />
         </View>
 
@@ -247,8 +235,8 @@ export const JournalEntryScreen: React.FC = () => {
             value={notes}
             onChangeText={setNotes}
             placeholder="Write your thoughts about today's training..."
-            placeholderTextColor={C.textMuted}
-            selectionColor={C.orange}
+            placeholderTextColor={theme.colors.textMuted}
+            selectionColor={theme.colors.brandOrange}
             multiline
             numberOfLines={6}
             textAlignVertical="top"
@@ -260,7 +248,7 @@ export const JournalEntryScreen: React.FC = () => {
             <Text style={styles.sectionLabel}>Voice Note</Text>
             {!hasVoiceAccess && (
               <View style={styles.premiumBadge}>
-                <Lock size={10} color={C.orange} weight="fill" />
+                <Lock size={10} color={theme.colors.brandOrange} weight="fill" />
                 <Text style={styles.premiumBadgeText}>Pro</Text>
               </View>
             )}
@@ -279,8 +267,8 @@ export const JournalEntryScreen: React.FC = () => {
             >
               {isRecording
                 ? <Stop size={14} color="#ef4444" weight="fill" />
-                : <Microphone size={14} color={hasVoiceAccess ? C.orange : C.textMuted} weight="fill" />}
-              <Text style={[styles.voiceBtnText, isRecording && { color: '#ef4444' }, !hasVoiceAccess && { color: C.textMuted }]}>
+                : <Microphone size={14} color={hasVoiceAccess ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" />}
+              <Text style={[styles.voiceBtnText, isRecording && { color: theme.colors.destructive }, !hasVoiceAccess && { color: theme.colors.textMuted }]}>
                 {isRecording ? 'Stop' : 'Record'}
               </Text>
             </TouchableOpacity>
@@ -295,8 +283,8 @@ export const JournalEntryScreen: React.FC = () => {
               disabled={!recordingUri || isPlaying}
               activeOpacity={0.7}
             >
-              <Play size={14} color={recordingUri && !isPlaying ? C.orange : C.textMuted} weight="fill" />
-              <Text style={[styles.voiceBtnText, (!recordingUri || isPlaying) && { color: C.textMuted }]}>
+              <Play size={14} color={recordingUri && !isPlaying ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" />
+              <Text style={[styles.voiceBtnText, (!recordingUri || isPlaying) && { color: theme.colors.textMuted }]}>
                 {isPlaying ? 'Playing…' : 'Play'}
               </Text>
             </TouchableOpacity>
@@ -312,9 +300,9 @@ export const JournalEntryScreen: React.FC = () => {
               activeOpacity={0.7}
             >
               {isTranscribing
-                ? <ActivityIndicator size={14} color={C.orange} />
-                : <TextT size={14} color={recordingUri && hasVoiceAccess ? C.orange : C.textMuted} weight="fill" />}
-              <Text style={[styles.voiceBtnText, (!recordingUri || !hasVoiceAccess) && { color: C.textMuted }]}>
+                ? <ActivityIndicator size={14} color={theme.colors.brandOrange} />
+                : <TextT size={14} color={recordingUri && hasVoiceAccess ? theme.colors.brandOrange : theme.colors.textMuted} weight="fill" />}
+              <Text style={[styles.voiceBtnText, (!recordingUri || !hasVoiceAccess) && { color: theme.colors.textMuted }]}>
                 {isTranscribing ? 'Working…' : 'Transcribe'}
               </Text>
             </TouchableOpacity>
@@ -346,7 +334,7 @@ export const JournalEntryScreen: React.FC = () => {
               value={moodRating}
               onValueChange={setMoodRating}
               minimumTrackTintColor={moodColor}
-              maximumTrackTintColor={C.border}
+              maximumTrackTintColor={theme.colors.overlayLight}
               thumbTintColor={moodColor}
             />
             <View style={styles.sliderLabels}>
@@ -365,8 +353,8 @@ export const JournalEntryScreen: React.FC = () => {
             <Switch
               value={isPublic}
               onValueChange={setIsPublic}
-              trackColor={{ false: C.border, true: C.orange }}
-              thumbColor={C.textPrimary}
+              trackColor={{ false: theme.colors.overlayLight, true: theme.colors.brandOrange }}
+              thumbColor={theme.colors.textPrimary}
             />
           </View>
         </View>
@@ -378,8 +366,8 @@ export const JournalEntryScreen: React.FC = () => {
           activeOpacity={0.85}
         >
           {createMutation.isPending
-            ? <ActivityIndicator size={18} color={C.textPrimary} />
-            : <FloppyDisk size={18} color={C.textPrimary} weight="fill" />}
+            ? <ActivityIndicator size={18} color={theme.colors.textPrimary} />
+            : <FloppyDisk size={18} color={theme.colors.textPrimary} weight="fill" />}
           <Text style={styles.saveBtnText}>
             {createMutation.isPending ? 'Saving…' : 'Save Entry'}
           </Text>
@@ -389,10 +377,10 @@ export const JournalEntryScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: t.colors.backgroundSolid,
   },
   header: {
     flexDirection: 'row',
@@ -401,22 +389,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
   content: {
@@ -426,7 +414,7 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     fontWeight: '500',
     letterSpacing: 0.2,
   },
@@ -436,7 +424,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -447,12 +435,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: C.textPrimary,
-    backgroundColor: C.inputBg,
+    color: t.colors.textPrimary,
+    backgroundColor: t.colors.overlaySubtle,
     fontSize: 15,
   },
   textArea: {
@@ -474,11 +462,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   voiceBtnDefault: {
-    backgroundColor: C.inputBg,
-    borderColor: C.border,
+    backgroundColor: t.colors.overlaySubtle,
+    borderColor: t.colors.overlayLight,
   },
   voiceBtnActive: {
-    backgroundColor: C.dangerDim,
+    backgroundColor: 'rgba(239,68,68,0.15)',
     borderColor: 'rgba(239,68,68,0.3)',
   },
   voiceBtnDisabled: {
@@ -487,7 +475,7 @@ const styles = StyleSheet.create({
   voiceBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   recordingReadyBadge: {
     flexDirection: 'row',
@@ -505,12 +493,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#22c55e',
+    backgroundColor: t.colors.success,
   },
   recordingReadyText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#22c55e',
+    color: t.colors.success,
   },
   premiumBadge: {
     flexDirection: 'row',
@@ -518,7 +506,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: C.orangeDim,
+    backgroundColor: t.colors.brandOrangeLight,
     borderRadius: 6,
     borderWidth: 0.5,
     borderColor: 'rgba(255,122,0,0.3)',
@@ -526,7 +514,7 @@ const styles = StyleSheet.create({
   premiumBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   sliderWrap: {
     gap: 4,
@@ -542,7 +530,7 @@ const styles = StyleSheet.create({
   },
   sliderLabel: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   moodBadge: {
     paddingHorizontal: 10,
@@ -557,16 +545,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
   },
   switchSub: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     marginTop: 1,
   },
   saveBtn: {
@@ -574,7 +562,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 14,
     paddingVertical: 16,
   },
@@ -584,7 +572,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
 });

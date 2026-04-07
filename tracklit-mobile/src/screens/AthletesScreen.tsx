@@ -27,20 +27,10 @@ import { SkeletonListRows } from '@/components/Skeleton';
 import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
-
-const C = {
-  bg: '#0E0F14',
-  orange: '#FF7A00',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textMuted: 'rgba(255,255,255,0.4)',
-  border: 'rgba(255,255,255,0.06)',
-  iconBg: 'rgba(255,255,255,0.05)',
-  connected: 'rgba(255,255,255,0.5)',
-  requested: 'rgba(255,255,255,0.35)',
-};
 
 interface Athlete {
   id: number;
@@ -74,6 +64,7 @@ export const AthletesScreen: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
   const queryClient = useQueryClient();
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -171,8 +162,8 @@ export const AthletesScreen: React.FC = () => {
     if (isFriend || athlete.isFollowing) {
       return (
         <View style={styles.statusBadge}>
-          <CheckCircle size={12} color={C.connected} weight="fill" />
-          <Text style={[styles.statusText, { color: C.connected }]}>Connected</Text>
+          <CheckCircle size={12} color={theme.colors.textSecondary} weight="fill" />
+          <Text style={[styles.statusText, { color: theme.colors.textSecondary }]}>Connected</Text>
         </View>
       );
     }
@@ -180,8 +171,8 @@ export const AthletesScreen: React.FC = () => {
     if (isPending) {
       return (
         <View style={styles.statusBadge}>
-          <Clock size={12} color={C.requested} weight="fill" />
-          <Text style={[styles.statusText, { color: C.requested }]}>Requested</Text>
+          <Clock size={12} color={theme.colors.textMuted} weight="fill" />
+          <Text style={[styles.statusText, { color: theme.colors.textMuted }]}>Requested</Text>
         </View>
       );
     }
@@ -194,19 +185,19 @@ export const AthletesScreen: React.FC = () => {
         activeOpacity={0.6}
       >
         {isSending ? (
-          <ActivityIndicator size="small" color={C.orange} />
+          <ActivityIndicator size="small" color={theme.colors.brandOrange} />
         ) : (
           <Text style={styles.connectText}>Connect</Text>
         )}
       </TouchableOpacity>
     );
-  }, [isAlreadyFriend, hasPendingRequest, pendingRequests, handleConnect]);
+  }, [isAlreadyFriend, hasPendingRequest, pendingRequests, handleConnect, styles, theme]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <CaretLeft size={18} color={C.textSecondary} weight="bold" />
+          <CaretLeft size={18} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Athletes</Text>
         <View style={{ flex: 1 }} />
@@ -214,11 +205,11 @@ export const AthletesScreen: React.FC = () => {
 
       <View style={styles.searchContainer}>
         <View style={styles.searchRow}>
-          <MagnifyingGlass size={14} color={C.textMuted} weight="bold" />
+          <MagnifyingGlass size={14} color={theme.colors.textMuted} weight="bold" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by name or username"
-            placeholderTextColor={C.textMuted}
+            placeholderTextColor={theme.colors.textMuted}
             value={search}
             onChangeText={handleSearchChange}
           />
@@ -231,7 +222,7 @@ export const AthletesScreen: React.FC = () => {
       >
         {isGuest ? (
           <View style={styles.emptyContainer}>
-            <Users size={40} color={C.textMuted} weight="fill" />
+            <Users size={40} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>Sign in to browse athletes.</Text>
           </View>
         ) : athletesQuery.isLoading && page === 1 ? (
@@ -242,7 +233,7 @@ export const AthletesScreen: React.FC = () => {
           </View>
         ) : athletes.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Users size={40} color={C.textMuted} weight="fill" />
+            <Users size={40} color={theme.colors.textMuted} weight="fill" />
             <Text style={styles.emptyText}>No athletes found.</Text>
           </View>
         ) : (
@@ -295,7 +286,7 @@ export const AthletesScreen: React.FC = () => {
                   activeOpacity={0.6}
                 >
                   {athletesQuery.isFetching ? (
-                    <ActivityIndicator size="small" color={C.orange} />
+                    <ActivityIndicator size="small" color={theme.colors.brandOrange} />
                   ) : (
                     <Text style={styles.loadMoreText}>Show More</Text>
                   )}
@@ -309,8 +300,8 @@ export const AthletesScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -318,40 +309,40 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlaySubtle,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     letterSpacing: 0.3,
   },
   searchContainer: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlaySubtle,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: C.iconBg,
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 10,
     paddingHorizontal: 12,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 10,
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     fontSize: 13,
   },
   content: {
@@ -364,7 +355,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -373,7 +364,7 @@ const styles = StyleSheet.create({
   },
   itemSeparator: {
     height: 0.5,
-    backgroundColor: C.border,
+    backgroundColor: t.colors.overlaySubtle,
     marginLeft: 48,
   },
   itemRow: {
@@ -395,20 +386,20 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 13,
     fontWeight: '600',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     flexShrink: 1,
   },
   itemUsername: {
     fontSize: 11,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   itemMeta: {
     fontSize: 10,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     marginTop: 1,
   },
   coachTag: {
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -416,14 +407,14 @@ const styles = StyleSheet.create({
   coachTagText: {
     fontSize: 8,
     fontWeight: '800',
-    color: C.orange,
+    color: t.colors.brandOrange,
     letterSpacing: 0.5,
   },
   connectButton: {
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
-    backgroundColor: C.orange,
+    backgroundColor: t.colors.brandOrange,
   },
   connectText: {
     fontSize: 10,
@@ -447,6 +438,6 @@ const styles = StyleSheet.create({
   loadMoreText: {
     fontSize: 12,
     fontWeight: '600',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
 });

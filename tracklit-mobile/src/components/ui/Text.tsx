@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text as RNText, TextProps as RNTextProps, StyleSheet } from 'react-native';
-import theme from '@/utils/theme';
+import { useTheme, type ThemeValues } from '@/contexts/ThemeContext';
+import { typography } from '@/utils/theme';
 
 interface TextProps extends RNTextProps {
   variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'caption' | 'small';
@@ -9,6 +10,18 @@ interface TextProps extends RNTextProps {
   center?: boolean;
   children: React.ReactNode;
 }
+
+const colorTokenMap: Record<NonNullable<TextProps['color']>, keyof ThemeValues['colors']> = {
+  primary: 'textPrimary',
+  secondary: 'textSecondary',
+  muted: 'textMuted',
+  accent: 'accent',
+  destructive: 'destructive',
+  success: 'success',
+  warning: 'warning',
+  foreground: 'foreground',
+  'primary-foreground': 'primaryForeground',
+};
 
 export const Text: React.FC<TextProps> = ({
   variant = 'body',
@@ -19,10 +32,11 @@ export const Text: React.FC<TextProps> = ({
   children,
   ...props
 }) => {
+  const { theme } = useTheme();
+
   const textStyle = [
-    styles.base,
+    { color: theme.colors[colorTokenMap[color]] },
     styles[variant],
-    styles[color],
     styles[weight],
     center && styles.center,
     style,
@@ -36,90 +50,54 @@ export const Text: React.FC<TextProps> = ({
 };
 
 const styles = StyleSheet.create({
-  base: {
-    color: theme.colors.textPrimary,
-  },
-  
-  // Variants
   h1: {
-    fontSize: theme.typography.sizes['4xl'],
-    lineHeight: Math.ceil(theme.typography.sizes['4xl'] * theme.typography.lineHeights.tight),
+    fontSize: typography.sizes['4xl'],
+    lineHeight: Math.ceil(typography.sizes['4xl'] * typography.lineHeights.tight),
   },
   h2: {
-    fontSize: theme.typography.sizes['3xl'],
-    lineHeight: Math.ceil(theme.typography.sizes['3xl'] * theme.typography.lineHeights.tight),
+    fontSize: typography.sizes['3xl'],
+    lineHeight: Math.ceil(typography.sizes['3xl'] * typography.lineHeights.tight),
   },
   h3: {
-    fontSize: theme.typography.sizes['2xl'],
-    lineHeight: Math.ceil(theme.typography.sizes['2xl'] * theme.typography.lineHeights.tight),
+    fontSize: typography.sizes['2xl'],
+    lineHeight: Math.ceil(typography.sizes['2xl'] * typography.lineHeights.tight),
   },
   h4: {
-    fontSize: theme.typography.sizes.xl,
-    lineHeight: Math.ceil(theme.typography.sizes.xl * theme.typography.lineHeights.normal),
+    fontSize: typography.sizes.xl,
+    lineHeight: Math.ceil(typography.sizes.xl * typography.lineHeights.normal),
   },
   body: {
-    fontSize: theme.typography.sizes.base,
-    lineHeight: Math.ceil(theme.typography.sizes.base * theme.typography.lineHeights.normal),
+    fontSize: typography.sizes.base,
+    lineHeight: Math.ceil(typography.sizes.base * typography.lineHeights.normal),
   },
   caption: {
-    fontSize: theme.typography.sizes.sm,
-    lineHeight: Math.ceil(theme.typography.sizes.sm * theme.typography.lineHeights.normal),
+    fontSize: typography.sizes.sm,
+    lineHeight: Math.ceil(typography.sizes.sm * typography.lineHeights.normal),
   },
   small: {
-    fontSize: theme.typography.sizes.xs,
-    lineHeight: Math.ceil(theme.typography.sizes.xs * theme.typography.lineHeights.normal),
+    fontSize: typography.sizes.xs,
+    lineHeight: Math.ceil(typography.sizes.xs * typography.lineHeights.normal),
   },
-  
-  // Colors
-  primary: {
-    color: theme.colors.textPrimary,
-  },
-  secondary: {
-    color: theme.colors.textSecondary,
-  },
-  muted: {
-    color: theme.colors.textMuted,
-  },
-  accent: {
-    color: theme.colors.accent,
-  },
-  destructive: {
-    color: theme.colors.destructive,
-  },
-  success: {
-    color: theme.colors.success,
-  },
-  warning: {
-    color: theme.colors.warning,
-  },
-  foreground: {
-    color: theme.colors.foreground,
-  },
-  'primary-foreground': {
-    color: theme.colors.primaryForeground,
-  },
-  
-  // Weights
+
   light: {
-    fontWeight: theme.typography.weights.light,
+    fontWeight: typography.weights.light,
   },
   regular: {
-    fontWeight: theme.typography.weights.regular,
+    fontWeight: typography.weights.regular,
   },
   medium: {
-    fontWeight: theme.typography.weights.medium,
+    fontWeight: typography.weights.medium,
   },
   semiBold: {
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: typography.weights.semiBold,
   },
   bold: {
-    fontWeight: theme.typography.weights.bold,
+    fontWeight: typography.weights.bold,
   },
   extraBold: {
-    fontWeight: theme.typography.weights.extraBold,
+    fontWeight: typography.weights.extraBold,
   },
-  
-  // Alignment
+
   center: {
     textAlign: 'center',
   },

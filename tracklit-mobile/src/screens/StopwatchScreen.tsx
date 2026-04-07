@@ -20,15 +20,18 @@ import {
 } from 'phosphor-react-native';
 
 import { Text } from '../components/ui/Text';
-import theme from '../utils/theme';
+import themeStatic from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 let VolumeManager: any = null;
 try {
   VolumeManager = require('react-native-volume-manager').VolumeManager;
 } catch {}
 
 export const StopwatchScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [time, setTime] = useState(0);
@@ -281,12 +284,12 @@ export const StopwatchScreen: React.FC = () => {
 
 const mono = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'System' });
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: themeStatic.spacing.xl,
     gap: 32,
   },
   header: {
@@ -317,7 +320,7 @@ const styles = StyleSheet.create({
   digitText: {
     fontSize: 72,
     fontWeight: '200',
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontFamily: mono,
     lineHeight: 80,
     letterSpacing: -2,
@@ -325,7 +328,7 @@ const styles = StyleSheet.create({
   centisText: {
     fontSize: 48,
     fontWeight: '200',
-    color: 'rgba(255,255,255,0.5)',
+    color: t.colors.textMuted,
     fontFamily: mono,
     lineHeight: 80,
     letterSpacing: -2,
@@ -333,7 +336,7 @@ const styles = StyleSheet.create({
   colonText: {
     fontSize: 60,
     fontWeight: '200',
-    color: 'rgba(255,255,255,0.3)',
+    color: t.colors.textMuted,
     fontFamily: mono,
     lineHeight: 80,
     marginHorizontal: 4,
@@ -341,7 +344,7 @@ const styles = StyleSheet.create({
   digitLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.3)',
+    color: t.colors.textMuted,
     letterSpacing: 2,
   },
   currentLapLabel: {
@@ -359,7 +362,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: 'rgba(255,152,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
   },
   glowActive: {
     backgroundColor: 'rgba(239,68,68,0.15)',
@@ -385,7 +388,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tipText: {
-    color: 'rgba(255,255,255,0.35)',
+    color: t.colors.textMuted,
   },
   controlsRow: {
     flexDirection: 'row',
@@ -400,18 +403,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 12,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: t.colors.overlayMedium,
   },
   controlBtnDisabled: {
     opacity: 0.3,
   },
   controlBtnText: {
-    color: '#fff',
+    color: t.colors.textPrimary,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 12,
     padding: 16,
     borderWidth: 0.5,
@@ -425,7 +428,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   lapsTitle: {
-    color: '#fff',
+    color: t.colors.textPrimary,
   },
   lapRow: {
     flexDirection: 'row',
@@ -434,7 +437,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: t.colors.overlaySubtle,
     borderWidth: 0.5,
     borderColor: 'rgba(148,163,184,0.15)',
   },
@@ -449,7 +452,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,152,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 0.5,
     borderColor: 'rgba(255,152,0,0.3)',
   },
@@ -457,15 +460,15 @@ const styles = StyleSheet.create({
     color: '#FF9800',
   },
   lapTime: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontFamily: mono,
   },
   lapDelta: {
-    color: 'rgba(255,255,255,0.4)',
+    color: t.colors.textMuted,
     fontFamily: mono,
   },
   latestBadge: {
-    backgroundColor: 'rgba(255,152,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderColor: 'rgba(255,152,0,0.3)',
     borderWidth: 0.5,
     paddingVertical: 4,

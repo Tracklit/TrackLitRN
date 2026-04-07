@@ -30,7 +30,8 @@ import type { RootStackParamList } from '@/navigation/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import theme from '@/utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -58,6 +59,7 @@ export const ConnectionsScreen: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const isGuest = user?.id === 'guest';
   const qc = useQueryClient();
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'connections' | 'requests'>('connections');
@@ -185,7 +187,7 @@ export const ConnectionsScreen: React.FC = () => {
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
-          <ArrowLeft size={22} color="#e2e8f0" weight="bold" />
+          <ArrowLeft size={22} color={theme.colors.textSecondary} weight="bold" />
         </TouchableOpacity>
         <Text
           variant="body"
@@ -238,11 +240,11 @@ export const ConnectionsScreen: React.FC = () => {
 
       {tab === 'connections' && (
         <View style={styles.searchRow}>
-          <MagnifyingGlass size={16} color="rgba(255,255,255,0.4)" />
+          <MagnifyingGlass size={16} color={theme.colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search connections..."
-            placeholderTextColor="rgba(255,255,255,0.3)"
+            placeholderTextColor={theme.colors.textMuted}
             value={search}
             onChangeText={setSearch}
           />
@@ -259,7 +261,7 @@ export const ConnectionsScreen: React.FC = () => {
           </View>
         ) : isGuest ? (
           <View style={styles.center}>
-            <Users size={32} color="rgba(255,255,255,0.3)" weight="fill" />
+            <Users size={32} color={theme.colors.textMuted} weight="fill" />
             <Text variant="body" color="muted">
               Sign in to view connections.
             </Text>
@@ -267,7 +269,7 @@ export const ConnectionsScreen: React.FC = () => {
         ) : tab === 'requests' ? (
           pendingRequests.length === 0 ? (
             <View style={styles.center}>
-              <UserPlus size={32} color="rgba(255,255,255,0.3)" weight="fill" />
+              <UserPlus size={32} color={theme.colors.textMuted} weight="fill" />
               <Text variant="body" color="muted">
                 No pending requests.
               </Text>
@@ -326,7 +328,7 @@ export const ConnectionsScreen: React.FC = () => {
                       onPress={() => declineMutation.mutate({ fromUserId: senderId, notifId: req.id })}
                       disabled={declineMutation.isPending}
                     >
-                      <XCircle size={18} color="rgba(255,255,255,0.6)" weight="fill" />
+                      <XCircle size={18} color={theme.colors.textSecondary} weight="fill" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -335,7 +337,7 @@ export const ConnectionsScreen: React.FC = () => {
           )
         ) : filtered.length === 0 ? (
           <View style={styles.center}>
-            <Users size={32} color="rgba(255,255,255,0.3)" weight="fill" />
+            <Users size={32} color={theme.colors.textMuted} weight="fill" />
             <Text variant="body" color="muted">
               No connections yet.
             </Text>
@@ -401,7 +403,7 @@ export const ConnectionsScreen: React.FC = () => {
                     handleRemove(c);
                   }}
                 >
-                  <UserMinus size={16} color="rgba(255,255,255,0.35)" weight="fill" />
+                  <UserMinus size={16} color={theme.colors.textMuted} weight="fill" />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -412,10 +414,10 @@ export const ConnectionsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: t.colors.backgroundSolid,
   },
   header: {
     flexDirection: 'row',
@@ -441,15 +443,15 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   tabActive: {
-    backgroundColor: 'rgba(255,152,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 1,
-    borderColor: 'rgba(255,152,0,0.25)',
+    borderColor: t.colors.brandOrange + '40',
   },
   badge: {
-    backgroundColor: '#FF9800',
+    backgroundColor: t.colors.warning,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -463,16 +465,16 @@ const styles = StyleSheet.create({
     gap: 8,
     marginHorizontal: 20,
     marginBottom: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: t.colors.overlayLight,
   },
   searchInput: {
     flex: 1,
-    color: '#e2e8f0',
+    color: t.colors.textPrimary,
     fontSize: 14,
   },
   scrollArea: {
@@ -490,12 +492,12 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   requestCard: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 12,
     padding: 14,
     gap: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,152,0,0.15)',
+    borderColor: t.colors.brandOrangeLight,
   },
   requestInfo: {
     flexDirection: 'row',
@@ -512,7 +514,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FF9800',
+    backgroundColor: t.colors.warning,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -521,7 +523,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: t.colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -529,11 +531,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: t.colors.overlaySubtle,
   },
   avatar: {
     width: 44,
@@ -549,7 +551,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,152,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -557,7 +559,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -14,13 +14,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type RouteT = RouteProp<RootStackParamList, 'ClubManagement'>;
 
 export const ClubManagementScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const route = useRoute<RouteT>();
@@ -68,7 +71,7 @@ export const ClubManagementScreen: React.FC = () => {
   });
 
   const contentBottomPadding = useMemo(
-    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
+    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }),
     [insets.bottom],
   );
 
@@ -111,7 +114,7 @@ export const ClubManagementScreen: React.FC = () => {
               <CardHeader>
                 <CardTitle>Invite</CardTitle>
               </CardHeader>
-              <CardContent style={{ gap: theme.spacing.md }}>
+              <CardContent style={{ gap: themeStatic.spacing.md }}>
                 <Button variant="default" onPress={() => generateInviteMutation.mutate()} loading={generateInviteMutation.isPending}>
                   Generate invite link
                 </Button>
@@ -122,7 +125,7 @@ export const ClubManagementScreen: React.FC = () => {
               <CardHeader>
                 <CardTitle>Pending requests</CardTitle>
               </CardHeader>
-              <CardContent style={{ gap: theme.spacing.sm }}>
+              <CardContent style={{ gap: themeStatic.spacing.sm }}>
                 {pending.length === 0 ? (
                   <Text variant="body" color="muted">
                     No pending requests.
@@ -146,7 +149,7 @@ export const ClubManagementScreen: React.FC = () => {
               <CardHeader>
                 <CardTitle>Members</CardTitle>
               </CardHeader>
-              <CardContent style={{ gap: theme.spacing.sm }}>
+              <CardContent style={{ gap: themeStatic.spacing.sm }}>
                 {members.length === 0 ? (
                   <Text variant="body" color="muted">
                     No members found.
@@ -157,7 +160,7 @@ export const ClubManagementScreen: React.FC = () => {
                       <Text variant="body" color="foreground" style={{ flex: 1 }}>
                         {m.user?.name || `User #${m.userId}`}
                       </Text>
-                      <Text variant="small" color="muted" style={{ marginRight: theme.spacing.sm }}>
+                      <Text variant="small" color="muted" style={{ marginRight: themeStatic.spacing.sm }}>
                         {m.role || 'member'}
                       </Text>
                       <TouchableOpacity
@@ -187,14 +190,14 @@ export const ClubManagementScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: theme.spacing.lg, gap: theme.spacing.lg },
-  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: theme.spacing.lg },
+  content: { paddingHorizontal: themeStatic.spacing.lg, gap: themeStatic.spacing.lg },
+  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: themeStatic.spacing.lg },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  loadingRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: theme.spacing.sm },
+  loadingRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: themeStatic.spacing.sm },
   card: { marginBottom: 0 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  row: { flexDirection: 'row', alignItems: 'center', gap: themeStatic.spacing.md },
   removeBtn: {
     width: 36,
     height: 36,
@@ -202,8 +205,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.card,
   },
 });
 

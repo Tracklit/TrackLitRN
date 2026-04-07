@@ -33,7 +33,9 @@ import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RootStackParamList } from '@/navigation/types';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '../utils/theme';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
+import { spacing as themeSpacing } from '@/utils/theme';
 
 interface Friend {
   id: number;
@@ -137,6 +139,7 @@ export const ChatScreen: React.FC = () => {
   const isGuest = user?.id === 'guest';
   const contentBottomPadding = getScreenContentBottomPadding(insets.bottom, { includeBottomNav: true });
   const queryClient = useQueryClient();
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showFriendsModal, setShowFriendsModal] = useState(false);
@@ -371,7 +374,7 @@ export const ChatScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={22} color="#fff" weight="bold" />
+          <ArrowLeft size={22} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text variant="h3" weight="bold" color="foreground" style={styles.headerTitle}>
           {' '}
@@ -380,7 +383,7 @@ export const ChatScreen: React.FC = () => {
           style={styles.headerAction}
           onPress={() => setShowNewChatModal(true)}
         >
-          <NotePencil size={22} color="#94a3b8" weight="fill" />
+          <NotePencil size={22} color={theme.colors.textMuted} weight="fill" />
         </TouchableOpacity>
       </View>
 
@@ -399,11 +402,11 @@ export const ChatScreen: React.FC = () => {
         }
       >
         <View style={styles.searchBar}>
-          <MagnifyingGlass size={16} color="#64748b" weight="bold" />
+          <MagnifyingGlass size={16} color={theme.colors.textMuted} weight="bold" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search conversations..."
-            placeholderTextColor="#475569"
+            placeholderTextColor={theme.colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
@@ -411,7 +414,7 @@ export const ChatScreen: React.FC = () => {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <X size={14} color="#64748b" weight="bold" />
+              <X size={14} color={theme.colors.textMuted} weight="bold" />
             </TouchableOpacity>
           )}
         </View>
@@ -477,7 +480,7 @@ export const ChatScreen: React.FC = () => {
               }}
             >
               <View style={styles.modalOptionIcon}>
-                <ChatCircle size={24} color="#FF9800" weight="fill" />
+                <ChatCircle size={24} color={theme.colors.brandOrange} weight="fill" />
               </View>
               <View style={styles.modalOptionText}>
                 <Text variant="body" weight="semiBold" color="foreground">New Message</Text>
@@ -493,7 +496,7 @@ export const ChatScreen: React.FC = () => {
               }}
             >
               <View style={styles.modalOptionIcon}>
-                <UsersThree size={24} color="#FF9800" weight="fill" />
+                <UsersThree size={24} color={theme.colors.brandOrange} weight="fill" />
               </View>
               <View style={styles.modalOptionText}>
                 <Text variant="body" weight="semiBold" color="foreground">New Group</Text>
@@ -519,7 +522,7 @@ export const ChatScreen: React.FC = () => {
         <View style={[styles.friendsModal, { paddingTop: insets.top }]}>
           <View style={styles.friendsModalHeader}>
             <TouchableOpacity onPress={() => setShowFriendsModal(false)}>
-              <X size={24} color="#fff" weight="bold" />
+              <X size={24} color={theme.colors.textPrimary} weight="bold" />
             </TouchableOpacity>
             <Text variant="h4" weight="bold" color="foreground">Select Friend</Text>
             <View style={{ width: 24 }} />
@@ -540,7 +543,7 @@ export const ChatScreen: React.FC = () => {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             style={styles.friendsList}
-            contentContainerStyle={{ paddingBottom: insets.bottom + theme.spacing.lg }}
+            contentContainerStyle={{ paddingBottom: insets.bottom + themeSpacing.lg }}
           >
             {friendsQuery.isLoading ? (
               <View style={styles.center}>
@@ -582,10 +585,10 @@ export const ChatScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1623',
+    backgroundColor: t.colors.backgroundSolid,
   },
   header: {
     flexDirection: 'row',
@@ -593,7 +596,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: t.colors.overlayLight,
   },
   backBtn: {
     width: 36,
@@ -621,7 +624,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 16,
     marginBottom: 8,
-    backgroundColor: '#1a1f2e',
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -630,7 +633,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
     padding: 0,
@@ -652,16 +655,16 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#5b21b6',
+    backgroundColor: t.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#0f1623',
+    borderColor: t.colors.backgroundSolid,
   },
   chatRowBody: {
     flex: 1,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: t.colors.overlaySubtle,
     paddingBottom: 10,
   },
   chatRowTop: {
@@ -696,13 +699,13 @@ const styles = StyleSheet.create({
     minWidth: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#FF9800',
+    backgroundColor: t.colors.warning,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
   unreadPillText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -729,7 +732,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: t.colors.backgroundSolid,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -749,7 +752,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,152,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -761,11 +764,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: t.colors.overlayMedium,
   },
   friendsModal: {
     flex: 1,
-    backgroundColor: '#0f1623',
+    backgroundColor: t.colors.backgroundSolid,
   },
   friendsModalHeader: {
     flexDirection: 'row',
@@ -774,7 +777,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: t.colors.overlayLight,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -784,12 +787,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: t.colors.overlaySubtle,
     gap: 10,
   },
   friendSearchInput: {
     flex: 1,
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 15,
   },
   friendsList: {

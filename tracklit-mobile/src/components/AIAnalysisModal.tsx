@@ -15,6 +15,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text } from '@/components/ui/Text';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface AIAnalysisModalProps {
   visible: boolean;
   onClose: () => void;
@@ -30,6 +32,7 @@ export const AIAnalysisModal: React.FC<AIAnalysisModalProps> = ({
   analysis,
   error,
 }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -140,7 +143,7 @@ function parseAnalysisSections(text: string): { title: string | null; content: s
   return sections;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.85)',
@@ -160,7 +163,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: t.colors.overlayLight,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -168,13 +171,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   title: {
-    color: '#fff',
+    color: t.colors.textPrimary,
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: t.colors.overlayMedium,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -188,7 +191,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   loadingText: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     textAlign: 'center',
   },
   loadingSubtext: {
@@ -238,7 +241,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   programBtnText: {
-    color: '#fff',
+    color: t.colors.textPrimary,
     fontSize: 15,
   },
   disclaimer: {

@@ -1,121 +1,28 @@
-// TrackLit React Native Theme System - Exact replica of web design
-// Based on HSL color values from the web application
+// TrackLit React Native Theme System
+// Re-exports dark palette as static default for backward compatibility.
+// Migrated code should use useTheme() from @/contexts/ThemeContext instead.
 
-export const colors = {
-  // Primary colors - web purple
-  primary: '#5b21b6',
-  primaryForeground: '#FFFFFF', // hsl(0, 0%, 100%)
-  secondary: '#7c3aed',
-  secondaryForeground: '#FFFFFF', // hsl(0, 0%, 100%)
-  deepGold: '#7c3aed', // legacy alias
-  accent: '#7c3aed',
-  accentForeground: '#FFFFFF', // hsl(0, 0%, 100%)
-  
-  // Background colors - dark theme
-  background: 'transparent', // Allows gradient to show through
-  backgroundSolid: '#1a1a2e', // Fallback solid color
-  foreground: '#F2F2F2', // hsl(0, 0%, 95%)
-  
-  // Card and surface colors with opacity
-  card: 'rgba(37, 42, 52, 0.8)', // hsl(220, 25%, 15%) with 80% opacity
-  cardForeground: '#F2F2F2', // hsl(0, 0%, 95%)
-  cardSolid: '#252A34', // Solid version for when opacity isn't supported
-  
-  // Muted colors
-  muted: 'rgba(47, 57, 77, 0.8)', // hsl(220, 25%, 15%)
-  mutedForeground: '#A6A6A6', // hsl(220, 5%, 65%)
-  
-  // Border and input colors
-  border: '#334155', // hsl(220, 20%, 20%)
-  input: '#334155', // hsl(220, 20%, 20%)
-  ring: '#7c3aed',
-  
-  // Status colors
-  destructive: '#E53935', // hsl(0, 70%, 50%)
-  destructiveForeground: '#F2F2F2', // hsl(0, 0%, 95%)
-  success: '#4CAF50', // hsl(142, 71%, 45%)
-  warning: '#FF9800', // hsl(36, 93%, 54%)
-  
-  // Popover colors
-  popover: 'rgba(26, 32, 44, 0.95)', // hsl(220, 30%, 10%) with 95% opacity
-  popoverForeground: '#F2F2F2', // hsl(0, 0%, 95%)
-  
-  // Sidebar colors
-  sidebar: '#151a23', // hsl(220, 30%, 8%) solid
-  sidebarForeground: '#F2F2F2', // hsl(0, 0%, 95%)
-  sidebarPrimary: '#5b21b6',
-  sidebarPrimaryForeground: '#FFFFFF', // hsl(0, 0%, 100%)
-  sidebarAccent: '#7c3aed',
-  sidebarAccentForeground: '#FFFFFF', // hsl(0, 0%, 100%)
-  sidebarBorder: '#475569', // hsl(220, 20%, 20%)
-  
-  // Chart colors
-  chart1: '#A855F7', // hsl(280, 85%, 65%)
-  chart2: '#7C3AED', // hsl(260, 70%, 50%)
-  chart3: '#C084FC', // hsl(300, 70%, 60%)
-  chart4: '#8B5CF6', // hsl(250, 80%, 55%)
-  chart5: '#A78BFA', // hsl(290, 75%, 50%)
-  
-  // Specific theme colors from web app
-  darkNavy: '#0F1419', // hsl(220, 30%, 6%)
-  darkGray: '#202634', // hsl(220, 20%, 15%)
-  lightGray: '#2D3748', // hsl(220, 15%, 20%)
-  
-  // Text colors
-  textPrimary: '#F2F2F2',
-  textSecondary: '#A6A6A6',
-  textMuted: '#7A7A7A',
+import {
+  darkColors,
+  darkGradients,
+  darkShadows,
+  type ThemeColors,
+  type ThemeGradients,
+  type ThemeShadows,
+} from './theme/colors';
 
-  // Web parity colors (Programs/Practice/Tools)
-  webPurpleStart: '#5b21b6',
-  webPurpleEnd: '#7c3aed',
-  webBlueStart: '#1e3a8a',
-  webIndigoDeep: '#1e1b4b',
-  webNotificationBackground: '#010a18',
-  webChatBackground: '#0b1220',
-  webCardBorder: 'rgba(168, 85, 247, 0.1)',
-  webBorderLight: 'rgba(255, 255, 255, 0.1)',
-};
+// Re-export types for convenience
+export type { ThemeColors, ThemeGradients, ThemeShadows };
 
-// Gradient background - exact replica from web app
-export const gradients = {
-  background: {
-    colors: ['#000000', '#1a1a2e', '#16213e', '#4a148c', '#7b1fa2'],
-    locations: [0, 0.5, 0.7, 0.9, 1.0],
-    start: {x: 0, y: 0},
-    end: {x: 1, y: 1},
-  },
-  // Gradient for cards
-  cardGradient: {
-    colors: ['rgba(37, 42, 52, 0.9)', 'rgba(26, 32, 44, 0.8)'],
-    locations: [0, 1],
-    start: {x: 0, y: 0},
-    end: {x: 1, y: 1},
-  },
-  webPurple: {
-    colors: ['#5b21b6', '#7c3aed'],
-    locations: [0, 1],
-    start: {x: 0, y: 0},
-    end: {x: 1, y: 1},
-  },
-  webPurpleDeep: {
-    colors: ['#1e1b4b', '#581c87', '#1e3a8a'],
-    locations: [0, 0.5, 1],
-    start: {x: 0, y: 0},
-    end: {x: 1, y: 1},
-  },
-  webHeader: {
-    colors: ['rgba(91, 33, 182, 0.95)', 'rgba(124, 58, 237, 0.95)'],
-    locations: [0, 1],
-    start: {x: 0, y: 0},
-    end: {x: 1, y: 1},
-  },
-};
+// Static color exports -- backward-compatible, used by unmigrated code.
+// After migration is complete these can be removed.
+export const colors = darkColors;
+export const gradients = darkGradients;
 
 // Backward-compatible alias for existing screens that use theme.gradient
 export const gradient = {
-  background: gradients.background.colors,
-  locations: gradients.background.locations,
+  background: darkGradients.background.colors,
+  locations: darkGradients.background.locations,
 };
 
 // Spacing system - consistent with web app (8px base unit)
@@ -134,19 +41,19 @@ export const spacing = {
 
 // Border radius - exact from web app (--radius: 0.5rem = 8px)
 export const borderRadius = {
-  sm: 4, // calc(--radius - 4px)
-  md: 6, // calc(--radius - 2px)
-  lg: 8, // var(--radius) - main radius used throughout app
+  sm: 4,
+  md: 6,
+  lg: 8,
   xl: 12,
-  round: 9999, // fully rounded
+  round: 9999,
   webCard: 6,
 };
 
 // Typography system
 export const typography = {
   sizes: {
-    xs: 12,
-    sm: 14,
+    xs: 13,
+    sm: 15,
     base: 16,
     lg: 18,
     xl: 20,
@@ -167,54 +74,11 @@ export const typography = {
     tight: 1.2,
     normal: 1.4,
     relaxed: 1.6,
-  }
+  },
 };
 
-// Shadow system - matching web app shadow styles
-export const shadows = {
-  none: {
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
-  },
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, // Increased from default for better visibility
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 10,
-  },
-  xl: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 25 },
-    shadowOpacity: 0.25,
-    shadowRadius: 50,
-    elevation: 25,
-  },
-  webCard: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.3,
-    shadowRadius: 30,
-    elevation: 12,
-  },
-};
+// Shadow system - static export for backward compatibility
+export const shadows = darkShadows;
 
 // Icon sizes
 export const iconSizes = {
@@ -229,7 +93,7 @@ export const iconSizes = {
 // Layout dimensions
 export const layout = {
   headerHeight: 60,
-  bottomNavHeight: 80, // Matching web app bottom nav
+  bottomNavHeight: 80,
   tabBarHeight: 50,
   maxContentWidth: 1200,
 };

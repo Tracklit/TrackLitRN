@@ -33,6 +33,8 @@ import { queryClient } from '@/lib/queryClient';
 import type { RootStackParamList } from '@/navigation/types';
 import { TIER_LIMITS, resolveUserTier } from '@/constants/tierEntitlements';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'GroupSettings'>;
 
@@ -66,6 +68,7 @@ interface GroupDetail {
 }
 
 export const GroupSettingsScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -377,10 +380,10 @@ export const GroupSettingsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0E0F14',
+    backgroundColor: t.colors.backgroundSolid,
   },
   header: {
     flexDirection: 'row',
@@ -388,7 +391,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: t.colors.overlayLight,
   },
   backBtn: {
     width: 36,
@@ -425,17 +428,17 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: 48,
     borderWidth: 2,
-    borderColor: '#FF7A00',
+    borderColor: t.colors.brandOrange,
   },
   avatarPlaceholder: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: t.colors.overlayMedium,
   },
   cameraOverlay: {
     position: 'absolute',
@@ -444,7 +447,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FF7A00',
+    backgroundColor: t.colors.brandOrange,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -476,7 +479,7 @@ const styles = StyleSheet.create({
   },
   memberDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopColor: t.colors.overlaySubtle,
   },
   memberInfo: {
     flex: 1,
@@ -491,13 +494,13 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   youBadge: {
-    backgroundColor: 'rgba(255,122,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   youBadgeText: {
-    color: '#FF7A00',
+    color: t.colors.brandOrange,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -505,7 +508,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -519,7 +522,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   paywallSheet: {
-    backgroundColor: '#1C1F2B',
+    backgroundColor: t.colors.cardSolid,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 24,
@@ -530,12 +533,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: t.colors.overlayHeavy,
     alignSelf: 'center',
     marginBottom: 8,
   },
   paywallUpgradeBtn: {
-    backgroundColor: '#FF7A00',
+    backgroundColor: t.colors.brandOrange,
     borderRadius: 10,
     paddingVertical: 13,
     alignItems: 'center',
@@ -552,6 +555,6 @@ const styles = StyleSheet.create({
   },
   paywallDismissBtnText: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
+    color: t.colors.textMuted,
   },
 });

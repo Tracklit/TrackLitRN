@@ -53,6 +53,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { env } from './src/config/env';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { OnboardingProvider, useOnboarding } from './src/contexts/OnboardingContext';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { Text } from './src/components/ui/Text';
 
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -331,6 +332,7 @@ const RootNavigator: React.FC = () => (
 const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { theme: t } = useTheme();
   const isGuest = user?.id === 'guest';
   const isCoach = (user as any)?.isCoach === true;
   const isAdmin = (user as any)?.role === 'admin';
@@ -359,10 +361,10 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     destructive,
   }) => {
     const iconColor = disabled
-      ? theme.colors.muted
+      ? t.colors.muted
       : destructive
-        ? theme.colors.destructive
-        : theme.colors.sidebarForeground;
+        ? t.colors.destructive
+        : t.colors.sidebarForeground;
 
     const content = (
       <View
@@ -383,13 +385,13 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             variant="small"
             weight="medium"
             color={disabled ? 'muted' : 'foreground'}
-            style={destructive && !disabled ? styles.menuRowTextDestructive : undefined}
+            style={destructive && !disabled ? { color: t.colors.destructive } : undefined}
           >
             {label}
           </Text>
         </View>
         {comingSoon && (
-          <View style={styles.comingSoonPill}>
+          <View style={[styles.comingSoonPill, { backgroundColor: t.colors.border }]}>
             <Text variant="caption" color="muted">
               Coming Soon
             </Text>
@@ -591,16 +593,16 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   ];
 
   return (
-    <View style={styles.drawerContainer} onStartShouldSetResponder={() => true}>
+    <View style={[styles.drawerContainer, { backgroundColor: t.colors.backgroundSolid }]} onStartShouldSetResponder={() => true}>
       <View style={[styles.drawerCloseRow, { paddingTop: insets.top + theme.spacing.md }]}>
         <TouchableOpacity
           onPress={() => props.navigation.closeDrawer()}
           activeOpacity={0.7}
-          style={styles.drawerCloseButton}
+          style={[styles.drawerCloseButton, { backgroundColor: t.colors.overlayLight }]}
           accessibilityRole="button"
           accessibilityLabel="Close menu"
         >
-          <X size={18} color="rgba(255,255,255,0.85)" weight="bold" />
+          <X size={18} color={t.colors.foreground} weight="bold" />
         </TouchableOpacity>
       </View>
       <ScrollView
@@ -640,6 +642,8 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         style={[
           styles.drawerFooter,
           {
+            backgroundColor: t.colors.backgroundSolid,
+            borderTopColor: t.colors.overlayLight,
             paddingBottom: Math.max(insets.bottom, theme.spacing.md),
           },
         ]}
@@ -655,27 +659,31 @@ const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   );
 };
 
-const DrawerNavigator: React.FC = () => (
-  <Drawer.Navigator
-    screenOptions={{
-      headerShown: false,
-      drawerType: 'front',
-      swipeEnabled: false,
-      overlayColor: 'rgba(0,0,0,0.6)',
-      drawerStyle: {
-        width: '60%',
-        backgroundColor: '#1a1a1a',
-        borderRightColor: 'rgba(255,255,255,0.08)',
-        borderRightWidth: 1,
-      },
-    }}
-    drawerContent={(drawerProps: DrawerContentComponentProps) => (
-      <DrawerContent {...drawerProps} />
-    )}
-  >
-    <Drawer.Screen name="AppStack" component={RootNavigator} />
-  </Drawer.Navigator>
-);
+const DrawerNavigator: React.FC = () => {
+  const { theme: t } = useTheme();
+
+  return (
+    <Drawer.Navigator
+      screenOptions={{
+        headerShown: false,
+        drawerType: 'front',
+        swipeEnabled: false,
+        overlayColor: 'rgba(0,0,0,0.6)',
+        drawerStyle: {
+          width: '60%',
+          backgroundColor: t.colors.backgroundSolid,
+          borderRightColor: t.colors.overlayLight,
+          borderRightWidth: 1,
+        },
+      }}
+      drawerContent={(drawerProps: DrawerContentComponentProps) => (
+        <DrawerContent {...drawerProps} />
+      )}
+    >
+      <Drawer.Screen name="AppStack" component={RootNavigator} />
+    </Drawer.Navigator>
+  );
+};
 
 const AuthNavigator: React.FC = () => (
   <AuthStack.Navigator screenOptions={{ headerShown: false }}>
@@ -686,6 +694,7 @@ const AuthNavigator: React.FC = () => (
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const { isActive: onboardingActive } = useOnboarding();
+  const { theme: t } = useTheme();
   const insets = useSafeAreaInsets();
   const [showGlobalBackButton, setShowGlobalBackButton] = React.useState(false);
 
@@ -730,8 +739,8 @@ const AppContent: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fff" />
+      <View style={[styles.loadingContainer, { backgroundColor: t.colors.backgroundSolid }]}>
+        <ActivityIndicator size="large" color={t.colors.foreground} />
       </View>
     );
   }
@@ -750,17 +759,32 @@ const AppContent: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.globalBackButton,
-            { top: insets.top + theme.spacing.sm },
+            {
+              top: insets.top + theme.spacing.sm,
+              backgroundColor: t.colors.popover,
+              borderColor: t.colors.border,
+            },
           ]}
           onPress={() => navigationRef.goBack()}
           accessibilityRole="button"
           accessibilityLabel="Go back"
           activeOpacity={0.85}
         >
-          <ArrowLeft size={14} color={theme.colors.foreground} weight="bold" />
+          <ArrowLeft size={14} color={t.colors.foreground} weight="bold" />
         </TouchableOpacity>
       ) : null}
     </View>
+  );
+};
+
+const DynamicStatusBar: React.FC = () => {
+  const { isDark } = useTheme();
+  return (
+    <StatusBar
+      barStyle={isDark ? 'light-content' : 'dark-content'}
+      backgroundColor="transparent"
+      translucent
+    />
   );
 };
 
@@ -769,16 +793,14 @@ const App: React.FC = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <OnboardingProvider>
-              <StatusBar
-                barStyle="light-content"
-                backgroundColor="transparent"
-                translucent
-              />
-              <AppContent />
-            </OnboardingProvider>
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <OnboardingProvider>
+                <DynamicStatusBar />
+                <AppContent />
+              </OnboardingProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -792,7 +814,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#010a18',
   },
   appContentContainer: {
     flex: 1,
@@ -803,9 +824,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
     borderWidth: 1,
-    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 999,
@@ -815,7 +834,6 @@ const styles = StyleSheet.create({
   },
   drawerContainer: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
   },
   drawerCloseRow: {
     flexDirection: 'row',
@@ -827,7 +845,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -841,7 +858,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.sidebarBorder,
   },
   drawerHeaderText: {
     flexDirection: 'row',
@@ -857,7 +873,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: theme.colors.primary,
   },
   drawerHeaderCopy: {
     marginTop: theme.spacing.md,
@@ -877,7 +892,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   drawerItemLabel: {
-    color: theme.colors.sidebarForeground,
     fontSize: 14,
   },
   drawerItem: {
@@ -891,9 +905,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   drawerFooter: {
-    backgroundColor: '#1a1a1a',
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(255,255,255,0.08)',
     marginTop: 'auto',
     paddingTop: theme.spacing.sm,
   },
@@ -918,13 +930,9 @@ const styles = StyleSheet.create({
   menuRowDisabled: {
     opacity: 0.4,
   },
-  menuRowTextDestructive: {
-    color: theme.colors.destructive,
-  },
   comingSoonPill: {
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
-    backgroundColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
   },
 });

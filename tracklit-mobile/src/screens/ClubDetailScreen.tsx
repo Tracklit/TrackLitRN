@@ -13,9 +13,11 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import { getScreenContentBottomPadding } from '@/utils/layoutPadding';
-import theme from '@/utils/theme';
+import themeStatic from '@/utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type RouteT = RouteProp<RootStackParamList, 'ClubDetail'>;
 
@@ -31,6 +33,7 @@ interface Club {
 }
 
 export const ClubDetailScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Navigation>();
   const route = useRoute<RouteT>();
@@ -64,7 +67,7 @@ export const ClubDetailScreen: React.FC = () => {
 
   const isMember = !membersQuery.isError && Array.isArray(membersQuery.data);
   const contentBottomPadding = useMemo(
-    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: theme.spacing.xl }),
+    () => getScreenContentBottomPadding(insets.bottom, { includeBottomNav: false, extra: themeStatic.spacing.xl }),
     [insets.bottom],
   );
 
@@ -101,10 +104,10 @@ export const ClubDetailScreen: React.FC = () => {
         ) : (
           <>
             <Card style={styles.card}>
-              <CardHeader style={{ paddingBottom: theme.spacing.sm }}>
+              <CardHeader style={{ paddingBottom: themeStatic.spacing.sm }}>
                 <CardTitle>{clubQuery.data.name}</CardTitle>
               </CardHeader>
-              <CardContent style={{ gap: theme.spacing.sm }}>
+              <CardContent style={{ gap: themeStatic.spacing.sm }}>
                 {!!clubQuery.data.description && (
                   <Text variant="body" color="muted">
                     {clubQuery.data.description}
@@ -139,10 +142,10 @@ export const ClubDetailScreen: React.FC = () => {
             </Card>
 
             <Card style={styles.card}>
-              <CardHeader style={{ paddingBottom: theme.spacing.sm }}>
+              <CardHeader style={{ paddingBottom: themeStatic.spacing.sm }}>
                 <CardTitle>Members</CardTitle>
               </CardHeader>
-              <CardContent style={{ gap: theme.spacing.sm }}>
+              <CardContent style={{ gap: themeStatic.spacing.sm }}>
                 {membersQuery.isLoading ? (
                   <View style={styles.loadingRow}>
                     <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -182,15 +185,15 @@ export const ClubDetailScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: theme.spacing.lg, gap: theme.spacing.lg },
-  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: theme.spacing.lg },
+  content: { paddingHorizontal: themeStatic.spacing.lg, gap: themeStatic.spacing.lg },
+  headerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: themeStatic.spacing.lg },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  loadingRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: theme.spacing.sm },
+  loadingRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: themeStatic.spacing.sm },
   card: { marginBottom: 0 },
-  actionsRow: { flexDirection: 'row', gap: theme.spacing.md },
-  memberRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+  actionsRow: { flexDirection: 'row', gap: themeStatic.spacing.md },
+  memberRow: { flexDirection: 'row', alignItems: 'center', gap: themeStatic.spacing.sm },
 });
 
 

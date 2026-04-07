@@ -21,20 +21,11 @@ import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import type { RootStackParamList } from '@/navigation/types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'CoachJournalEntry'>;
-
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  cardAlt: '#181B27',
-  orange: '#FF7A00',
-  border: 'rgba(255,255,255,0.07)',
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.65)',
-  textMuted: 'rgba(255,255,255,0.38)',
-};
 
 interface JournalEntry {
   id: number;
@@ -69,6 +60,7 @@ export const CoachJournalEntryScreen: React.FC = () => {
   const route = useRoute<Route>();
   const { entryId, athleteId, athleteName, athleteUsername } = route.params;
   const { isAuthenticated } = useAuth();
+  const { styles, theme } = useThemedStyles(createStyles);
 
   const allEntriesQuery = useQuery({
     queryKey: ['coach-athlete-journals', athleteId],
@@ -86,14 +78,14 @@ export const CoachJournalEntryScreen: React.FC = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <CaretLeft size={22} color={C.textPrimary} weight="bold" />
+          <CaretLeft size={22} color={theme.colors.textPrimary} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Journal Entry</Text>
         <View style={{ width: 22 }} />
       </View>
 
       {isLoading ? (
-        <ActivityIndicator color={C.orange} style={{ marginTop: 48 }} />
+        <ActivityIndicator color={theme.colors.brandOrange} style={{ marginTop: 48 }} />
       ) : (
         <ScrollView
           contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
@@ -103,7 +95,7 @@ export const CoachJournalEntryScreen: React.FC = () => {
             <View style={styles.mainCard}>
               <View style={styles.mainCardHeader}>
                 <View style={styles.entryIconWrap}>
-                  <NotePencil size={18} color={C.orange} weight="fill" />
+                  <NotePencil size={18} color={theme.colors.brandOrange} weight="fill" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.entryDate}>{formatDate(currentEntry.createdAt)}</Text>
@@ -154,7 +146,7 @@ export const CoachJournalEntryScreen: React.FC = () => {
                         {entry.notes || entry.content || 'No content'}
                       </Text>
                     </View>
-                    <CaretRight size={13} color={C.textMuted} weight="bold" />
+                    <CaretRight size={13} color={theme.colors.textMuted} weight="bold" />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -166,8 +158,8 @@ export const CoachJournalEntryScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -175,12 +167,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: C.textPrimary },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: t.colors.textPrimary },
   scroll: { padding: 20 },
   mainCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 16,
     padding: 18,
     marginBottom: 28,
@@ -190,43 +182,43 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,122,0,0.12)',
+    backgroundColor: t.colors.brandOrangeLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  entryDate: { fontSize: 12, color: C.textMuted, marginBottom: 2 },
-  entryAuthor: { fontSize: 13, fontWeight: '600', color: C.textSecondary },
+  entryDate: { fontSize: 12, color: t.colors.textMuted, marginBottom: 2 },
+  entryAuthor: { fontSize: 13, fontWeight: '600', color: t.colors.textSecondary },
   entryTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
     marginBottom: 12,
     lineHeight: 24,
   },
   entryBody: {
     fontSize: 15,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 24,
   },
   sectionLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 1,
     marginBottom: 12,
   },
   earlierList: { gap: 10 },
   earlierCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 12,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  earlierDate: { fontSize: 11, color: C.textMuted, marginBottom: 3 },
-  earlierTitle: { fontSize: 13, fontWeight: '600', color: C.textPrimary, marginBottom: 3 },
-  earlierPreview: { fontSize: 12, color: C.textSecondary, lineHeight: 17 },
+  earlierDate: { fontSize: 11, color: t.colors.textMuted, marginBottom: 3 },
+  earlierTitle: { fontSize: 13, fontWeight: '600', color: t.colors.textPrimary, marginBottom: 3 },
+  earlierPreview: { fontSize: 12, color: t.colors.textSecondary, lineHeight: 17 },
   empty: { alignItems: 'center', paddingVertical: 48 },
-  emptyText: { fontSize: 13, color: C.textMuted },
+  emptyText: { fontSize: 13, color: t.colors.textMuted },
 });

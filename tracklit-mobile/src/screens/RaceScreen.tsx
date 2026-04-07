@@ -14,8 +14,10 @@ import { Text } from '../components/ui/Text';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import theme from '../utils/theme';
+import themeStatic from '../utils/theme';
 
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 interface Meet {
   id: string;
   name: string;
@@ -32,6 +34,7 @@ interface Meet {
 }
 
 export const RaceScreen: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'calendar' | 'results'>('upcoming');
 
@@ -171,7 +174,9 @@ interface StatCardProps {
   subtitle: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle }) => (
+const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle }) => {
+  const { styles } = useThemedStyles(createStyles);
+  return (
   <Card style={styles.statCard}>
     <CardContent style={styles.statCardContent}>
       <Text variant="small" color="muted" weight="medium">
@@ -185,13 +190,15 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle }) => (
       </Text>
     </CardContent>
   </Card>
-);
+  );
+};
 
 interface UpcomingMeetsTabProps {
   meets: Meet[];
 }
 
 const UpcomingMeetsTab: React.FC<UpcomingMeetsTabProps> = ({ meets }) => {
+  const { styles, theme } = useThemedStyles(createStyles);
   const getTypeColor = (type: Meet['type']) => {
     switch (type) {
       case 'Local': return 'default';
@@ -289,7 +296,9 @@ const UpcomingMeetsTab: React.FC<UpcomingMeetsTabProps> = ({ meets }) => {
   );
 };
 
-const CalendarTab: React.FC = () => (
+const CalendarTab: React.FC = () => {
+  const { styles, theme } = useThemedStyles(createStyles);
+  return (
   <View style={styles.calendarContainer}>
     <Card style={styles.calendarCard}>
       <CardHeader>
@@ -308,9 +317,12 @@ const CalendarTab: React.FC = () => (
       </CardContent>
     </Card>
   </View>
-);
+  );
+};
 
-const ResultsTab: React.FC = () => (
+const ResultsTab: React.FC = () => {
+  const { styles } = useThemedStyles(createStyles);
+  return (
   <View style={styles.resultsContainer}>
     <Card style={styles.resultsCard}>
       <CardHeader>
@@ -326,98 +338,99 @@ const ResultsTab: React.FC = () => (
       </CardContent>
     </Card>
   </View>
-);
+  );
+};
 
-const styles = StyleSheet.create({
+const createStyles = (t: ThemeValues) => StyleSheet.create({
   container: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl * 2,
+    paddingHorizontal: themeStatic.spacing.lg,
+    paddingBottom: themeStatic.spacing.xl * 2,
   },
   header: {
     alignItems: 'center',
-    marginTop: theme.spacing.xl,
-    marginBottom: theme.spacing.xl,
+    marginTop: themeStatic.spacing.xl,
+    marginBottom: themeStatic.spacing.xl,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.xl,
-    gap: theme.spacing.md,
+    marginBottom: themeStatic.spacing.xl,
+    gap: themeStatic.spacing.md,
   },
   statCard: {
     flex: 1,
   },
   statCardContent: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: themeStatic.spacing.lg,
   },
   tabs: {
     flexDirection: 'row',
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.muted,
-    padding: theme.spacing.xs,
-    marginBottom: theme.spacing.xl,
+    borderRadius: themeStatic.borderRadius.lg,
+    backgroundColor: t.colors.muted,
+    padding: themeStatic.spacing.xs,
+    marginBottom: themeStatic.spacing.xl,
   },
   tab: {
     flex: 1,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    paddingVertical: themeStatic.spacing.sm,
+    paddingHorizontal: themeStatic.spacing.md,
+    borderRadius: themeStatic.borderRadius.md,
     alignItems: 'center',
   },
   activeTab: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: t.colors.background,
   },
   tabText: {
-    color: theme.colors.textMuted,
+    color: t.colors.textMuted,
   },
   activeTabText: {
-    color: theme.colors.foreground,
+    color: t.colors.foreground,
   },
   meetsContainer: {
-    gap: theme.spacing.md,
+    gap: themeStatic.spacing.md,
   },
   meetCard: {
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   meetHeader: {
-    paddingBottom: theme.spacing.sm,
+    paddingBottom: themeStatic.spacing.sm,
   },
   meetTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: themeStatic.spacing.sm,
   },
   meetTitle: {
     flex: 1,
-    marginRight: theme.spacing.md,
+    marginRight: themeStatic.spacing.md,
   },
   meetMeta: {
-    gap: theme.spacing.xs,
+    gap: themeStatic.spacing.xs,
   },
   meetInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   metaText: {
-    marginLeft: theme.spacing.xs,
+    marginLeft: themeStatic.spacing.xs,
   },
   eventsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.md,
+    gap: themeStatic.spacing.xs,
+    marginBottom: themeStatic.spacing.md,
   },
   weatherContainer: {
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
   },
   weatherDetails: {
-    marginTop: theme.spacing.xs,
+    marginTop: themeStatic.spacing.xs,
   },
   meetActions: {
     flexDirection: 'row',
@@ -425,39 +438,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   registerButton: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: themeStatic.spacing.lg,
   },
   registeredText: {
-    marginLeft: theme.spacing.xs,
-    color: theme.colors.destructiveForeground,
+    marginLeft: themeStatic.spacing.xs,
+    color: t.colors.destructiveForeground,
   },
   calendarContainer: {
-    gap: theme.spacing.lg,
+    gap: themeStatic.spacing.lg,
   },
   calendarCard: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: themeStatic.spacing.lg,
   },
   calendarText: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: themeStatic.spacing.lg,
     textAlign: 'center',
   },
   calendarButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing.sm,
+    gap: themeStatic.spacing.sm,
   },
   calendarButtonText: {
-    marginLeft: theme.spacing.sm,
+    marginLeft: themeStatic.spacing.sm,
   },
   resultsContainer: {
-    gap: theme.spacing.lg,
+    gap: themeStatic.spacing.lg,
   },
   resultsCard: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: themeStatic.spacing.lg,
   },
   resultsText: {
-    marginBottom: theme.spacing.md,
+    marginBottom: themeStatic.spacing.md,
     textAlign: 'center',
   },
   noResults: {

@@ -7,30 +7,19 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from '@/components/LinearGradient';
 import { Text } from '@/components/ui/Text';
 import type { RootStackParamList } from '@/navigation/types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { type ThemeValues } from '@/contexts/ThemeContext';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'SheetFormatInfo'>;
-
-const C = {
-  bg: '#0E0F14',
-  card: '#1C1F2B',
-  orange: '#FF7A00',
-  orangeLight: '#FF9D00',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8C0FF',
-  textMuted: '#8A90B5',
-  border: 'rgba(255,255,255,0.08)',
-  glass: 'rgba(255,255,255,0.05)',
-  green: '#22c55e',
-};
 
 const ADVANCED_COLUMNS = [
   { col: 'A', label: 'Date', eg: 'Feb-24' },
   { col: 'B', label: 'Pre-Act 1', eg: 'A-skips' },
   { col: 'C', label: 'Pre-Act 2', eg: 'Med ball' },
-  { col: 'D', label: 'Short', eg: '6×30m' },
-  { col: 'E', label: 'Medium', eg: '4×150m' },
-  { col: 'F', label: 'Long', eg: '2×300m' },
+  { col: 'D', label: 'Short', eg: '6\u00d730m' },
+  { col: 'E', label: 'Medium', eg: '4\u00d7150m' },
+  { col: 'F', label: 'Long', eg: '2\u00d7300m' },
   { col: 'G', label: 'Extra', eg: 'Gym 3' },
 ];
 
@@ -39,6 +28,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const showContinue = route.params?.showContinue ?? false;
+  const { styles, theme } = useThemedStyles(createStyles);
 
   return (
     <View style={styles.container}>
@@ -56,8 +46,8 @@ export const SheetFormatInfoScreen: React.FC = () => {
 
         <View style={styles.formatCard}>
           <View style={styles.formatHeader}>
-            <View style={[styles.iconCircle, { backgroundColor: 'rgba(255,122,0,0.12)' }]}>
-              <Columns size={20} color={C.orange} weight="fill" />
+            <View style={[styles.iconCircle, { backgroundColor: theme.colors.brandOrangeLight }]}>
+              <Columns size={20} color={theme.colors.brandOrange} weight="fill" />
             </View>
             <View style={styles.formatTitleBlock}>
               <Text style={styles.formatTitle}>Simple Format</Text>
@@ -83,7 +73,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
                 <Text style={styles.tableCellText}>Feb-24</Text>
               </View>
               <View style={[styles.tableCell, { flex: 3, borderRightWidth: 0 }]}>
-                <Text style={styles.tableCellText}>Warm up, 4×60m, 3×150m, cool down</Text>
+                <Text style={styles.tableCellText}>Warm up, 4\u00d760m, 3\u00d7150m, cool down</Text>
               </View>
             </View>
             <View style={styles.tableRow}>
@@ -91,7 +81,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
                 <Text style={styles.tableCellText}>Feb-25</Text>
               </View>
               <View style={[styles.tableCell, { flex: 3, borderRightWidth: 0 }]}>
-                <Text style={styles.tableCellText}>Tempo 6×200m, core circuit</Text>
+                <Text style={styles.tableCellText}>Tempo 6\u00d7200m, core circuit</Text>
               </View>
             </View>
             <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
@@ -105,15 +95,15 @@ export const SheetFormatInfoScreen: React.FC = () => {
           </View>
 
           <View style={styles.tipRow}>
-            <CheckCircle size={14} color={C.green} weight="fill" />
+            <CheckCircle size={14} color={theme.colors.success} weight="fill" />
             <Text style={styles.tipText}>First row is treated as a header and skipped automatically.</Text>
           </View>
         </View>
 
         <View style={styles.formatCard}>
           <View style={styles.formatHeader}>
-            <View style={[styles.iconCircle, { backgroundColor: 'rgba(184,192,255,0.1)' }]}>
-              <Table size={20} color={C.textSecondary} weight="fill" />
+            <View style={[styles.iconCircle, { backgroundColor: theme.colors.overlayMedium }]}>
+              <Table size={20} color={theme.colors.textSecondary} weight="fill" />
             </View>
             <View style={styles.formatTitleBlock}>
               <Text style={styles.formatTitle}>Advanced Format</Text>
@@ -170,7 +160,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
           </View>
 
           <View style={styles.tipRow}>
-            <CheckCircle size={14} color={C.green} weight="fill" />
+            <CheckCircle size={14} color={theme.colors.success} weight="fill" />
             <Text style={styles.tipText}>Google Sheets import also supports this format via the Advanced selector.</Text>
           </View>
         </View>
@@ -191,7 +181,7 @@ export const SheetFormatInfoScreen: React.FC = () => {
             onPress={() => navigation.replace('ProgramImport')}
           >
             <LinearGradient
-              colors={[C.orange, C.orangeLight]}
+              colors={[theme.colors.brandOrange, theme.colors.brandOrange]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.continueBtnInner}
@@ -206,8 +196,8 @@ export const SheetFormatInfoScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
+const createStyles = (t: ThemeValues) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.colors.backgroundSolid },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -217,7 +207,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   content: {
     paddingHorizontal: 20,
@@ -226,15 +216,15 @@ const styles = StyleSheet.create({
   },
   intro: {
     fontSize: 14,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 22,
   },
   formatCard: {
-    backgroundColor: C.card,
+    backgroundColor: t.colors.cardSolid,
     borderRadius: 16,
     padding: 18,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     gap: 14,
   },
   formatHeader: {
@@ -255,46 +245,46 @@ const styles = StyleSheet.create({
   formatTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: C.textPrimary,
+    color: t.colors.textPrimary,
   },
   formatSubtitle: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.colors.textMuted,
   },
   formatDesc: {
     fontSize: 14,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 22,
   },
   table: {
     borderRadius: 8,
     borderWidth: 0.5,
-    borderColor: C.border,
+    borderColor: t.colors.overlayLight,
     overflow: 'hidden',
   },
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 0.5,
-    borderBottomColor: C.border,
+    borderBottomColor: t.colors.overlayLight,
   },
   tableHeaderCell: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: t.colors.overlaySubtle,
   },
   tableHeaderText: {
     fontSize: 11,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     letterSpacing: 0.5,
   },
   tableCell: {
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRightWidth: 0.5,
-    borderRightColor: C.border,
+    borderRightColor: t.colors.overlayLight,
   },
   tableCellText: {
     fontSize: 12,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 18,
   },
   advCell: {
@@ -302,34 +292,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 7,
     borderRightWidth: 0.5,
-    borderRightColor: C.border,
+    borderRightColor: t.colors.overlayLight,
     alignItems: 'center',
   },
   colLetterBadge: {
     width: 22,
     height: 22,
     borderRadius: 6,
-    backgroundColor: 'rgba(255,122,0,0.15)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,122,0,0.35)',
+    borderColor: t.colors.brandOrange + '59',
     alignItems: 'center',
     justifyContent: 'center',
   },
   colLetterText: {
     fontSize: 11,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   advLabelText: {
     fontSize: 9,
     fontWeight: '600',
-    color: C.textMuted,
+    color: t.colors.textMuted,
     textAlign: 'center',
     lineHeight: 13,
   },
   advExampleText: {
     fontSize: 9,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 13,
   },
@@ -340,26 +330,26 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.colors.textMuted,
     lineHeight: 18,
     flex: 1,
   },
   autoDetectCard: {
-    backgroundColor: 'rgba(255,122,0,0.06)',
+    backgroundColor: t.colors.brandOrangeLight,
     borderRadius: 12,
     padding: 16,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,122,0,0.2)',
+    borderColor: t.colors.brandOrange + '33',
     gap: 8,
   },
   autoDetectTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: C.orange,
+    color: t.colors.brandOrange,
   },
   autoDetectBody: {
     fontSize: 13,
-    color: C.textSecondary,
+    color: t.colors.textSecondary,
     lineHeight: 20,
   },
   continueBar: {
@@ -369,9 +359,9 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: C.bg,
+    backgroundColor: t.colors.backgroundSolid,
     borderTopWidth: 0.5,
-    borderTopColor: C.border,
+    borderTopColor: t.colors.overlayLight,
   },
   continueBtn: {
     borderRadius: 14,
