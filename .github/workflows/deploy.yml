@@ -42,6 +42,23 @@ jobs:
             ${{ env.IMAGE_NAME_LC }}:latest
             ${{ env.IMAGE_NAME_LC }}:${{ github.sha }}
 
+      # Run SQL migrations against prod BEFORE swapping to the new image.
+      # If a migration fails, the deploy step is skipped and prod keeps running
+      # the previous image. Migrations are idempotent via schema_migrations_sql
+      # tracking + DO $$ IF NOT EXISTS guards.
+      - name: Set up Node for migrations
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install migration dependencies
+        run: npm ci --omit=dev --omit=optional
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: node server/scripts/run-sql-migrations.js
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
