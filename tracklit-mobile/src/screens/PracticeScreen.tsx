@@ -632,14 +632,14 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
   });
 
   const unassignProgramMutation = useMutation({
-    mutationFn: async (purchaseId: number | string) => {
-      await apiRequest(`/api/purchased-programs/${purchaseId}`, { method: 'DELETE' });
+    mutationFn: async (wrapperId: number | string) => {
+      await apiRequest(`/api/my-programs/${wrapperId}`, { method: 'DELETE' });
     },
-    onSuccess: async (_data, purchaseId) => {
-      // Only clear active_program_selection if the unassigned program was actually the
-      // active one. If the user unassigns a background program while a different one is
-      // active, leave the active selection intact.
-      const wasActive = user?.activeProgramSelection === String(purchaseId);
+    onSuccess: async (_data, wrapperId) => {
+      // Only clear active_program_selection if the removed program was actually the
+      // active one. The server also clears it via its own cleanup hook, so this is
+      // belt-and-suspenders for the optimistic client update.
+      const wasActive = user?.activeProgramSelection === String(wrapperId);
       if (wasActive) {
         try {
           const updated = await apiRequest<any>('/api/user', {
@@ -656,19 +656,31 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
       queryClient.invalidateQueries({ queryKey: ['my-programs'] });
       queryClient.invalidateQueries({ queryKey: ['my-programs-home'] });
       queryClient.invalidateQueries({ queryKey: ['today-session'] });
+      queryClient.invalidateQueries({ queryKey: ['user-programs'] });
     },
   });
 
   const handleUnassignProgram = () => {
     if (!selectedProgram) return;
     const title = selectedProgram.program?.title || 'this program';
+    // "Remove" means different things depending on how the program is in the list.
+    // For a program the user created, the only way to remove it from Practice is to
+    // delete it entirely (created programs are auto-included in /api/my-programs),
+    // so the dialog has to say so loudly.
+    const wrapperId = String(selectedProgram.id);
+    const isCreated = wrapperId.startsWith('created-');
+    const alertTitle = isCreated ? 'Delete Program' : 'Remove Program';
+    const alertBody = isCreated
+      ? `Permanently delete "${title}"? This removes the program, its sessions, and any assignments to your athletes. This cannot be undone.`
+      : `Remove "${title}" from your practice?`;
+    const actionLabel = isCreated ? 'Delete' : 'Remove';
     Alert.alert(
-      'Unassign Program',
-      `Remove "${title}" from your practice?`,
+      alertTitle,
+      alertBody,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Remove',
+          text: actionLabel,
           style: 'destructive',
           onPress: () => {
             unassignProgramMutation.mutate(selectedProgram.id, {

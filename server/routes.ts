@@ -5762,7 +5762,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     return myProgramsHandler(req, res);
   });
-  
+
+  // Remove a program from the user's Practice tab. Dispatches based on the wrapper id
+  // format emitted by /api/my-programs:
+  //   "created-{programId}"  → delete the training program entirely (creator only)
+  //   "assigned-{assignmentId}" → delete the assignment row (assignee only)
+  //   bare integer           → delete the purchase row (purchaser only)
+  // Clears the caller's active_program_selection in all three cases via the storage helper.
+  const removeMyProgramHandler = async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const userId = req.user!.id;
+      const wrapper = String(req.params.wrapperId || "").trim();
+      if (!wrapper) {
+        return res.status(400).json({ error: "Wrapper id is required" });
+      }
+
+      if (wrapper.startsWith("created-")) {
+        const programId = parseInt(wrapper.slice("created-".length), 10);
+        if (!Number.isInteger(programId) || programId <= 0) {
+          return res.status(400).json({ error: "Invalid created wrapper id" });
+        }
+        const program = await dbStorage.getProgram(programId);
+        if (!program) {
+          return res.status(404).json({ error: "Program not found" });
+        }
+        if (program.userId !== userId) {
+          return res.status(403).json({ error: "You don't have permission to delete this program" });
+        }
+        await dbStorage.deleteProgram(programId);
+        await dbStorage.clearActiveProgramSelectionIfMatches(userId, [`created-${programId}`]);
+        return res.json({ success: true, kind: "created", programId });
+      }
+
+      if (wrapper.startsWith("assigned-")) {
+        const assignmentId = parseInt(wrapper.slice("assigned-".length), 10);
+        if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+          return res.status(400).json({ error: "Invalid assigned wrapper id" });
+        }
+        const assignments = await dbStorage.getAssignedPrograms(userId);
+        const assignment = assignments.find(a => a.id === assignmentId);
+        if (!assignment) {
+          return res.status(404).json({ error: "Assignment not found" });
+        }
+        if (assignment.assigneeId !== userId) {
+          return res.status(403).json({ error: "You can only remove your own assignments" });
+        }
+        await pool.query(
+          `DELETE FROM program_assignments WHERE id = $1 AND assignee_id = $2`,
+          [assignmentId, userId],
+        );
+        await dbStorage.clearActiveProgramSelectionIfMatches(userId, [`assigned-${assignmentId}`]);
+        return res.json({ success: true, kind: "assigned", assignmentId });
+      }
+
+      // Bare integer: purchase id
+      const purchaseId = parseInt(wrapper, 10);
+      if (!Number.isInteger(purchaseId) || purchaseId <= 0) {
+        return res.status(400).json({ error: "Invalid wrapper id" });
+      }
+      const purchases = await dbStorage.getUserPurchasedPrograms(userId);
+      const purchase = purchases.find((p: any) => p.id === purchaseId);
+      if (!purchase) {
+        return res.status(404).json({ error: "Purchase not found" });
+      }
+      await pool.query(
+        `DELETE FROM program_purchases WHERE id = $1 AND user_id = $2`,
+        [purchaseId, userId],
+      );
+      await dbStorage.clearActiveProgramSelectionIfMatches(userId, [String(purchaseId)]);
+      return res.json({ success: true, kind: "purchased", purchaseId });
+    } catch (error: any) {
+      console.error("Error removing program from practice:", error);
+      res.status(500).json({ error: "Failed to remove program" });
+    }
+  };
+
+  app.delete("/api/my-programs/:wrapperId", removeMyProgramHandler);
+  // Back-compat: mobile builds <= #15 still call the old URL. Point it at the same handler
+  // so existing installs are unblocked without a rebuild. Remove once those builds are gone.
+  app.delete("/api/purchased-programs/:wrapperId", removeMyProgramHandler);
+
   // ============================================================
   // Stripe Payment Routes
   // ============================================================
