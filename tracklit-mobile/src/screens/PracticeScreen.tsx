@@ -65,6 +65,10 @@ interface PurchasedProgramItem {
   program: Program;
   assignerName?: string;
   source?: ProgramSource;
+  // ISO timestamp — for assigned/self-assigned items this is program_assignments.assigned_at,
+  // for purchased items it's program_purchases.purchased_at, for created items it's
+  // training_programs.created_at. Used as the calendar anchor when sessions have no dates.
+  purchasedAt?: string | null;
 }
 
 
@@ -528,6 +532,15 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
       }
     });
 
+    // Anchor the calendar to a start date. Priority:
+    //   1. Earliest session.date (legacy Google-sheet-imported programs with explicit dates)
+    //   2. selectedProgram.purchasedAt (when the user adopted the program — works for
+    //      self-assigned, coach-assigned, purchased, and created items since the backend
+    //      maps all three to this field in /api/my-programs)
+    //   3. Today (safety fallback so day 1 always renders somewhere)
+    // Without this fallback, a user-created or freshly-self-assigned program whose sessions
+    // only have dayNumber (no date) would never render anything on the calendar — dayNum
+    // stayed null for every offset because there was no anchor to compute from.
     let programStartDate: Date | null = null;
     const datesFromSessions = sessionsToUse
       .map((s: any) => parseSessionDateForCard(s.date))
@@ -535,10 +548,22 @@ export const PracticeScreen: React.FC<PracticeScreenProps> = ({ hideHeader = fal
     if (datesFromSessions.length > 0) {
       datesFromSessions.sort((a, b) => a.getTime() - b.getTime());
       programStartDate = datesFromSessions[0];
+    } else if (selectedProgram?.purchasedAt) {
+      const parsed = new Date(selectedProgram.purchasedAt);
+      if (!Number.isNaN(parsed.getTime())) {
+        parsed.setHours(0, 0, 0, 0);
+        programStartDate = parsed;
+      }
     }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    // Final fallback: if neither session dates nor a purchasedAt exists, anchor to today
+    // so newly-adopted programs with only dayNumber-based sessions still render.
+    if (!programStartDate) {
+      programStartDate = today;
+    }
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     const FORWARD_DAYS = 60;
