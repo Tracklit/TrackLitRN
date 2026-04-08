@@ -5,7 +5,7 @@ import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
 import { meets, notifications, friendships, users, messageReactions, userSubscriptions, userSubscriptionPurchases, trainingPrograms, meetInvitations, passwordResetTokens, User } from "@shared/schema";
-import { and, eq, or, sql, isNotNull, desc, asc, inArray } from "drizzle-orm";
+import { and, eq, ne, or, sql, isNotNull, desc, asc, inArray } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import multer from "multer";
@@ -4677,7 +4677,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      
+
       const programs = await dbStorage.getUserPrograms(req.user!.id);
       res.json(programs);
     } catch (error: any) {
@@ -4685,7 +4685,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch programs" });
     }
   });
-  
+
+  // Get public programs created by OTHER users (for discovery). The caller's own
+  // programs are excluded so the list only surfaces programs they can actually
+  // "Start" via POST /api/programs/:id/self-assign.
+  app.get("/api/programs/public", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const rows = await db
+        .select({
+          id: trainingPrograms.id,
+          userId: trainingPrograms.userId,
+          title: trainingPrograms.title,
+          description: trainingPrograms.description,
+          category: trainingPrograms.category,
+          level: trainingPrograms.level,
+          duration: trainingPrograms.duration,
+          totalSessions: trainingPrograms.totalSessions,
+          coverImageUrl: trainingPrograms.coverImageUrl,
+          createdAt: trainingPrograms.createdAt,
+          creatorUsername: users.username,
+          creatorName: users.name,
+        })
+        .from(trainingPrograms)
+        .innerJoin(users, eq(users.id, trainingPrograms.userId))
+        .where(and(
+          eq(trainingPrograms.visibility, 'public'),
+          ne(trainingPrograms.userId, req.user!.id),
+        ))
+        .orderBy(desc(trainingPrograms.createdAt))
+        .limit(50);
+
+      res.json(rows);
+    } catch (error: any) {
+      console.error("Error fetching public programs:", error);
+      res.status(500).json({ error: "Failed to fetch public programs" });
+    }
+  });
+
   // 2. Get program by id
   // Get gym exercises for a specific session
   app.get("/api/sessions/:sessionId/gym-data", async (req: Request, res: Response) => {

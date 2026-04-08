@@ -59,6 +59,21 @@ interface Program {
   isPurchased?: boolean;
 }
 
+interface PublicProgram {
+  id: number;
+  userId: number;
+  title: string;
+  description?: string | null;
+  category?: string | null;
+  level?: string | null;
+  duration?: number;
+  totalSessions?: number;
+  coverImageUrl?: string | null;
+  createdAt?: string;
+  creatorUsername?: string | null;
+  creatorName?: string | null;
+}
+
 
 interface ProgramsScreenProps {
   hideHeader?: boolean;
@@ -381,6 +396,46 @@ const createStyles = (t: ThemeValues) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  discoverSection: {
+    marginTop: 28,
+    marginBottom: 8,
+  },
+  discoverHeading: {
+    color: t.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  discoverSubheading: {
+    color: t.colors.textMuted,
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 12,
+    lineHeight: 16,
+  },
+  discoverList: {
+    gap: 8,
+  },
+  discoverRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: t.colors.cardSolid,
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: t.colors.overlayLight,
+  },
+  discoverTitle: {
+    color: t.colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  discoverMeta: {
+    color: t.colors.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+  },
   filterOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -472,6 +527,14 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
   const myProgramsQuery = useQuery({
     queryKey: ['user-programs'],
     queryFn: () => apiRequest<Program[]>('/api/programs'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
+  // Public programs from other coaches that the user can adopt via Start Program.
+  // Returns programs where visibility='public' AND userId != caller.
+  const publicProgramsQuery = useQuery({
+    queryKey: ['public-programs'],
+    queryFn: () => apiRequest<PublicProgram[]>('/api/programs/public'),
     enabled: isAuthenticated && !isGuest,
   });
 
@@ -618,6 +681,40 @@ export const ProgramsScreen: React.FC<ProgramsScreenProps> = ({ hideHeader = fal
           styles={styles}
           theme={theme}
         />
+
+        {isAuthenticated && !isGuest && (publicProgramsQuery.data?.length ?? 0) > 0 && (
+          <View style={styles.discoverSection}>
+            <Text style={styles.discoverHeading}>Discover Public Programs</Text>
+            <Text style={styles.discoverSubheading}>
+              Programs shared by other coaches. Tap one to view it and start practicing.
+            </Text>
+            <View style={styles.discoverList}>
+              {(publicProgramsQuery.data ?? []).map((p) => (
+                <TouchableOpacity
+                  key={`public-${p.id}`}
+                  style={styles.discoverRow}
+                  activeOpacity={0.75}
+                  onPress={() => navigation.navigate('ProgramDetail', { id: p.id })}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.discoverTitle} numberOfLines={1}>{p.title}</Text>
+                    <Text style={styles.discoverMeta} numberOfLines={1}>
+                      by @{p.creatorUsername || 'unknown'}
+                      {p.category ? ` · ${p.category}` : ''}
+                      {p.level ? ` · ${p.level}` : ''}
+                    </Text>
+                  </View>
+                  <CaretDown
+                    size={14}
+                    color={theme.colors.textMuted}
+                    weight="bold"
+                    style={{ transform: [{ rotate: '-90deg' }] }}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
       </KeyboardAwareScreenScrollView>
 
       <Modal
