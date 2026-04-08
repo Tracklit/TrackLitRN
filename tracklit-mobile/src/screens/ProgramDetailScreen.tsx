@@ -5,14 +5,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from '@/components/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { UsersThree } from 'phosphor-react-native';
+import { UsersThree, Play } from 'phosphor-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
 import { SkeletonBlock } from '@/components/Skeleton';
@@ -66,7 +67,8 @@ export const ProgramDetailScreen: React.FC = () => {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<ProgramDetailRouteProp>();
   const programId = route.params?.id;
-  const { user } = useAuth();
+  const { user, setUserAndPersist } = useAuth();
+  const queryClient = useQueryClient();
   const [showAssignModal, setShowAssignModal] = useState(false);
 
   // Fetch program details
@@ -78,6 +80,75 @@ export const ProgramDetailScreen: React.FC = () => {
 
   const program = programQuery.data;
   const isOwner = !!program && !!user?.id && program.userId === user.id;
+
+  // Self-assign: adopt a program that isn't yours so it shows up in your Practice tab.
+  // On success, set it as the active program and navigate to the Training tab so the user
+  // lands directly on what they just started. Handles the idempotent "already started"
+  // backend response as a soft success.
+  const startProgramMutation = useMutation({
+    mutationFn: async (pid: number) => {
+      return apiRequest<{ id: number; programId: number; status: string }>(
+        `/api/programs/${pid}/self-assign`,
+        { method: 'POST', data: {} },
+      );
+    },
+    onSuccess: async (assignment) => {
+      // Make the newly-started program the active one.
+      if (assignment && typeof assignment === 'object' && typeof assignment.id === 'number') {
+        try {
+          const updated = await apiRequest<any>('/api/user', {
+            method: 'PATCH',
+            data: { activeProgramSelection: `assigned-${assignment.id}` },
+          });
+          if (updated && typeof updated === 'object') {
+            await setUserAndPersist(updated);
+          }
+        } catch (err) {
+          // Non-critical; the user can pick it in the Practice picker instead.
+          if (__DEV__) console.log('[start-program] active PATCH failed', err);
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ['my-programs'] });
+      queryClient.invalidateQueries({ queryKey: ['my-programs-home'] });
+      queryClient.invalidateQueries({ queryKey: ['today-session'] });
+      queryClient.invalidateQueries({ queryKey: ['user-programs'] });
+      Alert.alert(
+        'Program Started',
+        `"${program?.title || 'Program'}" is now in your Practice tab.`,
+        [
+          {
+            text: 'Open Practice',
+            onPress: () => navigation.navigate('MainTabs', { screen: 'Training' } as never),
+          },
+        ],
+      );
+    },
+    onError: (err: any) => {
+      const msg = err?.message || 'Failed to start program';
+      // The backend returns 400 "You've already started this program" if a self-assignment
+      // already exists for this (program, user) pair. Treat that as a soft success.
+      if (msg === "You've already started this program") {
+        Alert.alert(
+          'Already in your Practice',
+          `"${program?.title || 'This program'}" is already in your Practice tab.`,
+          [
+            {
+              text: 'Open Practice',
+              onPress: () => navigation.navigate('MainTabs', { screen: 'Training' } as never),
+            },
+            { text: 'OK', style: 'cancel' },
+          ],
+        );
+        return;
+      }
+      Alert.alert('Could not start program', msg);
+    },
+  });
+
+  const handleStartProgram = () => {
+    if (!program) return;
+    startProgramMutation.mutate(program.id);
+  };
 
   const getLevelColor = (level?: string) => {
     switch (level?.toLowerCase()) {
@@ -249,7 +320,7 @@ export const ProgramDetailScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        {isOwner && (
+        {isOwner ? (
           <View style={styles.actionRow}>
             <Button
               variant="default"
@@ -275,6 +346,24 @@ export const ProgramDetailScreen: React.FC = () => {
                 </View>
               </Button>
             )}
+          </View>
+        ) : (
+          <View style={styles.actionRow}>
+            <Button
+              variant="default"
+              size="lg"
+              onPress={handleStartProgram}
+              disabled={startProgramMutation.isPending}
+              style={styles.actionButton}
+            >
+              {/* Button has no leftIcon prop, so compose icon + text as children */}
+              <View style={styles.actionButtonContent}>
+                <Play size={18} color="#fff" weight="fill" />
+                <Text variant="body" weight="medium" color="primary-foreground">
+                  {startProgramMutation.isPending ? 'Starting…' : 'Start Program'}
+                </Text>
+              </View>
+            </Button>
           </View>
         )}
 
